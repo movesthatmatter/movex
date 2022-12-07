@@ -9,6 +9,7 @@ import {
   objectKeys,
   UnidentifiableModel,
 } from 'relational-redis-store';
+import { Ok } from 'ts-results';
 
 // Note:
 // This is currently depending on RRStore, but from what I see
@@ -117,73 +118,33 @@ export class SessionStore {
 
   removeClient(id: string) {
     return this.store
-      .removeItemInCollection('$clients', id)
-      .mapErr(toSessionError);
+      .getItemInCollection('$clients', id)
+      .flatMap((prevClent) =>
+        AsyncResult.all(
+          new AsyncOk(prevClent),
+          this.store
+            .removeItemInCollection('$clients', id)
+            .mapErr(toSessionError)
+        )
+      )
+      .flatMap(([{ subscriptions }, removed]) => {
+        const subscriptionNames = objectKeys(subscriptions);
 
-    // TODO: Remove it from the subscribers
+        return AsyncResult.all(
+          ...subscriptionNames.map((sub) => {
+            const resourceType = sub.slice(
+              0,
+              sub.indexOf(':')
+            ) as SessionCollectionMapOfResourceKeys;
+            const resourceId = sub.slice(sub.indexOf(':') + 1);
+            return this.removeResourceSubscriber(id, {
+              resourceId,
+              resourceType,
+            });
+          })
+        ).map(() => removed);
+      });
   }
-
-  // Topic
-
-  // createTopic<TName extends string>(uniqName: TName) {
-  //   return this.store
-  //     .addItemToCollection(
-  //       '$topics',
-  //       { subscribers: {} },
-  //       uniqName,
-  //       TOPICS_COLLECTION_STORE_OPTIONS
-  //     )
-  //     .map((s) => s as RRStore.CollectionItemOrReply<Topic<TName>>)
-  //     .mapErr(toSessionError);
-  // }
-
-  // getTopic<TTopic extends string>(topic: TTopic) {
-  //   return this.store.getItemInCollection('$topics', topic);
-  // }
-
-  // private updateTopicSubscribers<TName extends string>(
-  //   name: TName,
-  //   propsGetter: RRStore.UpdateableCollectionPropsGetter<Topic<TName>>
-  // ) {
-  //   return this.store
-  //     .updateItemInCollection(
-  //       '$topics',
-  //       name,
-  //       propsGetter,
-  //       TOPICS_COLLECTION_STORE_OPTIONS
-  //     )
-  //     .map((t) => t as Topic<TName>)
-  //     .mapErr(toSessionError);
-  // }
-
-  // Subscriptions
-
-  // getTopicSubscribers<TTopic extends string>(topic: TTopic) {
-  //   return this.getTopic(topic)
-  //     .flatMap((topic) => {
-  //       return this.store.getItemsInCollection(
-  //         '_peers',
-  //         Object.keys(topic.subscribers)
-  //       );
-  //     })
-  //     .mapErr(toSessionError);
-  // }
-
-  // getPeerSubscriptions(peerId: Peer['id']) {
-  //   return this.getPeer(peerId).flatMap((peer) => {
-  //     return this.store
-  //       .getItemsInCollection('$topics', Object.keys(peer.subscriptions))
-  //       .mapErr(toSessionError);
-  //   });
-  // }
-
-  // (Observable) Resources
-
-  // private toResourceCollectionName = <
-  //   TResourceType extends SessionCollectionMapOfResourceKeys
-  // >(
-  //   resourceType: TResourceType
-  // ) => `resource:${resourceType}`;
 
   createResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
@@ -191,11 +152,6 @@ export class SessionStore {
       SessionCollectionMap[TResourceType]['data']
     >
   >(resourceType: TResourceType, data: TResourceData) {
-    // TODO: Should the return of the Resource look like"
-    // {
-    //   data: {} // my Resource data?
-    // }
-
     return this.store
       .addItemToCollection(
         resourceType as any, // TODO: Here can add the string literal types
@@ -290,13 +246,10 @@ export class SessionStore {
     return this.getClient(clientId) // Remove in favor of an optimized read
       .flatMap((client) => {
         // TODO: This MUST BE a transaction!!!
-        return this.updateResourceSubscribers(
-          {
-            resourceType,
-            resourceId,
-          },
-          ({ [client.id]: _, ...remainingSubscribers }) => remainingSubscribers
-        ).flatMap((nextResource) =>
+        return this.removeResourceSubscriber(client.id, {
+          resourceType,
+          resourceId,
+        }).flatMap((nextResource) =>
           AsyncResult.all(
             new AsyncOk(nextResource),
             this.updateClient(clientId, (prev) => {
@@ -313,10 +266,30 @@ export class SessionStore {
           )
         );
       })
+      .mapErr((e) => {
+        console.debug('ubsubscribe ee', clientId, resourceId, resourceType, e);
+
+        return e;
+      })
       .map(([resource, client]) => ({
         resource,
         client,
       }));
+  }
+
+  private removeResourceSubscriber<
+    TResourceType extends SessionCollectionMapOfResourceKeys
+  >(
+    clientId: Client['id'],
+    { resourceType, resourceId }: ResourceIdentifier<TResourceType>
+  ) {
+    return this.updateResourceSubscribers(
+      {
+        resourceType,
+        resourceId,
+      },
+      ({ [clientId]: _, ...remainingSubscribers }) => remainingSubscribers
+    );
   }
 
   getResource<TResourceType extends SessionCollectionMapOfResourceKeys>({
@@ -348,12 +321,9 @@ export class SessionStore {
     TResourceType extends SessionCollectionMapOfResourceKeys
   >(p: { resourceType: TResourceType; resourceId: Resource['id'] }) {
     return this.getResource(p)
-      .flatMap((resource) => {
-        return this.store.getItemsInCollection(
-          '$clients',
-          Object.keys(resource.subscribers)
-        );
-      })
+      .flatMap(({ subscribers }) =>
+        this.store.getItemsInCollection('$clients', Object.keys(subscribers))
+      )
       .mapErr(toSessionError);
   }
 
@@ -362,7 +332,6 @@ export class SessionStore {
       return client.subscriptions;
 
       // TODO Does this need to be fetching the resources or do any extra processing ??
-
 
       // return objectKeys(client.subscriptions).reduce((accum, next) => {
       //   const resourceType = next.slice(0, next.indexOf(':'));

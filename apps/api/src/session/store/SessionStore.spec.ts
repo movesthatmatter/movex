@@ -319,7 +319,7 @@ describe('AppService', () => {
 
     // TODO Add test for when the client doesn't exist the resource should revert!
 
-    it('get all subscribers from a topic', async () => {
+    it('gets all resource subscribers', async () => {
       await AsyncResult.all(
         session.createClient({ id: '1st' }),
         session.createClient({ id: '2nd' }),
@@ -412,27 +412,7 @@ describe('AppService', () => {
           subscribedAt: NOW_TIMESTAMP,
         },
       });
-      // const expected = new Ok(
-      //   {
-      //     id: get_MOCKED_UUID(2),
-      //     subscribers: {
-      //       '1st': {
-      //         subscribedAt: NOW_TIMESTAMP,
-      //       },
-      //     },
-      //   },
-      //   {
-      //     id: get_MOCKED_UUID(1),
-      //     subscribers: {
-      //       '1st': {
-      //         subscribedAt: NOW_TIMESTAMP,
-      //       },
-      //       '2nd': {
-      //         subscribedAt: NOW_TIMESTAMP,
-      //       },
-      //     },
-      //   },
-      // ]);
+
       expect(actual).toEqual(expected);
     });
 
@@ -487,6 +467,118 @@ describe('AppService', () => {
       });
 
       expect(actual).toEqual(expected);
+    });
+
+    it('unsuscribes automatically on client removal', async () => {
+      await session.createClient({ id: '1st' }).resolve();
+      await session.createResource('room', { type: 'play' }).resolve(); // id: get_MOCKED_UUID(1)
+      await session.createResource('game', { type: 'maha' }).resolve(); // id: get_MOCKED_UUID(2)
+
+      await session
+        .subscribeToResource('1st', {
+          resourceId: get_MOCKED_UUID(1),
+          resourceType: 'room',
+        })
+        .resolve();
+
+      await session
+        .subscribeToResource('1st', {
+          resourceId: get_MOCKED_UUID(2),
+          resourceType: 'game',
+        })
+        .resolve();
+
+      const actualRoomResourceSubscribers = await session
+        .getResourceSubscribers({
+          resourceId: get_MOCKED_UUID(1),
+          resourceType: 'room',
+        })
+        .resolve();
+
+      expect(actualRoomResourceSubscribers).toEqual(
+        new Ok([
+          {
+            id: '1st',
+            subscriptions: {
+              [`room:${get_MOCKED_UUID(1)}`]: {
+                subscribedAt: NOW_TIMESTAMP,
+              },
+              [`game:${get_MOCKED_UUID(2)}`]: {
+                subscribedAt: NOW_TIMESTAMP,
+              },
+            },
+          },
+        ])
+      );
+
+      const actualGameResourceSubscribers = await session
+        .getResourceSubscribers({
+          resourceId: get_MOCKED_UUID(2),
+          resourceType: 'game',
+        })
+        .resolve();
+
+      expect(actualGameResourceSubscribers).toEqual(
+        new Ok([
+          {
+            id: '1st',
+            subscriptions: {
+              [`room:${get_MOCKED_UUID(1)}`]: {
+                subscribedAt: NOW_TIMESTAMP,
+              },
+              [`game:${get_MOCKED_UUID(2)}`]: {
+                subscribedAt: NOW_TIMESTAMP,
+              },
+            },
+          },
+        ])
+      );
+
+      expect(actualGameResourceSubscribers).toEqual(
+        new Ok([
+          {
+            id: '1st',
+            subscriptions: {
+              [`room:${get_MOCKED_UUID(1)}`]: {
+                subscribedAt: NOW_TIMESTAMP,
+              },
+              [`game:${get_MOCKED_UUID(2)}`]: {
+                subscribedAt: NOW_TIMESTAMP,
+              },
+            },
+          },
+        ])
+      );
+
+      const actualClient = await session.removeClient('1st').resolve();
+
+      const expectedClient = new Ok({
+        index: 1,
+        length: 0,
+        item: undefined,
+      });
+
+      expect(actualClient).toEqual(expectedClient);
+
+      const actualRoomResourceSubscribersAfterClientRemoval = await session
+        .getResourceSubscribers({
+          resourceId: get_MOCKED_UUID(1),
+          resourceType: 'room',
+        })
+        .resolve();
+
+      expect(actualRoomResourceSubscribersAfterClientRemoval).toEqual(
+        new Ok([])
+      );
+
+      const actualGameResourceSubscribersAfterRemoval = await session
+        .getResourceSubscribers({
+          resourceId: get_MOCKED_UUID(2),
+          resourceType: 'game',
+        })
+        .resolve();
+
+      expect(actualGameResourceSubscribersAfterRemoval).toEqual(new Ok([]));
     });
   });
 });

@@ -1,20 +1,11 @@
 import * as RRStore from 'relational-redis-store';
-import {
-  CollectionItemOrReply,
-  CollectionMapBase,
-} from 'relational-redis-store';
+import { CollectionMapBase } from 'relational-redis-store';
 import { AsyncResult } from 'ts-async-results';
-import { Client, Resource, Topic } from '../types';
+import { Client } from '../types';
 import {
-  CraeteResourceError,
   CreatePeerError,
-  CreateTopicError,
   GetPeerError,
-  GetPeerSubscriptionsError,
-  GetTopicSubscribersError,
   RemovePeerError,
-  SubscribeToTopicError,
-  UnsubscribeToTopicError,
 } from './SessionStoreErrors';
 
 export type SessionStoreCollectionMap<
