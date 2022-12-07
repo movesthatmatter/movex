@@ -1,11 +1,14 @@
 export type UnknownRecord = Record<string, unknown>;
 
+type ResourceType = string;
+
 export type Client<Info extends UnknownRecord = {}> = {
   id: string;
   info?: Info; // User Info or whatever
   subscriptions: Record<
-    Topic<string>['id'],
+    `${ResourceType}:${Resource['id']}`,
     {
+      // resourceType: string; // TODO: This could be part of the resource id
       subscribedAt: number;
     }
   >;

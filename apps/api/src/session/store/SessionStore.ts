@@ -4,7 +4,11 @@ import { ISessionStore, SessionStoreCollectionMap } from './ISessionStore';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
 import { getUuid } from './util';
-import { CollectionItem, UnidentifiableModel } from 'relational-redis-store';
+import {
+  CollectionItem,
+  objectKeys,
+  UnidentifiableModel,
+} from 'relational-redis-store';
 
 // Note:
 // This is currently depending on RRStore, but from what I see
@@ -42,6 +46,13 @@ type SessionCollectionMapOfResourceKeys = keyof Omit<
   SessionCollectionMap,
   keyof SessionStoreCollectionMap<{}>
 >;
+
+type ResourceIdentifier<
+  TResourceType extends SessionCollectionMapOfResourceKeys
+> = {
+  resourceType: TResourceType;
+  resourceId: Resource['id'];
+};
 
 export class SessionStore {
   // TODO: Type this!
@@ -147,73 +158,6 @@ export class SessionStore {
 
   // Subscriptions
 
-  // subscribeToTopic<TTopicName extends string>(
-  //   name: TTopicName,
-  //   peerId: Peer['id']
-  // ) {
-  //   return this.getPeer(peerId)
-  //     .flatMap((peer) => {
-  //       // TODO: This MUST BE a transaction!!!
-  //       return this.updateTopicSubscribers(name, (prev) => ({
-  //         ...prev,
-  //         subscribers: {
-  //           ...prev.subscribers,
-  //           [peer.id]: null,
-  //         },
-  //       })).flatMap((updatedTopic) =>
-  //         AsyncResult.all(
-  //           new AsyncOk(updatedTopic),
-  //           this.updatePeer(peerId, (prev) => ({
-  //             ...prev,
-  //             subscriptions: {
-  //               ...prev.subscriptions,
-  //               [updatedTopic.id]: null,
-  //             },
-  //           }))
-  //         )
-  //       );
-  //     })
-  //     .map(([topic, peer]) => ({
-  //       topic,
-  //       peer,
-  //     }));
-  // }
-
-  // unsubscribeFromTopic<TTopicName extends string>(
-  //   name: TTopicName,
-  //   peerId: Peer['id']
-  // ) {
-  //   return this.getPeer(peerId)
-  //     .flatMap((peer) => {
-  //       // TODO: This MUST BE a transaction!!!
-  //       return this.updateTopicSubscribers(name, (prev) => {
-  //         const { [peer.id]: removed, ...nextSubscribers } = prev.subscribers;
-
-  //         return {
-  //           ...prev,
-  //           subscribers: nextSubscribers,
-  //         };
-  //       }).flatMap((updatedTopic) =>
-  //         AsyncResult.all(
-  //           new AsyncOk(updatedTopic),
-  //           this.updatePeer(peerId, (prev) => {
-  //             const { [updatedTopic.id]: removed, ...nextSubscriptions } =
-  //               prev.subscriptions;
-
-  //             return {
-  //               ...prev,
-  //               subscriptions: nextSubscriptions,
-  //             };
-  //           })
-  //         )
-  //       );
-  //     })
-  //     .map(([topic, peer]) => ({
-  //       topic,
-  //       peer,
-  //     }));
-  // }
-
   // getTopicSubscribers<TTopic extends string>(topic: TTopic) {
   //   return this.getTopic(topic)
   //     .flatMap((topic) => {
@@ -275,26 +219,22 @@ export class SessionStore {
 
   // Subscriptions
 
-  subscribeToResource<
-    TResourceType extends SessionCollectionMapOfResourceKeys
-  >({
-    clientId,
-    resourceType,
-    resourceId,
-  }: {
-    resourceId: Resource['id'];
-    resourceType: TResourceType;
-    clientId: Client['id'];
-  }) {
+  subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
+    clientId: Client['id'],
+    { resourceType, resourceId }: ResourceIdentifier<TResourceType>
+  ) {
     const now = new Date().getTime();
 
     // First we update the resource
-    return this.updateResourceSubscribers(resourceType, resourceId, (prev) => ({
-      ...prev,
-      [clientId]: {
-        subscribedAt: now,
-      },
-    }))
+    return this.updateResourceSubscribers(
+      { resourceType, resourceId },
+      (prev) => ({
+        ...prev,
+        [clientId]: {
+          subscribedAt: now,
+        },
+      })
+    )
       .flatMap((nextResource) =>
         AsyncResult.all(
           new AsyncOk(nextResource),
@@ -302,7 +242,7 @@ export class SessionStore {
             ...prev,
             subscriptions: {
               ...prev.subscriptions,
-              [nextResource.id]: {
+              [`${resourceType}:${nextResource.id}`]: {
                 subscribedAt: now,
               },
             },
@@ -323,14 +263,13 @@ export class SessionStore {
   private updateResourceSubscribers<
     TResourceType extends SessionCollectionMapOfResourceKeys
   >(
-    type: TResourceType,
-    id: Resource['id'],
+    { resourceId, resourceType }: ResourceIdentifier<TResourceType>,
     updateFn: (prev: Resource['subscribers']) => Resource['subscribers']
   ) {
     return this.store
       .updateItemInCollection(
-        type,
-        id,
+        resourceType,
+        resourceId,
         (prev) => ({
           ...prev,
           subscribers: updateFn(prev.subscribers),
@@ -344,28 +283,27 @@ export class SessionStore {
 
   unsubscribeFromResource<
     TResourceType extends SessionCollectionMapOfResourceKeys
-  >({
-    clientId,
-    resourceType,
-    resourceId,
-  }: {
-    resourceId: Resource['id'];
-    resourceType: TResourceType;
-    clientId: Client['id'];
-  }) {
+  >(
+    clientId: Client['id'],
+    { resourceType, resourceId }: ResourceIdentifier<TResourceType>
+  ) {
     return this.getClient(clientId) // Remove in favor of an optimized read
       .flatMap((client) => {
         // TODO: This MUST BE a transaction!!!
         return this.updateResourceSubscribers(
-          resourceType,
-          resourceId,
+          {
+            resourceType,
+            resourceId,
+          },
           ({ [client.id]: _, ...remainingSubscribers }) => remainingSubscribers
         ).flatMap((nextResource) =>
           AsyncResult.all(
             new AsyncOk(nextResource),
             this.updateClient(clientId, (prev) => {
-              const { [nextResource.id]: removed, ...remainingSubscriptions } =
-                prev.subscriptions;
+              const {
+                [`${resourceType}:${nextResource.id}` as any]: removed,
+                ...remainingSubscriptions
+              } = prev.subscriptions;
 
               return {
                 ...prev,
@@ -379,5 +317,88 @@ export class SessionStore {
         resource,
         client,
       }));
+  }
+
+  getResource<TResourceType extends SessionCollectionMapOfResourceKeys>({
+    resourceType,
+    resourceId,
+  }: {
+    resourceType: TResourceType;
+    resourceId: Resource['id'];
+  }) {
+    return this.store.getItemInCollection(resourceType, resourceId);
+  }
+
+  // private updateTopicSubscribers<TName extends string>(
+  //   name: TName,
+  //   propsGetter: RRStore.UpdateableCollectionPropsGetter<Topic<TName>>
+  // ) {
+  //   return this.store
+  //     .updateItemInCollection(
+  //       '$topics',
+  //       name,
+  //       propsGetter,
+  //       TOPICS_COLLECTION_STORE_OPTIONS
+  //     )
+  //     .map((t) => t as Topic<TName>)
+  //     .mapErr(toSessionError);
+  // }
+
+  getResourceSubscribers<
+    TResourceType extends SessionCollectionMapOfResourceKeys
+  >(p: { resourceType: TResourceType; resourceId: Resource['id'] }) {
+    return this.getResource(p)
+      .flatMap((resource) => {
+        return this.store.getItemsInCollection(
+          '$clients',
+          Object.keys(resource.subscribers)
+        );
+      })
+      .mapErr(toSessionError);
+  }
+
+  getClientSubscriptions(clientId: Client['id']) {
+    return this.getClient(clientId).map((client) => {
+      return client.subscriptions;
+
+      // TODO Does this need to be fetching the resources or do any extra processing ??
+
+
+      // return objectKeys(client.subscriptions).reduce((accum, next) => {
+      //   const resourceType = next.slice(0, next.indexOf(':'));
+      //   const resourceId = next.slice(next.indexOf(':') + 1);
+      //   const info = client.subscriptions[next];
+
+      //   return {
+      //     ...accum,
+      //     [resourceType]: [
+      //       ...(accum[resourceType] || []),
+      //       {
+      //         resourceId,
+      //         resourceType,
+      //         ...info,
+      //       },
+      //     ],
+      //   };
+      // }, {} as Record<string, (ResourceIdentifier<any> & Client['subscriptions'][any])[]>);
+
+      // const collectionNames = Object.keys(subscribedCollectionNames);
+
+      // return AsyncResult.all(
+      //   ...objectKeys(subscribedCollectionNames).map((collectionName) =>
+      //     this.store.getItemsInCollection(
+      //       collectionName as any,
+      //       subscribedCollectionNames[collectionName]
+      //     )
+      //   )
+      // ).mapErr(toSessionError);
+
+      // return this.store
+      //   .getItemsInCollection(
+      //     `${client.subscriptions}:${nextResource.id}` as any,
+      //     // resourceType comes from where?
+      //     , Object.keys(peer.subscriptions))
+      //   .mapErr(toSessionError);
+    });
   }
 }

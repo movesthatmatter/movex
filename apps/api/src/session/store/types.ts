@@ -1,5 +1,5 @@
 import * as RRStore from 'relational-redis-store';
-import { Peer, Topic } from '../types';
+import { Topic } from '../types';
 
 export type EmptyCollectionStoreOptions = {
   foreignKeys: {};
