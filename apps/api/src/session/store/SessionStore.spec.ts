@@ -1,14 +1,14 @@
+import MockDate from 'mockdate';
 import { Store, createMockStore } from 'relational-redis-store';
 import { AsyncResult } from 'ts-async-results';
 import { Ok } from 'ts-results';
 import { SessionStore } from './SessionStore';
-import MockDate from 'mockdate';
 
 let mockUUIDCount = 0;
 const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
 jest.mock('uuid', () => ({ v4: () => get_MOCKED_UUID(++mockUUIDCount) }));
 
-describe('AppService', () => {
+describe('SessionStore', () => {
   let store: Store<any>;
   let session: SessionStore;
 
@@ -47,9 +47,9 @@ describe('AppService', () => {
     store.flush();
   });
 
-  describe('peer', () => {
+  describe('clients', () => {
     describe('creation', () => {
-      it('creates a peer without input', async () => {
+      it('creates a client without input', async () => {
         const actual = await session.createClient().resolve();
         const expected = new Ok({
           index: 1,
@@ -65,7 +65,7 @@ describe('AppService', () => {
         expect(actual).toEqual(expected);
       });
 
-      it('creates a peer with given ID', async () => {
+      it('creates a client with given ID', async () => {
         const actual = await session.createClient({ id: 'test-id' }).resolve();
         const expected = new Ok({
           index: 1,
@@ -79,7 +79,7 @@ describe('AppService', () => {
         expect(actual).toEqual(expected);
       });
 
-      it('creates a peer with given Info', async () => {
+      it('creates a client with given Info', async () => {
         const info = {
           name: 'Jim',
           age: 23,
@@ -105,32 +105,35 @@ describe('AppService', () => {
     });
 
     describe('get', () => {
-      it('gets a peer by the returned PeerId', async () => {
-        const createdPeers = [
+      it('gets a client by the returned ClientId', async () => {
+        const createdClients = [
           await session.createClient().resolve(),
           await session.createClient().resolve(),
           await session.createClient().resolve(),
         ];
 
-        expect(createdPeers.map((r) => r.ok)).toEqual(
-          createdPeers.map(() => true)
+        expect(createdClients.map((r) => r.ok)).toEqual(
+          createdClients.map(() => true)
         );
 
-        const [createdPeerAResult, createdPeerBResult, createdPeerCResult] =
-          createdPeers;
+        const [
+          createdClientAResult,
+          createdClientBResult,
+          createdClientCResult,
+        ] = createdClients;
 
         if (
           !(
-            createdPeerAResult.ok &&
-            createdPeerBResult.ok &&
-            createdPeerCResult.ok
+            createdClientAResult.ok &&
+            createdClientBResult.ok &&
+            createdClientCResult.ok
           )
         ) {
           return;
         }
 
         const actual = await session
-          .getClient(createdPeerBResult.val.item.id)
+          .getClient(createdClientBResult.val.item.id)
           .resolve();
 
         const expected = new Ok({
@@ -141,25 +144,28 @@ describe('AppService', () => {
         expect(actual).toEqual(expected);
       });
 
-      it('gets a peer by the given PeerId', async () => {
-        const createdPeers = [
+      it('gets a client by the given ClientId', async () => {
+        const createdClients = [
           await session.createClient({ id: 'test-id' }).resolve(),
           await session.createClient().resolve(),
           await session.createClient().resolve(),
         ];
 
-        expect(createdPeers.map((r) => r.ok)).toEqual(
-          createdPeers.map(() => true)
+        expect(createdClients.map((r) => r.ok)).toEqual(
+          createdClients.map(() => true)
         );
 
-        const [createdPeerAResult, createdPeerBResult, createdPeerCResult] =
-          createdPeers;
+        const [
+          createdClientAResult,
+          createdClientBResult,
+          createdClientCResult,
+        ] = createdClients;
 
         if (
           !(
-            createdPeerAResult.ok &&
-            createdPeerBResult.ok &&
-            createdPeerCResult.ok
+            createdClientAResult.ok &&
+            createdClientBResult.ok &&
+            createdClientCResult.ok
           )
         ) {
           return;
@@ -175,7 +181,7 @@ describe('AppService', () => {
         expect(actual).toEqual(expected);
       });
 
-      it('gets all peers', async () => {
+      it('gets all clients', async () => {
         await session.createClient({ id: 'test-id' }).resolve();
         await session.createClient().resolve();
         await session.createClient().resolve();
@@ -201,17 +207,17 @@ describe('AppService', () => {
     });
 
     describe('removal', () => {
-      it('removes a peer by returned id after it got created', async () => {
-        const createdPeerResult = await session.createClient().resolve();
+      it('removes a client by returned id after it got created', async () => {
+        const createdClientResult = await session.createClient().resolve();
 
-        expect(createdPeerResult.ok).toBe(true);
+        expect(createdClientResult.ok).toBe(true);
 
-        if (!createdPeerResult.ok) {
+        if (!createdClientResult.ok) {
           return;
         }
 
         const actual = await session
-          .removeClient(createdPeerResult.val.item.id)
+          .removeClient(createdClientResult.val.item.id)
           .resolve();
 
         const expected = new Ok({
