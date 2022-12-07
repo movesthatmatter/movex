@@ -23,7 +23,9 @@ export type SubscribeToTopicError = GenericSessionErrorOfStoreReasons;
 export type UnsubscribeToTopicError = GenericSessionErrorOfStoreReasons;
 
 export type GetTopicSubscribersError = GenericSessionErrorOfStoreReasons;
-export type GetPeerSubscriptions = GenericSessionErrorOfStoreReasons;
+export type GetPeerSubscriptionsError = GenericSessionErrorOfStoreReasons;
+
+export type CraeteResourceError = GenericSessionErrorOfStoreReasons;
 
 export const toSessionError = <
   TReason extends string,

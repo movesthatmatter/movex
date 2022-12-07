@@ -1,15 +1,49 @@
 export type UnknownRecord = Record<string, unknown>;
 
-export type Peer<Info extends UnknownRecord = {}> = {
+export type Client<Info extends UnknownRecord = {}> = {
   id: string;
-  info?: Info; // maybe the userId comes in the extra
-  subscriptions: Record<Topic<string>['id'], null>;
+  info?: Info; // User Info or whatever
+  subscriptions: Record<
+    Topic<string>['id'],
+    {
+      subscribedAt: number;
+    }
+  >;
+
+  // TODO: Add later on
+  // lag: number;
+  // createdAt: number;
+  // upadtedAt: number;
+  // lastPingAt: mumber;
+  // status: 'idle' | 'active' | etc..
 };
 
 export type Topic<TUniqueName extends string> = {
   id: TUniqueName;
-  subscribers: Record<Peer['id'], null>; // Here it could use the full Peer?
+  subscribers: Record<Client['id'], null>; // Here it could use the full Peer?
 };
+
+export type Resource<TData extends UnknownRecord = {}> = {
+  id: string;
+  data: TData;
+  subscribers: Record<
+    Client['id'],
+    {
+      subscribedAt: number;
+    }
+  >;
+};
+
+// export type ObservableResource<TData extends UnknownRecord = {}> =
+// Resource<TData> & {
+//   topic: Topic<string>['id'];
+// };
+
+// export type Activity<TType extends string, Info extends UnknownRecord = {}> = {
+//   id: string;
+//   type: TType;
+//   info?: Info;
+// }
 
 // export type Activity = {
 //   id: string;
