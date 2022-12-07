@@ -1,15 +1,10 @@
 import * as RRStore from 'relational-redis-store';
 import { Client, Resource } from '../types';
-import { ISessionStore, SessionStoreCollectionMap } from './ISessionStore';
+import { SessionStoreCollectionMap } from './ISessionStore';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
 import { getUuid } from './util';
-import {
-  CollectionItem,
-  objectKeys,
-  UnidentifiableModel,
-} from 'relational-redis-store';
-import { Ok } from 'ts-results';
+import { objectKeys, UnidentifiableModel } from 'relational-redis-store';
 
 // Note:
 // This is currently depending on RRStore, but from what I see
@@ -68,7 +63,7 @@ export class SessionStore {
     private store: RRStore.Store<SessionCollectionMap> // This will actually be a namespaced store underneath // pased in by outside directly (by the sdk) // private namespace: TNamespace // This will be passed into the store directly by the SDK
   ) {}
 
-  // Peer
+  // Client
 
   createClient(p?: { id?: string; info?: {} }) {
     return this.store
@@ -116,18 +111,9 @@ export class SessionStore {
       .mapErr(toSessionError);
   }
 
-  removeClient(id: string) {
-    return this.store
-      .getItemInCollection('$clients', id)
-      .flatMap((prevClent) =>
-        AsyncResult.all(
-          new AsyncOk(prevClent),
-          this.store
-            .removeItemInCollection('$clients', id)
-            .mapErr(toSessionError)
-        )
-      )
-      .flatMap(([{ subscriptions }, removed]) => {
+  removeClient(id: Client['id']) {
+    return this.getClient(id)
+      .flatMap(({ subscriptions }) => {
         const subscriptionNames = objectKeys(subscriptions);
 
         return AsyncResult.all(
@@ -137,13 +123,17 @@ export class SessionStore {
               sub.indexOf(':')
             ) as SessionCollectionMapOfResourceKeys;
             const resourceId = sub.slice(sub.indexOf(':') + 1);
+
             return this.removeResourceSubscriber(id, {
               resourceId,
               resourceType,
             });
           })
-        ).map(() => removed);
-      });
+        );
+      })
+      .flatMap(() =>
+        this.store.removeItemInCollection('$clients', id).mapErr(toSessionError)
+      );
   }
 
   createResource<
@@ -252,24 +242,12 @@ export class SessionStore {
         }).flatMap((nextResource) =>
           AsyncResult.all(
             new AsyncOk(nextResource),
-            this.updateClient(clientId, (prev) => {
-              const {
-                [`${resourceType}:${nextResource.id}` as any]: removed,
-                ...remainingSubscriptions
-              } = prev.subscriptions;
-
-              return {
-                ...prev,
-                subscriptions: remainingSubscriptions,
-              };
+            this.removeClientSubscription(clientId, {
+              resourceId,
+              resourceType,
             })
           )
         );
-      })
-      .mapErr((e) => {
-        console.debug('ubsubscribe ee', clientId, resourceId, resourceType, e);
-
-        return e;
       })
       .map(([resource, client]) => ({
         resource,
@@ -292,6 +270,25 @@ export class SessionStore {
     );
   }
 
+  private removeClientSubscription<
+    TResourceType extends SessionCollectionMapOfResourceKeys
+  >(
+    clientId: Client['id'],
+    { resourceId, resourceType }: ResourceIdentifier<TResourceType>
+  ) {
+    return this.updateClient(clientId, (prev) => {
+      const {
+        [`${resourceType}:${resourceId}` as any]: removed,
+        ...remainingSubscriptions
+      } = prev.subscriptions;
+
+      return {
+        ...prev,
+        subscriptions: remainingSubscriptions,
+      };
+    });
+  }
+
   getResource<TResourceType extends SessionCollectionMapOfResourceKeys>({
     resourceType,
     resourceId,
@@ -301,21 +298,6 @@ export class SessionStore {
   }) {
     return this.store.getItemInCollection(resourceType, resourceId);
   }
-
-  // private updateTopicSubscribers<TName extends string>(
-  //   name: TName,
-  //   propsGetter: RRStore.UpdateableCollectionPropsGetter<Topic<TName>>
-  // ) {
-  //   return this.store
-  //     .updateItemInCollection(
-  //       '$topics',
-  //       name,
-  //       propsGetter,
-  //       TOPICS_COLLECTION_STORE_OPTIONS
-  //     )
-  //     .map((t) => t as Topic<TName>)
-  //     .mapErr(toSessionError);
-  // }
 
   getResourceSubscribers<
     TResourceType extends SessionCollectionMapOfResourceKeys
@@ -328,46 +310,29 @@ export class SessionStore {
   }
 
   getClientSubscriptions(clientId: Client['id']) {
-    return this.getClient(clientId).map((client) => {
-      return client.subscriptions;
+    return this.getClient(clientId).map((client) => client.subscriptions);
+  }
 
-      // TODO Does this need to be fetching the resources or do any extra processing ??
-
-      // return objectKeys(client.subscriptions).reduce((accum, next) => {
-      //   const resourceType = next.slice(0, next.indexOf(':'));
-      //   const resourceId = next.slice(next.indexOf(':') + 1);
-      //   const info = client.subscriptions[next];
-
-      //   return {
-      //     ...accum,
-      //     [resourceType]: [
-      //       ...(accum[resourceType] || []),
-      //       {
-      //         resourceId,
-      //         resourceType,
-      //         ...info,
-      //       },
-      //     ],
-      //   };
-      // }, {} as Record<string, (ResourceIdentifier<any> & Client['subscriptions'][any])[]>);
-
-      // const collectionNames = Object.keys(subscribedCollectionNames);
-
-      // return AsyncResult.all(
-      //   ...objectKeys(subscribedCollectionNames).map((collectionName) =>
-      //     this.store.getItemsInCollection(
-      //       collectionName as any,
-      //       subscribedCollectionNames[collectionName]
-      //     )
-      //   )
-      // ).mapErr(toSessionError);
-
-      // return this.store
-      //   .getItemsInCollection(
-      //     `${client.subscriptions}:${nextResource.id}` as any,
-      //     // resourceType comes from where?
-      //     , Object.keys(peer.subscriptions))
-      //   .mapErr(toSessionError);
-    });
+  removeResource<TResourceType extends SessionCollectionMapOfResourceKeys>({
+    resourceId,
+    resourceType,
+  }: {
+    resourceType: TResourceType;
+    resourceId: Resource['id'];
+  }) {
+    // This should be a TRANSACTION
+    return this.getResource({ resourceType, resourceId }).flatMap(
+      (prevResource) =>
+        AsyncResult.all(
+          ...objectKeys(prevResource.subscribers).map((cliendId) =>
+            this.removeClientSubscription(cliendId, {
+              resourceId,
+              resourceType,
+            })
+          )
+        ).flatMap(() =>
+          this.store.removeItemInCollection(resourceType, resourceId)
+        )
+    );
   }
 }

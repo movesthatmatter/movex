@@ -267,6 +267,26 @@ describe('AppService', () => {
 
       expect(actual).toEqual(expected);
     });
+
+    it('removes a resource', async () => {
+      const actual = await session
+        .createResource('game', { type: 'maha' })
+        .flatMap(({ item: resource }) =>
+          session.removeResource({
+            resourceType: 'game',
+            resourceId: resource.id,
+          })
+        )
+        .resolve();
+
+      const expected = new Ok({
+        index: 1,
+        item: undefined,
+        length: 0,
+      });
+
+      expect(actual).toEqual(expected);
+    });
   });
 
   describe('subscriptions', () => {
@@ -579,6 +599,69 @@ describe('AppService', () => {
         .resolve();
 
       expect(actualGameResourceSubscribersAfterRemoval).toEqual(new Ok([]));
+    });
+
+    it('unsuscribes all the clients automatically on resource removal', async () => {
+      await session.createClient({ id: '1st' }).resolve();
+      await session.createClient({ id: '2nd' }).resolve();
+      await session.createResource('room', { type: 'play' }).resolve(); // id: get_MOCKED_UUID(1)
+
+      await session
+        .subscribeToResource('1st', {
+          resourceId: get_MOCKED_UUID(1),
+          resourceType: 'room',
+        })
+        .resolve();
+
+      await session
+        .subscribeToResource('2nd', {
+          resourceId: get_MOCKED_UUID(1),
+          resourceType: 'room',
+        })
+        .resolve();
+
+      const firstClientSubscriptions = await session
+        .getClientSubscriptions('1st')
+        .resolve();
+
+      expect(firstClientSubscriptions).toEqual(
+        new Ok({
+          [`room:${get_MOCKED_UUID(1)}`]: {
+            subscribedAt: NOW_TIMESTAMP,
+          },
+        })
+      );
+
+      const secondClientSubscriptions = await session
+        .getClientSubscriptions('2nd')
+        .resolve();
+
+      expect(secondClientSubscriptions).toEqual(
+        new Ok({
+          [`room:${get_MOCKED_UUID(1)}`]: {
+            subscribedAt: NOW_TIMESTAMP,
+          },
+        })
+      );
+
+      await session
+        .removeResource({
+          resourceId: get_MOCKED_UUID(1),
+          resourceType: 'room',
+        })
+        .resolve();
+
+      const firstClientSubscriptionsAfterRemoval = await session
+        .getClientSubscriptions('1st')
+        .resolve();
+
+      expect(firstClientSubscriptionsAfterRemoval).toEqual(new Ok({}));
+
+      const secondClientSubscriptionsAfterRemoval = await session
+        .getClientSubscriptions('2nd')
+        .resolve();
+
+      expect(secondClientSubscriptionsAfterRemoval).toEqual(new Ok({}));
     });
   });
 });
