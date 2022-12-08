@@ -3,8 +3,9 @@ import { Client, Resource } from '../types';
 import { SessionStoreCollectionMap } from './ISessionStore';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
-import { getUuid } from './util';
+import { getUuid, toResourceIdentifier } from './util';
 import { objectKeys, UnidentifiableModel } from 'relational-redis-store';
+import { ResourceIdentifier, ResourceIdentifierString } from './types';
 
 // Note:
 // This is currently depending on RRStore, but from what I see
@@ -42,13 +43,6 @@ type SessionCollectionMapOfResourceKeys = keyof Omit<
   SessionCollectionMap,
   keyof SessionStoreCollectionMap<{}>
 >;
-
-type ResourceIdentifier<
-  TResourceType extends SessionCollectionMapOfResourceKeys
-> = {
-  resourceType: TResourceType;
-  resourceId: Resource['id'];
-};
 
 export class SessionStore {
   // TODO: Type this!
@@ -117,18 +111,14 @@ export class SessionStore {
         const subscriptionNames = objectKeys(subscriptions);
 
         return AsyncResult.all(
-          ...subscriptionNames.map((sub) => {
-            const resourceType = sub.slice(
-              0,
-              sub.indexOf(':')
-            ) as SessionCollectionMapOfResourceKeys;
-            const resourceId = sub.slice(sub.indexOf(':') + 1);
-
-            return this.removeResourceSubscriber(id, {
-              resourceId,
-              resourceType,
-            });
-          })
+          ...subscriptionNames.map((sub) =>
+            this.removeResourceSubscriber(
+              id,
+              toResourceIdentifier(
+                sub as ResourceIdentifierString<SessionCollectionMapOfResourceKeys>
+              )
+            )
+          )
         );
       })
       .flatMap(() =>
@@ -163,13 +153,81 @@ export class SessionStore {
       );
   }
 
+  updateResourceData<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TResourceData extends UnidentifiableModel<
+      SessionCollectionMap[TResourceType]['data']
+    >
+  >(
+    resourceIdentifier:
+      | ResourceIdentifier<TResourceType>
+      | ResourceIdentifierString<TResourceType>,
+    dataGetter:
+      | Partial<TResourceData>
+      | ((prev: TResourceData) => Partial<TResourceData>)
+  ) {
+    const { resourceId, resourceType } =
+      toResourceIdentifier(resourceIdentifier);
+
+    return this.store
+      .updateItemInCollection(
+        resourceType as any,
+        resourceId,
+        typeof dataGetter === 'function'
+          ? (prev) => {
+              return {
+                ...prev,
+                data: dataGetter(prev.data),
+              };
+            }
+          : ({
+              data: dataGetter,
+            } as any),
+        {
+          foreignKeys: {},
+        }
+      )
+      .map(
+        (r) =>
+          r as RRStore.CollectionItemOrReply<
+            SessionCollectionMap[TResourceType]
+          >
+      );
+    // .map(({ item }) =>
+    //   objectKeys(item.subscribers).reduce(
+    //     (accum, nextId) => ({
+    //       ...accum,
+    //       [nextId]: {
+    //         ...item.subscribers[nextId],
+    //         id: nextId,
+    //       },
+    //     }),
+    //     {} as Record<
+    //       Resource['id'],
+    //       {
+    //         id: Resource['id'];
+    //         subscribedAt: Resource['subscribers'][string]['subscribedAt'];
+    //       }
+    //     >
+    //   )
+    // ).map((s) => {
+    //   s['s'].
+    // });
+  }
+
   // Subscriptions
 
   subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
     clientId: Client['id'],
-    { resourceType, resourceId }: ResourceIdentifier<TResourceType>
+    resourceIdentifierOrString:
+      | ResourceIdentifier<TResourceType>
+      | ResourceIdentifierString<TResourceType>
   ) {
     const now = new Date().getTime();
+
+    const { resourceId, resourceType } = toResourceIdentifier(
+      resourceIdentifierOrString
+    );
 
     // First we update the resource
     return this.updateResourceSubscribers(
@@ -209,9 +267,13 @@ export class SessionStore {
   private updateResourceSubscribers<
     TResourceType extends SessionCollectionMapOfResourceKeys
   >(
-    { resourceId, resourceType }: ResourceIdentifier<TResourceType>,
+    identifier:
+      | ResourceIdentifier<TResourceType>
+      | ResourceIdentifierString<TResourceType>,
     updateFn: (prev: Resource['subscribers']) => Resource['subscribers']
   ) {
+    const { resourceId, resourceType } = toResourceIdentifier(identifier);
+
     return this.store
       .updateItemInCollection(
         resourceType,

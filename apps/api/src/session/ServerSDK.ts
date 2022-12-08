@@ -1,48 +1,47 @@
 import { SessionStore } from './store';
-import { getUuid } from './store/util';
 
-// export
+// This is what creates the bridge between the seshy api server and the client's server
 
+export class ServerSDK {
+  constructor(private sessionStore: SessionStore) {}
 
-// The store gives us the basic blocks (peer/subscriber, resource, observableResource and topic)
-// while the Session is the abstraction of that
+  // Client
 
-export class Session extends SessionStore {
-  // Activity
+  createClient = this.sessionStore.createClient.bind(this.sessionStore);
 
-  // static toActivityRawId = (type: string, id: string) =>
-  //   `activity:${type}:${id}`;
-  // static fromActivityRawId = (id: ActivityRawId) => ({
-  //   type: id.slice(id.indexOf(':'), id.lastIndexOf(':') + 1),
-  //   id: id.slice(id.lastIndexOf(':')),
-  // });
+  getClient = this.sessionStore.getClient.bind(this.sessionStore);
 
-  // static getUUID = getUuid;
+  getClients = this.sessionStore.getAllClients.bind(this.sessionStore);
 
-  // createActivity<TType extends string>(
-  //   type: TType,
-  //   info?: Activity<TType>['info']
-  // ) {
-  //   const newId = SessionStore.getUUID();
-  //   // TODO: This must be generic
-  //   return this.createTopic(SessionStore.toActivityRawId(type, newId)).flatMap(
-  //     (topic) => {
-  //       // topic.item.
-  //       return this.store.addItemToCollection(
-  //         'activities',
-  //         {
-  //           type,
-  //           info,
-  //           topic: topic.item.id,
-  //         },
-  //         newId,
-  //         ACTIVITIES_COLLECTION_STORE_OPTIONS
-  //       );
-  //     }
-  //   );
-  // }
+  getAllClients = this.sessionStore.getAllClients.bind(this.sessionStore);
 
-  // all() {
-  //   // this.store.redisClient.ke()
-  // } 
+  updateClient = this.sessionStore.updateClient.bind(this.sessionStore);
+
+  removeClient = this.sessionStore.removeClient.bind(this.sessionStore);
+
+  // Resource
+
+  createResource = this.sessionStore.createResource.bind(this.sessionStore);
+
+  removeResource = this.sessionStore.removeResource.bind(this.sessionStore);
+
+  getResource = this.sessionStore.getResource.bind(this.sessionStore);
+
+  getResourceSubscribers = this.sessionStore.getResourceSubscribers.bind(
+    this.sessionStore
+  );
+
+  getClientSubscriptions = this.sessionStore.getClientSubscriptions.bind(
+    this.sessionStore
+  );
+
+  // subscriptions
+
+  subscribeToResource = this.sessionStore.subscribeToResource.bind(
+    this.sessionStore
+  );
+
+  unsubscribeFromResource = this.sessionStore.unsubscribeFromResource.bind(
+    this.sessionStore
+  );
 }

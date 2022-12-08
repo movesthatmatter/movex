@@ -274,6 +274,9 @@ describe('SessionStore', () => {
       expect(actual).toEqual(expected);
     });
 
+    // TODO: Add test for resource update +
+    //  returning all the subcribers so the SDK can pass them further to the clienta
+
     it('removes a resource', async () => {
       const actual = await session
         .createResource('game', { type: 'maha' })

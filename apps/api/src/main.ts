@@ -7,6 +7,9 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app/app.module';
+import * as redisSDK from 'handy-redis';
+import { SessionStore } from './session/store';
+import { Store } from 'relational-redis-store';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

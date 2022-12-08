@@ -2,6 +2,7 @@ import * as RRStore from 'relational-redis-store';
 import { CollectionMapBase } from 'relational-redis-store';
 import { AsyncResult } from 'ts-async-results';
 import { Client } from '../types';
+import { SessionStore } from './SessionStore';
 import {
   CreatePeerError,
   GetPeerError,
@@ -14,6 +15,8 @@ export type SessionStoreCollectionMap<
   $clients: Client;
   // $topics: Topic<string>;
 } & ResourcesCollectionMap;
+
+export type ISesh = typeof SessionStore;
 
 export interface ISessionStore<
   CollectionMap extends SessionStoreCollectionMap<{}>
