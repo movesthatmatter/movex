@@ -1,15 +1,18 @@
-// import { SessionStore } from './store';
-import { SessionClient } from '../session/types';
+import { SessionClient, SessionResource } from '../session/types';
 import { getSocketClient } from './socket';
 import { Socket } from 'socket.io-client';
-// import { Client } from './types';
 import { Pubsy } from 'ts-pubsy';
+import {
+  sessionSocketRequests as socketRequests,
+  sessionSocketResponses as socketResponses,
+} from './SessionSocketEvents';
 
 // This is what creates the bridge between the seshy api server and the client's server
 // via sockets
 
 type Events = {
   createClient: SessionClient;
+  createResource: SessionResource;
 };
 
 export class SessionSDK {
@@ -35,24 +38,23 @@ export class SessionSDK {
 
     return new Promise((resolve: (socket: Socket) => void) => {
       this.socket?.on('connect', () => {
-        this.handleIncomingMessage();
-        resolve(this.socket!);
+        if (!this.socket) {
+          return;
+        }
+
+        this.handleIncomingMessage(this.socket);
+        resolve(this.socket);
       });
     });
   }
 
-  private handleIncomingMessage() {
-    this.socket?.on('message_received', (data) => {
-      console.log('msg received back', data);
-
-      // TODO: This is where pubsy comes in!
-      // setMessages((prev) => [...prev, data]);
+  private handleIncomingMessage(socket: Socket) {
+    socket.on(socketResponses.CreateClient, (client: SessionClient) => {
+      this.pubsy.publish('createClient', client);
     });
 
-    this.socket?.on('res::createClient', (client: SessionClient) => {
-      // client.
-      this.pubsy.publish('createClient', client);
-      console.log('sdk: client created', client);
+    socket.on(socketResponses.CreateResource, (resource: SessionResource) => {
+      this.pubsy.publish('createResource', resource);
     });
   }
 
@@ -70,14 +72,15 @@ export class SessionSDK {
   // createClient = this.sessionStore.createClient.bind(this.sessionStore);
 
   createClient(p?: { id?: SessionClient['id']; info?: SessionClient['info'] }) {
-    this.socket?.emit('req::createClient', p);
+    this.socket?.emit(socketRequests.CreateClient, p);
 
     // TODO: This must return a requestId, which will be used in the onResponse
   }
 
-  onClientCreated(fn: (client: SessionClient) => void) {
-    return this.pubsy.subscribe('createClient', fn);
-  }
+  // removeClient(id: SessionClient['id']) {
+  //   this.socket?.emit('');
+  // }
+
   // getClient = this.sessionStore.getClient.bind(this.sessionStore);
 
   // getClients = this.sessionStore.getAllClients.bind(this.sessionStore);
@@ -88,9 +91,18 @@ export class SessionSDK {
 
   // removeClient = this.sessionStore.removeClient.bind(this.sessionStore);
 
+  on = this.pubsy.subscribe.bind(this.pubsy);
+
   // // Resource
 
-  // createResource = this.sessionStore.createResource.bind(this.sessionStore);
+  createResource() {
+    // console.log('asdas', sessionSocketResponse('CreateResource'));
+    this.socket?.emit(socketRequests.CreateResource, {});
+  }
+
+  // onResourceCreated(fn: (resource: SessionResource) => void) {
+  //   return this.pubsy.subscribe('createResource', fn);
+  // }
 
   // removeResource = this.sessionStore.removeResource.bind(this.sessionStore);
 

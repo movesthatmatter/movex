@@ -297,7 +297,7 @@ describe('SessionStore', () => {
   });
 
   describe('subscriptions', () => {
-    it('subscribes to a resource', async () => {
+    it('subscribes a Client to a Resource', async () => {
       let clientId = 'TBD';
       let resourceId = 'TBD';
 
@@ -608,7 +608,7 @@ describe('SessionStore', () => {
       expect(actualGameResourceSubscribersAfterRemoval).toEqual(new Ok([]));
     });
 
-    it('unsuscribes all the clients automatically on resource removal', async () => {
+    it('unsubcribes all the clients automatically on resource removal', async () => {
       await session.createClient({ id: '1st' }).resolve();
       await session.createClient({ id: '2nd' }).resolve();
       await session.createResource('room', { type: 'play' }).resolve(); // id: get_MOCKED_UUID(1)

@@ -1,6 +1,5 @@
-import * as RRStore from 'relational-redis-store';
 import { CollectionMapBase } from 'relational-redis-store';
-import { Resource, Topic } from '../types';
+import { SessionResource } from '../types';
 
 export type EmptyCollectionStoreOptions = {
   foreignKeys: {};
@@ -14,9 +13,9 @@ export type EmptyCollectionStoreOptions = {
 
 export type ResourceIdentifier<TResourceType extends keyof CollectionMapBase> = {
   resourceType: TResourceType;
-  resourceId: Resource['id'];
+  resourceId: SessionResource['id'];
 };
 
 export type ResourceIdentifierString<
   TResourceType extends keyof CollectionMapBase
-> = `${TResourceType}:${Resource['id']}`;
+> = `${TResourceType}:${SessionResource['id']}`;

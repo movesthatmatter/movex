@@ -1,12 +1,12 @@
 export type UnknownRecord = Record<string, unknown>;
 
-type ResourceType = string;
+type SessionResourceType = string;
 
 export type SessionClient<Info extends UnknownRecord = {}> = {
   id: string;
   info?: Info; // User Info or whatever
   subscriptions: Record<
-    `${ResourceType}:${Resource['id']}`,
+    `${SessionResourceType}:${SessionResource['id']}`,
     {
       // resourceType: string; // TODO: This could be part of the resource id
       subscribedAt: number;
@@ -21,12 +21,12 @@ export type SessionClient<Info extends UnknownRecord = {}> = {
   // status: 'idle' | 'active' | etc..
 };
 
-export type Topic<TUniqueName extends string> = {
-  id: TUniqueName;
-  subscribers: Record<SessionClient['id'], null>; // Here it could use the full Peer?
-};
+// export type Topic<TUniqueName extends string> = {
+//   id: TUniqueName;
+//   subscribers: Record<SessionClient['id'], null>; // Here it could use the full Peer?
+// };
 
-export type Resource<TData extends UnknownRecord = {}> = {
+export type SessionResource<TData extends UnknownRecord = {}> = {
   id: string;
   data: TData;
   subscribers: Record<

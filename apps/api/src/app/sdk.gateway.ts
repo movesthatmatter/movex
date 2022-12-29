@@ -6,9 +6,9 @@ import {
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { SessionStore } from '../session/store';
-import * as RRStore from 'relational-redis-store';
 import * as redisSDK from 'handy-redis';
 import { Store } from 'relational-redis-store';
+import { sessionSocketRequests, sessionSocketResponses } from '../sdk';
 
 @WebSocketGateway()
 export class SdkGateway {
@@ -18,8 +18,6 @@ export class SdkGateway {
   private session: SessionStore;
 
   constructor() {
-    console.log('construced sdk');
-
     //TODO: This needs to come from outside so it can be
     //  tested and dynamically configured
     const redisClient = redisSDK.createHandyClient({
@@ -32,16 +30,25 @@ export class SdkGateway {
     );
   }
 
-  @SubscribeMessage('message')
-  listenForMessages(@MessageBody() data: string) {
-    console.log('api: msg received:', data);
-    this.server?.sockets.emit('message_received', data);
+  // @SubscribeMessage('message')
+  // listenForMessages(@MessageBody() data: string) {
+  //   console.log('api: msg received:', data);
+  //   this.server?.sockets.emit('message_received', data);
+  // }
+
+  @SubscribeMessage(sessionSocketRequests.CreateClient)
+  createClientReq(@MessageBody() data: object) {
+    console.log('gateway creating client');
+    this.session.createClient().map((r) => {
+      this.server?.sockets.emit(sessionSocketResponses.CreateClient, r.item);
+    });
   }
 
-  @SubscribeMessage('req::createClient')
-  createClientReq(@MessageBody() data: object) {
-    this.session.createClient().map((r) => {
-      this.server?.sockets.emit('res::createClient', r.item);
+  @SubscribeMessage(sessionSocketRequests.CreateResource)
+  createResourceReq(@MessageBody() data: object) {
+    console.log('gateway creating resource');
+    this.session.createResource('game', { type: 'maha' }).map((r) => {
+      this.server?.sockets.emit(sessionSocketResponses.CreateResource, r.item);
     });
   }
 }

@@ -1,5 +1,5 @@
 import * as RRStore from 'relational-redis-store';
-import { SessionClient, Resource } from '../types';
+import { SessionClient, SessionResource } from '../types';
 import { SessionStoreCollectionMap } from './ISessionStore';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
@@ -30,10 +30,10 @@ import { ResourceIdentifier, ResourceIdentifierString } from './types';
 // TCustomCollectionMap & SessionStoreCollectionMap
 
 type SessionCollectionMap = SessionStoreCollectionMap<{
-  room: Resource<{
+  room: SessionResource<{
     type: 'play';
   }>;
-  game: Resource<{
+  game: SessionResource<{
     type: 'maha';
   }>;
 }>;
@@ -270,7 +270,7 @@ export class SessionStore {
     identifier:
       | ResourceIdentifier<TResourceType>
       | ResourceIdentifierString<TResourceType>,
-    updateFn: (prev: Resource['subscribers']) => Resource['subscribers']
+    updateFn: (prev: SessionResource['subscribers']) => SessionResource['subscribers']
   ) {
     const { resourceId, resourceType } = toResourceIdentifier(identifier);
 
@@ -356,14 +356,14 @@ export class SessionStore {
     resourceId,
   }: {
     resourceType: TResourceType;
-    resourceId: Resource['id'];
+    resourceId: SessionResource['id'];
   }) {
     return this.store.getItemInCollection(resourceType, resourceId);
   }
 
   getResourceSubscribers<
     TResourceType extends SessionCollectionMapOfResourceKeys
-  >(p: { resourceType: TResourceType; resourceId: Resource['id'] }) {
+  >(p: { resourceType: TResourceType; resourceId: SessionResource['id'] }) {
     return this.getResource(p)
       .flatMap(({ subscribers }) =>
         this.store.getItemsInCollection('$clients', Object.keys(subscribers))
@@ -380,7 +380,7 @@ export class SessionStore {
     resourceType,
   }: {
     resourceType: TResourceType;
-    resourceId: Resource['id'];
+    resourceId: SessionResource['id'];
   }) {
     // This should be a TRANSACTION
     return this.getResource({ resourceType, resourceId }).flatMap(

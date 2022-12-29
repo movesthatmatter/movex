@@ -4,7 +4,7 @@ import io, { Socket } from 'socket.io-client';
 import request from 'superwstest';
 import { bootstrapServer } from '../server';
 import { INestApplication } from '@nestjs/common';
-import { SessionClient } from '../session/types';
+import { SessionClient, SessionResource } from '../session/types';
 
 // let mockUUIDCount = 0;
 // const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
@@ -25,7 +25,7 @@ describe('My Remote Server', () => {
 
       sdk = new SessionSDK({
         url: 'ws://localhost:4444',
-        apiKey: 'tester',
+        apiKey: 'tester-A',
       });
 
       sdk.connect().then((socket) => {
@@ -44,7 +44,7 @@ describe('My Remote Server', () => {
 
   it('sends a "createClient" Request and gets a Response back succesfully', async () => {
     let actualClient: SessionClient | undefined;
-    sdk.onClientCreated((client) => {
+    sdk.on('createClient', (client) => {
       actualClient = client;
     });
 
@@ -60,25 +60,28 @@ describe('My Remote Server', () => {
     });
   });
 
-  // it('sends a "createResource" Request and gets a Response back succesfully', async () => {
-  //   let actualClient: SessionClient | undefined;
-  //   sdk.onClientCreated((client) => {
-  //     actualClient = client;
-  //   });
+  it('sends a "createResource" Request and gets a Response back succesfully', async () => {
+    let actualResource: SessionResource | undefined;
+    sdk.on('createResource', (client) => {
+      actualResource = client;
+    });
 
-  //   // sdk.();
+    sdk.createResource();
 
-  //   // TODO: This is only needed because we are still using
-  //   //  the real redis not the mocked one!
-  //   await delay(100);
+    // TODO: This is only needed because we are still using
+    //  the real redis not the mocked one!
+    await delay(100);
 
-  //   expect(actualClient).toEqual({
-  //     id: actualClient?.id,
-  //     subscriptions: {},
-  //   });
-  // });
+    expect(actualResource).toEqual({
+      id: actualResource?.id,
+      data: {
+        type: 'maha',
+      },
+      subscribers: {},
+    });
 
-
+    // sdk.on('')
+  });
 
   //   afterEach(() => {
   //     request.closeAll(); // recommended when using remote servers
