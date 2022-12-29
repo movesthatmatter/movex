@@ -1,5 +1,5 @@
 import * as RRStore from 'relational-redis-store';
-import { SessionClient, SessionResource } from '../types';
+import { SessionClient, SessionResource, UnknownRecord } from '../types';
 import { SessionStoreCollectionMap } from './ISessionStore';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
@@ -16,35 +16,28 @@ import { ResourceIdentifier, ResourceIdentifierString } from './types';
 //   - nesting the subscribers and subscriptions inside the object,
 //     but maybe that's not that bad actually :-/
 
-// const client_COLLECTION_STORE_OPTIONS = {
-//   foreignKeys: {},
-// };
+type StringKeys<TRecord extends UnknownRecord> = Extract<keyof TRecord, string>;
 
-// const RESOURCES_COLLECTION_STORE_OPTIONS = {
-//   foreignKeys: {},
-// };
-
-// <
-//   TCustomCollectionMap extends RRStore.CollectionMapBase
-// >
-// TCustomCollectionMap & SessionStoreCollectionMap
-
-type SessionCollectionMap = SessionStoreCollectionMap<{
-  room: SessionResource<{
-    type: 'play';
-  }>;
-  game: SessionResource<{
-    type: 'maha';
-  }>;
-}>;
-
-// This extracts out the $clients and other possible private keys
-type SessionCollectionMapOfResourceKeys = keyof Omit<
-  SessionCollectionMap,
-  keyof SessionStoreCollectionMap<{}>
+type UnknwownSessionResourceCollectionMap = Record<
+  string,
+  SessionResource<UnknownRecord>
 >;
 
-export class SessionStore {
+type AnySessionResourceCollectionMap = {
+  [k: string]: SessionResource<any>;
+};
+
+// This extracts out the $clients and other possible private keys
+type OnlySessionCollectionMapOfResourceKeys<
+  ResourceCollectionMap extends UnknwownSessionResourceCollectionMap,
+  SessionCollectionMap = SessionStoreCollectionMap<ResourceCollectionMap>
+> = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<{}>>>;
+
+export class SessionStore<
+  ResourceCollectionMap extends UnknwownSessionResourceCollectionMap = AnySessionResourceCollectionMap,
+  SessionCollectionMap extends SessionStoreCollectionMap<ResourceCollectionMap> = SessionStoreCollectionMap<ResourceCollectionMap>,
+  SessionCollectionMapOfResourceKeys extends OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap> = OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap>
+> {
   // TODO: Type this!
   // TODO: Actually this could come at the store level as generic not at method level
   static storeCollectionOptionsMap = {
@@ -66,9 +59,9 @@ export class SessionStore {
         {
           info: p?.info,
           subscriptions: {},
-        },
+        } as any, // TODO: Fix this stupid type casting
         p?.id || getUuid(),
-        SessionStore.storeCollectionOptionsMap.$clients
+        SessionStore.storeCollectionOptionsMap.$clients as any // TODO: Fix this stupid type casting
       )
       .mapErr(toSessionError);
   }
@@ -115,8 +108,8 @@ export class SessionStore {
             this.removeResourceSubscriber(
               id,
               toResourceIdentifier(
-                sub as ResourceIdentifierString<SessionCollectionMapOfResourceKeys>
-              )
+                sub
+              ) as ResourceIdentifier<SessionCollectionMapOfResourceKeys>
             )
           )
         );
@@ -134,14 +127,14 @@ export class SessionStore {
   >(resourceType: TResourceType, data: TResourceData) {
     return this.store
       .addItemToCollection(
-        resourceType as any, // TODO: Here can add the string literal types
+        resourceType, // TODO: Here can add the string literal types
         {
           data,
           subscribers: {},
-        },
+        } as any, // TODO: Fix this stupid type casting
         getUuid(),
         {
-          foreignKeys: {},
+          foreignKeys: {} as any, // TODO: Fix this stupid type casting,
         }
       )
       .map(
@@ -171,25 +164,25 @@ export class SessionStore {
 
     return this.store
       .updateItemInCollection(
-        resourceType as any,
+        resourceType,
         resourceId,
         typeof dataGetter === 'function'
           ? (prev) => {
               return {
                 ...prev,
-                data: dataGetter(prev.data),
+                data: dataGetter(prev.data as TResourceData),
               };
             }
           : ({
               data: dataGetter,
             } as any),
         {
-          foreignKeys: {},
+          foreignKeys: {} as any,
         }
       )
       .map(
         (r) =>
-          r as RRStore.CollectionItemOrReply<
+          r as unknown as RRStore.CollectionItemOrReply<
             SessionCollectionMap[TResourceType]
           >
       );
@@ -270,13 +263,15 @@ export class SessionStore {
     identifier:
       | ResourceIdentifier<TResourceType>
       | ResourceIdentifierString<TResourceType>,
-    updateFn: (prev: SessionResource['subscribers']) => SessionResource['subscribers']
+    updateFn: (
+      prev: SessionResource['subscribers']
+    ) => SessionResource['subscribers']
   ) {
     const { resourceId, resourceType } = toResourceIdentifier(identifier);
 
     return this.store
       .updateItemInCollection(
-        resourceType,
+        resourceType as string,
         resourceId,
         (prev) => ({
           ...prev,
@@ -358,7 +353,7 @@ export class SessionStore {
     resourceType: TResourceType;
     resourceId: SessionResource['id'];
   }) {
-    return this.store.getItemInCollection(resourceType, resourceId);
+    return this.store.getItemInCollection(resourceType as string, resourceId);
   }
 
   getResourceSubscribers<
@@ -393,7 +388,7 @@ export class SessionStore {
             })
           )
         ).flatMap(() =>
-          this.store.removeItemInCollection(resourceType, resourceId)
+          this.store.removeItemInCollection(resourceType as string, resourceId)
         )
     );
   }

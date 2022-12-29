@@ -1,3 +1,5 @@
+import * as RRStore from 'relational-redis-store';
+
 export type UnknownRecord = Record<string, unknown>;
 
 type SessionResourceType = string;
@@ -26,7 +28,9 @@ export type SessionClient<Info extends UnknownRecord = {}> = {
 //   subscribers: Record<SessionClient['id'], null>; // Here it could use the full Peer?
 // };
 
-export type SessionResource<TData extends UnknownRecord = {}> = {
+type CollectionMapBaseItem = RRStore.CollectionMapBase[any];
+
+export type SessionResource<TData extends UnknownRecord = {}> = CollectionMapBaseItem & {
   id: string;
   data: TData;
   subscribers: Record<

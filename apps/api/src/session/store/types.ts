@@ -1,21 +1,13 @@
-import { CollectionMapBase } from 'relational-redis-store';
 import { SessionResource } from '../types';
 
 export type EmptyCollectionStoreOptions = {
   foreignKeys: {};
 };
 
-// export type RawActivity = Activity<string> & {
-
-// }
-
-// export type ActivityRawId = `activity:${string}:${string}`;
-
-export type ResourceIdentifier<TResourceType extends keyof CollectionMapBase> = {
+export type ResourceIdentifier<TResourceType extends string> = {
   resourceType: TResourceType;
   resourceId: SessionResource['id'];
 };
 
-export type ResourceIdentifierString<
-  TResourceType extends keyof CollectionMapBase
-> = `${TResourceType}:${SessionResource['id']}`;
+export type ResourceIdentifierString<TResourceType extends string> =
+  `${TResourceType}:${SessionResource['id']}`;

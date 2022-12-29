@@ -2,6 +2,7 @@ import MockDate from 'mockdate';
 import { Store, createMockStore } from 'relational-redis-store';
 import { AsyncResult } from 'ts-async-results';
 import { Ok } from 'ts-results';
+import { SessionResource } from '../types';
 import { SessionStore } from './SessionStore';
 
 let mockUUIDCount = 0;
@@ -10,7 +11,14 @@ jest.mock('uuid', () => ({ v4: () => get_MOCKED_UUID(++mockUUIDCount) }));
 
 describe('SessionStore', () => {
   let store: Store<any>;
-  let session: SessionStore;
+  let session: SessionStore<{
+    room: SessionResource<{
+      type: 'play';
+    }>;
+    game: SessionResource<{
+      type: 'maha';
+    }>;
+  }>;
 
   let oldConsoleLog = console.log;
   let oldConsoleInfo = console.info;

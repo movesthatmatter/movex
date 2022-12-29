@@ -1,12 +1,9 @@
-import { CollectionMapBase } from 'relational-redis-store';
 import * as uuid from 'uuid';
 import { ResourceIdentifier, ResourceIdentifierString } from './types';
 
 export const getUuid = () => uuid.v4();
 
-export const toResourceIdentifier = <
-  TResourceType extends keyof CollectionMapBase
->(
+export const toResourceIdentifier = <TResourceType extends string>(
   r: ResourceIdentifier<TResourceType> | ResourceIdentifierString<TResourceType>
 ): ResourceIdentifier<TResourceType> => {
   if (typeof r === 'string') {
