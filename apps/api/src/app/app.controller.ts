@@ -15,7 +15,7 @@ export class AppController {
       family: 'IPv6',
     });
     this.session = new SessionStore(
-      new Store(redisClient, { namespace: 'maha-1234' })
+      new Store(redisClient, { namespace: 'maha-1235' })
     );
   }
 

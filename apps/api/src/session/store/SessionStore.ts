@@ -1,5 +1,5 @@
 import * as RRStore from 'relational-redis-store';
-import { Client, Resource } from '../types';
+import { SessionClient, Resource } from '../types';
 import { SessionStoreCollectionMap } from './ISessionStore';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
@@ -73,13 +73,13 @@ export class SessionStore {
       .mapErr(toSessionError);
   }
 
-  getClient(id: Client['id']) {
+  getClient(id: SessionClient['id']) {
     return this.store
       .getItemInCollection('$clients', id)
       .mapErr(toSessionError);
   }
 
-  getClients(ids: Client['id'][]) {
+  getClients(ids: SessionClient['id'][]) {
     return this.store
       .getItemsInCollection('$clients', ids)
       .mapErr(toSessionError);
@@ -92,8 +92,8 @@ export class SessionStore {
   }
 
   updateClient(
-    id: Client['id'],
-    propsGetter: RRStore.UpdateableCollectionPropsGetter<Client>
+    id: SessionClient['id'],
+    propsGetter: RRStore.UpdateableCollectionPropsGetter<SessionClient>
   ) {
     return this.store
       .updateItemInCollection(
@@ -105,7 +105,7 @@ export class SessionStore {
       .mapErr(toSessionError);
   }
 
-  removeClient(id: Client['id']) {
+  removeClient(id: SessionClient['id']) {
     return this.getClient(id)
       .flatMap(({ subscriptions }) => {
         const subscriptionNames = objectKeys(subscriptions);
@@ -218,7 +218,7 @@ export class SessionStore {
   // Subscriptions
 
   subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
-    clientId: Client['id'],
+    clientId: SessionClient['id'],
     resourceIdentifierOrString:
       | ResourceIdentifier<TResourceType>
       | ResourceIdentifierString<TResourceType>
@@ -292,7 +292,7 @@ export class SessionStore {
   unsubscribeFromResource<
     TResourceType extends SessionCollectionMapOfResourceKeys
   >(
-    clientId: Client['id'],
+    clientId: SessionClient['id'],
     { resourceType, resourceId }: ResourceIdentifier<TResourceType>
   ) {
     return this.getClient(clientId) // Remove in favor of an optimized read
@@ -320,7 +320,7 @@ export class SessionStore {
   private removeResourceSubscriber<
     TResourceType extends SessionCollectionMapOfResourceKeys
   >(
-    clientId: Client['id'],
+    clientId: SessionClient['id'],
     { resourceType, resourceId }: ResourceIdentifier<TResourceType>
   ) {
     return this.updateResourceSubscribers(
@@ -335,7 +335,7 @@ export class SessionStore {
   private removeClientSubscription<
     TResourceType extends SessionCollectionMapOfResourceKeys
   >(
-    clientId: Client['id'],
+    clientId: SessionClient['id'],
     { resourceId, resourceType }: ResourceIdentifier<TResourceType>
   ) {
     return this.updateClient(clientId, (prev) => {
@@ -371,7 +371,7 @@ export class SessionStore {
       .mapErr(toSessionError);
   }
 
-  getClientSubscriptions(clientId: Client['id']) {
+  getClientSubscriptions(clientId: SessionClient['id']) {
     return this.getClient(clientId).map((client) => client.subscriptions);
   }
 

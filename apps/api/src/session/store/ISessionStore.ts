@@ -1,7 +1,7 @@
 import * as RRStore from 'relational-redis-store';
 import { CollectionMapBase } from 'relational-redis-store';
 import { AsyncResult } from 'ts-async-results';
-import { Client } from '../types';
+import { SessionClient } from '../types';
 import { SessionStore } from './SessionStore';
 import {
   CreatePeerError,
@@ -12,7 +12,7 @@ import {
 export type SessionStoreCollectionMap<
   ResourcesCollectionMap extends CollectionMapBase
 > = {
-  $clients: Client;
+  $clients: SessionClient;
   // $topics: Topic<string>;
 } & ResourcesCollectionMap;
 
@@ -27,16 +27,16 @@ export interface ISessionStore<
   // >
   // Peer
   createClient(p?: {
-    id?: Client['id']; // Given ID to replace the generating one
-    info?: Client['info'];
-  }): AsyncResult<RRStore.CollectionItemOrReply<Client>, CreatePeerError>;
+    id?: SessionClient['id']; // Given ID to replace the generating one
+    info?: SessionClient['info'];
+  }): AsyncResult<RRStore.CollectionItemOrReply<SessionClient>, CreatePeerError>;
 
-  getClient(id: Client['id']): AsyncResult<Client, GetPeerError>;
+  getClient(id: SessionClient['id']): AsyncResult<SessionClient, GetPeerError>;
 
-  getClients(id: Client['id'][]): AsyncResult<Client[], GetPeerError>;
+  getClients(id: SessionClient['id'][]): AsyncResult<SessionClient[], GetPeerError>;
 
   removeClient(
-    id: Client['id']
+    id: SessionClient['id']
   ): AsyncResult<RRStore.CollectionItemRemovalReply, RemovePeerError>;
 
   // Topic

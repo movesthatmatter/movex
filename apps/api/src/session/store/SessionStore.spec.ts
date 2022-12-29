@@ -60,8 +60,6 @@ describe('SessionStore', () => {
           },
         });
 
-        // console.debug(session.)
-
         expect(actual).toEqual(expected);
       });
 

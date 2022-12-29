@@ -2,7 +2,7 @@ export type UnknownRecord = Record<string, unknown>;
 
 type ResourceType = string;
 
-export type Client<Info extends UnknownRecord = {}> = {
+export type SessionClient<Info extends UnknownRecord = {}> = {
   id: string;
   info?: Info; // User Info or whatever
   subscriptions: Record<
@@ -23,14 +23,14 @@ export type Client<Info extends UnknownRecord = {}> = {
 
 export type Topic<TUniqueName extends string> = {
   id: TUniqueName;
-  subscribers: Record<Client['id'], null>; // Here it could use the full Peer?
+  subscribers: Record<SessionClient['id'], null>; // Here it could use the full Peer?
 };
 
 export type Resource<TData extends UnknownRecord = {}> = {
   id: string;
   data: TData;
   subscribers: Record<
-    Client['id'],
+    SessionClient['id'],
     {
       subscribedAt: number;
     }
