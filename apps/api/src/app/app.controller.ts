@@ -4,12 +4,13 @@ import { AppService } from './app.service';
 import { SessionStore } from '../session/store';
 import { Store } from 'relational-redis-store';
 import { ResourceIdentifierString } from '../session/store/types';
+// import { SdkService } from './session.service';
 
 @Controller()
 export class AppController {
   private session: SessionStore;
 
-  constructor(private readonly appService: AppService) {
+  constructor() {
     const redisClient = redisSDK.createHandyClient({
       url: 'redis://127.0.0.1:6379',
       family: 'IPv6',

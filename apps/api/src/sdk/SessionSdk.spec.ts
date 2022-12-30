@@ -1,10 +1,8 @@
 import { SessionSDK } from './SessionSdk';
-import { getSocketClient } from './socket';
-import io, { Socket } from 'socket.io-client';
-import request from 'superwstest';
 import { bootstrapServer } from '../server';
 import { INestApplication } from '@nestjs/common';
 import { SessionClient, SessionResource } from '../session/types';
+import { WsResponseAsResult, WsResponseResultPayload } from './types';
 
 // let mockUUIDCount = 0;
 // const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
@@ -17,21 +15,37 @@ const delay = (ms = 500) =>
 
 describe('My Remote Server', () => {
   let server: INestApplication;
-  let sdk: SessionSDK;
+  let sdkA: SessionSDK;
+  let sdkB: SessionSDK;
+  let sdkC: SessionSDK;
 
   beforeEach((done) => {
     bootstrapServer().then((startedServer) => {
       server = startedServer;
 
-      sdk = new SessionSDK({
+      sdkA = new SessionSDK({
         url: 'ws://localhost:4444',
         apiKey: 'tester-A',
       });
 
-      sdk.connect().then((socket) => {
-        // console.log('connected', socket.id);
-        done();
+      sdkB = new SessionSDK({
+        url: 'ws://localhost:4444',
+        apiKey: 'tester-B',
       });
+
+      sdkC = new SessionSDK({
+        url: 'ws://localhost:4444',
+        apiKey: 'tester-C',
+      });
+
+      Promise.all([sdkA.connect(), sdkB.connect(), sdkC.connect()]).then(
+        (socket) => {
+          // console.log('connected', socket.id);
+          done();
+        }
+      );
+
+      // sdkB.connect();
 
       // ();
     });
@@ -39,16 +53,19 @@ describe('My Remote Server', () => {
 
   afterEach((done) => {
     server.close().then(done);
-    sdk.disconnect();
+    
+    sdkA.disconnect();
+    sdkB.disconnect();
+    sdkC.disconnect();
   });
 
   it('sends a "createClient" Request and gets a Response back succesfully', async () => {
     let actualClient: SessionClient | undefined;
-    sdk.on('createClient', (client) => {
+    sdkA.on('createClient', (client) => {
       actualClient = client;
     });
 
-    sdk.createClient();
+    sdkA.createClient();
 
     // TODO: This is only needed because we are still using
     //  the real redis not the mocked one!
@@ -62,15 +79,17 @@ describe('My Remote Server', () => {
 
   it('sends a "createResource" Request and gets a Response back succesfully', async () => {
     let actualResource: SessionResource | undefined;
-    sdk.on('createResource', (client) => {
-      actualResource = client;
+    sdkB.on('createResource', (resource) => {
+      actualResource = resource;
     });
 
-    sdk.createResource();
+    sdkB.createResource();
 
     // TODO: This is only needed because we are still using
     //  the real redis not the mocked one!
     await delay(100);
+
+    console.log('actualResource', actualResource);
 
     expect(actualResource).toEqual({
       id: actualResource?.id,

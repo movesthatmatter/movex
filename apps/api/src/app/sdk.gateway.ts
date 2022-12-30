@@ -1,54 +1,105 @@
 import {
+  ConnectedSocket,
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
-  WebSocketServer,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Socket } from 'socket.io';
 import { SessionStore } from '../session/store';
-import * as redisSDK from 'handy-redis';
-import { Store } from 'relational-redis-store';
 import { sessionSocketRequests, sessionSocketResponses } from '../sdk';
+import { AsyncResult } from 'ts-async-results';
+import { WsResponseAsResult } from '../sdk/types';
+import { Inject } from '@nestjs/common';
+import { SessionService } from './session.service';
 
 @WebSocketGateway()
 export class SdkGateway {
-  @WebSocketServer()
-  server?: Server;
+  // @WebSocketServer()
+  // private server?: Server;
 
-  private session: SessionStore;
+  constructor(private readonly sessionService: SessionService) {
+    // this.server?.sockets.on('connect', (socket) => {
+    //   console.log('gatway socket connected', socket);
+    // });
+    console.log('gateway instnantiated');
+  }
 
-  constructor() {
-    //TODO: This needs to come from outside so it can be
-    //  tested and dynamically configured
-    const redisClient = redisSDK.createHandyClient({
-      url: 'redis://127.0.0.1:6379',
-      family: 'IPv6',
-    });
+  handleConnection(socket: Socket) {
+    const token = getConnectionToken(socket);
 
-    this.session = new SessionStore(
-      new Store(redisClient, { namespace: 'tester-123456' })
+    if (token) {
+      console.log('connection to socket... token:', token);
+
+      this.sessionService.createSession(token);
+    }
+  }
+
+  @SubscribeMessage(sessionSocketRequests.CreateClient)
+  createClientReq(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: object
+  ) {
+    // console.log('create client socket', getConnectionToken(socket));
+
+    const token = getConnectionToken(socket);
+    const session = token ? this.sessionService.getSession(token) : undefined;
+
+    if (!session) {
+      return;
+    }
+
+    return asyncResultToWsResponse(
+      sessionSocketResponses.CreateClient,
+      session.createClient().map((r) => r.item)
     );
   }
 
-  // @SubscribeMessage('message')
-  // listenForMessages(@MessageBody() data: string) {
-  //   console.log('api: msg received:', data);
-  //   this.server?.sockets.emit('message_received', data);
-  // }
-
-  @SubscribeMessage(sessionSocketRequests.CreateClient)
-  createClientReq(@MessageBody() data: object) {
-    console.log('gateway creating client');
-    this.session.createClient().map((r) => {
-      this.server?.sockets.emit(sessionSocketResponses.CreateClient, r.item);
-    });
-  }
-
   @SubscribeMessage(sessionSocketRequests.CreateResource)
-  createResourceReq(@MessageBody() data: object) {
-    console.log('gateway creating resource');
-    this.session.createResource('game', { type: 'maha' }).map((r) => {
-      this.server?.sockets.emit(sessionSocketResponses.CreateResource, r.item);
-    });
+  createResourceReq(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: object
+  ) {
+    // TODO: This could be a Guard or smtg like that (a decorator)
+    const token = getConnectionToken(socket);
+    const session = token ? this.sessionService.getSession(token) : undefined;
+
+    if (!session) {
+      return;
+    }
+
+    return asyncResultToWsResponse(
+      sessionSocketResponses.CreateResource,
+
+      session.createResource('game', { type: 'maha' }).map((r) => r.item)
+    );
   }
 }
+
+const asyncResultToWsResponse = async <T, E>(
+  event: string,
+  ar: AsyncResult<T, E>
+): Promise<WsResponseAsResult<T, E>> => {
+  const r = await ar.resolve();
+
+  return {
+    event,
+    data: r.ok
+      ? {
+          ok: true,
+          err: false,
+          val: r.val,
+        }
+      : {
+          ok: false,
+          err: true,
+          val: r.val,
+        },
+  };
+};
+
+const getConnectionToken = (socket: Socket) => {
+  return 'apiKey' in socket.handshake.query &&
+    typeof socket.handshake.query.apiKey === 'string'
+    ? socket.handshake.query.apiKey
+    : undefined;
+};

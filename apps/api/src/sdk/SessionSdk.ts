@@ -1,11 +1,12 @@
 import { SessionClient, SessionResource } from '../session/types';
-import { getSocketClient } from './socket';
+import { getSocketClient } from './socket.client';
 import { Socket } from 'socket.io-client';
 import { Pubsy } from 'ts-pubsy';
 import {
   sessionSocketRequests as socketRequests,
   sessionSocketResponses as socketResponses,
 } from './SessionSocketEvents';
+import { WsResponseResultPayload } from './types';
 
 // This is what creates the bridge between the seshy api server and the client's server
 // via sockets
@@ -49,18 +50,30 @@ export class SessionSDK {
   }
 
   private handleIncomingMessage(socket: Socket) {
-    socket.on(socketResponses.CreateClient, (client: SessionClient) => {
-      this.pubsy.publish('createClient', client);
-    });
+    socket.on(
+      socketResponses.CreateClient,
+      (clientResult: WsResponseResultPayload<SessionClient, unknown>) => {
+        if (clientResult.ok) {
+          this.pubsy.publish('createClient', clientResult.val);
+        }
+      }
+    );
 
-    socket.on(socketResponses.CreateResource, (resource: SessionResource) => {
-      this.pubsy.publish('createResource', resource);
-    });
+    socket.on(
+      socketResponses.CreateResource,
+      (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
+        if (resourceResult.ok) {
+          this.pubsy.publish('createResource', resourceResult.val);
+        }
+      }
+    );
   }
 
   disconnect() {
     this.socket?.close();
   }
+
+  on = this.pubsy.subscribe.bind(this.pubsy);
 
   // This are message that wait for a response
   // private emitAndWaitForResponse(topic: string, msg?: unknown) {
@@ -90,8 +103,6 @@ export class SessionSDK {
   // updateClient = this.sessionStore.updateClient.bind(this.sessionStore);
 
   // removeClient = this.sessionStore.removeClient.bind(this.sessionStore);
-
-  on = this.pubsy.subscribe.bind(this.pubsy);
 
   // // Resource
 
