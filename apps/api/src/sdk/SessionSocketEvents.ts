@@ -1,5 +1,7 @@
 import { objectKeys } from 'relational-redis-store';
 
+
+// This should be a map of the event name to event payload type via zod or smtg
 export enum SessionSocketEvents {
   // Client
   CreateClient,

@@ -1,7 +1,9 @@
+import MockDate from 'mockdate';
 import { SessionSDK } from './SessionSdk';
 import { bootstrapServer } from '../server';
 import { INestApplication } from '@nestjs/common';
 import { SessionClient, SessionResource } from '../session/types';
+import { toResourceIdentifier } from '../session/store/util';
 
 // let mockUUIDCount = 0;
 // const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
@@ -12,41 +14,53 @@ const delay = (ms = 500) =>
     setTimeout(resolve, ms);
   });
 
-describe('My Remote Server', () => {
-  let server: INestApplication;
-  let sdk: SessionSDK<
-    {
-      username: string;
-      age: number;
-    },
-    {
-      room: SessionResource<{
-        type: 'play';
-      }>;
-      game: SessionResource<{
-        type: 'maha';
-      }>;
-    }
-  >;
+// describe('My Remote Server', () => {
+let server: INestApplication;
+let sdk: SessionSDK<
+  {
+    username: string;
+    age: number;
+  },
+  {
+    room: SessionResource<{
+      type: 'play';
+    }>;
+    game: SessionResource<{
+      type: 'maha';
+    }>;
+  }
+>;
 
-  beforeEach((done) => {
-    bootstrapServer().then((startedServer) => {
-      server = startedServer;
+const NOW_TIMESTAMP = new Date().getTime();
 
-      sdk = new SessionSDK({
-        url: 'ws://localhost:4444',
-        apiKey: 'tester-A',
-      });
+beforeAll(() => {
+  // Date
+  MockDate.set(NOW_TIMESTAMP);
+});
 
-      sdk.connect().then(() => done());
+afterAll(() => {
+  MockDate.reset();
+})
+
+beforeEach((done) => {
+  bootstrapServer().then((startedServer) => {
+    server = startedServer;
+
+    sdk = new SessionSDK({
+      url: 'ws://localhost:4444',
+      apiKey: 'tester-A',
     });
-  });
 
-  afterEach((done) => {
-    server.close().then(done);
-    sdk.disconnect();
+    sdk.connect().then(() => done());
   });
+});
 
+afterEach((done) => {
+  server.close().then(done);
+  sdk.disconnect();
+});
+
+describe('Clients', () => {
   it('sends a "createClient" Request and gets a Response back succesfully', async () => {
     let actualClient: SessionClient | undefined;
     sdk.on('createClient', (client) => {
@@ -92,7 +106,9 @@ describe('My Remote Server', () => {
       subscriptions: {},
     });
   });
+});
 
+describe('Rooms', () => {
   it('sends a "createResource" Request and gets a Response back succesfully', async () => {
     let actualResource: SessionResource | undefined;
     sdk.on('createResource', (resource) => {
@@ -115,6 +131,74 @@ describe('My Remote Server', () => {
     });
   });
 });
+
+describe('Subscriptions', () => {
+  it('subscribes a $client to a resource', async () => {
+    let actualResource: SessionResource | undefined;
+    sdk.on('createResource', (resource) => {
+      // TODO: here the $resource (type) needs
+      //  to be in and it also needs to be a tagged union of resources based on the $resource field
+      actualResource = resource;
+    });
+
+    let actualClient: SessionClient | undefined;
+    sdk.on('createClient', (client) => {
+      actualClient = client;
+    });
+
+    sdk.createClient({ id: 'user-1', info: { age: 23, username: 'tester-1' } });
+    sdk.createResource('room', { type: 'play' });
+
+    // TODO: This is only needed because we are still using
+    //  the real redis not the mocked one!
+    await delay(100);
+
+    expect(actualResource).toBeDefined();
+    expect(actualClient).toBeDefined();
+    if (!(actualResource?.id && actualClient?.id)) {
+      return;
+    }
+
+    const spy = jest.fn();
+
+    sdk.on('subscribeToResource', spy);
+
+    sdk.subscribeToResource('user-1', {
+      resourceId: actualResource.id,
+      resourceType: 'room',
+    });
+
+    await delay(100);
+
+    expect(spy).toBeCalledWith({
+      client: {
+        id: 'user-1',
+        info: {
+          username: 'tester-1',
+          age: 23,
+        },
+        subscriptions: {
+          [`room:${actualResource.id}`]: {
+            subscribedAt: NOW_TIMESTAMP,
+          }
+        },
+      },
+      resource: {
+        $resource: 'room',
+        id: actualResource.id,
+        data: {
+          type: 'play',
+        },
+        subscribers: {
+          'user-1': {
+            subscribedAt: NOW_TIMESTAMP,
+          }
+        },
+      },
+    });
+  });
+});
+// });
 
 // TODO: To add
 // describe('multiple connections', () => {

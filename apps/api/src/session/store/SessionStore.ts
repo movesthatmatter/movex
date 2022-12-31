@@ -242,7 +242,10 @@ export class SessionStore<
         )
       )
       .map(([resource, client]) => ({
-        resource,
+        resource: {
+          ...resource,
+          $resource: resourceType,
+        },
         client,
       }));
     // TODO: Revert the resource subscription in case of a client error

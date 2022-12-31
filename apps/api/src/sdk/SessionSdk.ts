@@ -15,6 +15,8 @@ import { SessionStoreCollectionMap } from '../session/store';
 import {
   AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
+  ResourceIdentifier,
+  ResourceIdentifierString,
   UnknwownSessionResourceCollectionMap,
 } from '../session/store/types';
 import { UnidentifiableModel } from 'relational-redis-store';
@@ -24,7 +26,13 @@ import { UnidentifiableModel } from 'relational-redis-store';
 
 type Events = {
   createClient: SessionClient;
+
   createResource: SessionResource;
+
+  subscribeToResource: {
+    client: SessionClient;
+    resource: SessionResource;
+  };
 };
 
 export class SessionSDK<
@@ -66,6 +74,7 @@ export class SessionSDK<
   }
 
   private handleIncomingMessage(socket: Socket) {
+    // $clients
     socket.on(
       socketResponses.CreateClient,
       (clientResult: WsResponseResultPayload<SessionClient, unknown>) => {
@@ -75,11 +84,30 @@ export class SessionSDK<
       }
     );
 
+    // resources
     socket.on(
       socketResponses.CreateResource,
       (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
         if (resourceResult.ok) {
           this.pubsy.publish('createResource', resourceResult.val);
+        }
+      }
+    );
+
+    // subscriptions
+    socket.on(
+      socketResponses.SubscribeToResource,
+      (
+        result: WsResponseResultPayload<
+          {
+            client: SessionClient;
+            resource: SessionResource;
+          },
+          unknown
+        >
+      ) => {
+        if (result.ok) {
+          this.pubsy.publish('subscribeToResource', result.val);
         }
       }
     );
@@ -100,6 +128,8 @@ export class SessionSDK<
 
   // createClient = this.sessionStore.createClient.bind(this.sessionStore);
 
+  // TODO: here add an inference or something to check if the p.info is defined in the
+  //  generic, and if it is it becomes required, not optional!
   createClient(p?: { id?: SessionClient['id']; info?: ClientInfo }) {
     this.socket?.emit(socketRequests.CreateClient, p);
 
@@ -151,6 +181,18 @@ export class SessionSDK<
   // );
 
   // // subscriptions
+
+  subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
+    clientId: SessionClient['id'],
+    resourceIdentifier: ResourceIdentifier<TResourceType>
+  ) {
+    console.log('subscrubing to resource', clientId, resourceIdentifier, this.socket?.emit);
+
+    this.socket?.emit(socketRequests.SubscribeToResource, {
+      clientId,
+      resourceIdentifier,
+    });
+  }
 
   // subscribeToResource = this.sessionStore.subscribeToResource.bind(
   //   this.sessionStore

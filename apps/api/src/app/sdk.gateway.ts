@@ -10,6 +10,7 @@ import { AsyncResult } from 'ts-async-results';
 import { WsResponseAsResult } from '../sdk/types';
 import { SessionService } from './session.service';
 import { UnknownRecord } from '../session/types';
+import { ResourceIdentifier } from '../session/store/types';
 
 @WebSocketGateway()
 export class SdkGateway {
@@ -69,10 +70,32 @@ export class SdkGateway {
 
     return asyncResultToWsResponse(
       sessionSocketResponses.CreateResource,
-
       session
         .createResource(msg.resourceType, msg.resourceData)
         .map((r) => r.item)
+    );
+  }
+
+  @SubscribeMessage(sessionSocketRequests.SubscribeToResource)
+  subscribeToResourceReq(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    msg: {
+      clientId: string;
+      resourceIdentifier: ResourceIdentifier<any>;
+    }
+  ) {
+    // TODO: This could be a Guard or smtg like that (a decorator)
+    const token = getConnectionToken(socket);
+    const session = token ? this.sessionService.getSession(token) : undefined;
+
+    if (!session) {
+      return;
+    }
+
+    return asyncResultToWsResponse(
+      sessionSocketResponses.SubscribeToResource,
+      session.subscribeToResource(msg.clientId, msg.resourceIdentifier)
     );
   }
 }
