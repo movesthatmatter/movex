@@ -5,7 +5,13 @@ import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
 import { getUuid, toResourceIdentifier } from './util';
 import { objectKeys, UnidentifiableModel } from 'relational-redis-store';
-import { ResourceIdentifier, ResourceIdentifierString } from './types';
+import {
+  AnySessionResourceCollectionMap,
+  OnlySessionCollectionMapOfResourceKeys,
+  ResourceIdentifier,
+  ResourceIdentifierString,
+  UnknwownSessionResourceCollectionMap,
+} from './types';
 
 // Note:
 // This is currently depending on RRStore, but from what I see
@@ -15,24 +21,6 @@ import { ResourceIdentifier, ResourceIdentifierString } from './types';
 // just for this. Some issues I see are:
 //   - nesting the subscribers and subscriptions inside the object,
 //     but maybe that's not that bad actually :-/
-
-type StringKeys<TRecord extends UnknownRecord> = Extract<keyof TRecord, string>;
-
-type UnknwownSessionResourceCollectionMap = Record<
-  string,
-  SessionResource<UnknownRecord>
->;
-
-type AnySessionResourceCollectionMap = {
-  [k: string]: SessionResource<any>;
-};
-
-// This extracts out the $clients and other possible private keys
-type OnlySessionCollectionMapOfResourceKeys<
-  ResourceCollectionMap extends UnknwownSessionResourceCollectionMap,
-  SessionCollectionMap = SessionStoreCollectionMap<ResourceCollectionMap>
-> = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<{}>>>;
-
 export class SessionStore<
   ResourceCollectionMap extends UnknwownSessionResourceCollectionMap = AnySessionResourceCollectionMap,
   SessionCollectionMap extends SessionStoreCollectionMap<ResourceCollectionMap> = SessionStoreCollectionMap<ResourceCollectionMap>,
@@ -143,7 +131,14 @@ export class SessionStore<
           r as RRStore.CollectionItemOrReply<
             SessionCollectionMap[TResourceType]
           >
-      );
+      )
+      .map((r) => ({
+        ...r,
+        item: {
+          ...r.item,
+          $resource: resourceType,
+        },
+      }));
   }
 
   updateResourceData<
@@ -353,7 +348,12 @@ export class SessionStore<
     resourceType: TResourceType;
     resourceId: SessionResource['id'];
   }) {
-    return this.store.getItemInCollection(resourceType as string, resourceId);
+    return this.store
+      .getItemInCollection(resourceType as string, resourceId)
+      .map((r) => ({
+        ...r,
+        $resource: resourceType,
+      }));
   }
 
   getResourceSubscribers<

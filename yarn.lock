@@ -5938,10 +5938,10 @@ regexpp@^3.2.0:
   resolved "https://registry.yarnpkg.com/regexpp/-/regexpp-3.2.0.tgz#0425a2768d8f23bad70ca4b90461fa2f1213e1b2"
   integrity sha512-pq2bWo9mVD43nbts2wGv17XLiNLya+GklZ8kaDLV2Z08gDCsGpnKn9BFMepvWuHCbyVvY7J5o5+BVvoQbmlJLg==
 
-relational-redis-store@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/relational-redis-store/-/relational-redis-store-0.4.1.tgz#37f54b8bcdd61338a4dab928a5f9403fbe949a0b"
-  integrity sha512-ns7/LvvAYJPg/6rvMzKw5VVsKB8DRMYUqqr6iOAQyQyIFs7Tn1+mzR+rMA+VfPWLghQMct9sGLKyyXmVXPcQUw==
+relational-redis-store@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/relational-redis-store/-/relational-redis-store-0.5.0.tgz#f15967557a8f3fa0f164ac6467b7e4a206eff9f4"
+  integrity sha512-2f5Q6fn80YzDrnQn6fyjS/Pv5aicHaWX9e/rXiNuKmFBrDBkh9+PV/yXxg6I2wH2Gkd1rNcr1qtpeiA0qLn18A==
   dependencies:
     "@types/deep-equal" "^1.0.1"
     "@types/json-stable-stringify" "^1.0.34"

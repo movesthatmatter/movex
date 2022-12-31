@@ -1,4 +1,8 @@
-import { SessionClient, SessionResource } from '../session/types';
+import {
+  SessionClient,
+  SessionResource,
+  UnknownRecord,
+} from '../session/types';
 import { getSocketClient } from './socket.client';
 import { Socket } from 'socket.io-client';
 import { Pubsy } from 'ts-pubsy';
@@ -7,6 +11,13 @@ import {
   sessionSocketResponses as socketResponses,
 } from './SessionSocketEvents';
 import { WsResponseResultPayload } from './types';
+import { SessionStoreCollectionMap } from '../session/store';
+import {
+  AnySessionResourceCollectionMap,
+  OnlySessionCollectionMapOfResourceKeys,
+  UnknwownSessionResourceCollectionMap,
+} from '../session/store/types';
+import { UnidentifiableModel } from 'relational-redis-store';
 
 // This is what creates the bridge between the seshy api server and the client's server
 // via sockets
@@ -16,7 +27,12 @@ type Events = {
   createResource: SessionResource;
 };
 
-export class SessionSDK {
+export class SessionSDK<
+  ClientInfo extends UnknownRecord = {},
+  ResourceCollectionMap extends UnknwownSessionResourceCollectionMap = AnySessionResourceCollectionMap,
+  SessionCollectionMap extends SessionStoreCollectionMap<ResourceCollectionMap> = SessionStoreCollectionMap<ResourceCollectionMap>,
+  SessionCollectionMapOfResourceKeys extends OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap> = OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap>
+> {
   private socket?: Socket;
 
   private pubsy = new Pubsy<Events>();
@@ -84,7 +100,7 @@ export class SessionSDK {
 
   // createClient = this.sessionStore.createClient.bind(this.sessionStore);
 
-  createClient(p?: { id?: SessionClient['id']; info?: SessionClient['info'] }) {
+  createClient(p?: { id?: SessionClient['id']; info?: ClientInfo }) {
     this.socket?.emit(socketRequests.CreateClient, p);
 
     // TODO: This must return a requestId, which will be used in the onResponse
@@ -106,9 +122,16 @@ export class SessionSDK {
 
   // // Resource
 
-  createResource() {
-    // console.log('asdas', sessionSocketResponse('CreateResource'));
-    this.socket?.emit(socketRequests.CreateResource, {});
+  createResource<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TResourceData extends UnidentifiableModel<
+      SessionCollectionMap[TResourceType]['data']
+    >
+  >(resourceType: TResourceType, resourceData: TResourceData) {
+    this.socket?.emit(socketRequests.CreateResource, {
+      resourceType,
+      resourceData,
+    });
   }
 
   // onResourceCreated(fn: (resource: SessionResource) => void) {

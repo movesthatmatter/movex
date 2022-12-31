@@ -249,6 +249,7 @@ describe('SessionStore', () => {
         index: 1,
         length: 1,
         item: {
+          $resource: 'room',
           id: get_MOCKED_UUID(1),
           data: {
             type: 'play',
@@ -270,6 +271,7 @@ describe('SessionStore', () => {
         .resolve();
 
       const expected = new Ok({
+        $resource: 'game',
         id: get_MOCKED_UUID(2),
         data: {
           type: 'maha',

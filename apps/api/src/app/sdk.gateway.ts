@@ -5,31 +5,23 @@ import {
   WebSocketGateway,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { SessionStore } from '../session/store';
 import { sessionSocketRequests, sessionSocketResponses } from '../sdk';
 import { AsyncResult } from 'ts-async-results';
 import { WsResponseAsResult } from '../sdk/types';
-import { Inject } from '@nestjs/common';
 import { SessionService } from './session.service';
+import { UnknownRecord } from '../session/types';
 
 @WebSocketGateway()
 export class SdkGateway {
   // @WebSocketServer()
   // private server?: Server;
 
-  constructor(private readonly sessionService: SessionService) {
-    // this.server?.sockets.on('connect', (socket) => {
-    //   console.log('gatway socket connected', socket);
-    // });
-    console.log('gateway instnantiated');
-  }
+  constructor(private readonly sessionService: SessionService) {}
 
   handleConnection(socket: Socket) {
     const token = getConnectionToken(socket);
 
     if (token) {
-      console.log('connection to socket... token:', token);
-
       this.sessionService.createSession(token);
     }
   }
@@ -37,7 +29,11 @@ export class SdkGateway {
   @SubscribeMessage(sessionSocketRequests.CreateClient)
   createClientReq(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: object
+    @MessageBody()
+    msg: {
+      id?: string;
+      info?: UnknownRecord;
+    }
   ) {
     // console.log('create client socket', getConnectionToken(socket));
 
@@ -50,14 +46,18 @@ export class SdkGateway {
 
     return asyncResultToWsResponse(
       sessionSocketResponses.CreateClient,
-      session.createClient().map((r) => r.item)
+      session.createClient(msg).map((r) => r.item)
     );
   }
 
   @SubscribeMessage(sessionSocketRequests.CreateResource)
   createResourceReq(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: object
+    @MessageBody()
+    msg: {
+      resourceType: string;
+      resourceData: UnknownRecord;
+    }
   ) {
     // TODO: This could be a Guard or smtg like that (a decorator)
     const token = getConnectionToken(socket);
@@ -70,7 +70,9 @@ export class SdkGateway {
     return asyncResultToWsResponse(
       sessionSocketResponses.CreateResource,
 
-      session.createResource('game', { type: 'maha' }).map((r) => r.item)
+      session
+        .createResource(msg.resourceType, msg.resourceData)
+        .map((r) => r.item)
     );
   }
 }
