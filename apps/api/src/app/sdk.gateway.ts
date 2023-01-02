@@ -76,6 +76,29 @@ export class SdkGateway {
     );
   }
 
+  @SubscribeMessage(sessionSocketRequests.UpdateResource)
+  updateResourceReq(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    msg: {
+      resourceIdentifier: ResourceIdentifier<any>;
+      data: Partial<any>;
+    }
+  ) {
+    // TODO: This could be a Guard or smtg like that (a decorator)
+    const token = getConnectionToken(socket);
+    const session = token ? this.sessionService.getSession(token) : undefined;
+
+    if (!session) {
+      return;
+    }
+
+    return asyncResultToWsResponse(
+      sessionSocketResponses.UpdateResource,
+      session.updateResourceData(msg.resourceIdentifier, msg.data)
+    );
+  }
+
   @SubscribeMessage(sessionSocketRequests.SubscribeToResource)
   subscribeToResourceReq(
     @ConnectedSocket() socket: Socket,

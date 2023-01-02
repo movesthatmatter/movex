@@ -180,7 +180,11 @@ export class SessionStore<
           r as unknown as RRStore.CollectionItemOrReply<
             SessionCollectionMap[TResourceType]
           >
-      );
+      )
+      .map((r) => ({
+        ...r,
+        $resource: resourceType,
+      }));
     // .map(({ item }) =>
     //   objectKeys(item.subscribers).reduce(
     //     (accum, nextId) => ({

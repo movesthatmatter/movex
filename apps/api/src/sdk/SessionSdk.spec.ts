@@ -3,7 +3,6 @@ import { SessionSDK } from './SessionSdk';
 import { bootstrapServer } from '../server';
 import { INestApplication } from '@nestjs/common';
 import { SessionClient, SessionResource } from '../session/types';
-import { toResourceIdentifier } from '../session/store/util';
 
 // let mockUUIDCount = 0;
 // const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
@@ -23,10 +22,10 @@ let sdk: SessionSDK<
   },
   {
     room: SessionResource<{
-      type: 'play';
+      type: 'play' | 'analysis' | 'meetup';
     }>;
     game: SessionResource<{
-      type: 'maha';
+      type: 'maha' | 'chess';
     }>;
   }
 >;
@@ -40,7 +39,7 @@ beforeAll(() => {
 
 afterAll(() => {
   MockDate.reset();
-})
+});
 
 beforeEach((done) => {
   bootstrapServer().then((startedServer) => {
@@ -108,7 +107,7 @@ describe('Clients', () => {
   });
 });
 
-describe('Rooms', () => {
+describe('Resources', () => {
   it('sends a "createResource" Request and gets a Response back succesfully', async () => {
     let actualResource: SessionResource | undefined;
     sdk.on('createResource', (resource) => {
@@ -128,6 +127,126 @@ describe('Rooms', () => {
         type: 'play',
       },
       subscribers: {},
+    });
+  });
+
+  describe('Update', () => {
+    let actualResource: SessionResource | undefined;
+
+    beforeEach(async () => {
+      sdk.on('createResource', (resource) => {
+        actualResource = resource;
+      });
+
+      sdk.createResource('room', { type: 'play' });
+
+      // TODO: This is only needed because we are still using
+      //  the real redis not the mocked one!
+      return delay(100);
+    });
+
+    it('Updates a Resource', async () => {
+      expect(actualResource).toEqual({
+        $resource: 'room',
+        id: actualResource?.id,
+        data: {
+          type: 'play',
+        },
+        subscribers: {},
+      });
+
+      sdk.on('updateResource', (resource) => {
+        actualResource = resource;
+      });
+
+      sdk.updateResource(
+        {
+          resourceId: actualResource!.id,
+          resourceType: 'room',
+        },
+        {
+          type: 'meetup',
+        }
+      );
+
+      // TODO: This is only needed because we are still using
+      //  the real redis not the mocked one!
+      await delay(100);
+
+      expect(actualResource).toEqual({
+        $resource: 'room',
+        id: actualResource?.id,
+        data: {
+          type: 'meetup',
+        },
+        subscribers: {},
+      });
+    });
+
+    it('Updates a Resource with subscribers', async () => {
+      expect(actualResource).toEqual({
+        $resource: 'room',
+        id: actualResource?.id,
+        data: {
+          type: 'play',
+        },
+        subscribers: {},
+      });
+
+      let actualClient: SessionClient | undefined;
+      sdk.on('createClient', (client) => {
+        actualClient = client;
+      });
+      sdk.createClient({
+        id: 'user-1',
+        info: { age: 23, username: 'tester-1' },
+      });
+
+      await delay(100);
+
+      expect(actualResource).toBeDefined();
+      expect(actualClient).toBeDefined();
+      if (!(actualResource?.id && actualClient?.id)) {
+        return;
+      }
+
+      sdk.subscribeToResource('user-1', {
+        resourceId: actualResource.id,
+        resourceType: 'room',
+      });
+
+      await delay(100);
+
+      sdk.on('updateResource', (resource) => {
+        actualResource = resource;
+      });
+
+      sdk.updateResource(
+        {
+          resourceId: actualResource!.id,
+          resourceType: 'room',
+        },
+        {
+          type: 'meetup',
+        }
+      );
+
+      // TODO: This is only needed because we are still using
+      //  the real redis not the mocked one!
+      await delay(100);
+
+      expect(actualResource).toEqual({
+        $resource: 'room',
+        id: actualResource?.id,
+        data: {
+          type: 'meetup',
+        },
+        subscribers: {
+          'user-1': {
+            subscribedAt: NOW_TIMESTAMP,
+          },
+        },
+      });
     });
   });
 });
@@ -180,7 +299,7 @@ describe('Subscriptions', () => {
         subscriptions: {
           [`room:${actualResource.id}`]: {
             subscribedAt: NOW_TIMESTAMP,
-          }
+          },
         },
       },
       resource: {
@@ -192,7 +311,7 @@ describe('Subscriptions', () => {
         subscribers: {
           'user-1': {
             subscribedAt: NOW_TIMESTAMP,
-          }
+          },
         },
       },
     });

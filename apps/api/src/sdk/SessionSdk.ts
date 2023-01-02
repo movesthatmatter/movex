@@ -16,7 +16,6 @@ import {
   AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
-  ResourceIdentifierString,
   UnknwownSessionResourceCollectionMap,
 } from '../session/store/types';
 import { UnidentifiableModel } from 'relational-redis-store';
@@ -28,6 +27,7 @@ type Events = {
   createClient: SessionClient;
 
   createResource: SessionResource;
+  updateResource: SessionResource;
 
   subscribeToResource: {
     client: SessionClient;
@@ -90,6 +90,15 @@ export class SessionSDK<
       (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
         if (resourceResult.ok) {
           this.pubsy.publish('createResource', resourceResult.val);
+        }
+      }
+    );
+
+    socket.on(
+      socketResponses.UpdateResource,
+      (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
+        if (resourceResult.ok) {
+          this.pubsy.publish('updateResource', resourceResult.val);
         }
       }
     );
@@ -164,6 +173,21 @@ export class SessionSDK<
     });
   }
 
+  updateResource<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TResourceData extends UnidentifiableModel<
+      SessionCollectionMap[TResourceType]['data']
+    >
+  >(
+    resourceIdentifier: ResourceIdentifier<TResourceType>,
+    data: Partial<TResourceData>
+  ) {
+    this.socket?.emit(socketRequests.UpdateResource, {
+      resourceIdentifier,
+      data,
+    });
+  }
+
   // onResourceCreated(fn: (resource: SessionResource) => void) {
   //   return this.pubsy.subscribe('createResource', fn);
   // }
@@ -186,8 +210,6 @@ export class SessionSDK<
     clientId: SessionClient['id'],
     resourceIdentifier: ResourceIdentifier<TResourceType>
   ) {
-    console.log('subscrubing to resource', clientId, resourceIdentifier, this.socket?.emit);
-
     this.socket?.emit(socketRequests.SubscribeToResource, {
       clientId,
       resourceIdentifier,
