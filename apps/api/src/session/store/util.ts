@@ -1,5 +1,5 @@
+import { ResourceIdentifier, ResourceIdentifierString } from '@mtm/server-sdk';
 import * as uuid from 'uuid';
-import { ResourceIdentifier, ResourceIdentifierString } from './types';
 
 export const getUuid = () => uuid.v4();
 

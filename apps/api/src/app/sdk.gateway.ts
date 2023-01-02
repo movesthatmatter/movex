@@ -1,16 +1,19 @@
 import {
+  ResourceIdentifier,
+  sessionSocketRequests,
+  sessionSocketResponses,
+  UnknownRecord,
+  WsResponseAsResult,
+} from '@mtm/server-sdk';
+import {
   ConnectedSocket,
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { sessionSocketRequests, sessionSocketResponses } from '../sdk';
 import { AsyncResult } from 'ts-async-results';
-import { WsResponseAsResult } from '../sdk/types';
 import { SessionService } from './session.service';
-import { UnknownRecord } from '../session/types';
-import { ResourceIdentifier } from '../session/store/types';
 
 @WebSocketGateway()
 export class SdkGateway {

@@ -1,8 +1,8 @@
+import { SessionResource } from '@mtm/server-sdk';
 import MockDate from 'mockdate';
 import { Store, createMockStore } from 'relational-redis-store';
 import { AsyncResult } from 'ts-async-results';
 import { Ok } from 'ts-results';
-import { SessionResource } from '../types';
 import { SessionStore } from './SessionStore';
 
 let mockUUIDCount = 0;

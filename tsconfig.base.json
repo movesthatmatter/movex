@@ -16,7 +16,9 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@mtm/server-sdk": ["libs/server-sdk/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

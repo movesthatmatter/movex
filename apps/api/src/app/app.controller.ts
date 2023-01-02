@@ -3,7 +3,7 @@ import { Controller, Get, Param } from '@nestjs/common';
 import { AppService } from './app.service';
 import { SessionStore } from '../session/store';
 import { Store } from 'relational-redis-store';
-import { ResourceIdentifierString } from '../session/store/types';
+import { ResourceIdentifierString } from '@mtm/server-sdk';
 // import { SdkService } from './session.service';
 
 @Controller()

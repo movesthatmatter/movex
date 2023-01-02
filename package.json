@@ -5,7 +5,7 @@
   "scripts": {
     "start": "nx serve",
     "build": "nx build",
-    "test": "nx test",
+    "test": "nx run-many --all --target=test --skip-nx-cache",
     "tsc-all": "tsc -b apps/api"
   },
   "private": true,

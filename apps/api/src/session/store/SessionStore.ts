@@ -1,6 +1,4 @@
 import * as RRStore from 'relational-redis-store';
-import { SessionClient, SessionResource, UnknownRecord } from '../types';
-import { SessionStoreCollectionMap } from './ISessionStore';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
 import { getUuid, toResourceIdentifier } from './util';
@@ -10,8 +8,11 @@ import {
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
   ResourceIdentifierString,
+  SessionClient,
+  SessionResource,
+  SessionStoreCollectionMap,
   UnknwownSessionResourceCollectionMap,
-} from './types';
+} from '@mtm/server-sdk';
 
 // Note:
 // This is currently depending on RRStore, but from what I see

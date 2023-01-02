@@ -1,8 +1,9 @@
 import MockDate from 'mockdate';
 import { SessionSDK } from './SessionSdk';
-import { bootstrapServer } from '../server';
+import { bootstrapServer } from '../../../../apps/api/src/server';
 import { INestApplication } from '@nestjs/common';
-import { SessionClient, SessionResource } from '../session/types';
+import { SessionClient, SessionResource } from './types';
+// import { SessionClient, SessionResource } from '../session/types';
 
 // let mockUUIDCount = 0;
 // const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;

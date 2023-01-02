@@ -1,8 +1,8 @@
-import {
-  SessionClient,
-  SessionResource,
-  UnknownRecord,
-} from '../session/types';
+// import {
+//   SessionClient,
+//   SessionResource,
+//   UnknownRecord,
+// } from '../session/types';
 import { getSocketClient } from './socket.client';
 import { Socket } from 'socket.io-client';
 import { Pubsy } from 'ts-pubsy';
@@ -10,14 +10,24 @@ import {
   sessionSocketRequests as socketRequests,
   sessionSocketResponses as socketResponses,
 } from './SessionSocketEvents';
-import { WsResponseResultPayload } from './types';
-import { SessionStoreCollectionMap } from '../session/store';
 import {
   AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
+  SessionClient,
+  SessionResource,
+  SessionStoreCollectionMap,
+  UnknownRecord,
   UnknwownSessionResourceCollectionMap,
-} from '../session/store/types';
+  WsResponseResultPayload,
+} from './types';
+// import { SessionStoreCollectionMap } from '../session/store';
+// import {
+//   AnySessionResourceCollectionMap,
+//   OnlySessionCollectionMapOfResourceKeys,
+//   ResourceIdentifier,
+//   UnknwownSessionResourceCollectionMap,
+// } from '../session/store/types';
 import { UnidentifiableModel } from 'relational-redis-store';
 
 // This is what creates the bridge between the seshy api server and the client's server
