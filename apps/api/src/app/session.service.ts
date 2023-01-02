@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Store } from 'relational-redis-store';
-import { SessionStore } from '../session/store';
+import { SessionStore } from '../services/session';
 import { Redis } from './app.module';
 
 @Injectable()

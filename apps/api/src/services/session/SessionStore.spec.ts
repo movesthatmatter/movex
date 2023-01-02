@@ -1,5 +1,5 @@
-import { SessionResource } from '@mtm/server-sdk';
 import MockDate from 'mockdate';
+import { SessionResource } from '@mtm/server-sdk';
 import { Store, createMockStore } from 'relational-redis-store';
 import { AsyncResult } from 'ts-async-results';
 import { Ok } from 'ts-results';

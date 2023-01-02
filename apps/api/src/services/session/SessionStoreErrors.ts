@@ -1,6 +1,6 @@
 import * as RRStore from 'relational-redis-store';
-import { ResultError } from '../ResultErrors';
-import { buildResultError } from '../ResultErrors';
+import { ResultError } from './ResultErrors';
+import { buildResultError } from './ResultErrors';
 
 export type SessionErrorOfReason<
   TReason extends string,

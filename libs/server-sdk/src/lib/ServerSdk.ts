@@ -1,15 +1,7 @@
-// import {
-//   SessionClient,
-//   SessionResource,
-//   UnknownRecord,
-// } from '../session/types';
-import { getSocketClient } from './socket.client';
+import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import { Pubsy } from 'ts-pubsy';
-import {
-  sessionSocketRequests as socketRequests,
-  sessionSocketResponses as socketResponses,
-} from './SessionSocketEvents';
+import { ServerSdkIO } from '../io';
 import {
   AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
@@ -21,13 +13,6 @@ import {
   UnknwownSessionResourceCollectionMap,
   WsResponseResultPayload,
 } from './types';
-// import { SessionStoreCollectionMap } from '../session/store';
-// import {
-//   AnySessionResourceCollectionMap,
-//   OnlySessionCollectionMapOfResourceKeys,
-//   ResourceIdentifier,
-//   UnknwownSessionResourceCollectionMap,
-// } from '../session/store/types';
 import { UnidentifiableModel } from 'relational-redis-store';
 
 // This is what creates the bridge between the seshy api server and the client's server
@@ -45,7 +30,7 @@ type Events = {
   };
 };
 
-export class SessionSDK<
+export class ServerSDK<
   ClientInfo extends UnknownRecord = {},
   ResourceCollectionMap extends UnknwownSessionResourceCollectionMap = AnySessionResourceCollectionMap,
   SessionCollectionMap extends SessionStoreCollectionMap<ResourceCollectionMap> = SessionStoreCollectionMap<ResourceCollectionMap>,
@@ -56,7 +41,6 @@ export class SessionSDK<
   private pubsy = new Pubsy<Events>();
 
   constructor(
-    // private sessionStore: SessionStore,
     private config: {
       url: string;
       apiKey: string;
@@ -64,8 +48,13 @@ export class SessionSDK<
   ) {}
 
   async connect() {
-    this.socket = getSocketClient({
-      url: this.config.url,
+    this.socket = io(this.config.url, {
+      reconnectionDelay: 1000,
+      reconnection: true,
+      transports: ['websocket'],
+      agent: false,
+      upgrade: true,
+      rejectUnauthorized: false,
       query: {
         apiKey: this.config.apiKey, // This could change
       },
@@ -86,7 +75,7 @@ export class SessionSDK<
   private handleIncomingMessage(socket: Socket) {
     // $clients
     socket.on(
-      socketResponses.CreateClient,
+      ServerSdkIO.responses.createClient,
       (clientResult: WsResponseResultPayload<SessionClient, unknown>) => {
         if (clientResult.ok) {
           this.pubsy.publish('createClient', clientResult.val);
@@ -96,7 +85,7 @@ export class SessionSDK<
 
     // resources
     socket.on(
-      socketResponses.CreateResource,
+      ServerSdkIO.responses.createResource,
       (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
         if (resourceResult.ok) {
           this.pubsy.publish('createResource', resourceResult.val);
@@ -105,7 +94,7 @@ export class SessionSDK<
     );
 
     socket.on(
-      socketResponses.UpdateResource,
+      ServerSdkIO.responses.updateResource,
       (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
         if (resourceResult.ok) {
           this.pubsy.publish('updateResource', resourceResult.val);
@@ -115,7 +104,7 @@ export class SessionSDK<
 
     // subscriptions
     socket.on(
-      socketResponses.SubscribeToResource,
+      ServerSdkIO.responses.subscribeToResource,
       (
         result: WsResponseResultPayload<
           {
@@ -150,7 +139,7 @@ export class SessionSDK<
   // TODO: here add an inference or something to check if the p.info is defined in the
   //  generic, and if it is it becomes required, not optional!
   createClient(p?: { id?: SessionClient['id']; info?: ClientInfo }) {
-    this.socket?.emit(socketRequests.CreateClient, p);
+    this.socket?.emit(ServerSdkIO.requests.createClient, p);
 
     // TODO: This must return a requestId, which will be used in the onResponse
   }
@@ -177,7 +166,7 @@ export class SessionSDK<
       SessionCollectionMap[TResourceType]['data']
     >
   >(resourceType: TResourceType, resourceData: TResourceData) {
-    this.socket?.emit(socketRequests.CreateResource, {
+    this.socket?.emit(ServerSdkIO.requests.createResource, {
       resourceType,
       resourceData,
     });
@@ -192,7 +181,7 @@ export class SessionSDK<
     resourceIdentifier: ResourceIdentifier<TResourceType>,
     data: Partial<TResourceData>
   ) {
-    this.socket?.emit(socketRequests.UpdateResource, {
+    this.socket?.emit(ServerSdkIO.requests.updateResource, {
       resourceIdentifier,
       data,
     });
@@ -220,7 +209,7 @@ export class SessionSDK<
     clientId: SessionClient['id'],
     resourceIdentifier: ResourceIdentifier<TResourceType>
   ) {
-    this.socket?.emit(socketRequests.SubscribeToResource, {
+    this.socket?.emit(ServerSdkIO.requests.subscribeToResource, {
       clientId,
       resourceIdentifier,
     });

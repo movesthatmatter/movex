@@ -1,9 +1,10 @@
 import MockDate from 'mockdate';
-import { SessionSDK } from './SessionSdk';
-import { bootstrapServer } from '../../../../apps/api/src/server';
+import { ServerSDK } from './ServerSdk';
 import { INestApplication } from '@nestjs/common';
 import { SessionClient, SessionResource } from './types';
-// import { SessionClient, SessionResource } from '../session/types';
+
+// TODO: Not sure about this as it's loading it from outside but it's ok for now!
+import { bootstrapServer } from '../../../../apps/api/src/server';
 
 // let mockUUIDCount = 0;
 // const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
@@ -16,7 +17,7 @@ const delay = (ms = 500) =>
 
 // describe('My Remote Server', () => {
 let server: INestApplication;
-let sdk: SessionSDK<
+let sdk: ServerSDK<
   {
     username: string;
     age: number;
@@ -46,7 +47,7 @@ beforeEach((done) => {
   bootstrapServer().then((startedServer) => {
     server = startedServer;
 
-    sdk = new SessionSDK({
+    sdk = new ServerSDK({
       url: 'ws://localhost:4444',
       apiKey: 'tester-A',
     });

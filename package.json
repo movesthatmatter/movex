@@ -6,7 +6,7 @@
     "start": "nx serve",
     "build": "nx build",
     "test": "nx run-many --all --target=test --skip-nx-cache",
-    "tsc-all": "tsc -b apps/api"
+    "tsc-all": "tsc -b apps/api libs/server-sdk"
   },
   "private": true,
   "dependencies": {
@@ -28,7 +28,8 @@
     "ts-pubsy": "^0.2.0",
     "ts-results": "^3.3.0",
     "tslib": "^2.3.0",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "zod": "^3.20.2"
   },
   "devDependencies": {
     "@nestjs/schematics": "^9.0.0",

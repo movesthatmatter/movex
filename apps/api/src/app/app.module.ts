@@ -6,7 +6,7 @@ import { SdkGateway } from './sdk.gateway';
 import { SessionService } from './session.service';
 
 import * as redisSDK from 'handy-redis';
-import { SessionStore } from '../session/store';
+import { SessionStore } from '../services/session';
 import { Store } from 'relational-redis-store';
 
 export type Redis = redisSDK.IHandyRedis;
