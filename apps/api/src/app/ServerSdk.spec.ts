@@ -1,10 +1,13 @@
 import MockDate from 'mockdate';
-import { ServerSDK } from './ServerSdk';
 import { INestApplication } from '@nestjs/common';
-import { SessionClient, SessionResource } from './types';
+import { ServerSDK, SessionClient, SessionResource } from '@mtm/server-sdk';
+
+// This depends on the server and it's more of an e2e test, so I'll leave it here
+// for now! Until further ado! The server-sdk lib can be tested by itself w/o
+// depending on the server actually – with everything mocked
 
 // TODO: Not sure about this as it's loading it from outside but it's ok for now!
-import { bootstrapServer } from '../../../../apps/api/src/server';
+import { bootstrapServer } from '../server';
 
 // let mockUUIDCount = 0;
 // const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
@@ -34,31 +37,34 @@ let sdk: ServerSDK<
 
 const NOW_TIMESTAMP = new Date().getTime();
 
-beforeAll(() => {
+beforeAll((done) => {
   // Date
   MockDate.set(NOW_TIMESTAMP);
-});
 
-afterAll(() => {
-  MockDate.reset();
-});
-
-beforeEach((done) => {
   bootstrapServer().then((startedServer) => {
     server = startedServer;
-
-    sdk = new ServerSDK({
-      url: 'ws://localhost:4444',
-      apiKey: 'tester-A',
-    });
-
-    sdk.connect().then(() => done());
+    done();
   });
 });
 
+afterAll((done) => {
+  MockDate.reset();
+
+  server.close().then(() => done());
+});
+
+beforeEach((done) => {
+  sdk = new ServerSDK({
+    url: 'ws://localhost:4444',
+    apiKey: 'tester-A',
+  });
+
+  sdk.connect().then(() => done());
+});
+
 afterEach((done) => {
-  server.close().then(done);
   sdk.disconnect();
+  done();
 });
 
 describe('Clients', () => {
