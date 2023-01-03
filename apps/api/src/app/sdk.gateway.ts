@@ -110,6 +110,26 @@ export class SdkGateway {
       session.subscribeToResource(msg.clientId, msg.resourceIdentifier)
     );
   }
+
+  @SubscribeMessage(ServerSdkIO.msgs.unsubscribeFromResource.req)
+  unsubscribeToResourceReq(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    msg: ServerSdkIO.Payloads['unsubscribeFromResource']['req']
+  ) {
+    // TODO: This could be a Guard or smtg like that (a decorator)
+    const token = getConnectionToken(socket);
+    const session = token ? this.sessionService.getSession(token) : undefined;
+
+    if (!session) {
+      return;
+    }
+
+    return asyncResultToWsResponse(
+      ServerSdkIO.msgs.unsubscribeFromResource.res,
+      session.unsubscribeFromResource(msg.clientId, msg.resourceIdentifier)
+    );
+  }
 }
 
 const asyncResultToWsResponse = async <T, E>(

@@ -370,7 +370,8 @@ describe('Subscriptions', () => {
       },
     });
 
-    sdk.on('subscribeToResource', suscriptionSpy);
+    const spy = jest.fn();
+    sdk.on('unsubscribeFromResource', spy);
 
     sdk.unsubscribeFromResource('user-1', {
       resourceId: actualResource.id,
@@ -379,7 +380,7 @@ describe('Subscriptions', () => {
 
     await delay(100);
 
-    expect(suscriptionSpy).toBeCalledWith({
+    expect(spy).toBeCalledWith({
       client: {
         id: 'user-1',
         info: {

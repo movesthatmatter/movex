@@ -13,7 +13,7 @@ import {
   UnknwownSessionResourceCollectionMap,
   WsResponseResultPayload,
 } from './types';
-import { UnidentifiableModel } from 'relational-redis-store';
+import { objectKeys, UnidentifiableModel } from 'relational-redis-store';
 
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets
@@ -25,7 +25,7 @@ type Events = {
   updateResource: ServerSdkIO.Payloads['updateResource']['res'];
 
   subscribeToResource: ServerSdkIO.Payloads['subscribeToResource']['res'];
-  unsubscribeToResource: ServerSdkIO.Payloads['unsubscribeFromResource']['res'];
+  unsubscribeFromResource: ServerSdkIO.Payloads['unsubscribeFromResource']['res'];
 };
 
 export class ServerSDK<
@@ -71,63 +71,16 @@ export class ServerSDK<
   }
 
   private handleIncomingMessage(socket: Socket) {
-    // $clients
-    socket.on(
-      ServerSdkIO.msgs.createClient.res,
-      (clientResult: WsResponseResultPayload<SessionClient, unknown>) => {
-        if (clientResult.ok) {
-          this.pubsy.publish('createClient', clientResult.val);
+    objectKeys(ServerSdkIO.msgs).forEach((key) => {
+      socket.on(
+        ServerSdkIO.msgs[key].res,
+        (clientResult: WsResponseResultPayload<SessionClient, unknown>) => {
+          if (clientResult.ok) {
+            this.pubsy.publish(key, clientResult.val);
+          }
         }
-      }
-    );
-
-    // resources
-    socket.on(
-      ServerSdkIO.msgs.createResource.res,
-      (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
-        if (resourceResult.ok) {
-          this.pubsy.publish('createResource', resourceResult.val);
-        }
-      }
-    );
-
-    socket.on(
-      ServerSdkIO.msgs.updateResource.res,
-      (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
-        if (resourceResult.ok) {
-          this.pubsy.publish('updateResource', resourceResult.val);
-        }
-      }
-    );
-
-    // subscriptions
-    socket.on(
-      ServerSdkIO.msgs.subscribeToResource.res,
-      (
-        result: WsResponseResultPayload<
-          ServerSdkIO.Payloads['subscribeToResource']['res'],
-          unknown
-        >
-      ) => {
-        if (result.ok) {
-          this.pubsy.publish('subscribeToResource', result.val);
-        }
-      }
-    );
-
-    socket.on(
-      ServerSdkIO.msgs.unsubscribeFromResource.res,
-      (
-        result: WsResponseResultPayload<
-          ServerSdkIO.Payloads['unsubscribeFromResource']['res'],
-          unknown
-        >
-      ) => {
-        if (result.ok) {
-          this.pubsy.publish('unsubscribeToResource', result.val);
-        }
-      }
-    );
+      );
+    });
   }
 
   disconnect() {
@@ -235,4 +188,14 @@ export class ServerSDK<
       resourceIdentifier,
     });
   }
+
+  // private emit = <
+  //   K extends keyof typeof ServerSdkIO.msgs,
+  //   TPayload extends ServerSdkIO.Payloads[K]['req']
+  // >(
+  //   k: K,
+  //   payload: TPayload
+  // ) => {
+  //   this.socket?.emit(ServerSdkIO.msgs[k].req, payload);
+  // };
 }

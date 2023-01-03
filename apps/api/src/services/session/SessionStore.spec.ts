@@ -492,6 +492,7 @@ describe('SessionStore', () => {
           subscriptions: {},
         },
         resource: {
+          $resource: 'room',
           id: resourceId,
           data: {
             type: 'play',

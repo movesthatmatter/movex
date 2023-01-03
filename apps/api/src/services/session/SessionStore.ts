@@ -310,7 +310,10 @@ export class SessionStore<
         );
       })
       .map(([resource, client]) => ({
-        resource,
+        resource: {
+          ...resource,
+          $resource: resourceType,
+        },
         client,
       }));
   }
