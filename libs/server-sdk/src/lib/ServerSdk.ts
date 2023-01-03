@@ -15,19 +15,17 @@ import {
 } from './types';
 import { UnidentifiableModel } from 'relational-redis-store';
 
-// This is what creates the bridge between the seshy api server and the client's server
-// via sockets
+// This is what creates the bridge between the seshy api
+// server and the client's server via sockets
 
 type Events = {
-  createClient: SessionClient;
+  createClient: ServerSdkIO.Payloads['createClient']['res'];
 
-  createResource: SessionResource;
-  updateResource: SessionResource;
+  createResource: ServerSdkIO.Payloads['createResource']['res'];
+  updateResource: ServerSdkIO.Payloads['updateResource']['res'];
 
-  subscribeToResource: {
-    client: SessionClient;
-    resource: SessionResource;
-  };
+  subscribeToResource: ServerSdkIO.Payloads['subscribeToResource']['res'];
+  unsubscribeToResource: ServerSdkIO.Payloads['unsubscribeFromResource']['res'];
 };
 
 export class ServerSDK<
@@ -75,7 +73,7 @@ export class ServerSDK<
   private handleIncomingMessage(socket: Socket) {
     // $clients
     socket.on(
-      ServerSdkIO.responses.createClient,
+      ServerSdkIO.msgs.createClient.res,
       (clientResult: WsResponseResultPayload<SessionClient, unknown>) => {
         if (clientResult.ok) {
           this.pubsy.publish('createClient', clientResult.val);
@@ -85,7 +83,7 @@ export class ServerSDK<
 
     // resources
     socket.on(
-      ServerSdkIO.responses.createResource,
+      ServerSdkIO.msgs.createResource.res,
       (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
         if (resourceResult.ok) {
           this.pubsy.publish('createResource', resourceResult.val);
@@ -94,7 +92,7 @@ export class ServerSDK<
     );
 
     socket.on(
-      ServerSdkIO.responses.updateResource,
+      ServerSdkIO.msgs.updateResource.res,
       (resourceResult: WsResponseResultPayload<SessionResource, unknown>) => {
         if (resourceResult.ok) {
           this.pubsy.publish('updateResource', resourceResult.val);
@@ -104,18 +102,29 @@ export class ServerSDK<
 
     // subscriptions
     socket.on(
-      ServerSdkIO.responses.subscribeToResource,
+      ServerSdkIO.msgs.subscribeToResource.res,
       (
         result: WsResponseResultPayload<
-          {
-            client: SessionClient;
-            resource: SessionResource;
-          },
+          ServerSdkIO.Payloads['subscribeToResource']['res'],
           unknown
         >
       ) => {
         if (result.ok) {
           this.pubsy.publish('subscribeToResource', result.val);
+        }
+      }
+    );
+
+    socket.on(
+      ServerSdkIO.msgs.unsubscribeFromResource.res,
+      (
+        result: WsResponseResultPayload<
+          ServerSdkIO.Payloads['unsubscribeFromResource']['res'],
+          unknown
+        >
+      ) => {
+        if (result.ok) {
+          this.pubsy.publish('unsubscribeToResource', result.val);
         }
       }
     );
@@ -139,7 +148,7 @@ export class ServerSDK<
   // TODO: here add an inference or something to check if the p.info is defined in the
   //  generic, and if it is it becomes required, not optional!
   createClient(p?: { id?: SessionClient['id']; info?: ClientInfo }) {
-    this.socket?.emit(ServerSdkIO.requests.createClient, p);
+    this.socket?.emit(ServerSdkIO.msgs.createClient.req, p);
 
     // TODO: This must return a requestId, which will be used in the onResponse
   }
@@ -166,7 +175,7 @@ export class ServerSDK<
       SessionCollectionMap[TResourceType]['data']
     >
   >(resourceType: TResourceType, resourceData: TResourceData) {
-    this.socket?.emit(ServerSdkIO.requests.createResource, {
+    this.socket?.emit(ServerSdkIO.msgs.createResource.req, {
       resourceType,
       resourceData,
     });
@@ -181,7 +190,7 @@ export class ServerSDK<
     resourceIdentifier: ResourceIdentifier<TResourceType>,
     data: Partial<TResourceData>
   ) {
-    this.socket?.emit(ServerSdkIO.requests.updateResource, {
+    this.socket?.emit(ServerSdkIO.msgs.updateResource.req, {
       resourceIdentifier,
       data,
     });
@@ -203,23 +212,27 @@ export class ServerSDK<
   //   this.sessionStore
   // );
 
-  // // subscriptions
+  // Subscriptions
 
   subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
     clientId: SessionClient['id'],
     resourceIdentifier: ResourceIdentifier<TResourceType>
   ) {
-    this.socket?.emit(ServerSdkIO.requests.subscribeToResource, {
+    this.socket?.emit(ServerSdkIO.msgs.subscribeToResource.req, {
       clientId,
       resourceIdentifier,
     });
   }
 
-  // subscribeToResource = this.sessionStore.subscribeToResource.bind(
-  //   this.sessionStore
-  // );
-
-  // unsubscribeFromResource = this.sessionStore.unsubscribeFromResource.bind(
-  //   this.sessionStore
-  // );
+  unsubscribeFromResource<
+    TResourceType extends SessionCollectionMapOfResourceKeys
+  >(
+    clientId: SessionClient['id'],
+    resourceIdentifier: ResourceIdentifier<TResourceType>
+  ) {
+    this.socket?.emit(ServerSdkIO.msgs.unsubscribeFromResource.req, {
+      clientId,
+      resourceIdentifier,
+    });
+  }
 }

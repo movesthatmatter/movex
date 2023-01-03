@@ -1,10 +1,8 @@
 import * as redisSDK from 'handy-redis';
 import { Controller, Get, Param } from '@nestjs/common';
-import { AppService } from './app.service';
 import { SessionStore } from '../services/session';
 import { Store } from 'relational-redis-store';
 import { ResourceIdentifierString } from '@mtm/server-sdk';
-// import { SdkService } from './session.service';
 
 @Controller()
 export class AppController {

@@ -24,11 +24,13 @@ export class SdkGateway {
     }
   }
 
-  @SubscribeMessage(ServerSdkIO.requests.createClient)
+  // Clients
+
+  @SubscribeMessage(ServerSdkIO.msgs.createClient.req)
   createClientReq(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
-    msg: ServerSdkIO.Payloads['createClient']
+    msg: ServerSdkIO.Payloads['createClient']['req']
   ) {
     const token = getConnectionToken(socket);
     const session = token ? this.sessionService.getSession(token) : undefined;
@@ -38,16 +40,18 @@ export class SdkGateway {
     }
 
     return asyncResultToWsResponse(
-      ServerSdkIO.responses.createClient,
+      ServerSdkIO.msgs.createClient.res,
       session.createClient(msg).map((r) => r.item)
     );
   }
 
-  @SubscribeMessage(ServerSdkIO.requests.createResource)
+  // Resources
+
+  @SubscribeMessage(ServerSdkIO.msgs.createResource.req)
   createResourceReq(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
-    msg: ServerSdkIO.Payloads['createResource']
+    msg: ServerSdkIO.Payloads['createResource']['req']
   ) {
     // TODO: This could be a Guard or smtg like that (a decorator)
     const token = getConnectionToken(socket);
@@ -58,18 +62,18 @@ export class SdkGateway {
     }
 
     return asyncResultToWsResponse(
-      ServerSdkIO.responses.createResource,
+      ServerSdkIO.msgs.createResource.res,
       session
         .createResource(msg.resourceType, msg.resourceData)
         .map((r) => r.item)
     );
   }
 
-  @SubscribeMessage(ServerSdkIO.requests.updateResource)
+  @SubscribeMessage(ServerSdkIO.msgs.updateResource.req)
   updateResourceReq(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
-    msg: ServerSdkIO.Payloads['updateResource']
+    msg: ServerSdkIO.Payloads['updateResource']['req']
   ) {
     // TODO: This could be a Guard or smtg like that (a decorator)
     const token = getConnectionToken(socket);
@@ -80,16 +84,18 @@ export class SdkGateway {
     }
 
     return asyncResultToWsResponse(
-      ServerSdkIO.responses.updateResource,
+      ServerSdkIO.msgs.updateResource.res,
       session.updateResourceData(msg.resourceIdentifier, msg.data)
     );
   }
 
-  @SubscribeMessage(ServerSdkIO.requests.subscribeToResource)
+  // Subscriptions
+
+  @SubscribeMessage(ServerSdkIO.msgs.subscribeToResource.req)
   subscribeToResourceReq(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
-    msg: ServerSdkIO.Payloads['subscribeToResource']
+    msg: ServerSdkIO.Payloads['subscribeToResource']['req']
   ) {
     // TODO: This could be a Guard or smtg like that (a decorator)
     const token = getConnectionToken(socket);
@@ -100,7 +106,7 @@ export class SdkGateway {
     }
 
     return asyncResultToWsResponse(
-      ServerSdkIO.responses.subscribeToResource,
+      ServerSdkIO.msgs.subscribeToResource.res,
       session.subscribeToResource(msg.clientId, msg.resourceIdentifier)
     );
   }

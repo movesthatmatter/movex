@@ -260,26 +260,26 @@ describe('Resources', () => {
 });
 
 describe('Subscriptions', () => {
-  it('subscribes a $client to a resource', async () => {
-    let actualResource: SessionResource | undefined;
+  let actualResource: SessionResource | undefined;
+  let actualClient: SessionClient | undefined;
+
+  beforeEach(async () => {
     sdk.on('createResource', (resource) => {
-      // TODO: here the $resource (type) needs
-      //  to be in and it also needs to be a tagged union of resources based on the $resource field
       actualResource = resource;
     });
+    sdk.createResource('room', { type: 'play' });
 
-    let actualClient: SessionClient | undefined;
     sdk.on('createClient', (client) => {
       actualClient = client;
     });
-
     sdk.createClient({ id: 'user-1', info: { age: 23, username: 'tester-1' } });
-    sdk.createResource('room', { type: 'play' });
 
     // TODO: This is only needed because we are still using
     //  the real redis not the mocked one!
-    await delay(100);
+    return delay(100);
+  });
 
+  it('subscribes a $client to a resource', async () => {
     expect(actualResource).toBeDefined();
     expect(actualClient).toBeDefined();
     if (!(actualResource?.id && actualClient?.id)) {
@@ -321,6 +321,80 @@ describe('Subscriptions', () => {
             subscribedAt: NOW_TIMESTAMP,
           },
         },
+      },
+    });
+  });
+
+  it('unsubscribes a $client from a resource', async () => {
+    expect(actualResource).toBeDefined();
+    expect(actualClient).toBeDefined();
+    if (!(actualResource?.id && actualClient?.id)) {
+      return;
+    }
+
+    const suscriptionSpy = jest.fn();
+
+    sdk.on('subscribeToResource', suscriptionSpy);
+
+    sdk.subscribeToResource('user-1', {
+      resourceId: actualResource.id,
+      resourceType: 'room',
+    });
+
+    await delay(100);
+
+    expect(suscriptionSpy).toBeCalledWith({
+      client: {
+        id: 'user-1',
+        info: {
+          username: 'tester-1',
+          age: 23,
+        },
+        subscriptions: {
+          [`room:${actualResource.id}`]: {
+            subscribedAt: NOW_TIMESTAMP,
+          },
+        },
+      },
+      resource: {
+        $resource: 'room',
+        id: actualResource.id,
+        data: {
+          type: 'play',
+        },
+        subscribers: {
+          'user-1': {
+            subscribedAt: NOW_TIMESTAMP,
+          },
+        },
+      },
+    });
+
+    sdk.on('subscribeToResource', suscriptionSpy);
+
+    sdk.unsubscribeFromResource('user-1', {
+      resourceId: actualResource.id,
+      resourceType: 'room',
+    });
+
+    await delay(100);
+
+    expect(suscriptionSpy).toBeCalledWith({
+      client: {
+        id: 'user-1',
+        info: {
+          username: 'tester-1',
+          age: 23,
+        },
+        subscriptions: {},
+      },
+      resource: {
+        $resource: 'room',
+        id: actualResource.id,
+        data: {
+          type: 'play',
+        },
+        subscribers: {},
       },
     });
   });
