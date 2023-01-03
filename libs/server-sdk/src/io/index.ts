@@ -1,5 +1,5 @@
-import { objectKeys } from 'relational-redis-store';
 import * as z from 'zod';
+import { objectKeys } from 'relational-redis-store';
 
 export namespace ServerSdkIO {
   const zId = z.string;
@@ -43,25 +43,7 @@ export namespace ServerSdkIO {
     return res ? toReqWithRes(req, res) : toReqReq(req);
   }
 
-  // export type SessionClient<Info extends UnknownRecord = {}> = {
-  //   id: string;
-  //   info?: Info; // User Info or whatever
-  //   subscriptions: Record<
-  //     `${SessionResourceType}:${SessionResource['id']}`,
-  //     {
-  //       // resourceType: string; // TODO: This could be part of the resource id
-  //       subscribedAt: number;
-  //     }
-  //   >;
-
-  //   // TODO: Add later on
-  //   // lag: number;
-  //   // createdAt: number;
-  //   // upadtedAt: number;
-  //   // lastPingAt: mumber;
-  //   // status: 'idle' | 'active' | etc..
-  // };
-  export const sessionClient = <TInfo extends z.ZodTypeAny>(info?: TInfo) =>
+  const sessionClient = <TInfo extends z.ZodTypeAny>(info?: TInfo) =>
     z.object({
       id: zId(),
       subscriptions: z.record(
@@ -73,19 +55,7 @@ export namespace ServerSdkIO {
       info: info ? info : z.undefined().optional(),
     });
 
-  // export type SessionResource<TData extends UnknownRecord = {}> =
-  // CollectionMapBaseItem & {
-  //   id: string;
-  //   data: TData;
-  //   subscribers: Record<
-  //     SessionClient['id'],
-  //     {
-  //       subscribedAt: number;
-  //     }
-  //   >;
-  // };
-
-  export const sessionResource = <TData extends z.ZodRecord>(data: TData) =>
+  const sessionResource = <TData extends z.ZodRecord>(data: TData) =>
     z.object({
       id: zId(),
       data,
@@ -97,7 +67,7 @@ export namespace ServerSdkIO {
       ),
     });
 
-  export const genericSessionResource = () => sessionResource(unknownRecord());
+  const genericSessionResource = () => sessionResource(unknownRecord());
 
   export const payloads = z.object({
     // Clients
@@ -123,6 +93,12 @@ export namespace ServerSdkIO {
         data: unknownRecord(),
       }),
       genericSessionResource()
+    ),
+    removeResource: toReqRes(
+      z.object({
+        resourceIdentifier: genericResourceIdentifier(),
+      }),
+      genericResourceIdentifier()
     ),
 
     // Subscriptions
@@ -159,24 +135,29 @@ export namespace ServerSdkIO {
           req: `req::${next}`,
           res: `res::${next}`,
         },
-        // requests: {
-        //   ...accum.requests,
-        //   [next]: `req::${next}`,
-        // },
-        // responses: {
-        //   ...accum.responses,
-        //   [next]: `res::${next}`,
-        // },
       };
     },
-    {
-      // responses: {} as { [k in keyof typeof payloadsShape]: string },
-      // requests: {} as { [k in keyof typeof payloadsShape]: string },
-    } as {
+    {} as {
       [k in keyof typeof payloadsShape]: {
         req: string;
         res: string;
       };
     }
   );
+
+  const msgToResponseMap = z.object(
+    objectKeys(msgs).reduce(
+      (accum, next) => {
+        return {
+          ...accum,
+          [next]: payloadsShape[next].shape.res,
+        };
+      },
+      {} as {
+        [k in keyof typeof msgs]: typeof payloadsShape[k]['shape']['res'];
+      }
+    )
+  );
+
+  export type MsgToResponseMap = z.infer<typeof msgToResponseMap>;
 }

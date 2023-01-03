@@ -1,13 +1,11 @@
 import MockDate from 'mockdate';
 import { INestApplication } from '@nestjs/common';
 import { ServerSDK, SessionClient, SessionResource } from '@mtm/server-sdk';
+import { bootstrapServer } from '../server';
 
 // This depends on the server and it's more of an e2e test, so I'll leave it here
 // for now! Until further ado! The server-sdk lib can be tested by itself w/o
 // depending on the server actually – with everything mocked
-
-// TODO: Not sure about this as it's loading it from outside but it's ok for now!
-import { bootstrapServer } from '../server';
 
 // let mockUUIDCount = 0;
 // const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
@@ -138,7 +136,7 @@ describe('Resources', () => {
     });
   });
 
-  describe('Update', () => {
+  describe('Read/Update/Delete ', () => {
     let actualResource: SessionResource | undefined;
 
     beforeEach(async () => {
@@ -152,6 +150,22 @@ describe('Resources', () => {
       //  the real redis not the mocked one!
       return delay(100);
     });
+
+    // it('gets a Resource', async () => {
+
+    //   // TODO: This is only needed because we are still using
+    //   //  the real redis not the mocked one!
+    //   await delay(100);
+
+    //   expect(actualResource).toEqual({
+    //     $resource: 'room',
+    //     id: actualResource?.id,
+    //     data: {
+    //       type: 'play',
+    //     },
+    //     subscribers: {},
+    //   });
+    // });
 
     it('Updates a Resource', async () => {
       expect(actualResource).toEqual({
@@ -254,6 +268,37 @@ describe('Resources', () => {
             subscribedAt: NOW_TIMESTAMP,
           },
         },
+      });
+    });
+  });
+
+  describe('Removal', () => {
+    it('removes a resource', async () => {
+      let actualResource: SessionResource | undefined;
+      sdk.on('createResource', (resource) => {
+        actualResource = resource;
+      });
+
+      sdk.createResource('room', {
+        type: 'meetup',
+      });
+
+      await delay(100);
+
+      const spy = jest.fn();
+      sdk.on('removeResource', spy);
+
+      sdk.removeResource({
+        resourceId: actualResource!.id,
+        resourceType: 'room',
+      });
+
+      await delay(100);
+
+      expect(spy).toHaveBeenCalledWith({
+        resourceId: actualResource!.id,
+        resourceType: 'room',
+        subscribers: {},
       });
     });
   });
@@ -396,6 +441,41 @@ describe('Subscriptions', () => {
           type: 'play',
         },
         subscribers: {},
+      },
+    });
+  });
+
+  it('removes a resource with subscribers', async () => {
+    expect(actualResource).toBeDefined();
+
+    if (!actualResource) {
+      return;
+    }
+
+    sdk.subscribeToResource('user-1', {
+      resourceId: actualResource.id,
+      resourceType: 'room',
+    });
+
+    await delay(100);
+
+    const spy = jest.fn();
+    sdk.on('removeResource', spy);
+
+    sdk.removeResource({
+      resourceId: actualResource.id,
+      resourceType: 'room',
+    });
+
+    await delay(100);
+
+    expect(spy).toHaveBeenCalledWith({
+      resourceId: actualResource.id,
+      resourceType: 'room',
+      subscribers: {
+        'user-1': {
+          subscribedAt: NOW_TIMESTAMP,
+        },
       },
     });
   });

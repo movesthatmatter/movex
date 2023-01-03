@@ -298,7 +298,11 @@ describe('SessionStore', () => {
 
       const expected = new Ok({
         index: 1,
-        item: undefined,
+        item: {
+          resourceId: get_MOCKED_UUID(1),
+          resourceType: 'game',
+          subscribers: {},
+        },
         length: 0,
       });
 

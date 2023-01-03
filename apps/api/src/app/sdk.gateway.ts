@@ -89,6 +89,26 @@ export class SdkGateway {
     );
   }
 
+  @SubscribeMessage(ServerSdkIO.msgs.removeResource.req)
+  removeResourceReq(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    msg: ServerSdkIO.Payloads['removeResource']['req']
+  ) {
+    // TODO: This could be a Guard or smtg like that (a decorator)
+    const token = getConnectionToken(socket);
+    const session = token ? this.sessionService.getSession(token) : undefined;
+
+    if (!session) {
+      return;
+    }
+
+    return asyncResultToWsResponse(
+      ServerSdkIO.msgs.removeResource.res,
+      session.removeResource(msg.resourceIdentifier).map((r) => r.item)
+    );
+  }
+
   // Subscriptions
 
   @SubscribeMessage(ServerSdkIO.msgs.subscribeToResource.req)

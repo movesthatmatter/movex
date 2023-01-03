@@ -7,7 +7,6 @@ import {
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
   SessionClient,
-  SessionResource,
   SessionStoreCollectionMap,
   UnknownRecord,
   UnknwownSessionResourceCollectionMap,
@@ -18,15 +17,7 @@ import { objectKeys, UnidentifiableModel } from 'relational-redis-store';
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets
 
-type Events = {
-  createClient: ServerSdkIO.Payloads['createClient']['res'];
-
-  createResource: ServerSdkIO.Payloads['createResource']['res'];
-  updateResource: ServerSdkIO.Payloads['updateResource']['res'];
-
-  subscribeToResource: ServerSdkIO.Payloads['subscribeToResource']['res'];
-  unsubscribeFromResource: ServerSdkIO.Payloads['unsubscribeFromResource']['res'];
-};
+type Events = ServerSdkIO.MsgToResponseMap;
 
 export class ServerSDK<
   ClientInfo extends UnknownRecord = {},
@@ -74,9 +65,9 @@ export class ServerSDK<
     objectKeys(ServerSdkIO.msgs).forEach((key) => {
       socket.on(
         ServerSdkIO.msgs[key].res,
-        (clientResult: WsResponseResultPayload<SessionClient, unknown>) => {
-          if (clientResult.ok) {
-            this.pubsy.publish(key, clientResult.val);
+        (res: WsResponseResultPayload<any, unknown>) => {
+          if (res.ok) {
+            this.pubsy.publish(key, res.val);
           }
         }
       );
@@ -95,8 +86,6 @@ export class ServerSDK<
   // }
 
   // Client
-
-  // createClient = this.sessionStore.createClient.bind(this.sessionStore);
 
   // TODO: here add an inference or something to check if the p.info is defined in the
   //  generic, and if it is it becomes required, not optional!
@@ -149,11 +138,13 @@ export class ServerSDK<
     });
   }
 
-  // onResourceCreated(fn: (resource: SessionResource) => void) {
-  //   return this.pubsy.subscribe('createResource', fn);
-  // }
-
-  // removeResource = this.sessionStore.removeResource.bind(this.sessionStore);
+  removeResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
+    resourceIdentifier: ResourceIdentifier<TResourceType>
+  ) {
+    this.socket?.emit(ServerSdkIO.msgs.removeResource.req, {
+      resourceIdentifier,
+    });
+  }
 
   // getResource = this.sessionStore.getResource.bind(this.sessionStore);
 

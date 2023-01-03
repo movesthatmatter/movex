@@ -390,17 +390,31 @@ export class SessionStore<
   }) {
     // This should be a TRANSACTION
     return this.getResource({ resourceType, resourceId }).flatMap(
-      (prevResource) =>
-        AsyncResult.all(
+      (prevResource) => {
+        return AsyncResult.all(
+          // TODO: Optimization: This could be batched at Redis level
           ...objectKeys(prevResource.subscribers).map((cliendId) =>
             this.removeClientSubscription(cliendId, {
               resourceId,
               resourceType,
             })
           )
-        ).flatMap(() =>
-          this.store.removeItemInCollection(resourceType as string, resourceId)
         )
+          .flatMap(() =>
+            this.store.removeItemInCollection(
+              resourceType as string,
+              resourceId
+            )
+          )
+          .map((removedResource) => ({
+            ...removedResource,
+            item: {
+              resourceType,
+              resourceId,
+              subscribers: prevResource.subscribers,
+            },
+          }));
+      }
     );
   }
 }
