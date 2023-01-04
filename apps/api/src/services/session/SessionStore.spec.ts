@@ -13,15 +13,16 @@ describe('SessionStore', () => {
   let store: Store<any>;
   let session: SessionStore<{
     room: SessionResource<{
-      type: 'play';
+      type: 'play' | 'analysis' | 'meetup';
     }>;
     game: SessionResource<{
-      type: 'maha';
+      type: 'maha' | 'chess' | 'dojo';
     }>;
   }>;
 
   let oldConsoleLog = console.log;
   let oldConsoleInfo = console.info;
+  let oldConsoleError = console.error;
 
   const NOW_TIMESTAMP = new Date().getTime();
 
@@ -30,6 +31,7 @@ describe('SessionStore', () => {
     const noop = () => {};
     console.log = noop;
     console.info = noop;
+    console.error = noop;
 
     // Date
     MockDate.set(NOW_TIMESTAMP);
@@ -43,6 +45,7 @@ describe('SessionStore', () => {
     // Logs
     console.log = oldConsoleLog;
     console.info = oldConsoleInfo;
+    console.error = oldConsoleError;
 
     // Date
     MockDate.reset();
@@ -308,6 +311,58 @@ describe('SessionStore', () => {
         },
         length: 0,
       });
+
+      expect(actual).toEqual(expected);
+    });
+
+    it('remove all resources of type', async () => {
+      await AsyncResult.all(
+        session.createResource('game', { type: 'maha' }),
+        session.createResource('game', { type: 'dojo' }),
+        session.createResource('game', { type: 'maha' }),
+        session.createResource('game', { type: 'chess' }),
+        session.createResource('room', { type: 'meetup' })
+      ).resolve();
+
+      await session
+        .removeAllResourcesOfType('game')
+        .resolve();
+
+      const actual = await session.getAllResourcesOfType('game').resolve();
+
+      const expected = new Ok([]);
+
+      expect(actual).toEqual(expected);
+    });
+
+    it('gets all resources of type', async () => {
+      await AsyncResult.all(
+        session.createResource('game', { type: 'maha' }),
+        session.createResource('room', { type: 'play' }),
+        session.createResource('game', { type: 'chess' }),
+        session.createResource('room', { type: 'analysis' })
+      ).resolve();
+
+      const actual = await session.getAllResourcesOfType('game').resolve();
+
+      const expected = new Ok([
+        {
+          $resource: 'game',
+          id: get_MOCKED_UUID(1),
+          data: {
+            type: 'maha',
+          },
+          subscribers: {},
+        },
+        {
+          $resource: 'game',
+          id: get_MOCKED_UUID(3),
+          data: {
+            type: 'chess',
+          },
+          subscribers: {},
+        },
+      ]);
 
       expect(actual).toEqual(expected);
     });

@@ -221,6 +221,43 @@ export class SessionStore<
     // });
   }
 
+  getResource<TResourceType extends SessionCollectionMapOfResourceKeys>({
+    resourceType,
+    resourceId,
+  }: {
+    resourceType: TResourceType;
+    resourceId: SessionResource['id'];
+  }) {
+    return this.store
+      .getItemInCollection(resourceType as string, resourceId)
+      .map((r) => ({
+        ...r,
+        $resource: resourceType,
+      }));
+  }
+
+  getAllResourcesOfType<
+    TResourceType extends SessionCollectionMapOfResourceKeys
+  >(resourceType: TResourceType) {
+    return this.store.getAllItemsInCollection(resourceType).map((all) =>
+      all.map((r) => ({
+        ...r,
+        $resource: resourceType,
+      }))
+    );
+  }
+
+  removeAllResourcesOfType<
+    TResourceType extends SessionCollectionMapOfResourceKeys
+  >(resourceType: TResourceType) {
+    console.debug('removing', resourceType);
+    return this.store.removeCollection(resourceType).map(() => {
+      console.debug('remocved', resourceType);
+    }).mapErr((s) => {
+      console.debug('nope', s);
+    });
+  }
+
   // Subscriptions
 
   subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
@@ -363,23 +400,6 @@ export class SessionStore<
         subscriptions: remainingSubscriptions,
       };
     });
-  }
-
-  getResource<TResourceType extends SessionCollectionMapOfResourceKeys>({
-    resourceType,
-    resourceId,
-  }: {
-    resourceType: TResourceType;
-    resourceId: SessionResource['id'];
-  }) {
-    console.log('resource type', resourceType);
-    console.log('resource id', resourceId);
-    return this.store
-      .getItemInCollection(resourceType as string, resourceId)
-      .map((r) => ({
-        ...r,
-        $resource: resourceType,
-      }));
   }
 
   getResourceSubscribers<

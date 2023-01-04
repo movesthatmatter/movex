@@ -13,7 +13,7 @@ import {
   WsResponseResultPayload,
 } from './types';
 import { objectKeys, UnidentifiableModel } from 'relational-redis-store';
-import { AsyncResult, AsyncResultWrapper } from 'ts-async-results';
+import { AsyncResultWrapper } from 'ts-async-results';
 
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets

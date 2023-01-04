@@ -1,6 +1,6 @@
 import MockDate from 'mockdate';
 import { INestApplication } from '@nestjs/common';
-import { ServerSDK, SessionClient, SessionResource } from '@mtm/server-sdk';
+import { ServerSDK, SessionResource } from '@mtm/server-sdk';
 import { bootstrapServer } from '../server';
 import { Err, Ok } from 'ts-results';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
@@ -13,10 +13,10 @@ import { AsyncOk, AsyncResult } from 'ts-async-results';
 // const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
 // jest.mock('uuid', () => ({ v4: () => get_MOCKED_UUID(++mockUUIDCount) }));
 
-const delay = (ms = 500) =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+// const delay = (ms = 500) =>
+//   new Promise((resolve) => {
+//     setTimeout(resolve, ms);
+//   });
 
 // describe('My Remote Server', () => {
 let server: INestApplication;
@@ -37,7 +37,14 @@ let sdk: ServerSDK<
 
 const NOW_TIMESTAMP = new Date().getTime();
 
+const noop = () => {};
+let oldConsoleLog = console.log;
+let oldConsoleInfo = console.info;
+
 beforeAll((done) => {
+  console.log = noop;
+  console.info = noop;
+
   // Date
   MockDate.set(NOW_TIMESTAMP);
 
@@ -48,6 +55,10 @@ beforeAll((done) => {
 });
 
 afterAll((done) => {
+  // Logs
+  console.log = oldConsoleLog;
+  console.info = oldConsoleInfo;
+
   MockDate.reset();
 
   server.close().then(() => done());
