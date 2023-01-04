@@ -30,8 +30,11 @@ export class AppController {
     // return '3'
 
     return await this.session
-      .createResource('game', {
-        type: 'maha',
+      .createResource({
+        resourceType: 'game',
+        resourceData: {
+          type: 'maha',
+        },
       })
       .resolve();
   }

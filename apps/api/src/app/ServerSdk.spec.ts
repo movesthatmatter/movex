@@ -186,7 +186,7 @@ describe('Clients', () => {
 describe('Resources', () => {
   it('sends a "createResource" Request and gets a Response back succesfully', async () => {
     await sdk
-      .createResource('room', { type: 'play' })
+      .createResource({ resourceType: 'room', resourceData: { type: 'play' } })
       .map((actual) => {
         expect(actual).toEqual({
           $resource: 'room',
@@ -203,7 +203,10 @@ describe('Resources', () => {
   describe('Read & Update ', () => {
     it('gets a Resource', async () => {
       await sdk
-        .createResource('room', { type: 'play' })
+        .createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+        })
         .flatMap((createdResource) =>
           AsyncResult.all(
             new AsyncOk(createdResource),
@@ -228,7 +231,10 @@ describe('Resources', () => {
 
     it('Updates a Resource', async () => {
       await sdk
-        .createResource('room', { type: 'play' })
+        .createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+        })
         .flatMap((resource) =>
           sdk.updateResource(
             {
@@ -255,7 +261,10 @@ describe('Resources', () => {
 
     it('Updates a Resource with subscribers', async () => {
       await AsyncResult.all(
-        sdk.createResource('room', { type: 'play' }),
+        sdk.createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+        }),
         sdk.createClient({
           id: 'user-1',
           info: { age: 23, username: 'tester-1' },
@@ -330,8 +339,11 @@ describe('Resources', () => {
   describe('Removal', () => {
     it('removes a resource', async () => {
       await sdk
-        .createResource('room', {
-          type: 'meetup',
+        .createResource({
+          resourceType: 'room',
+          resourceData: {
+            type: 'meetup',
+          },
         })
         .flatMap((resource) =>
           AsyncResult.all(
@@ -357,7 +369,10 @@ describe('Resources', () => {
 describe('Subscriptions', () => {
   it('subscribes a $client to a resource', async () => {
     await AsyncResult.all(
-      sdk.createResource('room', { type: 'play' }),
+      sdk.createResource({
+        resourceType: 'room',
+        resourceData: { type: 'play' },
+      }),
       sdk.createClient({
         id: 'user-1',
         info: { age: 23, username: 'tester-1' },
@@ -398,7 +413,10 @@ describe('Subscriptions', () => {
 
   it('unsubscribes a $client from a resource', async () => {
     await AsyncResult.all(
-      sdk.createResource('room', { type: 'play' }),
+      sdk.createResource({
+        resourceType: 'room',
+        resourceData: { type: 'play' },
+      }),
       sdk.createClient({
         id: 'user-1',
         info: { age: 23, username: 'tester-1' },
@@ -436,7 +454,10 @@ describe('Subscriptions', () => {
 
   it('removes a resource with subscribers', async () => {
     await AsyncResult.all(
-      sdk.createResource('room', { type: 'play' }),
+      sdk.createResource({
+        resourceType: 'room',
+        resourceData: { type: 'play' },
+      }),
       sdk.createClient({
         id: 'user-1',
         info: { age: 23, username: 'tester-1' },

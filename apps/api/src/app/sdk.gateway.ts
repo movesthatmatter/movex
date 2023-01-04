@@ -93,9 +93,8 @@ export class SdkGateway {
     }
 
     return acknowledge(
-      // ServerSdkIO.msgs.createResource.res,
       session
-        .createResource(msg.resourceType, msg.resourceData)
+        .createResource(msg)
         .map((r) => r.item)
     );
   }

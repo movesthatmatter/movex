@@ -99,6 +99,7 @@ export namespace ServerSdkIO {
       z.object({
         resourceType: z.string(),
         resourceData: unknownRecord(),
+        resourceId: zId().optional(),
       }),
       genericSessionResource()
     ),

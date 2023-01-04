@@ -246,8 +246,11 @@ describe('SessionStore', () => {
   describe('resources', () => {
     test('creates a resource', async () => {
       const actual = await session
-        .createResource('room', {
-          type: 'play',
+        .createResource({
+          resourceType: 'room',
+          resourceData: {
+            type: 'play',
+          },
         })
         .resolve();
 
@@ -267,10 +270,54 @@ describe('SessionStore', () => {
       expect(actual).toEqual(expected);
     });
 
+    test('creates a resource with given id', async () => {
+      const actual = await session
+        .createResource({
+          resourceId: 'test-res-1',
+          resourceType: 'room',
+          resourceData: {
+            type: 'play',
+          },
+        })
+        .resolve();
+
+      const expected = new Ok({
+        index: 1,
+        length: 1,
+        item: {
+          $resource: 'room',
+          id: 'test-res-1',
+          data: {
+            type: 'play',
+          },
+          subscribers: {},
+        },
+      });
+
+      expect(actual).toEqual(expected);
+    });
+
     it('gets a resource', async () => {
-      await session.createResource('game', { type: 'maha' }).resolve();
-      await session.createResource('game', { type: 'maha' }).resolve();
-      await session.createResource('room', { type: 'play' }).resolve();
+      await session
+        .createResource({
+          resourceType: 'game',
+          resourceData: {
+            type: 'maha',
+          },
+        })
+        .resolve();
+      await session
+        .createResource({
+          resourceType: 'game',
+          resourceData: { type: 'maha' },
+        })
+        .resolve();
+      await session
+        .createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+        })
+        .resolve();
 
       const actual = await session
         .getResource({ resourceType: 'game', resourceId: get_MOCKED_UUID(2) })
@@ -293,7 +340,10 @@ describe('SessionStore', () => {
 
     it('removes a resource', async () => {
       const actual = await session
-        .createResource('game', { type: 'maha' })
+        .createResource({
+          resourceType: 'game',
+          resourceData: { type: 'maha' },
+        })
         .flatMap(({ item: resource }) =>
           session.removeResource({
             resourceType: 'game',
@@ -317,16 +367,29 @@ describe('SessionStore', () => {
 
     it('remove all resources of type', async () => {
       await AsyncResult.all(
-        session.createResource('game', { type: 'maha' }),
-        session.createResource('game', { type: 'dojo' }),
-        session.createResource('game', { type: 'maha' }),
-        session.createResource('game', { type: 'chess' }),
-        session.createResource('room', { type: 'meetup' })
+        session.createResource({
+          resourceType: 'game',
+          resourceData: { type: 'maha' },
+        }),
+        session.createResource({
+          resourceType: 'game',
+          resourceData: { type: 'dojo' },
+        }),
+        session.createResource({
+          resourceType: 'game',
+          resourceData: { type: 'maha' },
+        }),
+        session.createResource({
+          resourceType: 'game',
+          resourceData: { type: 'chess' },
+        }),
+        session.createResource({
+          resourceType: 'room',
+          resourceData: { type: 'meetup' },
+        })
       ).resolve();
 
-      await session
-        .removeAllResourcesOfType('game')
-        .resolve();
+      await session.removeAllResourcesOfType('game').resolve();
 
       const actual = await session.getAllResourcesOfType('game').resolve();
 
@@ -337,10 +400,22 @@ describe('SessionStore', () => {
 
     it('gets all resources of type', async () => {
       await AsyncResult.all(
-        session.createResource('game', { type: 'maha' }),
-        session.createResource('room', { type: 'play' }),
-        session.createResource('game', { type: 'chess' }),
-        session.createResource('room', { type: 'analysis' })
+        session.createResource({
+          resourceType: 'game',
+          resourceData: { type: 'maha' },
+        }),
+        session.createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+        }),
+        session.createResource({
+          resourceType: 'game',
+          resourceData: { type: 'chess' },
+        }),
+        session.createResource({
+          resourceType: 'room',
+          resourceData: { type: 'analysis' },
+        })
       ).resolve();
 
       const actual = await session.getAllResourcesOfType('game').resolve();
@@ -375,8 +450,11 @@ describe('SessionStore', () => {
 
       const actual = await AsyncResult.all(
         session.createClient(),
-        session.createResource('room', {
-          type: 'play',
+        session.createResource({
+          resourceType: 'room',
+          resourceData: {
+            type: 'play',
+          },
         })
       )
         .flatMap(([{ item: client }, { item: resource }]) => {
@@ -424,8 +502,11 @@ describe('SessionStore', () => {
         session.createClient({ id: '1st' }),
         session.createClient({ id: '2nd' }),
         session.createClient({ id: '3rd' }),
-        session.createResource('game', {
-          type: 'maha',
+        session.createResource({
+          resourceType: 'game',
+          resourceData: {
+            type: 'maha',
+          },
         })
       ).resolve();
 
@@ -477,9 +558,18 @@ describe('SessionStore', () => {
       await AsyncResult.all(
         session.createClient({ id: '1st' }),
         session.createClient({ id: '2nd' }),
-        session.createResource('game', { type: 'maha' }), // id: get_MOCKED_UUID(1)
-        session.createResource('room', { type: 'play' }), // id: get_MOCKED_UUID(2)
-        session.createResource('room', { type: 'play' }) //  id: get_MOCKED_UUID(3)
+        session.createResource({
+          resourceType: 'game',
+          resourceData: { type: 'maha' },
+        }), // id: get_MOCKED_UUID(1)
+        session.createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+        }), // id: get_MOCKED_UUID(2)
+        session.createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+        }) //  id: get_MOCKED_UUID(3)
       ).resolve();
 
       await session
@@ -520,8 +610,11 @@ describe('SessionStore', () => {
       await AsyncResult.all(
         session.createClient({ id: '1st' }),
         session.createClient({ id: '2nd' }),
-        session.createResource('room', {
-          type: 'play',
+        session.createResource({
+          resourceType: 'room',
+          resourceData: {
+            type: 'play',
+          },
         })
       ).resolve();
 
@@ -572,8 +665,18 @@ describe('SessionStore', () => {
 
     it('unsuscribes automatically on client removal', async () => {
       await session.createClient({ id: '1st' }).resolve();
-      await session.createResource('room', { type: 'play' }).resolve(); // id: get_MOCKED_UUID(1)
-      await session.createResource('game', { type: 'maha' }).resolve(); // id: get_MOCKED_UUID(2)
+      await session
+        .createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+        })
+        .resolve(); // id: get_MOCKED_UUID(1)
+      await session
+        .createResource({
+          resourceType: 'game',
+          resourceData: { type: 'maha' },
+        })
+        .resolve(); // id: get_MOCKED_UUID(2)
 
       await session
         .subscribeToResource('1st', {
@@ -679,7 +782,12 @@ describe('SessionStore', () => {
     it('unsubcribes all the clients automatically on resource removal', async () => {
       await session.createClient({ id: '1st' }).resolve();
       await session.createClient({ id: '2nd' }).resolve();
-      await session.createResource('room', { type: 'play' }).resolve(); // id: get_MOCKED_UUID(1)
+      await session
+        .createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+        })
+        .resolve(); // id: get_MOCKED_UUID(1)
 
       await session
         .subscribeToResource('1st', {

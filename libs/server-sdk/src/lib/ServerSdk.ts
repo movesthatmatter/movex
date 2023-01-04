@@ -7,6 +7,7 @@ import {
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
   SessionClient,
+  SessionResource,
   SessionStoreCollectionMap,
   UnknownRecord,
   UnknwownSessionResourceCollectionMap,
@@ -133,20 +134,17 @@ export class ServerSDK<
     TResourceData extends UnidentifiableModel<
       SessionCollectionMap[TResourceType]['data']
     >
-  >(resourceType: TResourceType, resourceData: TResourceData) {
+  >(p: {
+    resourceType: TResourceType;
+    resourceData: TResourceData;
+    resourceId?: SessionResource['id'];
+  }) {
     return new AsyncResultWrapper<
       ResourceCollectionMap[TResourceType],
       unknown
     >(
       new Promise((resolve) => {
-        this.socket?.emit(
-          ServerSdkIO.msgs.createResource.req,
-          {
-            resourceType,
-            resourceData,
-          },
-          resolve
-        );
+        this.socket?.emit(ServerSdkIO.msgs.createResource.req, p, resolve);
       })
     );
   }

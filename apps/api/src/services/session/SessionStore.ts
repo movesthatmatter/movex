@@ -126,15 +126,23 @@ export class SessionStore<
     TResourceData extends UnidentifiableModel<
       SessionCollectionMap[TResourceType]['data']
     >
-  >(resourceType: TResourceType, data: TResourceData) {
+  >({
+    resourceType,
+    resourceData,
+    resourceId = getUuid(),
+  }: {
+    resourceType: TResourceType;
+    resourceData: TResourceData;
+    resourceId?: string;
+  }) {
     return this.store
       .addItemToCollection(
         resourceType, // TODO: Here can add the string literal types
         {
-          data,
+          data: resourceData,
           subscribers: {},
         } as any, // TODO: Fix this stupid type casting
-        getUuid(),
+        resourceId,
         {
           foreignKeys: {} as any, // TODO: Fix this stupid type casting,
         }
@@ -251,11 +259,14 @@ export class SessionStore<
     TResourceType extends SessionCollectionMapOfResourceKeys
   >(resourceType: TResourceType) {
     console.debug('removing', resourceType);
-    return this.store.removeCollection(resourceType).map(() => {
-      console.debug('remocved', resourceType);
-    }).mapErr((s) => {
-      console.debug('nope', s);
-    });
+    return this.store
+      .removeCollection(resourceType)
+      .map(() => {
+        console.debug('remocved', resourceType);
+      })
+      .mapErr((s) => {
+        console.debug('nope', s);
+      });
   }
 
   // Subscriptions
