@@ -111,6 +111,32 @@ describe('Clients', () => {
       subscriptions: {},
     });
   });
+
+  it('gets a Client', async () => {
+    await sdk.createClient({
+      id: 'client-1',
+      info: {
+        username: 'tester',
+        age: 23,
+      },
+    });
+
+    await delay(100);
+
+    await sdk
+      .getClient({ clientId: 'client-1' })
+      .resolve()
+      .then((actual) => {
+        expect(actual.val).toEqual({
+          id: 'client-1',
+          info: {
+            age: 23,
+            username: 'tester',
+          },
+          subscriptions: {},
+        });
+      });
+  });
 });
 
 describe('Resources', () => {

@@ -45,6 +45,23 @@ export class SdkGateway {
     );
   }
 
+  @SubscribeMessage(ServerSdkIO.msgs.getClient.req)
+  async getClientReq(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    req: ServerSdkIO.Payloads['getClient']['req']
+  ) {
+    // TODO: This could be a Guard or smtg like that (a decorator)
+    const token = getConnectionToken(socket);
+    const session = token ? this.sessionService.getSession(token) : undefined;
+
+    if (!session) {
+      return;
+    }
+
+    return acknowledge(session.getClient(req.clientId));
+  }
+
   // Resources
 
   @SubscribeMessage(ServerSdkIO.msgs.createResource.req)

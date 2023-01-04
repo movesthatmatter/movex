@@ -67,7 +67,6 @@ export class ServerSDK<
       socket.on(
         ServerSdkIO.msgs[key].res,
         (res: WsResponseResultPayload<any, unknown>) => {
-          console.log(key, ServerSdkIO.msgs[key].res, 'res')
           if (res.ok) {
             this.pubsy.publish(key, res.val);
           }
@@ -98,6 +97,14 @@ export class ServerSDK<
     this.socket?.emit(ServerSdkIO.msgs.createClient.req, p);
 
     // TODO: This must return a requestId, which will be used in the onResponse
+  }
+
+  getClient(p: { clientId: SessionClient['id'] }) {
+    return new AsyncResultWrapper(
+      new Promise((resolve) => {
+        this.socket?.emit(ServerSdkIO.msgs.getClient.req, p, resolve);
+      })
+    );
   }
 
   // removeClient(id: SessionClient['id']) {
@@ -154,8 +161,7 @@ export class ServerSDK<
   getResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
     resourceIdentifier: ResourceIdentifier<TResourceType>
   ): AsyncResult<ResourceCollectionMap[TResourceType], unknown> {
-    // TODO: Rhe error should come from store as well?
-
+    // TODO: The error should come from store as well?
     return new AsyncResultWrapper(
       new Promise((resolve) => {
         this.socket?.emit(

@@ -78,6 +78,12 @@ export namespace ServerSdkIO {
       }),
       sessionClient()
     ),
+    getClient: toReqRes(
+      z.object({
+        clientId: zId(),
+      }),
+      sessionClient(),
+    ),
 
     // Resources
     createResource: toReqRes(
