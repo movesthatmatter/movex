@@ -94,7 +94,11 @@ export class ServerSDK<
   // TODO: here add an inference or something to check if the p.info is defined in the
   //  generic, and if it is it becomes required, not optional!
   createClient(p?: { id?: SessionClient['id']; info?: ClientInfo }) {
-    this.socket?.emit(ServerSdkIO.msgs.createClient.req, p);
+    return new AsyncResultWrapper<SessionClient, unknown>(
+      new Promise((resolve) => {
+        this.socket?.emit(ServerSdkIO.msgs.createClient.req, p, resolve);
+      })
+    );
 
     // TODO: This must return a requestId, which will be used in the onResponse
   }
@@ -108,8 +112,12 @@ export class ServerSDK<
   }
 
   removeClient(id: SessionClient['id']) {
-    // TODO: Create a new function for emit that takes in the correct payloads and types them
-    this.socket?.emit(ServerSdkIO.msgs.removeClient.req, { id });
+    return new AsyncResultWrapper<SessionClient, unknown>(
+      new Promise((resolve) => {
+        // TODO: Create a new function for emit that takes in the correct payloads and types them
+        this.socket?.emit(ServerSdkIO.msgs.removeClient.req, { id }, resolve);
+      })
+    );
   }
 
   // getClients = this.sessionStore.getAllClients.bind(this.sessionStore);
@@ -126,10 +134,21 @@ export class ServerSDK<
       SessionCollectionMap[TResourceType]['data']
     >
   >(resourceType: TResourceType, resourceData: TResourceData) {
-    this.socket?.emit(ServerSdkIO.msgs.createResource.req, {
-      resourceType,
-      resourceData,
-    });
+    return new AsyncResultWrapper<
+      ResourceCollectionMap[TResourceType],
+      unknown
+    >(
+      new Promise((resolve) => {
+        this.socket?.emit(
+          ServerSdkIO.msgs.createResource.req,
+          {
+            resourceType,
+            resourceData,
+          },
+          resolve
+        );
+      })
+    );
   }
 
   updateResource<
@@ -141,25 +160,50 @@ export class ServerSDK<
     resourceIdentifier: ResourceIdentifier<TResourceType>,
     data: Partial<TResourceData>
   ) {
-    this.socket?.emit(ServerSdkIO.msgs.updateResource.req, {
-      resourceIdentifier,
-      data,
-    });
+    return new AsyncResultWrapper<
+      ResourceCollectionMap[TResourceType],
+      unknown
+    >(
+      new Promise((resolve) => {
+        this.socket?.emit(
+          ServerSdkIO.msgs.updateResource.req,
+          {
+            resourceIdentifier,
+            data,
+          },
+          resolve
+        );
+      })
+    );
   }
 
   removeResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
     resourceIdentifier: ResourceIdentifier<TResourceType>
   ) {
-    this.socket?.emit(ServerSdkIO.msgs.removeResource.req, {
-      resourceIdentifier,
-    });
+    return new AsyncResultWrapper<
+      ServerSdkIO.MsgToResponseMap['removeResource'],
+      unknown
+    >(
+      new Promise((resolve) => {
+        this.socket?.emit(
+          ServerSdkIO.msgs.removeResource.req,
+          {
+            resourceIdentifier,
+          },
+          resolve
+        );
+      })
+    );
   }
 
   getResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
     resourceIdentifier: ResourceIdentifier<TResourceType>
-  ): AsyncResult<ResourceCollectionMap[TResourceType], unknown> {
+  ) {
     // TODO: The error should come from store as well?
-    return new AsyncResultWrapper(
+    return new AsyncResultWrapper<
+      ResourceCollectionMap[TResourceType],
+      unknown
+    >(
       new Promise((resolve) => {
         this.socket?.emit(
           ServerSdkIO.msgs.getResource.req,
@@ -184,10 +228,24 @@ export class ServerSDK<
     clientId: SessionClient['id'],
     resourceIdentifier: ResourceIdentifier<TResourceType>
   ) {
-    this.socket?.emit(ServerSdkIO.msgs.subscribeToResource.req, {
-      clientId,
-      resourceIdentifier,
-    });
+    return new AsyncResultWrapper<
+      {
+        resource: ResourceCollectionMap[TResourceType];
+        client: SessionClient;
+      },
+      unknown
+    >(
+      new Promise((resolve) =>
+        this.socket?.emit(
+          ServerSdkIO.msgs.subscribeToResource.req,
+          {
+            clientId,
+            resourceIdentifier,
+          },
+          resolve
+        )
+      )
+    );
   }
 
   unsubscribeFromResource<
@@ -196,10 +254,24 @@ export class ServerSDK<
     clientId: SessionClient['id'],
     resourceIdentifier: ResourceIdentifier<TResourceType>
   ) {
-    this.socket?.emit(ServerSdkIO.msgs.unsubscribeFromResource.req, {
-      clientId,
-      resourceIdentifier,
-    });
+    return new AsyncResultWrapper<
+      {
+        resource: ResourceCollectionMap[TResourceType];
+        client: SessionClient;
+      },
+      unknown
+    >(
+      new Promise((resolve) =>
+        this.socket?.emit(
+          ServerSdkIO.msgs.unsubscribeFromResource.req,
+          {
+            clientId,
+            resourceIdentifier,
+          },
+          resolve
+        )
+      )
+    );
   }
 
   // TODO: Start using this for typed payloads!

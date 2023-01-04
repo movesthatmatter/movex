@@ -39,10 +39,7 @@ export class SdkGateway {
       return;
     }
 
-    return emit(
-      ServerSdkIO.msgs.createClient.res,
-      session.createClient(msg).map((r) => r.item)
-    );
+    return acknowledge(session.createClient(msg).map((r) => r.item));
   }
 
   @SubscribeMessage(ServerSdkIO.msgs.getClient.req)
@@ -76,10 +73,7 @@ export class SdkGateway {
       return;
     }
 
-    return emit(
-      ServerSdkIO.msgs.removeClient.res,
-      session.removeClient(req.id).map((r) => r.item),
-    );
+    return acknowledge(session.removeClient(req.id).map((r) => r.item));
   }
 
   // Resources
@@ -98,8 +92,8 @@ export class SdkGateway {
       return;
     }
 
-    return emit(
-      ServerSdkIO.msgs.createResource.res,
+    return acknowledge(
+      // ServerSdkIO.msgs.createResource.res,
       session
         .createResource(msg.resourceType, msg.resourceData)
         .map((r) => r.item)
@@ -137,8 +131,7 @@ export class SdkGateway {
       return;
     }
 
-    return emit(
-      ServerSdkIO.msgs.updateResource.res,
+    return acknowledge(
       session.updateResourceData(msg.resourceIdentifier, msg.data)
     );
   }
@@ -157,8 +150,7 @@ export class SdkGateway {
       return;
     }
 
-    return emit(
-      ServerSdkIO.msgs.removeResource.res,
+    return acknowledge(
       session.removeResource(msg.resourceIdentifier).map((r) => r.item)
     );
   }
@@ -179,8 +171,7 @@ export class SdkGateway {
       return;
     }
 
-    return emit(
-      ServerSdkIO.msgs.subscribeToResource.res,
+    return acknowledge(
       session.subscribeToResource(msg.clientId, msg.resourceIdentifier)
     );
   }
@@ -199,8 +190,7 @@ export class SdkGateway {
       return;
     }
 
-    return emit(
-      ServerSdkIO.msgs.unsubscribeFromResource.res,
+    return acknowledge(
       session.unsubscribeFromResource(msg.clientId, msg.resourceIdentifier)
     );
   }

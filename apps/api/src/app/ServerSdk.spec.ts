@@ -2,6 +2,8 @@ import MockDate from 'mockdate';
 import { INestApplication } from '@nestjs/common';
 import { ServerSDK, SessionClient, SessionResource } from '@mtm/server-sdk';
 import { bootstrapServer } from '../server';
+import { Err, Ok } from 'ts-results';
+import { AsyncOk, AsyncResult } from 'ts-async-results';
 
 // This depends on the server and it's more of an e2e test, so I'll leave it here
 // for now! Until further ado! The server-sdk lib can be tested by itself w/o
@@ -67,67 +69,51 @@ afterEach((done) => {
 
 describe('Clients', () => {
   it('sends a "createClient" Request and gets a Response back succesfully', async () => {
-    let actualClient: SessionClient | undefined;
-    sdk.on('createClient', (client) => {
-      actualClient = client;
-    });
-
-    sdk.createClient();
-
-    // TODO: This is only needed because we are still using
-    //  the real redis not the mocked one!
-    await delay(100);
-
-    expect(actualClient).toEqual({
-      id: actualClient?.id,
-      subscriptions: {},
-    });
+    await sdk
+      .createClient()
+      .map((actual) => {
+        expect(actual).toEqual({
+          id: actual.id,
+          subscriptions: {},
+        });
+      })
+      .resolve();
   });
 
   it('sends a "createClient" Request with given id and params and gets a Response back succesfully', async () => {
-    let actualClient: SessionClient | undefined;
-    sdk.on('createClient', (client) => {
-      actualClient = client;
-    });
-
-    sdk.createClient({
-      id: 'client-1',
-      info: {
-        username: 'tester',
-        age: 23,
-      },
-    });
-
-    // TODO: This is only needed because we are still using
-    //  the real redis not the mocked one!
-    await delay(100);
-
-    expect(actualClient).toEqual({
-      id: 'client-1',
-      info: {
-        username: 'tester',
-        age: 23,
-      },
-      subscriptions: {},
-    });
+    await sdk
+      .createClient({
+        id: 'client-1',
+        info: {
+          username: 'tester',
+          age: 23,
+        },
+      })
+      .map((actual) => {
+        expect(actual).toEqual({
+          id: 'client-1',
+          info: {
+            username: 'tester',
+            age: 23,
+          },
+          subscriptions: {},
+        });
+      })
+      .resolve();
   });
 
   it('gets a Client', async () => {
-    await sdk.createClient({
-      id: 'client-1',
-      info: {
-        username: 'tester',
-        age: 23,
-      },
-    });
-
-    await delay(100);
-
     await sdk
-      .getClient('client-1')
-      .resolve()
-      .then((actual) => {
-        expect(actual.val).toEqual({
+      .createClient({
+        id: 'client-1',
+        info: {
+          username: 'tester',
+          age: 23,
+        },
+      })
+      .flatMap(() => sdk.getClient('client-1'))
+      .map((actual) => {
+        expect(actual).toEqual({
           id: 'client-1',
           info: {
             age: 23,
@@ -135,20 +121,21 @@ describe('Clients', () => {
           },
           subscriptions: {},
         });
-      });
+      })
+      .resolve();
   });
 
   it('removes a Client', async () => {
     const clientId = 'client-for-removal';
-    await sdk.createClient({
-      id: clientId,
-      info: {
-        username: 'tester',
-        age: 23,
-      },
-    });
-
-    await delay(100);
+    await sdk
+      .createClient({
+        id: clientId,
+        info: {
+          username: 'tester',
+          age: 23,
+        },
+      })
+      .resolve();
 
     await sdk
       .getClient(clientId)
@@ -164,18 +151,10 @@ describe('Clients', () => {
         });
       });
 
-    await delay(100);
+    const actualRemoval = await sdk.removeClient(clientId).resolve();
+    const actualRetrieval = await sdk.getClient(clientId).resolve();
 
-    const spy = jest.fn();
-    sdk.on('removeClient', spy);
-
-    await sdk.removeClient(clientId);
-
-    await delay(100);
-
-    const actual = await sdk.getClient(clientId).resolve();
-
-    expect(actual).toEqual({
+    expect(actualRetrieval).toEqual({
       err: true,
       ok: false,
       val: {
@@ -184,386 +163,298 @@ describe('Clients', () => {
       },
     });
 
-    expect(spy).toHaveBeenCalledWith({
-      id: clientId,
-      subscriptions: {},
-    });
+    expect(actualRemoval).toEqual(
+      new Ok({
+        id: clientId,
+        subscriptions: {},
+      })
+    );
   });
 });
 
 describe('Resources', () => {
   it('sends a "createResource" Request and gets a Response back succesfully', async () => {
-    let actualResource: SessionResource | undefined;
-    sdk.on('createResource', (resource) => {
-      actualResource = resource;
-    });
-
-    sdk.createResource('room', { type: 'play' });
-
-    // TODO: This is only needed because we are still using
-    //  the real redis not the mocked one!
-    await delay(100);
-
-    expect(actualResource).toEqual({
-      $resource: 'room',
-      id: actualResource?.id,
-      data: {
-        type: 'play',
-      },
-      subscribers: {},
-    });
+    await sdk
+      .createResource('room', { type: 'play' })
+      .map((actual) => {
+        expect(actual).toEqual({
+          $resource: 'room',
+          id: actual.id,
+          data: {
+            type: 'play',
+          },
+          subscribers: {},
+        });
+      })
+      .resolve();
   });
 
   describe('Read & Update ', () => {
-    let actualResource: SessionResource | undefined;
-
-    beforeEach(async () => {
-      sdk.on('createResource', (resource) => {
-        actualResource = resource;
-      });
-
-      sdk.createResource('room', { type: 'play' });
-
-      // TODO: This is only needed because we are still using
-      //  the real redis not the mocked one!
-      return delay(100);
-    });
-
     it('gets a Resource', async () => {
-      expect(actualResource?.id).toBeDefined();
-      if (!actualResource?.id) {
-        return;
-      }
-
       await sdk
-        .getResource({
-          resourceId: actualResource.id,
-          resourceType: 'room',
-        })
-        .resolve()
-        .then((actual) => {
-          expect(actual.val).toEqual({
+        .createResource('room', { type: 'play' })
+        .flatMap((createdResource) =>
+          AsyncResult.all(
+            new AsyncOk(createdResource),
+            sdk.getResource({
+              resourceId: createdResource.id,
+              resourceType: 'room',
+            })
+          )
+        )
+        .map(([createdResource, actual]) => {
+          expect(actual).toEqual({
             $resource: 'room',
-            id: actualResource!.id,
+            id: createdResource.id,
             data: {
               type: 'play',
             },
             subscribers: {},
           });
-        });
+        })
+        .resolve();
     });
 
     it('Updates a Resource', async () => {
-      expect(actualResource).toEqual({
-        $resource: 'room',
-        id: actualResource?.id,
-        data: {
-          type: 'play',
-        },
-        subscribers: {},
-      });
-
-      sdk.on('updateResource', (resource) => {
-        actualResource = resource;
-      });
-
-      sdk.updateResource(
-        {
-          resourceId: actualResource!.id,
-          resourceType: 'room',
-        },
-        {
-          type: 'meetup',
-        }
-      );
-
-      // TODO: This is only needed because we are still using
-      //  the real redis not the mocked one!
-      await delay(100);
-
-      expect(actualResource).toEqual({
-        $resource: 'room',
-        id: actualResource?.id,
-        data: {
-          type: 'meetup',
-        },
-        subscribers: {},
-      });
+      await sdk
+        .createResource('room', { type: 'play' })
+        .flatMap((resource) =>
+          sdk.updateResource(
+            {
+              resourceId: resource.id,
+              resourceType: 'room',
+            },
+            {
+              type: 'meetup',
+            }
+          )
+        )
+        .map((actual) => {
+          expect(actual).toEqual({
+            $resource: 'room',
+            id: actual.id,
+            data: {
+              type: 'meetup',
+            },
+            subscribers: {},
+          });
+        })
+        .resolve();
     });
 
     it('Updates a Resource with subscribers', async () => {
-      expect(actualResource).toEqual({
-        $resource: 'room',
-        id: actualResource?.id,
-        data: {
-          type: 'play',
-        },
-        subscribers: {},
-      });
-
-      let actualClient: SessionClient | undefined;
-      sdk.on('createClient', (client) => {
-        actualClient = client;
-      });
-      sdk.createClient({
-        id: 'user-1',
-        info: { age: 23, username: 'tester-1' },
-      });
-
-      await delay(100);
-
-      expect(actualResource).toBeDefined();
-      expect(actualClient).toBeDefined();
-      if (!(actualResource?.id && actualClient?.id)) {
-        return;
-      }
-
-      sdk.subscribeToResource('user-1', {
-        resourceId: actualResource.id,
-        resourceType: 'room',
-      });
-
-      await delay(100);
-
-      sdk.on('updateResource', (resource) => {
-        actualResource = resource;
-      });
-
-      sdk.updateResource(
-        {
-          resourceId: actualResource!.id,
-          resourceType: 'room',
-        },
-        {
-          type: 'meetup',
-        }
-      );
-
-      // TODO: This is only needed because we are still using
-      //  the real redis not the mocked one!
-      await delay(100);
-
-      expect(actualResource).toEqual({
-        $resource: 'room',
-        id: actualResource?.id,
-        data: {
-          type: 'meetup',
-        },
-        subscribers: {
-          'user-1': {
-            subscribedAt: NOW_TIMESTAMP,
-          },
-        },
-      });
+      await AsyncResult.all(
+        sdk.createResource('room', { type: 'play' }),
+        sdk.createClient({
+          id: 'user-1',
+          info: { age: 23, username: 'tester-1' },
+        })
+      )
+        .flatMap(([resource, client]) =>
+          AsyncResult.all(
+            new AsyncOk(resource),
+            new AsyncOk(client),
+            sdk.subscribeToResource(client.id, {
+              resourceId: resource.id,
+              resourceType: 'room',
+            })
+          )
+        )
+        .map(
+          AsyncResult.passThrough(([resource, client, subscriptionRes]) => {
+            expect(subscriptionRes).toEqual({
+              client: {
+                ...client,
+                subscriptions: {
+                  [`room:${resource.id}`]: {
+                    subscribedAt: NOW_TIMESTAMP,
+                  },
+                },
+              },
+              resource: {
+                ...resource,
+                subscribers: {
+                  [client.id]: {
+                    subscribedAt: NOW_TIMESTAMP,
+                  },
+                },
+              },
+            });
+          })
+        )
+        .flatMap(([resource, client]) =>
+          AsyncResult.all(
+            sdk.updateResource(
+              {
+                resourceId: resource.id,
+                resourceType: 'room',
+              },
+              {
+                type: 'meetup',
+              }
+            ),
+            new AsyncOk(client)
+          )
+        )
+        .map(
+          AsyncResult.passThrough(([updatedResource, client]) => {
+            expect(updatedResource).toEqual({
+              $resource: 'room',
+              id: updatedResource.id,
+              data: {
+                type: 'meetup',
+              },
+              subscribers: {
+                [client.id]: {
+                  subscribedAt: NOW_TIMESTAMP,
+                },
+              },
+            });
+          })
+        )
+        .resolve();
     });
   });
 
   describe('Removal', () => {
     it('removes a resource', async () => {
-      let actualResource: SessionResource | undefined;
-      sdk.on('createResource', (resource) => {
-        actualResource = resource;
-      });
-
-      sdk.createResource('room', {
-        type: 'meetup',
-      });
-
-      await delay(100);
-
-      const spy = jest.fn();
-      sdk.on('removeResource', spy);
-
-      sdk.removeResource({
-        resourceId: actualResource!.id,
-        resourceType: 'room',
-      });
-
-      await delay(100);
-
-      expect(spy).toHaveBeenCalledWith({
-        resourceId: actualResource!.id,
-        resourceType: 'room',
-        subscribers: {},
-      });
+      await sdk
+        .createResource('room', {
+          type: 'meetup',
+        })
+        .flatMap((resource) =>
+          AsyncResult.all(
+            new AsyncOk(resource),
+            sdk.removeResource({
+              resourceId: resource.id,
+              resourceType: 'room',
+            })
+          )
+        )
+        .map(([prevResource, actual]) => {
+          expect(actual).toEqual({
+            resourceId: prevResource.id,
+            resourceType: 'room',
+            subscribers: {},
+          });
+        })
+        .resolve();
     });
   });
 });
 
 describe('Subscriptions', () => {
-  let actualResource: SessionResource | undefined;
-  let actualClient: SessionClient | undefined;
-
-  beforeEach(async () => {
-    sdk.on('createResource', (resource) => {
-      actualResource = resource;
-    });
-    sdk.createResource('room', { type: 'play' });
-
-    sdk.on('createClient', (client) => {
-      actualClient = client;
-    });
-    sdk.createClient({ id: 'user-1', info: { age: 23, username: 'tester-1' } });
-
-    // TODO: This is only needed because we are still using
-    //  the real redis not the mocked one!
-    return delay(100);
-  });
-
   it('subscribes a $client to a resource', async () => {
-    expect(actualResource).toBeDefined();
-    expect(actualClient).toBeDefined();
-    if (!(actualResource?.id && actualClient?.id)) {
-      return;
-    }
-
-    const spy = jest.fn();
-
-    sdk.on('subscribeToResource', spy);
-
-    sdk.subscribeToResource('user-1', {
-      resourceId: actualResource.id,
-      resourceType: 'room',
-    });
-
-    await delay(100);
-
-    expect(spy).toBeCalledWith({
-      client: {
+    await AsyncResult.all(
+      sdk.createResource('room', { type: 'play' }),
+      sdk.createClient({
         id: 'user-1',
-        info: {
-          username: 'tester-1',
-          age: 23,
-        },
-        subscriptions: {
-          [`room:${actualResource.id}`]: {
-            subscribedAt: NOW_TIMESTAMP,
+        info: { age: 23, username: 'tester-1' },
+      })
+    )
+      .flatMap(([resource, client]) =>
+        AsyncResult.all(
+          new AsyncOk(resource),
+          new AsyncOk(client),
+          sdk.subscribeToResource('user-1', {
+            resourceId: resource.id,
+            resourceType: 'room',
+          })
+        )
+      )
+      .map(([resource, client, subscription]) => {
+        expect(subscription).toEqual({
+          client: {
+            ...client,
+            subscriptions: {
+              [`room:${resource.id}`]: {
+                subscribedAt: NOW_TIMESTAMP,
+              },
+            },
           },
-        },
-      },
-      resource: {
-        $resource: 'room',
-        id: actualResource.id,
-        data: {
-          type: 'play',
-        },
-        subscribers: {
-          'user-1': {
-            subscribedAt: NOW_TIMESTAMP,
+          resource: {
+            ...resource,
+            subscribers: {
+              [client.id]: {
+                subscribedAt: NOW_TIMESTAMP,
+              },
+            },
           },
-        },
-      },
-    });
+        });
+      })
+      .resolve();
   });
 
   it('unsubscribes a $client from a resource', async () => {
-    expect(actualResource).toBeDefined();
-    expect(actualClient).toBeDefined();
-    if (!(actualResource?.id && actualClient?.id)) {
-      return;
-    }
-
-    const suscriptionSpy = jest.fn();
-
-    sdk.on('subscribeToResource', suscriptionSpy);
-
-    sdk.subscribeToResource('user-1', {
-      resourceId: actualResource.id,
-      resourceType: 'room',
-    });
-
-    await delay(100);
-
-    expect(suscriptionSpy).toBeCalledWith({
-      client: {
+    await AsyncResult.all(
+      sdk.createResource('room', { type: 'play' }),
+      sdk.createClient({
         id: 'user-1',
-        info: {
-          username: 'tester-1',
-          age: 23,
-        },
-        subscriptions: {
-          [`room:${actualResource.id}`]: {
-            subscribedAt: NOW_TIMESTAMP,
+        info: { age: 23, username: 'tester-1' },
+      })
+    )
+      .flatMap(([resource, client]) =>
+        sdk.subscribeToResource(client.id, {
+          resourceId: resource.id,
+          resourceType: 'room',
+        })
+      )
+      .flatMap(({ resource, client }) =>
+        AsyncResult.all(
+          ...[resource, client].map((a) => new AsyncOk(a)),
+          sdk.unsubscribeFromResource(client.id, {
+            resourceId: resource.id,
+            resourceType: 'room',
+          })
+        )
+      )
+      .map(([resource, client, unsubscriptionResult]) => {
+        expect(unsubscriptionResult).toEqual({
+          resource: {
+            ...resource,
+            subscribers: {},
           },
-        },
-      },
-      resource: {
-        $resource: 'room',
-        id: actualResource.id,
-        data: {
-          type: 'play',
-        },
-        subscribers: {
-          'user-1': {
-            subscribedAt: NOW_TIMESTAMP,
+          client: {
+            ...client,
+            subscriptions: {},
           },
-        },
-      },
-    });
-
-    const spy = jest.fn();
-    sdk.on('unsubscribeFromResource', spy);
-
-    sdk.unsubscribeFromResource('user-1', {
-      resourceId: actualResource.id,
-      resourceType: 'room',
-    });
-
-    await delay(100);
-
-    expect(spy).toBeCalledWith({
-      client: {
-        id: 'user-1',
-        info: {
-          username: 'tester-1',
-          age: 23,
-        },
-        subscriptions: {},
-      },
-      resource: {
-        $resource: 'room',
-        id: actualResource.id,
-        data: {
-          type: 'play',
-        },
-        subscribers: {},
-      },
-    });
+        });
+      })
+      .resolve();
   });
 
   it('removes a resource with subscribers', async () => {
-    expect(actualResource).toBeDefined();
-
-    if (!actualResource) {
-      return;
-    }
-
-    sdk.subscribeToResource('user-1', {
-      resourceId: actualResource.id,
-      resourceType: 'room',
-    });
-
-    await delay(100);
-
-    const spy = jest.fn();
-    sdk.on('removeResource', spy);
-
-    sdk.removeResource({
-      resourceId: actualResource.id,
-      resourceType: 'room',
-    });
-
-    await delay(100);
-
-    expect(spy).toHaveBeenCalledWith({
-      resourceId: actualResource.id,
-      resourceType: 'room',
-      subscribers: {
-        'user-1': {
-          subscribedAt: NOW_TIMESTAMP,
-        },
-      },
-    });
+    await AsyncResult.all(
+      sdk.createResource('room', { type: 'play' }),
+      sdk.createClient({
+        id: 'user-1',
+        info: { age: 23, username: 'tester-1' },
+      })
+    )
+      .flatMap(([resource, client]) =>
+        sdk.subscribeToResource(client.id, {
+          resourceId: resource.id,
+          resourceType: 'room',
+        })
+      )
+      .flatMap(({ resource }) =>
+        sdk.removeResource({
+          resourceId: resource.id,
+          resourceType: 'room',
+        })
+      )
+      .map((actual) => {
+        expect(actual).toEqual({
+          resourceId: actual.resourceId,
+          resourceType: 'room',
+          subscribers: {
+            'user-1': {
+              subscribedAt: NOW_TIMESTAMP,
+            },
+          },
+        });
+      })
+      .resolve();
   });
 });
 // });
