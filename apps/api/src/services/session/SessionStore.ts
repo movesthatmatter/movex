@@ -359,6 +359,8 @@ export class SessionStore<
     resourceType: TResourceType;
     resourceId: SessionResource['id'];
   }) {
+    console.log('resource type', resourceType);
+    console.log('resource id', resourceId);
     return this.store
       .getItemInCollection(resourceType as string, resourceId)
       .map((r) => ({

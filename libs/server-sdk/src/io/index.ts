@@ -87,6 +87,10 @@ export namespace ServerSdkIO {
       }),
       genericSessionResource()
     ),
+    getResource: toReqRes(
+      genericResourceIdentifier(),
+      genericSessionResource()
+    ),
     updateResource: toReqRes(
       z.object({
         resourceIdentifier: genericResourceIdentifier(),
@@ -132,8 +136,12 @@ export namespace ServerSdkIO {
       return {
         ...accum,
         [next]: {
-          req: `req::${next}`,
-          res: `res::${next}`,
+          // req: `req::${next}`,
+          // res: `res::${next}`,
+          // ToDo: this could be removed completely in favor of one map of "channels"
+          //  The req/res only maps to emit => req, on => res. no need to change the naming as well
+          req: next,
+          res: next,
         },
       };
     },

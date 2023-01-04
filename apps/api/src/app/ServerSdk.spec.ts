@@ -136,7 +136,7 @@ describe('Resources', () => {
     });
   });
 
-  describe('Read/Update/Delete ', () => {
+  describe('Read & Update ', () => {
     let actualResource: SessionResource | undefined;
 
     beforeEach(async () => {
@@ -151,21 +151,29 @@ describe('Resources', () => {
       return delay(100);
     });
 
-    // it('gets a Resource', async () => {
+    it('gets a Resource', async () => {
+      expect(actualResource?.id).toBeDefined();
+      if (!actualResource?.id) {
+        return;
+      }
 
-    //   // TODO: This is only needed because we are still using
-    //   //  the real redis not the mocked one!
-    //   await delay(100);
-
-    //   expect(actualResource).toEqual({
-    //     $resource: 'room',
-    //     id: actualResource?.id,
-    //     data: {
-    //       type: 'play',
-    //     },
-    //     subscribers: {},
-    //   });
-    // });
+      await sdk
+        .getResource({
+          resourceId: actualResource.id,
+          resourceType: 'room',
+        })
+        .resolve()
+        .then((actual) => {
+          expect(actual.val).toEqual({
+            $resource: 'room',
+            id: actualResource!.id,
+            data: {
+              type: 'play',
+            },
+            subscribers: {},
+          });
+        });
+    });
 
     it('Updates a Resource', async () => {
       expect(actualResource).toEqual({

@@ -13,6 +13,7 @@ import {
   WsResponseResultPayload,
 } from './types';
 import { objectKeys, UnidentifiableModel } from 'relational-redis-store';
+import { AsyncResult, AsyncResultWrapper } from 'ts-async-results';
 
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets
@@ -66,6 +67,7 @@ export class ServerSDK<
       socket.on(
         ServerSdkIO.msgs[key].res,
         (res: WsResponseResultPayload<any, unknown>) => {
+          console.log(key, ServerSdkIO.msgs[key].res, 'res')
           if (res.ok) {
             this.pubsy.publish(key, res.val);
           }
@@ -79,6 +81,9 @@ export class ServerSDK<
   }
 
   on = this.pubsy.subscribe.bind(this.pubsy);
+
+  // TODO: This will be able to proxy all of the events
+  // onAll() {}
 
   // This are message that wait for a response
   // private emitAndWaitForResponse(topic: string, msg?: unknown) {
@@ -144,6 +149,22 @@ export class ServerSDK<
     this.socket?.emit(ServerSdkIO.msgs.removeResource.req, {
       resourceIdentifier,
     });
+  }
+
+  getResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
+    resourceIdentifier: ResourceIdentifier<TResourceType>
+  ): AsyncResult<ResourceCollectionMap[TResourceType], unknown> {
+    // TODO: Rhe error should come from store as well?
+
+    return new AsyncResultWrapper(
+      new Promise((resolve) => {
+        this.socket?.emit(
+          ServerSdkIO.msgs.getResource.req,
+          resourceIdentifier,
+          resolve
+        );
+      })
+    );
   }
 
   // getResource = this.sessionStore.getResource.bind(this.sessionStore);

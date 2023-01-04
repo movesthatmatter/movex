@@ -39,7 +39,7 @@ export class SdkGateway {
       return;
     }
 
-    return asyncResultToWsResponse(
+    return emit(
       ServerSdkIO.msgs.createClient.res,
       session.createClient(msg).map((r) => r.item)
     );
@@ -61,12 +61,29 @@ export class SdkGateway {
       return;
     }
 
-    return asyncResultToWsResponse(
+    return emit(
       ServerSdkIO.msgs.createResource.res,
       session
         .createResource(msg.resourceType, msg.resourceData)
         .map((r) => r.item)
     );
+  }
+
+  @SubscribeMessage(ServerSdkIO.msgs.getResource.req)
+  async getResourceReq(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    msg: ServerSdkIO.Payloads['getResource']['req']
+  ) {
+    // TODO: This could be a Guard or smtg like that (a decorator)
+    const token = getConnectionToken(socket);
+    const session = token ? this.sessionService.getSession(token) : undefined;
+
+    if (!session) {
+      return;
+    }
+
+    return acknowledge(session.getResource(msg));
   }
 
   @SubscribeMessage(ServerSdkIO.msgs.updateResource.req)
@@ -83,7 +100,7 @@ export class SdkGateway {
       return;
     }
 
-    return asyncResultToWsResponse(
+    return emit(
       ServerSdkIO.msgs.updateResource.res,
       session.updateResourceData(msg.resourceIdentifier, msg.data)
     );
@@ -103,7 +120,7 @@ export class SdkGateway {
       return;
     }
 
-    return asyncResultToWsResponse(
+    return emit(
       ServerSdkIO.msgs.removeResource.res,
       session.removeResource(msg.resourceIdentifier).map((r) => r.item)
     );
@@ -125,7 +142,7 @@ export class SdkGateway {
       return;
     }
 
-    return asyncResultToWsResponse(
+    return emit(
       ServerSdkIO.msgs.subscribeToResource.res,
       session.subscribeToResource(msg.clientId, msg.resourceIdentifier)
     );
@@ -145,33 +162,35 @@ export class SdkGateway {
       return;
     }
 
-    return asyncResultToWsResponse(
+    return emit(
       ServerSdkIO.msgs.unsubscribeFromResource.res,
       session.unsubscribeFromResource(msg.clientId, msg.resourceIdentifier)
     );
   }
 }
 
-const asyncResultToWsResponse = async <T, E>(
+const emit = async <T, E>(
   event: string,
   ar: AsyncResult<T, E>
-): Promise<WsResponseAsResult<T, E>> => {
+): Promise<WsResponseAsResult<T, E>> => ({
+  event,
+  data: await acknowledge(ar),
+});
+
+const acknowledge = async <T, E>(ar: AsyncResult<T, E>) => {
   const r = await ar.resolve();
 
-  return {
-    event,
-    data: r.ok
-      ? {
-          ok: true,
-          err: false,
-          val: r.val,
-        }
-      : {
-          ok: false,
-          err: true,
-          val: r.val,
-        },
-  };
+  return r.ok
+    ? ({
+        ok: true,
+        err: false,
+        val: r.val,
+      } as const)
+    : ({
+        ok: false,
+        err: true,
+        val: r.val,
+      } as const);
 };
 
 const getConnectionToken = (socket: Socket) => {
