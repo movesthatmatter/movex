@@ -99,27 +99,24 @@ export class ServerSDK<
     // TODO: This must return a requestId, which will be used in the onResponse
   }
 
-  getClient(p: { clientId: SessionClient['id'] }) {
+  getClient(id: SessionClient['id']) {
     return new AsyncResultWrapper(
       new Promise((resolve) => {
-        this.socket?.emit(ServerSdkIO.msgs.getClient.req, p, resolve);
+        this.socket?.emit(ServerSdkIO.msgs.getClient.req, { id }, resolve);
       })
     );
   }
 
-  // removeClient(id: SessionClient['id']) {
-  //   this.socket?.emit('');
-  // }
-
-  // getClient = this.sessionStore.getClient.bind(this.sessionStore);
+  removeClient(id: SessionClient['id']) {
+    // TODO: Create a new function for emit that takes in the correct payloads and types them
+    this.socket?.emit(ServerSdkIO.msgs.removeClient.req, { id });
+  }
 
   // getClients = this.sessionStore.getAllClients.bind(this.sessionStore);
 
   // getAllClients = this.sessionStore.getAllClients.bind(this.sessionStore);
 
   // updateClient = this.sessionStore.updateClient.bind(this.sessionStore);
-
-  // removeClient = this.sessionStore.removeClient.bind(this.sessionStore);
 
   // // Resource
 
@@ -173,8 +170,6 @@ export class ServerSDK<
     );
   }
 
-  // getResource = this.sessionStore.getResource.bind(this.sessionStore);
-
   // getResourceSubscribers = this.sessionStore.getResourceSubscribers.bind(
   //   this.sessionStore
   // );
@@ -207,13 +202,14 @@ export class ServerSDK<
     });
   }
 
-  // private emit = <
-  //   K extends keyof typeof ServerSdkIO.msgs,
-  //   TPayload extends ServerSdkIO.Payloads[K]['req']
-  // >(
-  //   k: K,
-  //   payload: TPayload
-  // ) => {
-  //   this.socket?.emit(ServerSdkIO.msgs[k].req, payload);
-  // };
+  // TODO: Start using this for typed payloads!
+  private emit = <
+    K extends keyof typeof ServerSdkIO.msgs,
+    TPayload extends ServerSdkIO.Payloads[K]['req']
+  >(
+    k: K,
+    payload: TPayload
+  ) => {
+    this.socket?.emit(ServerSdkIO.msgs[k].req, payload);
+  };
 }

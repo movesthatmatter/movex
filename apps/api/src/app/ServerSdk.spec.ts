@@ -124,7 +124,7 @@ describe('Clients', () => {
     await delay(100);
 
     await sdk
-      .getClient({ clientId: 'client-1' })
+      .getClient('client-1')
       .resolve()
       .then((actual) => {
         expect(actual.val).toEqual({
@@ -136,6 +136,58 @@ describe('Clients', () => {
           subscriptions: {},
         });
       });
+  });
+
+  it('removes a Client', async () => {
+    const clientId = 'client-for-removal';
+    await sdk.createClient({
+      id: clientId,
+      info: {
+        username: 'tester',
+        age: 23,
+      },
+    });
+
+    await delay(100);
+
+    await sdk
+      .getClient(clientId)
+      .resolve()
+      .then((actual) => {
+        expect(actual.val).toEqual({
+          id: clientId,
+          info: {
+            age: 23,
+            username: 'tester',
+          },
+          subscriptions: {},
+        });
+      });
+
+    await delay(100);
+
+    const spy = jest.fn();
+    sdk.on('removeClient', spy);
+
+    await sdk.removeClient(clientId);
+
+    await delay(100);
+
+    const actual = await sdk.getClient(clientId).resolve();
+
+    expect(actual).toEqual({
+      err: true,
+      ok: false,
+      val: {
+        kind: 'ServerSDKError',
+        reason: 'CollectionFieldInexistent',
+      },
+    });
+
+    expect(spy).toHaveBeenCalledWith({
+      id: clientId,
+      subscriptions: {},
+    });
   });
 });
 

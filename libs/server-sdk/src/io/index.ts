@@ -80,9 +80,18 @@ export namespace ServerSdkIO {
     ),
     getClient: toReqRes(
       z.object({
-        clientId: zId(),
+        id: zId(),
       }),
-      sessionClient(),
+      sessionClient()
+    ),
+    removeClient: toReqRes(
+      z.object({
+        id: zId(),
+      }),
+      z.object({
+        id: zId(),
+        subscriptions: genericSessionResource().shape.subscribers,
+      })
     ),
 
     // Resources
@@ -108,7 +117,13 @@ export namespace ServerSdkIO {
       z.object({
         resourceIdentifier: genericResourceIdentifier(),
       }),
-      genericResourceIdentifier()
+      z.intersection(
+        genericResourceIdentifier(),
+        z.object({
+          $removed: z.boolean(),
+          subscribers: genericSessionResource().shape.subscribers,
+        })
+      )
     ),
 
     // Subscriptions

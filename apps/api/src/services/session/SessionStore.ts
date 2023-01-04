@@ -89,10 +89,11 @@ export class SessionStore<
 
   removeClient(id: SessionClient['id']) {
     return this.getClient(id)
-      .flatMap(({ subscriptions }) => {
-        const subscriptionNames = objectKeys(subscriptions);
+      .flatMap((prevClient) => {
+        const subscriptionNames = objectKeys(prevClient.subscriptions);
 
         return AsyncResult.all(
+          new AsyncOk(prevClient),
           ...subscriptionNames.map((sub) =>
             this.removeResourceSubscriber(
               id,
@@ -103,9 +104,21 @@ export class SessionStore<
           )
         );
       })
-      .flatMap(() =>
-        this.store.removeItemInCollection('$clients', id).mapErr(toSessionError)
-      );
+      .flatMap(([prevClient]) =>
+        AsyncResult.all(
+          new AsyncOk(prevClient),
+          this.store
+            .removeItemInCollection('$clients', id)
+            .mapErr(toSessionError)
+        )
+      )
+      .map(([prevClient, r]) => ({
+        ...r,
+        item: {
+          id: prevClient.id,
+          subscriptions: prevClient.subscriptions,
+        },
+      }));
   }
 
   createResource<

@@ -59,7 +59,27 @@ export class SdkGateway {
       return;
     }
 
-    return acknowledge(session.getClient(req.clientId));
+    return acknowledge(session.getClient(req.id));
+  }
+
+  @SubscribeMessage(ServerSdkIO.msgs.removeClient.req)
+  async removeClientReq(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody()
+    req: ServerSdkIO.Payloads['removeClient']['req']
+  ) {
+    // TODO: This could be a Guard or smtg like that (a decorator)
+    const token = getConnectionToken(socket);
+    const session = token ? this.sessionService.getSession(token) : undefined;
+
+    if (!session) {
+      return;
+    }
+
+    return emit(
+      ServerSdkIO.msgs.removeClient.res,
+      session.removeClient(req.id).map((r) => r.item),
+    );
   }
 
   // Resources
@@ -186,6 +206,8 @@ export class SdkGateway {
   }
 }
 
+// TODO: Make the string be part of the responses so it can type check the payload!
+// TODO: Maybe after refactoring to single channels again, w/o req/res!
 const emit = async <T, E>(
   event: string,
   ar: AsyncResult<T, E>

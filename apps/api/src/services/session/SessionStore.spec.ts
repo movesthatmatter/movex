@@ -229,7 +229,10 @@ describe('SessionStore', () => {
         const expected = new Ok({
           index: 1,
           length: 0,
-          item: undefined,
+          item: {
+            id: get_MOCKED_UUID(1),
+            subscriptions: {},
+          },
         });
 
         expect(actual).toEqual(expected);
@@ -577,28 +580,22 @@ describe('SessionStore', () => {
         ])
       );
 
-      expect(actualGameResourceSubscribers).toEqual(
-        new Ok([
-          {
-            id: '1st',
-            subscriptions: {
-              [`room:${get_MOCKED_UUID(1)}`]: {
-                subscribedAt: NOW_TIMESTAMP,
-              },
-              [`game:${get_MOCKED_UUID(2)}`]: {
-                subscribedAt: NOW_TIMESTAMP,
-              },
-            },
-          },
-        ])
-      );
-
       const actualClient = await session.removeClient('1st').resolve();
 
       const expectedClient = new Ok({
         index: 1,
         length: 0,
-        item: undefined,
+        item: {
+          id: '1st',
+          subscriptions: {
+            [`room:${get_MOCKED_UUID(1)}`]: {
+              subscribedAt: NOW_TIMESTAMP,
+            },
+            [`game:${get_MOCKED_UUID(2)}`]: {
+              subscribedAt: NOW_TIMESTAMP,
+            },
+          },
+        },
       });
 
       expect(actualClient).toEqual(expectedClient);
