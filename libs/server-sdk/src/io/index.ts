@@ -97,20 +97,24 @@ export namespace ServerSdkIO {
     // Resources
     createResource: toReqRes(
       z.object({
-        resourceType: z.string(),
+        resourceIdentifier: z.object({
+          resourceType: z.string(),
+          resourceId: zId().optional(),
+        }),
         resourceData: unknownRecord(),
-        resourceId: zId().optional(),
       }),
       genericSessionResource()
     ),
     getResource: toReqRes(
-      genericResourceIdentifier(),
+      z.object({
+        resourceIdentifier: genericResourceIdentifier(),
+      }),
       genericSessionResource()
     ),
     updateResource: toReqRes(
       z.object({
         resourceIdentifier: genericResourceIdentifier(),
-        data: unknownRecord(),
+        resourceData: unknownRecord(),
       }),
       genericSessionResource()
     ),
@@ -121,7 +125,7 @@ export namespace ServerSdkIO {
       z.intersection(
         genericResourceIdentifier(),
         z.object({
-          $removed: z.boolean(),
+          // $removed: z.boolean(),
           subscribers: genericSessionResource().shape.subscribers,
         })
       )

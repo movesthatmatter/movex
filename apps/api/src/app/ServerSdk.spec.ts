@@ -38,13 +38,16 @@ let sdk: ServerSDK<
 const NOW_TIMESTAMP = new Date().getTime();
 
 const noop = () => {};
-let oldConsoleLog = console.log;
-let oldConsoleInfo = console.info;
+
+const silentLogger = {
+  ...console,
+  info: noop,
+  log: noop,
+  warn: noop,
+  error: noop,
+} as any;
 
 beforeAll((done) => {
-  console.log = noop;
-  console.info = noop;
-
   // Date
   MockDate.set(NOW_TIMESTAMP);
 
@@ -55,10 +58,6 @@ beforeAll((done) => {
 });
 
 afterAll((done) => {
-  // Logs
-  console.log = oldConsoleLog;
-  console.info = oldConsoleInfo;
-
   MockDate.reset();
 
   server.close().then(() => done());
@@ -68,6 +67,7 @@ beforeEach((done) => {
   sdk = new ServerSDK({
     url: 'ws://localhost:4444',
     apiKey: 'tester-A',
+    logger: silentLogger,
   });
 
   sdk.connect().then(() => done());
@@ -152,6 +152,7 @@ describe('Clients', () => {
       .getClient(clientId)
       .resolve()
       .then((actual) => {
+        // console.debug('actual.val', actual.val);
         expect(actual.val).toEqual({
           id: clientId,
           info: {
@@ -165,13 +166,11 @@ describe('Clients', () => {
     const actualRemoval = await sdk.removeClient(clientId).resolve();
     const actualRetrieval = await sdk.getClient(clientId).resolve();
 
-    expect(actualRetrieval).toEqual({
-      err: true,
-      ok: false,
-      val: {
-        kind: 'ServerSDKError',
-        reason: 'CollectionFieldInexistent',
-      },
+    // console.debug('actualRetrieval', actualRetrieval);
+
+    expect(actualRetrieval.val).toEqual({
+      kind: 'ServerSDKError',
+      reason: 'CollectionFieldInexistent',
     });
 
     expect(actualRemoval).toEqual(
@@ -229,6 +228,30 @@ describe('Resources', () => {
         .resolve();
     });
 
+    it('gets a Resource and adds a flatmap to it', async () => {
+      await sdk
+        .createResource({
+          resourceType: 'room',
+          resourceData: { type: 'play' },
+          resourceId: 'tr1',
+        })
+        .flatMap((createdResource) =>
+          sdk.getResource({
+            resourceId: createdResource.id,
+            resourceType: 'room',
+          })
+        )
+        .map((resource) => {
+          expect(resource).toEqual({
+            $resource: 'room',
+            data: { type: 'play' },
+            id: 'tr1',
+            subscribers: {},
+          });
+        })
+        .resolve();
+    });
+
     it('Updates a Resource', async () => {
       await sdk
         .createResource({
@@ -247,6 +270,7 @@ describe('Resources', () => {
           )
         )
         .map((actual) => {
+          console.debug('yeah');
           expect(actual).toEqual({
             $resource: 'room',
             id: actual.id,
@@ -476,15 +500,17 @@ describe('Subscriptions', () => {
         })
       )
       .map((actual) => {
-        expect(actual).toEqual({
-          resourceId: actual.resourceId,
-          resourceType: 'room',
-          subscribers: {
-            'user-1': {
-              subscribedAt: NOW_TIMESTAMP,
-            },
-          },
-        });
+        expect(1).toBe(2);
+        // TOOD: Fix this type!!!
+        // expect(actual).toEqual({
+        //   resourceId: actual.resourceId,
+        //   resourceType: 'room',
+        //   subscribers: {
+        //     'user-1': {
+        //       subscribedAt: NOW_TIMESTAMP,
+        //     },
+        //   },
+        // });
       })
       .resolve();
   });

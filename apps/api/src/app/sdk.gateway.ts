@@ -82,7 +82,7 @@ export class SdkGateway {
   createResourceReq(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
-    msg: ServerSdkIO.Payloads['createResource']['req']
+    req: ServerSdkIO.Payloads['createResource']['req']
   ) {
     // TODO: This could be a Guard or smtg like that (a decorator)
     const token = getConnectionToken(socket);
@@ -94,7 +94,11 @@ export class SdkGateway {
 
     return acknowledge(
       session
-        .createResource(msg)
+        .createResource({
+          resourceType: req.resourceIdentifier.resourceType,
+          resourceId: req.resourceIdentifier.resourceId,
+          resourceData: req.resourceData,
+        })
         .map((r) => r.item)
     );
   }
@@ -103,7 +107,7 @@ export class SdkGateway {
   async getResourceReq(
     @ConnectedSocket() socket: Socket,
     @MessageBody()
-    msg: ServerSdkIO.Payloads['getResource']['req']
+    req: ServerSdkIO.Payloads['getResource']['req']
   ) {
     // TODO: This could be a Guard or smtg like that (a decorator)
     const token = getConnectionToken(socket);
@@ -113,7 +117,7 @@ export class SdkGateway {
       return;
     }
 
-    return acknowledge(session.getResource(msg));
+    return acknowledge(session.getResource(req.resourceIdentifier));
   }
 
   @SubscribeMessage(ServerSdkIO.msgs.updateResource.req)
@@ -131,7 +135,7 @@ export class SdkGateway {
     }
 
     return acknowledge(
-      session.updateResourceData(msg.resourceIdentifier, msg.data)
+      session.updateResourceData(msg.resourceIdentifier, msg.resourceData)
     );
   }
 

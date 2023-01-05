@@ -6054,10 +6054,10 @@ regexpp@^3.2.0:
   resolved "https://registry.yarnpkg.com/regexpp/-/regexpp-3.2.0.tgz#0425a2768d8f23bad70ca4b90461fa2f1213e1b2"
   integrity sha512-pq2bWo9mVD43nbts2wGv17XLiNLya+GklZ8kaDLV2Z08gDCsGpnKn9BFMepvWuHCbyVvY7J5o5+BVvoQbmlJLg==
 
-relational-redis-store@^0.6.2:
-  version "0.6.3"
-  resolved "https://registry.yarnpkg.com/relational-redis-store/-/relational-redis-store-0.6.3.tgz#2d463a5a8d88e55253952347e7b13620c29875f4"
-  integrity sha512-+Cdu0qJbupkp9M/gbb/maXPF5fgKCzuNIRqBK+cJnAXX6EEEm/l0nP2D1hHeENqn6gAPCCo7XZTjF/KTM6mtKg==
+relational-redis-store@^0.6.11:
+  version "0.6.11"
+  resolved "https://registry.yarnpkg.com/relational-redis-store/-/relational-redis-store-0.6.11.tgz#76f67f82513e0c9fedcbdec3db65ab6bb3185da3"
+  integrity sha512-/IlBuxIn9omVVXvg5sC5wFoSSKyDLIUrFi+ToBAwSGo/OAYIECifzU2GjIV+w3ZOsYmcVYJIiAdkDxfkex/Sgw==
   dependencies:
     "@types/deep-equal" "^1.0.1"
     "@types/json-stable-stringify" "^1.0.34"
@@ -6068,7 +6068,7 @@ relational-redis-store@^0.6.2:
     json-stable-stringify "^1.0.2"
     redis "3.0.2"
     redis-lock "0.1.4"
-    ts-async-results "^0.3.2"
+    ts-async-results "^0.5.3"
     tslib "^2.4.1"
 
 require-directory@^2.1.1:
@@ -6903,10 +6903,18 @@ tree-kill@1.2.2:
   resolved "https://registry.yarnpkg.com/tree-kill/-/tree-kill-1.2.2.tgz#4ca09a9092c88b73a7cdc5e8a01b507b0790a0cc"
   integrity sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==
 
-ts-async-results@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.3.2.tgz#7ba78a1f709e4c9e96a83dffdd506bae432c4f98"
-  integrity sha512-Xh0DZj7oeEmzKRnRHuEXnCEZNCwBpbRut1bHehxAN3GWHdz0hVti7D1wRtHIrGNcgzzF3oevzsaWohfGx2kXDw==
+ts-async-results@^0.5.3:
+  version "0.5.3"
+  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.5.3.tgz#35c340089f3bb923cf4cd6c767f087c5b19db0ca"
+  integrity sha512-3vDuaiCf5FtGTVZ9RKft/0TV0ZJzt89zFy1lOcKkZQdPrYb06mwWN9DHsnmxnyKqIwNEPZdhv/mRwG+dC5mlIA==
+  dependencies:
+    conditional-type-checks "^1.0.5"
+    ts-results "^3.0.0"
+
+ts-async-results@^0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.6.0.tgz#78c57245fb48de1645c65562a1271b04df490e2b"
+  integrity sha512-ekThTvDCbni4wB0BN8m29LB/H7pnoIZivMvp4xQsqETbjdqdq2lO+Y+jN1A7VgZ8t7xA9Vzhu/fdPjY/RD1nxg==
   dependencies:
     conditional-type-checks "^1.0.5"
     ts-results "^3.0.0"
@@ -6961,7 +6969,7 @@ ts-pubsy@^0.2.0:
   dependencies:
     tslib "^2.4.1"
 
-ts-results@^3.0.0, ts-results@^3.3.0:
+ts-results@^3.0.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/ts-results/-/ts-results-3.3.0.tgz#68623a6c18e65556287222dab76498a28154922f"
   integrity sha512-FWqxGX2NHp5oCyaMd96o2y2uMQmSu8Dey6kvyuFdRJ2AzfmWo3kWa4UsPlCGlfQ/qu03m09ZZtppMoY8EMHuiA==

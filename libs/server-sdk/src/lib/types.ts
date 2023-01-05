@@ -47,19 +47,18 @@ export type SessionClient<Info extends UnknownRecord = {}> = {
 //   subscribers: Record<SessionClient['id'], null>; // Here it could use the full Peer?
 // };
 
-type CollectionMapBaseItem = RRStore.CollectionMapBase[any];
+// type CollectionMapBaseItem = RRStore.CollectionMapBase[any];
 
-export type SessionResource<TData extends UnknownRecord = {}> =
-  CollectionMapBaseItem & {
-    id: string;
-    data: TData;
-    subscribers: Record<
-      SessionClient['id'],
-      {
-        subscribedAt: number;
-      }
-    >;
-  };
+export type SessionResource<TData extends UnknownRecord = {}> = {
+  id: string;
+  data: TData;
+  subscribers: Record<
+    SessionClient['id'],
+    {
+      subscribedAt: number;
+    }
+  >;
+};
 
 // export type ObservableResource<TData extends UnknownRecord = {}> =
 // Resource<TData> & {

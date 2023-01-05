@@ -20,36 +20,30 @@ describe('SessionStore', () => {
     }>;
   }>;
 
-  let oldConsoleLog = console.log;
-  let oldConsoleInfo = console.info;
-  let oldConsoleError = console.error;
-
   const NOW_TIMESTAMP = new Date().getTime();
 
-  beforeAll(async () => {
-    // Logs
-    const noop = () => {};
-    console.log = noop;
-    console.info = noop;
-    console.error = noop;
+  const noop = () => {};
 
+  const silentLogger = {
+    ...console,
+    info: noop,
+    log: noop,
+    warn: noop,
+    error: noop,
+  };
+
+  beforeAll(async () => {
     // Date
     MockDate.set(NOW_TIMESTAMP);
 
     // Store
-    store = createMockStore();
+    store = createMockStore({ logger: silentLogger });
     session = new SessionStore(store);
   });
 
   afterAll(() => {
-    // Logs
-    console.log = oldConsoleLog;
-    console.info = oldConsoleInfo;
-    console.error = oldConsoleError;
-
     // Date
     MockDate.reset();
-    // global.Date.now = realDateFn;
   });
 
   beforeEach(() => {

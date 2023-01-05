@@ -258,15 +258,7 @@ export class SessionStore<
   removeAllResourcesOfType<
     TResourceType extends SessionCollectionMapOfResourceKeys
   >(resourceType: TResourceType) {
-    console.debug('removing', resourceType);
-    return this.store
-      .removeCollection(resourceType)
-      .map(() => {
-        console.debug('remocved', resourceType);
-      })
-      .mapErr((s) => {
-        console.debug('nope', s);
-      });
+    return this.store.removeCollection(resourceType);
   }
 
   // Subscriptions
