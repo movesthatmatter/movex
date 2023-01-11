@@ -6,7 +6,7 @@ export async function bootstrapServer() {
   const app = await NestFactory.create(AppModule);
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
-  const port = process.env.PORT || 4444;
+  const port = process.env.port || 4444;
 
   await app.listen(port);
   Logger.log(

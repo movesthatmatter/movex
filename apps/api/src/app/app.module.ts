@@ -6,8 +6,7 @@ import { SdkGateway } from './sdk.gateway';
 import { SessionService } from './session.service';
 
 import * as redisSDK from 'handy-redis';
-import { SessionStore } from '../services/session';
-import { Store } from 'relational-redis-store';
+import { config } from '../config';
 
 export type Redis = redisSDK.IHandyRedis;
 
@@ -15,7 +14,7 @@ const RedisProvider: Provider<Redis> = {
   provide: 'Redis',
   useFactory: () =>
     redisSDK.createHandyClient({
-      url: 'redis://127.0.0.1:6379',
+      url: config.REDIS_URL,
       family: 'IPv6',
     }),
 };

@@ -4,9 +4,11 @@
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
+    "tsc-all": "tsc -b apps/api libs/server-sdk",
     "build": "nx build",
+    "build-api": "nx build api",
     "test": "nx run-many --all --target=test --skip-nx-cache",
-    "tsc-all": "tsc -b apps/api libs/server-sdk"
+    "deploy-api:staging": "git diff --exit-code HEAD && flyctl deploy -c apps/api/fly.staging.toml --dockerfile apps/api/Dockerfile -e APP_REVISION=$(git rev-parse --short HEAD) --remote-only"
   },
   "private": true,
   "dependencies": {
