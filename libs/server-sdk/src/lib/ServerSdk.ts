@@ -88,7 +88,7 @@ export class ServerSDK<
     this.socket?.close();
   }
 
-  on = this.pubsy.subscribe.bind(this.pubsy);
+  // on = this.pubsy.subscribe.bind(this.pubsy);
 
   // TODO: This will be able to proxy all of the events
   // onAll() {}
@@ -424,6 +424,11 @@ export class ServerSDK<
     //   )
     // );
   }
+
+  onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
+    resourceType: TResourceType,
+    fn: (r: ResourceCollectionMap[TResourceType]) => void
+  ) {}
 
   // private emitAndAcknowledgeResources
 

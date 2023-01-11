@@ -515,6 +515,14 @@ describe('Subscriptions', () => {
       .resolve();
   });
 });
+
+describe('Events', () => {
+  it('listens to resource updates', async () => [
+    sdk.onResourceUpdated('game', (p) => {
+      
+    })
+  ])
+})
 // });
 
 // TODO: To add
