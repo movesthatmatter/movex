@@ -30,7 +30,7 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
 ) => {
   const seshySDK = new ServerSDK(sdkConfig);
 
-  const backendSocket: SocketServer = new SocketServer(httpServer, {
+  const clientSocket: SocketServer = new SocketServer(httpServer, {
     cors: {
       origin: '*',
     },
@@ -38,12 +38,12 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
 
   // seshy.connect();
 
-  backendSocket.on('connection', (serverSocket) => {
+  clientSocket.on('connection', (clientSocket) => {
     const requestHandlersMap = p.requestHandlers
       ? p.requestHandlers(seshySDK)
       : {};
 
-    serverSocket.on(
+    clientSocket.on(
       'request',
       async ([reqName, req]: [string, unknown], acknowledgeCb) => {
         const handler = requestHandlersMap[reqName] || (() => req);
@@ -58,7 +58,7 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
     );
 
     // This only makes sense for resources or clients to transform
-    serverSocket.onAny(async (event, req, acknowledgeCb) => {
+    clientSocket.onAny(async (event, req, acknowledgeCb) => {
       if (event === 'request') {
         return;
       }
@@ -86,6 +86,10 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
       //   //   acknowledgeCb(response);
       //   // }
       // });
+    });
+
+    seshySDK.onBroadcastToSubscribers((r) => {
+      console.log('[backened] gonna braodcast to', r.subscribers, r);
     });
   });
 

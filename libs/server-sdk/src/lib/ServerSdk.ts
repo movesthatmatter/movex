@@ -8,6 +8,7 @@ import {
   AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
+  ResourceResponse,
   SessionClient,
   SessionResource,
   SessionStoreCollectionMap,
@@ -44,7 +45,12 @@ export class ServerSDK<
 > {
   public socket?: Socket;
 
-  private pubsy = new Pubsy<Events>();
+  private pubsy = new Pubsy<{
+    onBroadcastToSubscribers: ResourceResponse<
+      ResourceCollectionMap,
+      keyof ResourceCollectionMap
+    >;
+  }>();
 
   private logger: typeof console;
 
@@ -70,7 +76,7 @@ export class ServerSDK<
 
     return new Promise((resolve: (socket: Socket) => void) => {
       socket.on('connect', () => {
-        this.handleIncomingMessage(socket);
+        // this.handleIncomingMessage(socket);
         resolve(socket);
 
         this.logger.info('[ServerSdk] Connected Succesfully');
@@ -78,24 +84,25 @@ export class ServerSDK<
     });
   }
 
-  private handleIncomingMessage(socket: Socket) {
-    objectKeys(ServerSdkIO.msgs).forEach((key) => {
-      socket.on(
-        ServerSdkIO.msgs[key].res,
-        (res: WsResponseResultPayload<any, unknown>) => {
-          if (res.ok) {
-            this.pubsy.publish(key, res.val);
-          }
-        }
-      );
-    });
-  }
+  // This is taken out for now, until further notice!
+  // private handleIncomingMessage(socket: Socket) {
+  //   objectKeys(ServerSdkIO.msgs).forEach((key) => {
+  //     socket.on(
+  //       ServerSdkIO.msgs[key].res,
+  //       (res: WsResponseResultPayload<any, unknown>) => {
+  //         if (res.ok) {
+  //           this.pubsy.publish(key, res.val);
+  //         }
+  //       }
+  //     );
+  //   });
+  // }
 
   disconnect() {
     this.socket?.close();
   }
 
-  // on = this.pubsy.subscribe.bind(this.pubsy);
+  on = this.pubsy.subscribe.bind(this.pubsy);
 
   // TODO: This will be able to proxy all of the events
   // onAll() {}
@@ -111,73 +118,14 @@ export class ServerSDK<
   //  generic, and if it is it becomes required, not optional!
   createClient(req: { id?: SessionClient['id']; info?: ClientInfo } = {}) {
     return this.emitAndAcknowledgeClients('createClient', req);
-
-    // this.logger.info('[ServerSdk] createClient Request:', req);
-
-    // return new AsyncResultWrapper<SessionClient, any>( // TODO: Fix this error type
-    //   new Promise((resolve) => {
-    //     this.socket?.emit(
-    //       ServerSdkIO.msgs.createClient.req,
-    //       req,
-    //       (res: any) => {
-    //         this.logger.info(
-    //           '[ServerSdk] createClient:',
-    //           req,
-    //           '> Response:',
-    //           res
-    //         );
-    //         resolve(res);
-    //       }
-    //     );
-    //   })
-    // );
-
-    // TODO: This must return a requestId, which will be used in the onResponse
   }
 
   getClient(id: SessionClient['id']) {
     return this.emitAndAcknowledgeClients('getClient', { id });
-
-    // this.logger.info('[ServerSdk] getClient Request:', id);
-
-    // return new AsyncResultWrapper(
-    //   new Promise((resolve) => {
-    //     this.socket?.emit(
-    //       ServerSdkIO.msgs.getClient.req,
-    //       { id },
-    //       (res: any) => {
-    //         this.logger.info('[ServerSdk] getClient:', id, '> Response:', res);
-    //         resolve(res);
-    //       }
-    //     );
-    //   })
-    // );
   }
 
   removeClient(id: SessionClient['id']) {
     return this.emitAndAcknowledgeClients('removeClient', { id });
-
-    // const req = { id };
-    // this.logger.info('[ServerSdk] removeClient Request:', req);
-
-    // return new AsyncResultWrapper<SessionClient, any>( // TODO: Fix this error type
-    //   new Promise((resolve) => {
-    //     // TODO: Create a new function for emit that takes in the correct payloads and types them
-    //     this.socket?.emit(
-    //       ServerSdkIO.msgs.removeClient.req,
-    //       req,
-    //       (res: any) => {
-    //         this.logger.info(
-    //           '[ServerSdk] removeClient:',
-    //           req,
-    //           '> Response:',
-    //           res
-    //         );
-    //         resolve(res);
-    //       }
-    //     );
-    //   })
-    // );
   }
 
   // getClients = this.sessionStore.getAllClients.bind(this.sessionStore);
@@ -205,29 +153,6 @@ export class ServerSDK<
       },
       resourceData: req.resourceData,
     });
-
-    // this.logger.info('[ServerSdk] createResource Request:', req);
-
-    // return new AsyncResultWrapper<
-    //   ResourceCollectionMap[TResourceType],
-    //   any // TODO: Fix this error type
-    // >(
-    //   new Promise((resolve) => {
-    //     this.socket?.emit(
-    //       ServerSdkIO.msgs.createResource.req,
-    //       req,
-    //       (res: any) => {
-    //         this.logger.info(
-    //           '[ServerSdk] createResource:',
-    //           req,
-    //           '> Response:',
-    //           res
-    //         );
-    //         resolve(res);
-    //       }
-    //     );
-    //   })
-    // );
   }
 
   updateResource<
@@ -240,31 +165,11 @@ export class ServerSDK<
     return this.emitAndAcknowledgeResources('updateResource', {
       resourceIdentifier,
       resourceData,
-    });
-
-    // const req = { resourceIdentifier, data };
-    // this.logger.info('[ServerSdk] updateResource Request:', req);
-
-    // return new AsyncResultWrapper<
-    //   ResourceCollectionMap[TResourceType],
-    //   any // TODO: Fix this error type
-    // >(
-    //   new Promise((resolve) => {
-    //     this.socket?.emit(
-    //       ServerSdkIO.msgs.updateResource.req,
-    //       req,
-    //       (res: any) => {
-    //         this.logger.info(
-    //           '[ServerSdk] updateResource:',
-    //           req,
-    //           '> Response:',
-    //           res
-    //         );
-    //         resolve(res);
-    //       }
-    //     );
-    //   })
-    // );
+    }).map(
+      AsyncResult.passThrough((r) => {
+        this.pubsy.publish('onBroadcastToSubscribers', r);
+      })
+    );
   }
 
   removeResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
@@ -273,32 +178,6 @@ export class ServerSDK<
     return this.emitAndAcknowledgeResources('removeResource', {
       resourceIdentifier,
     });
-
-    // const req = { resourceIdentifier };
-    // this.logger.info('[ServerSdk] removeResource Request:', req);
-
-    // return new AsyncResultWrapper<
-    //   ServerSdkIO.MsgToResponseMap['removeResource'],
-    //   any // TODO: Fix this error type
-    // >(
-    //   new Promise((resolve) => {
-    //     this.socket?.emit(
-    //       ServerSdkIO.msgs.removeResource.req,
-    //       {
-    //         resourceIdentifier,
-    //       },
-    //       (res: any) => {
-    //         this.logger.info(
-    //           '[ServerSdk] removeResource:',
-    //           req,
-    //           '> Response:',
-    //           res
-    //         );
-    //         resolve(res);
-    //       }
-    //     );
-    //   })
-    // );
   }
 
   getResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
@@ -307,35 +186,6 @@ export class ServerSDK<
     return this.emitAndAcknowledgeResources('getResource', {
       resourceIdentifier,
     });
-
-    // const req = { resourceIdentifier };
-    // this.logger.info('[ServerSdk] getResource Request:', req);
-    // // TODO: The error should come from store as well?
-
-    // return AsyncResult.toAsyncResult(
-    //   new Promise((resolve) => {
-    //     this.socket?.emit(
-    //       ServerSdkIO.msgs.getResource.req,
-    //       resourceIdentifier,
-    //       (res: any) => {
-    //         this.logger.info(
-    //           '[ServerSdk] getResource:',
-    //           req,
-    //           '> Response:',
-    //           res
-    //         );
-    //         resolve(res);
-    //       }
-    //     );
-    //   })
-    // );
-
-    // return new AsyncResultWrapper<
-    //   ResourceCollectionMap[TResourceType],
-    //   any // TODO: Fix this error type
-    // >(
-
-    // );
   }
 
   // getResourceSubscribers = this.sessionStore.getResourceSubscribers.bind(
@@ -356,36 +206,6 @@ export class ServerSDK<
       clientId,
       resourceIdentifier,
     });
-
-    // const req = { clientId, resourceIdentifier };
-    // this.logger.info('[ServerSdk] subscribeToResource Request:', req);
-
-    // return new AsyncResultWrapper<
-    //   {
-    //     resource: ResourceCollectionMap[TResourceType];
-    //     client: SessionClient;
-    //   },
-    //   any // TODO: Fix this error type
-    // >(
-    //   new Promise((resolve) =>
-    //     this.socket?.emit(
-    //       ServerSdkIO.msgs.subscribeToResource.req,
-    //       {
-    //         clientId,
-    //         resourceIdentifier,
-    //       },
-    //       (res: any) => {
-    //         this.logger.info(
-    //           '[ServerSdk] subscribeToResource:',
-    //           req,
-    //           '> Response:',
-    //           res
-    //         );
-    //         resolve(res);
-    //       }
-    //     )
-    //   )
-    // );
   }
 
   unsubscribeFromResource<
@@ -398,42 +218,21 @@ export class ServerSDK<
       clientId,
       resourceIdentifier,
     });
-
-    // const req = { clientId, resourceIdentifier };
-    // this.logger.info('[ServerSdk] unsubscribeFromResource Request:', req);
-
-    // return new AsyncResultWrapper<
-    //   {
-    //     resource: ResourceCollectionMap[TResourceType];
-    //     client: SessionClient;
-    //   },
-    //   any // TODO: Fix this error type
-    // >(
-    //   new Promise((resolve) =>
-    //     this.socket?.emit(
-    //       ServerSdkIO.msgs.unsubscribeFromResource.req,
-    //       {
-    //         clientId,
-    //         resourceIdentifier,
-    //       },
-    //       (res: any) => {
-    //         this.logger.info(
-    //           '[ServerSdk] unsubscribeFromResource:',
-    //           req,
-    //           '> Response:',
-    //           res
-    //         );
-    //         resolve(res);
-    //       }
-    //     )
-    //   )
-    // );
   }
 
-  onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
-    resourceType: TResourceType,
-    fn: (r: ResourceCollectionMap[TResourceType]) => void
-  ) {}
+  // onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
+  //   fn: (r: ResourceResponse<ResourceCollectionMap, TResourceType>) => void
+  // ) {
+  //   this.pubsy.subscribe('updateResource');
+  // }
+
+  onBroadcastToSubscribers(
+    fn: (
+      r: ResourceResponse<ResourceCollectionMap, keyof ResourceCollectionMap>
+    ) => void
+  ) {
+    return this.pubsy.subscribe('onBroadcastToSubscribers', fn);
+  }
 
   // private emitAndAcknowledgeResources
 
@@ -485,11 +284,7 @@ export class ServerSDK<
     >,
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TReq extends ServerSdkIO.Payloads[K]['req'],
-    TRes = {
-      type: TResourceType;
-      item: ResourceCollectionMap[TResourceType];
-      subscribers: SessionCollectionMap[TResourceType]['subscribers'];
-    }
+    TRes = ResourceResponse<ResourceCollectionMap, TResourceType>
   >(
     k: K,
     req: TReq
@@ -532,11 +327,7 @@ export class ServerSDK<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TReq extends ServerSdkIO.Payloads[K]['req'],
     TRes = {
-      resource: {
-        type: TResourceType;
-        item: ResourceCollectionMap[TResourceType];
-        subscribers: SessionCollectionMap[TResourceType]['subscribers'];
-      };
+      resource: ResourceResponse<ResourceCollectionMap, TResourceType>;
       client: SessionCollectionMap['$clients'];
     }
   >(

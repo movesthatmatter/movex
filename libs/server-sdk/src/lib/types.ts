@@ -29,7 +29,10 @@ export type CollectionMapBase = {
 
 export type UnknownRecord = Record<string, unknown>;
 
-export type UnknownIdentifiableRecord = { id: string } & Record<string, unknown>;
+export type UnknownIdentifiableRecord = { id: string } & Record<
+  string,
+  unknown
+>;
 export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
 type SessionResourceType = string;
@@ -112,3 +115,13 @@ export type OnlySessionCollectionMapOfResourceKeys<
   ResourceCollectionMap extends CollectionMapBase,
   SessionCollectionMap = SessionStoreCollectionMap<ResourceCollectionMap>
 > = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<{}>>>;
+
+export type ResourceResponse<
+  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
+  TResourceType extends keyof ResourceCollectionMap,
+  // SessionCollectionMapOfResourceKeys extends OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap> = OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap>
+> = {
+  type: TResourceType;
+  item: ResourceCollectionMap[TResourceType];
+  subscribers: ResourceCollectionMap[TResourceType]['subscribers'];
+};
