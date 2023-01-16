@@ -3,6 +3,8 @@ import { Socket } from 'socket.io-client';
 import { Pubsy } from 'ts-pubsy';
 import { ServerSdkIO } from '../io';
 import {
+  AnyIdentifiableRecord,
+  // AnyRecord,
   AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
@@ -10,6 +12,7 @@ import {
   SessionResource,
   SessionStoreCollectionMap,
   UnidentifiableModel,
+  UnknownIdentifiableRecord,
   UnknownRecord,
   UnknwownSessionResourceCollectionMap,
   WsResponseResultPayload,
@@ -32,7 +35,10 @@ export type ServerSDKConfig = {
 
 export class ServerSDK<
   ClientInfo extends UnknownRecord = {},
-  ResourceCollectionMap extends UnknwownSessionResourceCollectionMap = AnySessionResourceCollectionMap,
+  ResourceCollectionMap extends Record<
+    string,
+    UnknownIdentifiableRecord
+  > = Record<string, AnyIdentifiableRecord>,
   SessionCollectionMap extends SessionStoreCollectionMap<ResourceCollectionMap> = SessionStoreCollectionMap<ResourceCollectionMap>,
   SessionCollectionMapOfResourceKeys extends OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap> = OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap>
 > {
@@ -185,7 +191,7 @@ export class ServerSDK<
   createResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TResourceData extends UnidentifiableModel<
-      SessionCollectionMap[TResourceType]['data']
+      SessionCollectionMap[TResourceType]
     >
   >(req: {
     resourceType: TResourceType;
@@ -227,7 +233,7 @@ export class ServerSDK<
   updateResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TResourceData extends UnidentifiableModel<
-      SessionCollectionMap[TResourceType]['data']
+      SessionCollectionMap[TResourceType]
     >
   >(
     resourceIdentifier: ResourceIdentifier<TResourceType>,
@@ -483,9 +489,7 @@ export class ServerSDK<
     TReq extends ServerSdkIO.Payloads[K]['req'],
     TRes = {
       type: TResourceType;
-      item: SessionCollectionMap[TResourceType]['data'] & {
-        id: SessionCollectionMap[TResourceType]['id'];
-      };
+      item: ResourceCollectionMap[TResourceType];
       subscribers: SessionCollectionMap[TResourceType]['subscribers'];
     }
   >(
@@ -532,9 +536,7 @@ export class ServerSDK<
     TRes = {
       resource: {
         type: TResourceType;
-        item: SessionCollectionMap[TResourceType]['data'] & {
-          id: SessionCollectionMap[TResourceType]['id'];
-        };
+        item: ResourceCollectionMap[TResourceType];
         subscribers: SessionCollectionMap[TResourceType]['subscribers'];
       };
       client: SessionCollectionMap['$clients'];
@@ -556,7 +558,6 @@ export class ServerSDK<
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
                 this.logger.info(reqId, '[ServerSdk] Response Ok:', res);
-                console.debug('res.val', res.val);
                 resolve(new Ok(res.val));
               } else {
                 this.logger.warn(reqId, '[ServerSdk] Response Err:', res);

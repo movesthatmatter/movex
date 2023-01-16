@@ -26,12 +26,14 @@ let sdk: ServerSDK<
     age: number;
   },
   {
-    room: SessionResource<{
+    room: {
+      id: string;
       type: 'play' | 'analysis' | 'meetup';
-    }>;
-    game: SessionResource<{
+    };
+    game: {
+      id: string;
       type: 'maha' | 'chess';
-    }>;
+    };
   }
 >;
 
