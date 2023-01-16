@@ -1,4 +1,9 @@
-import { WsResponse } from '@nestjs/websockets';
+export interface WsResponse<T = any> {
+  event: string;
+  data: T;
+}
+
+export declare type UnidentifiableModel<T extends {}> = Omit<T, 'id'>;
 
 export type WsResponseResultPayload<T, E> =
   | {
@@ -16,8 +21,11 @@ export type WsResponseAsResult<T, E> = WsResponse<
   WsResponseResultPayload<T, E>
 >;
 
-import * as RRStore from 'relational-redis-store';
-import { CollectionMapBase } from 'relational-redis-store';
+export type CollectionMapBase = {
+  [key: string]: {
+    id: string;
+  } & object;
+};
 
 export type UnknownRecord = Record<string, unknown>;
 

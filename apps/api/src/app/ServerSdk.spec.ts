@@ -188,9 +188,9 @@ describe('Resources', () => {
       .createResource({ resourceType: 'room', resourceData: { type: 'play' } })
       .map((actual) => {
         expect(actual).toEqual({
-          $resource: 'room',
-          id: actual.id,
-          data: {
+          type: 'room',
+          item: {
+            id: actual.item.id,
             type: 'play',
           },
           subscribers: {},
@@ -210,16 +210,16 @@ describe('Resources', () => {
           AsyncResult.all(
             new AsyncOk(createdResource),
             sdk.getResource({
-              resourceId: createdResource.id,
+              resourceId: createdResource.item.id,
               resourceType: 'room',
             })
           )
         )
         .map(([createdResource, actual]) => {
           expect(actual).toEqual({
-            $resource: 'room',
-            id: createdResource.id,
-            data: {
+            type: 'room',
+            item: {
+              id: createdResource.item.id,
               type: 'play',
             },
             subscribers: {},
@@ -237,15 +237,14 @@ describe('Resources', () => {
         })
         .flatMap((createdResource) =>
           sdk.getResource({
-            resourceId: createdResource.id,
+            resourceId: createdResource.item.id,
             resourceType: 'room',
           })
         )
         .map((resource) => {
           expect(resource).toEqual({
-            $resource: 'room',
-            data: { type: 'play' },
-            id: 'tr1',
+            type: 'room',
+            item: { id: 'tr1', type: 'play' },
             subscribers: {},
           });
         })
@@ -261,7 +260,7 @@ describe('Resources', () => {
         .flatMap((resource) =>
           sdk.updateResource(
             {
-              resourceId: resource.id,
+              resourceId: resource.item.id,
               resourceType: 'room',
             },
             {
@@ -270,11 +269,10 @@ describe('Resources', () => {
           )
         )
         .map((actual) => {
-          console.debug('yeah');
           expect(actual).toEqual({
-            $resource: 'room',
-            id: actual.id,
-            data: {
+            type: 'room',
+            item: {
+              id: actual.item.id,
               type: 'meetup',
             },
             subscribers: {},
@@ -299,7 +297,7 @@ describe('Resources', () => {
             new AsyncOk(resource),
             new AsyncOk(client),
             sdk.subscribeToResource(client.id, {
-              resourceId: resource.id,
+              resourceId: resource.item.id,
               resourceType: 'room',
             })
           )
@@ -310,7 +308,7 @@ describe('Resources', () => {
               client: {
                 ...client,
                 subscriptions: {
-                  [`room:${resource.id}`]: {
+                  [`room:${resource.item.id}`]: {
                     subscribedAt: NOW_TIMESTAMP,
                   },
                 },
@@ -330,7 +328,7 @@ describe('Resources', () => {
           AsyncResult.all(
             sdk.updateResource(
               {
-                resourceId: resource.id,
+                resourceId: resource.item.id,
                 resourceType: 'room',
               },
               {
@@ -343,9 +341,9 @@ describe('Resources', () => {
         .map(
           AsyncResult.passThrough(([updatedResource, client]) => {
             expect(updatedResource).toEqual({
-              $resource: 'room',
-              id: updatedResource.id,
-              data: {
+              type: 'room',
+              item: {
+                id: updatedResource.item.id,
                 type: 'meetup',
               },
               subscribers: {
@@ -373,14 +371,14 @@ describe('Resources', () => {
           AsyncResult.all(
             new AsyncOk(resource),
             sdk.removeResource({
-              resourceId: resource.id,
+              resourceId: resource.item.id,
               resourceType: 'room',
             })
           )
         )
         .map(([prevResource, actual]) => {
           expect(actual).toEqual({
-            resourceId: prevResource.id,
+            resourceId: prevResource.item.id,
             resourceType: 'room',
             subscribers: {},
           });
@@ -407,7 +405,7 @@ describe('Subscriptions', () => {
           new AsyncOk(resource),
           new AsyncOk(client),
           sdk.subscribeToResource('user-1', {
-            resourceId: resource.id,
+            resourceId: resource.item.id,
             resourceType: 'room',
           })
         )
@@ -417,7 +415,7 @@ describe('Subscriptions', () => {
           client: {
             ...client,
             subscriptions: {
-              [`room:${resource.id}`]: {
+              [`room:${resource.item.id}`]: {
                 subscribedAt: NOW_TIMESTAMP,
               },
             },
@@ -448,7 +446,7 @@ describe('Subscriptions', () => {
     )
       .flatMap(([resource, client]) =>
         sdk.subscribeToResource(client.id, {
-          resourceId: resource.id,
+          resourceId: resource.item.id,
           resourceType: 'room',
         })
       )
@@ -456,7 +454,7 @@ describe('Subscriptions', () => {
         AsyncResult.all(
           ...[resource, client].map((a) => new AsyncOk(a)),
           sdk.unsubscribeFromResource(client.id, {
-            resourceId: resource.id,
+            resourceId: resource.item.id,
             resourceType: 'room',
           })
         )
@@ -489,13 +487,13 @@ describe('Subscriptions', () => {
     )
       .flatMap(([resource, client]) =>
         sdk.subscribeToResource(client.id, {
-          resourceId: resource.id,
+          resourceId: resource.item.id,
           resourceType: 'room',
         })
       )
       .flatMap(({ resource }) =>
         sdk.removeResource({
-          resourceId: resource.id,
+          resourceId: resource.item.id,
           resourceType: 'room',
         })
       )
@@ -518,11 +516,9 @@ describe('Subscriptions', () => {
 
 describe('Events', () => {
   it('listens to resource updates', async () => [
-    sdk.onResourceUpdated('game', (p) => {
-      
-    })
-  ])
-})
+    sdk.onResourceUpdated('game', (p) => {}),
+  ]);
+});
 // });
 
 // TODO: To add

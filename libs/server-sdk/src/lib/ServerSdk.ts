@@ -9,18 +9,26 @@ import {
   SessionClient,
   SessionResource,
   SessionStoreCollectionMap,
+  UnidentifiableModel,
   UnknownRecord,
   UnknwownSessionResourceCollectionMap,
   WsResponseResultPayload,
 } from './types';
-import { objectKeys, UnidentifiableModel } from 'relational-redis-store';
-import { AsyncResult, AsyncResultWrapper } from 'ts-async-results';
+import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
+import { objectKeys } from '../util';
 
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets
 
 type Events = ServerSdkIO.MsgToResponseMap;
+
+export type ServerSDKConfig = {
+  url: string;
+  apiKey: string;
+  logger?: typeof console;
+  waitForResponseMs?: number;
+};
 
 export class ServerSDK<
   ClientInfo extends UnknownRecord = {},
@@ -28,20 +36,13 @@ export class ServerSDK<
   SessionCollectionMap extends SessionStoreCollectionMap<ResourceCollectionMap> = SessionStoreCollectionMap<ResourceCollectionMap>,
   SessionCollectionMapOfResourceKeys extends OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap> = OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap>
 > {
-  private socket?: Socket;
+  public socket?: Socket;
 
   private pubsy = new Pubsy<Events>();
 
   private logger: typeof console;
 
-  constructor(
-    private config: {
-      url: string;
-      apiKey: string;
-      logger?: typeof console;
-      waitForResponseMs?: number;
-    }
-  ) {
+  constructor(private config: ServerSDKConfig) {
     this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
   }
@@ -480,7 +481,13 @@ export class ServerSDK<
     >,
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TReq extends ServerSdkIO.Payloads[K]['req'],
-    TRes = SessionCollectionMap[TResourceType]
+    TRes = {
+      type: TResourceType;
+      item: SessionCollectionMap[TResourceType]['data'] & {
+        id: SessionCollectionMap[TResourceType]['id'];
+      };
+      subscribers: SessionCollectionMap[TResourceType]['subscribers'];
+    }
   >(
     k: K,
     req: TReq
@@ -512,7 +519,6 @@ export class ServerSDK<
           )
         );
       })
-      // .catch((e) => e) as any
     );
   };
 
@@ -524,7 +530,13 @@ export class ServerSDK<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TReq extends ServerSdkIO.Payloads[K]['req'],
     TRes = {
-      resource: SessionCollectionMap[TResourceType];
+      resource: {
+        type: TResourceType;
+        item: SessionCollectionMap[TResourceType]['data'] & {
+          id: SessionCollectionMap[TResourceType]['id'];
+        };
+        subscribers: SessionCollectionMap[TResourceType]['subscribers'];
+      };
       client: SessionCollectionMap['$clients'];
     }
   >(
@@ -544,6 +556,7 @@ export class ServerSDK<
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
                 this.logger.info(reqId, '[ServerSdk] Response Ok:', res);
+                console.debug('res.val', res.val);
                 resolve(new Ok(res.val));
               } else {
                 this.logger.warn(reqId, '[ServerSdk] Response Err:', res);

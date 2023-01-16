@@ -252,9 +252,9 @@ describe('SessionStore', () => {
         index: 1,
         length: 1,
         item: {
-          $resource: 'room',
-          id: get_MOCKED_UUID(1),
-          data: {
+          type: 'room',
+          item: {
+            id: get_MOCKED_UUID(1),
             type: 'play',
           },
           subscribers: {},
@@ -279,9 +279,9 @@ describe('SessionStore', () => {
         index: 1,
         length: 1,
         item: {
-          $resource: 'room',
-          id: 'test-res-1',
-          data: {
+          type: 'room',
+          item: {
+            id: 'test-res-1',
             type: 'play',
           },
           subscribers: {},
@@ -318,9 +318,9 @@ describe('SessionStore', () => {
         .resolve();
 
       const expected = new Ok({
-        $resource: 'game',
-        id: get_MOCKED_UUID(2),
-        data: {
+        type: 'game',
+        item: {
+          id: get_MOCKED_UUID(2),
           type: 'maha',
         },
         subscribers: {},
@@ -341,7 +341,7 @@ describe('SessionStore', () => {
         .flatMap(({ item: resource }) =>
           session.removeResource({
             resourceType: 'game',
-            resourceId: resource.id,
+            resourceId: resource.item.id,
           })
         )
         .resolve();
@@ -454,11 +454,11 @@ describe('SessionStore', () => {
         .flatMap(([{ item: client }, { item: resource }]) => {
           // This is just for testing
           clientId = client.id;
-          resourceId = resource.id;
+          resourceId = resource.item.id;
 
           return session.subscribeToResource(client.id, {
             resourceType: 'room',
-            resourceId: resource.id,
+            resourceId: resource.item.id,
           });
         })
         .resolve();
@@ -473,9 +473,9 @@ describe('SessionStore', () => {
           },
         },
         resource: {
-          $resource: 'room',
-          id: resourceId,
-          data: {
+          type: 'room',
+          item: {
+            id: resourceId,
             type: 'play',
           },
           subscribers: {
@@ -641,9 +641,9 @@ describe('SessionStore', () => {
           subscriptions: {},
         },
         resource: {
-          $resource: 'room',
-          id: resourceId,
-          data: {
+          type: 'room',
+          item: {
+            id: resourceId,
             type: 'play',
           },
           subscribers: {

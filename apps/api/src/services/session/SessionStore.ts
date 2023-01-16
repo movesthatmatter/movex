@@ -2,7 +2,11 @@ import * as RRStore from 'relational-redis-store';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
 import { getUuid, toResourceIdentifier } from './util';
-import { objectKeys, UnidentifiableModel } from 'relational-redis-store';
+import {
+  objectKeys,
+  UnidentifiableModel,
+  UnknownRecord,
+} from 'relational-redis-store';
 import {
   AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
@@ -156,10 +160,7 @@ export class SessionStore<
       )
       .map((r) => ({
         ...r,
-        item: {
-          ...r.item,
-          $resource: resourceType,
-        },
+        item: toOutResource(resourceType)(r.item),
       }));
   }
 
@@ -197,16 +198,7 @@ export class SessionStore<
           foreignKeys: {} as any,
         }
       )
-      .map(
-        (r) =>
-          r as unknown as RRStore.CollectionItemOrReply<
-            SessionCollectionMap[TResourceType]
-          >
-      )
-      .map((r) => ({
-        ...r,
-        $resource: resourceType,
-      }));
+      .map(toOutResource(resourceType));
     // .map(({ item }) =>
     //   objectKeys(item.subscribers).reduce(
     //     (accum, nextId) => ({
@@ -238,10 +230,7 @@ export class SessionStore<
   }) {
     return this.store
       .getItemInCollection(resourceType as string, resourceId)
-      .map((r) => ({
-        ...r,
-        $resource: resourceType,
-      }));
+      .map(toOutResource(resourceType));
   }
 
   getAllResourcesOfType<
@@ -300,10 +289,7 @@ export class SessionStore<
         )
       )
       .map(([resource, client]) => ({
-        resource: {
-          ...resource,
-          $resource: resourceType,
-        },
+        resource: toOutResource(resourceType)(resource),
         client,
       }));
     // TODO: Revert the resource subscription in case of a client error
@@ -363,10 +349,11 @@ export class SessionStore<
         );
       })
       .map(([resource, client]) => ({
-        resource: {
-          ...resource,
-          $resource: resourceType,
-        },
+        // resource: {
+        //   ...resource,
+        //   $resource: resourceType,
+        // },
+        resource: toOutResource(resourceType)(resource),
         client,
       }));
   }
@@ -456,3 +443,14 @@ export class SessionStore<
     );
   }
 }
+
+export const toOutResource =
+  <T extends UnknownRecord>(type: string) =>
+  (r: SessionResource<T>) => ({
+    type,
+    subscribers: r.subscribers,
+    item: {
+      ...r.data,
+      id: r.id,
+    },
+  });
