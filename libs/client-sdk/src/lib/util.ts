@@ -1,0 +1,1 @@
+export const objectKeys = <O extends object>(o: O) => Object.keys(o) as (keyof O)[];
