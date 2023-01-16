@@ -155,6 +155,27 @@ export class ServerSDK<
     });
   }
 
+  createResourceAndSubscribe<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TResourceData extends UnidentifiableModel<
+      SessionCollectionMap[TResourceType]
+    >
+  >(
+    clientId: SessionClient['id'],
+    req: {
+      resourceType: TResourceType;
+      resourceData: TResourceData;
+      resourceId?: SessionResource['id'];
+    }
+  ) {
+    return this.createResource(req).flatMap((r) =>
+      this.subscribeToResource(clientId, {
+        resourceId: r.item.id,
+        resourceType: req.resourceType,
+      })
+    );
+  }
+
   updateResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TResourceData extends SessionCollectionMap[TResourceType]
