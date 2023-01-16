@@ -1,6 +1,7 @@
 import io, { Socket } from 'socket.io-client';
 import { SdkIO } from './io';
 import {
+  AnyIdentifiableRecord,
   AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
@@ -8,6 +9,7 @@ import {
   SessionResource,
   SessionStoreCollectionMap,
   UnidentifiableModel,
+  UnknownIdentifiableRecord,
   UnknownRecord,
   UnknwownSessionResourceCollectionMap,
   WsResponseResultPayload,
@@ -23,7 +25,11 @@ type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
 export class ClientSdk<
   ClientInfo extends UnknownRecord = {},
-  ResourceCollectionMap extends UnknwownSessionResourceCollectionMap = AnySessionResourceCollectionMap,
+  // ResourceCollectionMap extends UnknwownSessionResourceCollectionMap = AnySessionResourceCollectionMap,
+  ResourceCollectionMap extends Record<
+    string,
+    UnknownIdentifiableRecord
+  > = Record<string, AnyIdentifiableRecord>,
   RequestsCollectionMap extends RequestsCollectionMapBase = Record<
     string,
     [any, any]
@@ -107,7 +113,7 @@ export class ClientSdk<
   createResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TResourceData extends UnidentifiableModel<
-      SessionCollectionMap[TResourceType]['data']
+      ResourceCollectionMap[TResourceType]
     >
   >(req: {
     resourceType: TResourceType;
@@ -125,12 +131,10 @@ export class ClientSdk<
 
   updateResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
-    TResourceData extends UnidentifiableModel<
-      SessionCollectionMap[TResourceType]['data']
-    >
+    TResourceData extends ResourceCollectionMap[TResourceType]
   >(
     resourceIdentifier: ResourceIdentifier<TResourceType>,
-    resourceData: Partial<TResourceData>
+    resourceData: Partial<UnidentifiableModel<TResourceData>>
   ) {
     return this.emitAndAcknowledgeResources('updateResource', {
       resourceIdentifier,
@@ -274,10 +278,19 @@ export class ClientSdk<
     >,
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TReq extends SdkIO.Payloads[K]['req'],
-    TRawRes extends ResourceCollectionMap[TResourceType] = ResourceCollectionMap[TResourceType],
-    TRes = {
-      id: ResourceCollectionMap[TResourceType]['id'];
-    } & ResourceCollectionMap[TResourceType]['data']
+    // TRawRes extends ResourceCollectionMap[TResourceType] = ResourceCollectionMap[TResourceType],
+    TRes extends {
+      type: TResourceType;
+      item: ResourceCollectionMap[TResourceType];
+      subscribers: SessionCollectionMap[TResourceType]['subscribers'];
+    } = {
+      type: TResourceType;
+      item: ResourceCollectionMap[TResourceType];
+      subscribers: SessionCollectionMap[TResourceType]['subscribers'];
+    }
+    // TRes = {
+    //   id: ResourceCollectionMap[TResourceType]['id'];
+    // } & ResourceCollectionMap[TResourceType]['data']
   >(
     k: K,
     req: TReq
@@ -292,20 +305,10 @@ export class ClientSdk<
           SdkIO.msgs[k].req,
           req,
           withTimeout(
-            (res: WsResponseResultPayload<TRawRes, unknown>) => {
+            (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
-                this.logger.info(reqId, '[ClientSdk] Response Ok:', res.val);
-                resolve(
-                  new Ok(res.val).map(
-                    (r: TRawRes) =>
-                      ({
-                        // TODO: This transformation should be done on the server I believe!!!
-                        // As the clients shouldn't even see the other ubscribers and stuff like that!
-                        id: r.id,
-                        ...r.data,
-                      } as TRes)
-                  )
-                );
+                this.logger.info(reqId, '[ClientSdk] Response Ok:', res.val.item);
+                resolve(new Ok(res.val.item as TRes));
               } else {
                 this.logger.warn(reqId, '[ClientSdk] Response Err:', res.val);
                 reject(new Err(res.val));

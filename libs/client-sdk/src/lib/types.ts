@@ -29,6 +29,9 @@ export type CollectionMapBase = {
 
 export type UnknownRecord = Record<string, unknown>;
 
+export type UnknownIdentifiableRecord = { id: string } & Record<string, unknown>;
+export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
+
 type SessionResourceType = string;
 
 export type SessionClient<Info extends UnknownRecord = {}> = {
@@ -105,7 +108,12 @@ export type SessionStoreCollectionMap<
 } & ResourcesCollectionMap;
 
 // This extracts out the $clients and other possible private keys
+// export type OnlySessionCollectionMapOfResourceKeys<
+//   ResourceCollectionMap extends UnknwownSessionResourceCollectionMap,
+//   SessionCollectionMap = SessionStoreCollectionMap<ResourceCollectionMap>
+// > = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<{}>>>;
+
 export type OnlySessionCollectionMapOfResourceKeys<
-  ResourceCollectionMap extends UnknwownSessionResourceCollectionMap,
+  ResourceCollectionMap extends CollectionMapBase,
   SessionCollectionMap = SessionStoreCollectionMap<ResourceCollectionMap>
 > = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<{}>>>;

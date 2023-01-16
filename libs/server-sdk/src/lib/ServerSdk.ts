@@ -232,12 +232,10 @@ export class ServerSDK<
 
   updateResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
-    TResourceData extends UnidentifiableModel<
-      SessionCollectionMap[TResourceType]
-    >
+    TResourceData extends SessionCollectionMap[TResourceType]
   >(
     resourceIdentifier: ResourceIdentifier<TResourceType>,
-    resourceData: Partial<TResourceData>
+    resourceData: Partial<UnidentifiableModel<TResourceData>>
   ) {
     return this.emitAndAcknowledgeResources('updateResource', {
       resourceIdentifier,
