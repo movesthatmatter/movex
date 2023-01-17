@@ -22,7 +22,6 @@ type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
 export class ClientSdk<
   ClientInfo extends UnknownRecord = {},
-  // ResourceCollectionMap extends UnknwownSessionResourceCollectionMap = AnySessionResourceCollectionMap,
   ResourceCollectionMap extends Record<
     string,
     UnknownIdentifiableRecord
@@ -101,19 +100,6 @@ export class ClientSdk<
   disconnect() {
     this.socket?.close();
   }
-
-  // TODO: These I believe are more like connect in the realm of the client SDK
-  // createClient(req: { id?: SessionClient['id']; info?: ClientInfo } = {}) {
-  //   return this.emitAndAcknowledgeClients('createClient', req);
-  // }
-
-  // getClient(id: SessionClient['id']) {
-  //   return this.emitAndAcknowledgeClients('getClient', { id });
-  // }
-
-  // removeClient(id: SessionClient['id']) {
-  //   return this.emitAndAcknowledgeClients('removeClient', { id });
-  // }
 
   createResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
@@ -196,7 +182,7 @@ export class ClientSdk<
     const reqName = String(k);
     const reqId = `${reqName}:${String(Math.random()).slice(-5)}`;
 
-    this.logger.info(reqId, '[ClientSdk] Request:', reqName);
+    this.logger.info('[ClientSdk]', reqId, 'Request:', reqName);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -206,15 +192,25 @@ export class ClientSdk<
           withTimeout(
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
-                this.logger.info(reqId, '[ClientSdk] Response Ok:', res.val);
+                this.logger.info(
+                  '[ClientSdk]',
+                  reqId,
+                  ' Response Ok:',
+                  res.val
+                );
                 resolve(new Ok(res.val));
               } else {
-                this.logger.warn(reqId, '[ClientSdk] Response Err:', res.val);
+                this.logger.warn(
+                  '[ClientSdk]',
+                  reqId,
+                  ' Response Err:',
+                  res.val
+                );
                 reject(new Err(res.val));
               }
             },
             () => {
-              this.logger.warn(reqId, '[ClientSdk] Request Timeout:', req);
+              this.logger.warn('[ClientSdk]', reqId, ' Request Timeout:', req);
               reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
             },
             this.config.waitForResponseMs
@@ -244,7 +240,7 @@ export class ClientSdk<
   ): AsyncResult<TRes, unknown> => {
     const reqId = `${k}:${String(Math.random()).slice(-5)}`;
 
-    this.logger.info(reqId, '[ClientSdk] Client Request:', req);
+    this.logger.info('[ClientSdk]', reqId, 'Client Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -254,15 +250,15 @@ export class ClientSdk<
           withTimeout(
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
-                this.logger.info(reqId, '[ClientSdk] Response Ok:', res);
+                this.logger.info('[ClientSdk]', reqId, 'Response Ok:', res);
                 resolve(new Ok(res.val));
               } else {
-                this.logger.warn(reqId, '[ClientSdk] Response Err:', res);
+                this.logger.warn('[ClientSdk]', reqId, 'Response Err:', res);
                 reject(new Err(res.val));
               }
             },
             () => {
-              this.logger.warn(reqId, '[ClientSdk] Request Timeout:', req);
+              this.logger.warn('[ClientSdk]', reqId, 'Request Timeout:', req);
               reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
             },
             this.config.waitForResponseMs
@@ -296,7 +292,7 @@ export class ClientSdk<
   ): AsyncResult<TRes, unknown> => {
     const reqId = `${k}:${String(Math.random()).slice(-5)}`;
 
-    this.logger.info(reqId, '[ClientSdk] Resource Request:', req);
+    this.logger.info('[ClientSdk]', reqId, 'Resource Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -307,15 +303,17 @@ export class ClientSdk<
             (res: WsResponseResultPayload<TRawRes, unknown>) => {
               if (res.ok) {
                 this.logger.info(
+                  '[ClientSdk]',
                   reqId,
-                  '[ClientSdk] Resource Response Ok:',
+                  ' Resource Response Ok:',
                   res.val.item
                 );
                 resolve(new Ok(res.val.item as TRes));
               } else {
                 this.logger.warn(
+                  '[ClientSdk]',
                   reqId,
-                  '[ClientSdk] Resource Response Err:',
+                  'Resource Response Err:',
                   res.val
                 );
                 reject(new Err(res.val));
@@ -323,8 +321,9 @@ export class ClientSdk<
             },
             () => {
               this.logger.warn(
+                '[ClientSdk]',
                 reqId,
-                '[ClientSdk] Resource Request Timeout:',
+                'Resource Request Timeout:',
                 req
               );
               reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
@@ -350,7 +349,7 @@ export class ClientSdk<
   ): AsyncResult<TRes, unknown> => {
     const reqId = `${k}:${String(Math.random()).slice(-5)}`;
 
-    this.logger.info(reqId, '[ClientSdk] Request:', req);
+    this.logger.info('[ClientSdk]', reqId, 'Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -360,15 +359,15 @@ export class ClientSdk<
           withTimeout(
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
-                this.logger.info(reqId, '[ClientSdk] Response Ok:', res);
+                this.logger.info('[ClientSdk]', reqId, 'Response Ok:', res);
                 resolve(new Ok(res.val));
               } else {
-                this.logger.warn(reqId, '[ClientSdk] Response Err:', res);
+                this.logger.warn('[ClientSdk]', reqId, 'Response Err:', res);
                 reject(new Err(res.val));
               }
             },
             () => {
-              this.logger.warn(reqId, '[ClientSdk] Request Timeout:', req);
+              this.logger.warn('[ClientSdk]', reqId, 'Request Timeout:', req);
               // TODO This error could be typed better using a result error
               reject(new Err('RequestTimeout'));
             },

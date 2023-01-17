@@ -2,7 +2,13 @@ import { Server as SocketServer } from 'socket.io';
 import express from 'express';
 import http from 'node:http';
 import https from 'node:https';
-import { ServerSDK, ServerSDKConfig } from '@mtm/server-sdk';
+import {
+  ServerSDK,
+  ServerSDKConfig,
+  SessionClient,
+  UnknownIdentifiableRecord,
+  UnknownRecord,
+} from '@mtm/server-sdk';
 import crypto from 'crypto';
 
 type Config = ServerSDKConfig & {
@@ -11,25 +17,45 @@ type Config = ServerSDKConfig & {
 
 type TransformerFn<V, T> = (value: V) => V | T;
 
-type EventHandlers = {
-  requestHandlers?: (serverSdk: any) => {
+type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
+
+type EventHandlers<
+  ClientInfo extends UnknownRecord,
+  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
+  RequestsCollectionMap extends RequestsCollectionMapBase
+> = {
+  requestHandlers?: (
+    serverSdk: ServerSDK<ClientInfo, ResourceCollectionMap>,
+    client: SessionClient
+  ) => {
     // This should be the ServerSDK
     // [eventName in string]: TransformerFn<>;
-    [eventName in string]: (a: any) => Promise<any>;
+    [eventName in keyof RequestsCollectionMap]: (a: any) => Promise<any>;
   };
-  resourceTransformers?: (serverSdk: any) => {
+  resourceTransformers?: (
+    serverSdk: ServerSDK<ClientInfo, ResourceCollectionMap>,
+    client: SessionClient
+  ) => {
     // This should be the ServerSDK
     // [eventName in string]: TransformerFn<>;
-    [eventName in string]: (a: any) => Promise<any>;
+    [eventName in keyof ResourceCollectionMap]: (a: any) => Promise<any>;
   };
 };
 
-export const mtmBackendWithExpress = <TEvents extends {}>(
+export const mtmBackendWithExpress = <
+  ClientInfo extends UnknownRecord,
+  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
+  RequestsCollectionMap extends RequestsCollectionMapBase
+>(
   httpServer: https.Server | http.Server,
   sdkConfig: ServerSDKConfig,
-  p: EventHandlers = {}
+  p: EventHandlers<
+    ClientInfo,
+    ResourceCollectionMap,
+    RequestsCollectionMap
+  > = {}
 ) => {
-  const seshySDK = new ServerSDK(sdkConfig);
+  const seshySDK = new ServerSDK<ClientInfo, ResourceCollectionMap>(sdkConfig);
 
   const clientSocket: SocketServer = new SocketServer(httpServer, {
     cors: {
@@ -44,7 +70,7 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
   // TODO: This comes from the config or system somehow if we need to track it!
   const serverInstanceId = crypto.randomUUID().slice(-3);
 
-  clientSocket.on('connection', (clientConn) => {
+  clientSocket.on('connection', async (clientConn) => {
     console.log(
       '[backened] client conn',
       clientConn.id,
@@ -62,8 +88,17 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
     // The combo of serverId + conn.id is needed in order to ensure no duplicates
     //  when using multiple mahcines. Thinking BIG :D!
     const clientId = `${serverInstanceId}-${clientConn.id}`;
+    const clientRes = await seshySDK.createClient({ id: clientId }).resolve();
 
-    seshySDK.createClient({ id: clientId });
+    if (!clientRes.ok) {
+      console.error('[backened] client creation error', clientRes.val);
+
+      return;
+    }
+
+    const $client = clientRes.val;
+
+    // TODO: Here should, notify the client that the $client got created and requests can happen
 
     clientConn.on('disconnect', (reason) => {
       console.log('[backened] client disconnected', reason);
@@ -72,17 +107,22 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
     });
 
     const requestHandlersMap = p.requestHandlers
-      ? p.requestHandlers(seshySDK)
-      : {};
+      ? p.requestHandlers(seshySDK, $client)
+      : ({} as {
+          [eventName in keyof RequestsCollectionMap]: (a: any) => Promise<any>;
+        });
 
     clientConn.on(
       'request',
-      async ([reqName, req]: [string, unknown], acknowledgeCb) => {
+      async (
+        [reqName, req]: [keyof RequestsCollectionMap, unknown],
+        acknowledgeCb
+      ) => {
         const handler = requestHandlersMap[reqName] || (() => req);
         const handledReq = await handler(req);
 
-        console.group('[proxy] On Request:', reqName);
-        console.debug('Payload', req, '>', handledReq);
+        console.group('[backened] On Request:', reqName);
+        console.debug('[backened] Payload', req, '>', handledReq);
         console.groupEnd();
 
         acknowledgeCb(handledReq);
@@ -101,9 +141,9 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
 
       // console.log('[proxy] received from clientSDK', event, req, 'Sending to seshy:', transformedReq);
       // const transformedRequest = transformer(req);
-      console.group('[proxy] OnAny');
-      console.info('Event', event);
-      console.debug('Req', req, '>', transformedReq);
+      console.group('[backened] OnAny');
+      console.info('[backened] Event', event);
+      console.debug('[backened] Req', req, '>', transformedReq);
       console.groupEnd();
 
       seshySDK.socket?.emit(event, transformedReq, acknowledgeCb);
@@ -125,10 +165,18 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
   return seshySDK;
 };
 
-export const mtmBackend = (
+export const mtmBackend = <
+  ClientInfo extends UnknownRecord,
+  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
+  RequestsCollectionMap extends RequestsCollectionMapBase
+>(
   { port, ...sdkConfig }: Config,
   callback?: (server: http.Server | https.Server) => void,
-  p: EventHandlers = {}
+  p: EventHandlers<
+    ClientInfo,
+    ResourceCollectionMap,
+    RequestsCollectionMap
+  > = {}
 ) => {
   const app = express();
   const server = http.createServer(app);

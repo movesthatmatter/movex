@@ -164,6 +164,9 @@ export class ServerSDK<
       resourceId?: SessionResource['id'];
     }
   ) {
+    // TODO: This should actuall happen on the seshy server in order to diminish
+    //  the trps back and forth!
+    // And there ideally they happen all at once in redis! again to diminish the trips!
     return this.createResource(req)
       .flatMap((r) =>
         this.subscribeToResource(clientId, {
