@@ -210,6 +210,15 @@ export class ServerSDK<
     });
   }
 
+  observeResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
+    clientId: SessionClient['id'],
+    resourceIdentifier: ResourceIdentifier<TResourceType>
+  ) {
+    return this.subscribeToResource(clientId, resourceIdentifier).map(
+      (r) => r.resource
+    );
+  }
+
   // getResourceSubscribers = this.sessionStore.getResourceSubscribers.bind(
   //   this.sessionStore
   // );
