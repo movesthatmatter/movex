@@ -33,9 +33,14 @@ export class ClientSdk<
   SessionCollectionMap extends SessionStoreCollectionMap<ResourceCollectionMap> = SessionStoreCollectionMap<ResourceCollectionMap>,
   SessionCollectionMapOfResourceKeys extends OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap> = OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap>
 > {
-  private socket?: Socket;
+  private socket: Socket;
 
-  private pubsy = new Pubsy<Events>();
+  private pubsy = new Pubsy<
+    Events & {
+      _socketConnect: void;
+      _socketDisconnect: void;
+    }
+  >();
 
   private logger: typeof console;
 
@@ -56,10 +61,8 @@ export class ClientSdk<
     // TODO: This should probably come from the server when it is random, b/c of duplicates?
     this.userId =
       config.userId || String(getRandomInt(10000000000, 999999999999));
-  }
 
-  async connect() {
-    const socket = io(this.config.url, {
+    this.socket = io(this.config.url, {
       reconnectionDelay: 1000,
       reconnection: true,
       transports: ['websocket'],
@@ -70,23 +73,25 @@ export class ClientSdk<
         userId: this.userId,
         apiKey: this.config.apiKey, // This could change
       },
+      autoConnect: false,
     });
 
-    this.socket = socket;
+    this.socket.on('connect', () => {
+      this.logger.info('[ClientSdk] Connected Succesfully');
 
-    return new Promise<void>((resolve) => {
-      socket.on('connect', () => {
-        this.logger.info('[ClientSdk] Connected Succesfully');
+      this.handleIncomingMessage();
 
-        this.handleIncomingMessage(socket);
-        resolve();
-      });
+      this.pubsy.publish('_socketConnect', undefined);
+    });
+
+    this.socket.on('disconnect', () => {
+      this.pubsy.publish('_socketDisconnect', undefined);
     });
   }
 
-  private handleIncomingMessage(socket: Socket) {
+  private handleIncomingMessage() {
     objectKeys(SdkIO.msgs).forEach((key) => {
-      socket.on(
+      this.socket.on(
         SdkIO.msgs[key].res,
         (res: WsResponseResultPayload<any, unknown>) => {
           if (res.ok) {
@@ -97,8 +102,20 @@ export class ClientSdk<
     });
   }
 
+  connect() {
+    return this.socket.connect();
+  }
+
+  onConnect(fn: () => void) {
+    return this.pubsy.subscribe('_socketConnect', fn);
+  }
+
+  onDisconnect(fn: () => void) {
+    return this.pubsy.subscribe('_socketDisconnect', fn);
+  }
+
   disconnect() {
-    this.socket?.close();
+    this.socket.close();
   }
 
   createResource<
@@ -186,7 +203,7 @@ export class ClientSdk<
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
-        this.socket?.emit(
+        this.socket.emit(
           'request',
           [reqName, req],
           withTimeout(
@@ -244,7 +261,7 @@ export class ClientSdk<
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
-        this.socket?.emit(
+        this.socket.emit(
           SdkIO.msgs[k].req,
           req,
           withTimeout(
@@ -296,7 +313,7 @@ export class ClientSdk<
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
-        this.socket?.emit(
+        this.socket.emit(
           SdkIO.msgs[k].req,
           req,
           withTimeout(
@@ -353,7 +370,7 @@ export class ClientSdk<
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
-        this.socket?.emit(
+        this.socket.emit(
           SdkIO.msgs[k].req,
           req,
           withTimeout(
