@@ -33,7 +33,10 @@ export class ClientSdk<
   SessionCollectionMap extends SessionStoreCollectionMap<ResourceCollectionMap> = SessionStoreCollectionMap<ResourceCollectionMap>,
   SessionCollectionMapOfResourceKeys extends OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap> = OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap>
 > {
-  private socket: Socket;
+  private socketInstance: Socket;
+
+  private socketConnection: Promise<Socket> =
+    getDelayedRejectionPromise<Socket>(50 * 1000);
 
   private pubsy = new Pubsy<
     Events & {
@@ -62,7 +65,7 @@ export class ClientSdk<
     this.userId =
       config.userId || String(getRandomInt(10000000000, 999999999999));
 
-    this.socket = io(this.config.url, {
+    this.socketInstance = io(this.config.url, {
       reconnectionDelay: 1000,
       reconnection: true,
       transports: ['websocket'],
@@ -76,22 +79,29 @@ export class ClientSdk<
       autoConnect: false,
     });
 
-    this.socket.on('connect', () => {
-      this.logger.info('[ClientSdk] Connected Succesfully');
-
-      this.handleIncomingMessage();
+    this.socketInstance.on('connect', () => {
+      this.handleIncomingMessage(this.socketInstance);
 
       this.pubsy.publish('_socketConnect', undefined);
+
+      // Set the connection promise to a real socket
+      // This needs to be at the end!
+      this.socketConnection = Promise.resolve(this.socketInstance);
+
+      this.logger.info('[ClientSdk] Connected Succesfully');
     });
 
-    this.socket.on('disconnect', () => {
+    this.socketInstance.on('disconnect', () => {
       this.pubsy.publish('_socketDisconnect', undefined);
+
+      // Set the connection promise to a long waiting to fail promise
+      this.socketConnection = getDelayedRejectionPromise<Socket>(50 * 1000);
     });
   }
 
-  private handleIncomingMessage() {
+  private handleIncomingMessage(socket: Socket) {
     objectKeys(SdkIO.msgs).forEach((key) => {
-      this.socket.on(
+      socket.on(
         SdkIO.msgs[key].res,
         (res: WsResponseResultPayload<any, unknown>) => {
           if (res.ok) {
@@ -103,7 +113,7 @@ export class ClientSdk<
   }
 
   connect() {
-    return this.socket.connect();
+    return this.socketInstance.connect();
   }
 
   onConnect(fn: () => void) {
@@ -115,7 +125,7 @@ export class ClientSdk<
   }
 
   disconnect() {
-    this.socket.close();
+    this.socketInstance.close();
   }
 
   createResource<
@@ -202,8 +212,10 @@ export class ClientSdk<
     this.logger.info('[ClientSdk]', reqId, 'Request:', reqName);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
-      new Promise((resolve, reject) => {
-        this.socket.emit(
+      new Promise(async (resolve, reject) => {
+        const connection = await this.socketConnection;
+
+        connection.emit(
           'request',
           [reqName, req],
           withTimeout(
@@ -260,8 +272,10 @@ export class ClientSdk<
     this.logger.info('[ClientSdk]', reqId, 'Client Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
-      new Promise((resolve, reject) => {
-        this.socket.emit(
+      new Promise(async (resolve, reject) => {
+        const connection = await this.socketConnection;
+
+        connection.emit(
           SdkIO.msgs[k].req,
           req,
           withTimeout(
@@ -312,8 +326,10 @@ export class ClientSdk<
     this.logger.info('[ClientSdk]', reqId, 'Resource Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
-      new Promise((resolve, reject) => {
-        this.socket.emit(
+      new Promise(async (resolve, reject) => {
+        const connection = await this.socketConnection;
+
+        connection.emit(
           SdkIO.msgs[k].req,
           req,
           withTimeout(
@@ -369,8 +385,10 @@ export class ClientSdk<
     this.logger.info('[ClientSdk]', reqId, 'Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
-      new Promise((resolve, reject) => {
-        this.socket.emit(
+      new Promise(async (resolve, reject) => {
+        const connection = await this.socketConnection;
+
+        connection.emit(
           SdkIO.msgs[k].req,
           req,
           withTimeout(
@@ -419,3 +437,8 @@ const withTimeout = (
     onSuccess(...args);
   };
 };
+
+const getDelayedRejectionPromise = <T>(delay = 15 * 1000) =>
+  new Promise<T>((_, reject) => {
+    setTimeout(reject, delay); // wait for a long time to reconnect before failing
+  });
