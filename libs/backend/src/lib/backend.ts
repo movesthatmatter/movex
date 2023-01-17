@@ -10,6 +10,8 @@ import {
   UnknownRecord,
 } from '@mtm/server-sdk';
 import crypto from 'crypto';
+import { Result } from 'ts-results';
+import { AsyncResult } from 'ts-async-results';
 
 type Config = ServerSDKConfig & {
   port?: number;
@@ -28,17 +30,21 @@ type EventHandlers<
     serverSdk: ServerSDK<ClientInfo, ResourceCollectionMap>,
     client: SessionClient
   ) => {
-    // This should be the ServerSDK
-    // [eventName in string]: TransformerFn<>;
-    [eventName in keyof RequestsCollectionMap]: (a: any) => Promise<any>;
+    [ReqName in keyof RequestsCollectionMap]: (
+      a: RequestsCollectionMap[ReqName][0]
+    ) =>
+      | Promise<RequestsCollectionMap[ReqName][1]>
+      | Promise<Result<RequestsCollectionMap[ReqName][1], any>>
+      | AsyncResult<RequestsCollectionMap[ReqName][1], any>;
   };
   resourceTransformers?: (
     serverSdk: ServerSDK<ClientInfo, ResourceCollectionMap>,
     client: SessionClient
   ) => {
-    // This should be the ServerSDK
-    // [eventName in string]: TransformerFn<>;
-    [eventName in keyof ResourceCollectionMap]: (a: any) => Promise<any>;
+    [ResourceName in keyof ResourceCollectionMap]: TransformerFn<
+      ResourceCollectionMap[ResourceName],
+      Promise<ResourceCollectionMap[ResourceName]>
+    >;
   };
 };
 
@@ -63,9 +69,7 @@ export const mtmBackendWithExpress = <
     },
   });
 
-  // seshy.connect();
-
-  const connectionToClientMap: Record<string, string> = {};
+  // const connectionToClientMap: Record<string, string> = {};
 
   // TODO: This comes from the config or system somehow if we need to track it!
   const serverInstanceId = crypto.randomUUID().slice(-3);
@@ -119,7 +123,12 @@ export const mtmBackendWithExpress = <
         acknowledgeCb
       ) => {
         const handler = requestHandlersMap[reqName] || (() => req);
-        const handledReq = await handler(req);
+
+        const handled = handler(req);
+
+        const handledReq = await (AsyncResult.isAsyncResult(handled)
+          ? handled.resolve()
+          : handled);
 
         console.group('[backened] On Request:', reqName);
         console.debug('[backened] Payload', req, '>', handledReq);

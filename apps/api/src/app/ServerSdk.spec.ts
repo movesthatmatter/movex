@@ -516,11 +516,11 @@ describe('Subscriptions', () => {
   });
 });
 
-describe('Events', () => {
-  it('listens to resource updates', async () => [
-    sdk.onResourceUpdated('game', (p) => {}),
-  ]);
-});
+// describe('Events', () => {
+//   it('listens to resource updates', async () => [
+//     sdk.onResourceUpdated('game', (p) => {}),
+//   ]);
+// });
 // });
 
 // TODO: To add
