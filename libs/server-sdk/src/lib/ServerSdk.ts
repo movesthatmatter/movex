@@ -4,8 +4,6 @@ import { Pubsy } from 'ts-pubsy';
 import { ServerSdkIO } from '../io';
 import {
   AnyIdentifiableRecord,
-  // AnyRecord,
-  AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
   ResourceResponse,
@@ -15,12 +13,10 @@ import {
   UnidentifiableModel,
   UnknownIdentifiableRecord,
   UnknownRecord,
-  UnknwownSessionResourceCollectionMap,
   WsResponseResultPayload,
 } from './types';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
-import { objectKeys } from '../util';
 
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets
@@ -168,12 +164,14 @@ export class ServerSDK<
       resourceId?: SessionResource['id'];
     }
   ) {
-    return this.createResource(req).flatMap((r) =>
-      this.subscribeToResource(clientId, {
-        resourceId: r.item.id,
-        resourceType: req.resourceType,
-      })
-    );
+    return this.createResource(req)
+      .flatMap((r) =>
+        this.subscribeToResource(clientId, {
+          resourceId: r.item.id,
+          resourceType: req.resourceType,
+        })
+      )
+      .map((r) => r.resource);
   }
 
   updateResource<
@@ -268,9 +266,9 @@ export class ServerSDK<
     k: K,
     req: TReq
   ): AsyncResult<TRes, unknown> => {
-    const reqId = `${k}:${String(Math.random()).slice(-5)}`;
+    const reqId = `${k}:${String(Math.random()).slice(-3)}`;
 
-    this.logger.info(reqId, '[ServerSdk] Request:', req);
+    this.logger.info('[ServerSdk]', reqId, 'Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -280,15 +278,15 @@ export class ServerSDK<
           withTimeout(
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
-                this.logger.info(reqId, '[ServerSdk] Response Ok:', res);
+                this.logger.info('[ServerSdk]', reqId, 'Response Ok:', res);
                 resolve(new Ok(res.val));
               } else {
-                this.logger.warn(reqId, '[ServerSdk] Response Err:', res);
+                this.logger.warn('[ServerSdk]', reqId, 'Response Err:', res);
                 reject(new Err(res.val));
               }
             },
             () => {
-              this.logger.warn(reqId, '[ServerSdk] Request Timeout:', req);
+              this.logger.warn('[ServerSdk]', reqId, 'Request Timeout:', req);
               reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
             },
             this.config.waitForResponseMs
@@ -312,7 +310,7 @@ export class ServerSDK<
   ): AsyncResult<TRes, unknown> => {
     const reqId = `${k}:${String(Math.random()).slice(-5)}`;
 
-    this.logger.info(reqId, '[ServerSdk] Request:', req);
+    this.logger.info('[ServerSdk]', reqId, 'Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -322,15 +320,25 @@ export class ServerSDK<
           withTimeout(
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
-                this.logger.info(reqId, '[ServerSdk] Response Ok:', res.val);
+                this.logger.info(
+                  '[ServerSdk]',
+                  reqId,
+                  ' Response Ok:',
+                  res.val
+                );
                 resolve(new Ok(res.val));
               } else {
-                this.logger.warn(reqId, '[ServerSdk] Response Err:', res.val);
+                this.logger.warn(
+                  '[ServerSdk]',
+                  reqId,
+                  ' Response Err:',
+                  res.val
+                );
                 reject(new Err(res.val));
               }
             },
             () => {
-              this.logger.warn(reqId, '[ServerSdk] Request Timeout:', req);
+              this.logger.warn('[ServerSdk]', reqId, ' Request Timeout:', req);
               reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
             },
             this.config.waitForResponseMs
@@ -357,7 +365,7 @@ export class ServerSDK<
   ): AsyncResult<TRes, unknown> => {
     const reqId = `${k}:${String(Math.random()).slice(-5)}`;
 
-    this.logger.info(reqId, '[ServerSdk] Request:', req);
+    this.logger.info('[ServerSdk]', reqId, 'Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -367,15 +375,15 @@ export class ServerSDK<
           withTimeout(
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
-                this.logger.info(reqId, '[ServerSdk] Response Ok:', res);
+                this.logger.info('[ServerSdk]', reqId, 'Response Ok:', res);
                 resolve(new Ok(res.val));
               } else {
-                this.logger.warn(reqId, '[ServerSdk] Response Err:', res);
+                this.logger.warn('[ServerSdk]', reqId, 'Response Err:', res);
                 reject(new Err(res.val));
               }
             },
             () => {
-              this.logger.warn(reqId, '[ServerSdk] Request Timeout:', req);
+              this.logger.warn('[ServerSdk]', reqId, 'Request Timeout:', req);
               reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
             },
             this.config.waitForResponseMs

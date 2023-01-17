@@ -3,6 +3,7 @@ import express from 'express';
 import http from 'node:http';
 import https from 'node:https';
 import { ServerSDK, ServerSDKConfig } from '@mtm/server-sdk';
+import crypto from 'crypto';
 
 type Config = ServerSDKConfig & {
   port?: number;
@@ -38,12 +39,43 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
 
   // seshy.connect();
 
-  clientSocket.on('connection', (clientSocket) => {
+  const connectionToClientMap: Record<string, string> = {};
+
+  // TODO: This comes from the config or system somehow if we need to track it!
+  const serverInstanceId = crypto.randomUUID().slice(-3);
+
+  clientSocket.on('connection', (clientConn) => {
+    console.log(
+      '[backened] client conn',
+      clientConn.id,
+      clientConn.handshake.query
+    );
+    // connectionToClientMapclientSocket.handshake]
+
+    // seshySDK.createClient()
+
+    // seshySDK.onBroadcastToSubscribers((r) => {
+    //   console.log('[backened] gonna braodcast to', r.subscribers, r);
+    //   console.log('[backened] gonna braodcast to conn', clientConn.id, clientConn.handshake);
+    // });
+
+    // The combo of serverId + conn.id is needed in order to ensure no duplicates
+    //  when using multiple mahcines. Thinking BIG :D!
+    const clientId = `${serverInstanceId}-${clientConn.id}`;
+
+    seshySDK.createClient({ id: clientId });
+
+    clientConn.on('disconnect', (reason) => {
+      console.log('[backened] client disconnected', reason);
+
+      seshySDK.removeClient(clientId);
+    });
+
     const requestHandlersMap = p.requestHandlers
       ? p.requestHandlers(seshySDK)
       : {};
 
-    clientSocket.on(
+    clientConn.on(
       'request',
       async ([reqName, req]: [string, unknown], acknowledgeCb) => {
         const handler = requestHandlersMap[reqName] || (() => req);
@@ -58,7 +90,7 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
     );
 
     // This only makes sense for resources or clients to transform
-    clientSocket.onAny(async (event, req, acknowledgeCb) => {
+    clientConn.onAny(async (event, req, acknowledgeCb) => {
       if (event === 'request') {
         return;
       }
@@ -86,10 +118,6 @@ export const mtmBackendWithExpress = <TEvents extends {}>(
       //   //   acknowledgeCb(response);
       //   // }
       // });
-    });
-
-    seshySDK.onBroadcastToSubscribers((r) => {
-      console.log('[backened] gonna braodcast to', r.subscribers, r);
     });
   });
 

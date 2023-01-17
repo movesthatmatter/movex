@@ -2,19 +2,16 @@ import io, { Socket } from 'socket.io-client';
 import { SdkIO } from './io';
 import {
   AnyIdentifiableRecord,
-  AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
-  SessionClient,
   SessionResource,
   SessionStoreCollectionMap,
   UnidentifiableModel,
   UnknownIdentifiableRecord,
   UnknownRecord,
-  UnknwownSessionResourceCollectionMap,
   WsResponseResultPayload,
 } from './types';
-import { objectKeys } from './util';
+import { objectKeys, getRandomInt } from './util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
@@ -43,9 +40,12 @@ export class ClientSdk<
 
   private logger: typeof console;
 
+  private userId: string;
+
   constructor(
     private config: {
       url: string;
+      userId?: string; // Pass in a userId or allow the SDK to generate a random one
       apiKey: string;
       logger?: typeof console;
       waitForResponseMs?: number;
@@ -53,6 +53,10 @@ export class ClientSdk<
   ) {
     this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
+
+    // TODO: This should probably come from the server when it is random, b/c of duplicates?
+    this.userId =
+      config.userId || String(getRandomInt(10000000000, 999999999999));
   }
 
   async connect() {
@@ -64,18 +68,19 @@ export class ClientSdk<
       upgrade: true,
       rejectUnauthorized: false,
       query: {
+        userId: this.userId,
         apiKey: this.config.apiKey, // This could change
       },
     });
 
     this.socket = socket;
 
-    return new Promise((resolve: (socket: Socket) => void) => {
+    return new Promise<void>((resolve) => {
       socket.on('connect', () => {
-        this.handleIncomingMessage(socket);
-        resolve(socket);
-
         this.logger.info('[ClientSdk] Connected Succesfully');
+
+        this.handleIncomingMessage(socket);
+        resolve();
       });
     });
   }
@@ -98,17 +103,17 @@ export class ClientSdk<
   }
 
   // TODO: These I believe are more like connect in the realm of the client SDK
-  createClient(req: { id?: SessionClient['id']; info?: ClientInfo } = {}) {
-    return this.emitAndAcknowledgeClients('createClient', req);
-  }
+  // createClient(req: { id?: SessionClient['id']; info?: ClientInfo } = {}) {
+  //   return this.emitAndAcknowledgeClients('createClient', req);
+  // }
 
-  getClient(id: SessionClient['id']) {
-    return this.emitAndAcknowledgeClients('getClient', { id });
-  }
+  // getClient(id: SessionClient['id']) {
+  //   return this.emitAndAcknowledgeClients('getClient', { id });
+  // }
 
-  removeClient(id: SessionClient['id']) {
-    return this.emitAndAcknowledgeClients('removeClient', { id });
-  }
+  // removeClient(id: SessionClient['id']) {
+  //   return this.emitAndAcknowledgeClients('removeClient', { id });
+  // }
 
   createResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
@@ -159,33 +164,29 @@ export class ClientSdk<
   }
 
   subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
-    clientId: SessionClient['id'],
     resourceIdentifier: ResourceIdentifier<TResourceType>
   ) {
-    return this.emitAndAcknowledgeSubscriptions('subscribeToResource', {
-      clientId,
-      resourceIdentifier,
-    });
+    return this.emitAndAcknowledgeSubscriptions(
+      'subscribeToResource',
+      resourceIdentifier
+    );
   }
 
   unsubscribeFromResource<
     TResourceType extends SessionCollectionMapOfResourceKeys
-  >(
-    clientId: SessionClient['id'],
-    resourceIdentifier: ResourceIdentifier<TResourceType>
-  ) {
-    return this.emitAndAcknowledgeSubscriptions('unsubscribeFromResource', {
-      clientId,
-      resourceIdentifier,
-    });
+  >(resourceIdentifier: ResourceIdentifier<TResourceType>) {
+    return this.emitAndAcknowledgeSubscriptions(
+      'unsubscribeFromResource',
+      resourceIdentifier
+    );
   }
 
-  onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
-    resourceType: TResourceType,
-    fn: (r: ResourceCollectionMap[TResourceType]) => void
-  ) {
-    //TBD
-  }
+  // onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
+  //   resourceType: TResourceType,
+  //   fn: (r: ResourceCollectionMap[TResourceType]) => void
+  // ) {
+  //   //TBD
+  // }
 
   request<
     TReqType extends keyof RequestsCollectionMap,
@@ -243,7 +244,7 @@ export class ClientSdk<
   ): AsyncResult<TRes, unknown> => {
     const reqId = `${k}:${String(Math.random()).slice(-5)}`;
 
-    this.logger.info(reqId, '[ClientSdk] Request:', req);
+    this.logger.info(reqId, '[ClientSdk] Client Request:', req);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -340,12 +341,9 @@ export class ClientSdk<
       typeof SdkIO.msgs,
       'subscribeToResource' | 'unsubscribeFromResource'
     >,
-    TResourceType extends SessionCollectionMapOfResourceKeys,
-    TReq extends SdkIO.Payloads[K]['req'],
-    TRes = {
-      resource: SessionCollectionMap[TResourceType];
-      client: SessionCollectionMap['$clients'];
-    }
+    // TResourceType extends SessionCollectionMapOfResourceKeys,
+    TReq extends SdkIO.Payloads[K]['req']['resourceIdentifier'],
+    TRes = void
   >(
     k: K,
     req: Omit<TReq, 'resourceType'>
