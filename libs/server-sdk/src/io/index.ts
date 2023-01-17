@@ -157,7 +157,17 @@ export namespace ServerSdkIO {
   export type Payloads = z.infer<typeof payloads>;
 
   const payloadsShape = payloads.shape;
-  export const msgs = objectKeys(payloadsShape).reduce(
+  const msgNamesList = objectKeys(payloadsShape);
+
+  export const msgNames = msgNamesList.reduce(
+    (accum, next) => ({
+      ...accum,
+      [next]: next,
+    }),
+    {} as { [k in keyof typeof msgs]: k }
+  );
+
+  export const msgs = msgNamesList.reduce(
     (accum, next) => {
       return {
         ...accum,

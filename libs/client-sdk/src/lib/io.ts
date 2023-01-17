@@ -1,7 +1,7 @@
 import * as z from 'zod';
 import { objectKeys } from './util';
 
-export namespace SdkIO {
+export namespace ClientSdkIO {
   const zId = z.string;
 
   const unknownRecord = () => z.record(z.string(), z.unknown());
@@ -111,6 +111,12 @@ export namespace SdkIO {
       }),
       genericSessionResource()
     ),
+    observeResource: toReqRes(
+      z.object({
+        resourceIdentifier: genericResourceIdentifier(),
+      }),
+      genericSessionResource()
+    ),
     updateResource: toReqRes(
       z.object({
         resourceIdentifier: genericResourceIdentifier(),
@@ -134,23 +140,15 @@ export namespace SdkIO {
     // Subscriptions
     subscribeToResource: toReqRes(
       z.object({
-        clientId: zId(),
         resourceIdentifier: genericResourceIdentifier(),
       }),
-      z.object({
-        client: sessionClient(),
-        resource: genericSessionResource(),
-      })
+      genericSessionResource()
     ),
     unsubscribeFromResource: toReqRes(
       z.object({
-        clientId: zId(),
         resourceIdentifier: genericResourceIdentifier(),
       }),
-      z.object({
-        client: sessionClient(),
-        resource: genericSessionResource(),
-      })
+      genericSessionResource()
     ),
 
     // Custom Requests
@@ -160,6 +158,16 @@ export namespace SdkIO {
   export type Payloads = z.infer<typeof payloads>;
 
   const payloadsShape = payloads.shape;
+  const msgNamesList = objectKeys(payloadsShape);
+
+  export const msgNames = msgNamesList.reduce(
+    (accum, next) => ({
+      ...accum,
+      [next]: next,
+    }),
+    {} as { [k in keyof typeof msgs]: k }
+  );
+
   export const msgs = objectKeys(payloadsShape).reduce(
     (accum, next) => {
       return {
