@@ -53,7 +53,7 @@ beforeAll((done) => {
   // Date
   MockDate.set(NOW_TIMESTAMP);
 
-  bootstrapServer().then((startedServer) => {
+  bootstrapServer(6767).then((startedServer) => {
     server = startedServer;
     done();
   });
