@@ -1,7 +1,7 @@
 import * as RRStore from 'relational-redis-store';
 import { AsyncOk, AsyncResult, AsyncResultWrapper } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
-import { getUuid, toResourceIdentifier } from './util';
+import { getUuid } from './util';
 import {
   objectKeys,
   UnidentifiableModel,
@@ -17,6 +17,7 @@ import {
   SessionStoreCollectionMap,
   UnknwownSessionResourceCollectionMap,
 } from '@mtm/server-sdk';
+import { toResourceIdentifier } from 'libs/server-sdk/src/util';
 
 // Note:
 // This is currently depending on RRStore, but from what I see
@@ -192,16 +193,22 @@ export class SessionStore<
       .updateItemInCollection(
         resourceType,
         resourceId,
-        typeof dataGetter === 'function'
-          ? (prev) => {
-              return {
-                ...prev,
-                data: dataGetter(prev.data as TResourceData),
-              };
-            }
-          : ({
-              data: dataGetter,
-            } as any),
+        (prev) => {
+          // TODO: This is like this b/c it needs to load the prev since the store doesn't
+          //  merge partials of second or more generations. TODO: this could be set though
+          // in order to save a redis trip to read the prev!
+          return {
+            ...prev,
+            data: {
+              // TODO: Add a test here!
+              ...prev.data,
+              ...(typeof dataGetter === 'function'
+                ? dataGetter(prev.data as TResourceData)
+                : dataGetter),
+            },
+          };
+        },
+
         {
           foreignKeys: {} as any,
         }
