@@ -22,6 +22,22 @@ export class SdkGateway {
     if (token) {
       this.sessionService.createSession(token);
     }
+
+    console.log('[Seshy] Backend Connected:', token);
+
+    socket.on('disconnect', () => {
+      console.log('[Seshy] Backend Disconnected:', token);
+
+      const session = token ? this.sessionService.getSession(token) : undefined;
+
+      if (!session) {
+        return;
+      }
+
+      session.removeAllClients();
+    });
+
+    // TODO: Add a way to remove all clients from this server when this server is going down!
   }
 
   // Clients

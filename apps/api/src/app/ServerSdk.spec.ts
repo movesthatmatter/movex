@@ -37,9 +37,11 @@ let sdk: ServerSDK<
   }
 >;
 
-const NOW_TIMESTAMP = new Date().getTime();
+const NOW_TIMESTAMP = 12345;
 
 const noop = () => {};
+
+const SERVER_PORT = 6767;
 
 const silentLogger = {
   ...console,
@@ -53,7 +55,7 @@ beforeAll((done) => {
   // Date
   MockDate.set(NOW_TIMESTAMP);
 
-  bootstrapServer(6767).then((startedServer) => {
+  bootstrapServer(SERVER_PORT).then((startedServer) => {
     server = startedServer;
     done();
   });
@@ -67,7 +69,7 @@ afterAll((done) => {
 
 beforeEach((done) => {
   sdk = new ServerSDK({
-    url: 'ws://localhost:4444',
+    url: `ws://localhost:${SERVER_PORT}`,
     apiKey: 'tester-A',
     logger: silentLogger,
   });
@@ -500,17 +502,16 @@ describe('Subscriptions', () => {
         })
       )
       .map((actual) => {
-        expect(1).toBe(2);
-        // TOOD: Fix this type!!!
-        // expect(actual).toEqual({
-        //   resourceId: actual.resourceId,
-        //   resourceType: 'room',
-        //   subscribers: {
-        //     'user-1': {
-        //       subscribedAt: NOW_TIMESTAMP,
-        //     },
-        //   },
-        // });
+        expect(actual).toEqual({
+          // TOOD: Fix this any type!!!
+          resourceId: (actual as any).resourceId,
+          resourceType: 'room',
+          subscribers: {
+            'user-1': {
+              subscribedAt: NOW_TIMESTAMP,
+            },
+          },
+        });
       })
       .resolve();
   });
