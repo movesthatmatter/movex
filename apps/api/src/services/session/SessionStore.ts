@@ -1,5 +1,5 @@
 import * as RRStore from 'relational-redis-store';
-import { AsyncOk, AsyncResult } from 'ts-async-results';
+import { AsyncOk, AsyncResult, AsyncResultWrapper } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
 import { getUuid, toResourceIdentifier } from './util';
 import {
@@ -125,6 +125,14 @@ export class SessionStore<
       }));
   }
 
+  removeAllClients() {
+    return this.getAllClients().flatMap((allClients) =>
+      AsyncResult.all(
+        ...allClients.map((client) => this.removeClient(client.id))
+      )
+    );
+  }
+
   createResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TResourceData extends UnidentifiableModel<
@@ -160,7 +168,7 @@ export class SessionStore<
       )
       .map((r) => ({
         ...r,
-        item: toOutResource(resourceType)(r.item),
+        item: this.toOutResource(resourceType)(r.item),
       }));
   }
 
@@ -198,7 +206,7 @@ export class SessionStore<
           foreignKeys: {} as any,
         }
       )
-      .map(toOutResource(resourceType));
+      .map(this.toOutResource(resourceType));
     // .map(({ item }) =>
     //   objectKeys(item.subscribers).reduce(
     //     (accum, nextId) => ({
@@ -230,7 +238,7 @@ export class SessionStore<
   }) {
     return this.store
       .getItemInCollection(resourceType as string, resourceId)
-      .map(toOutResource(resourceType));
+      .map(this.toOutResource(resourceType));
   }
 
   getAllResourcesOfType<
@@ -264,34 +272,48 @@ export class SessionStore<
       resourceIdentifierOrString
     );
 
-    // First we update the resource
-    return this.updateResourceSubscribers(
-      { resourceType, resourceId },
-      (prev) => ({
-        ...prev,
-        [clientId]: {
-          subscribedAt: now,
-        },
-      })
-    )
-      .flatMap((nextResource) =>
-        AsyncResult.all(
-          new AsyncOk(nextResource),
-          this.updateClient(clientId, (prev) => ({
+    return new AsyncResultWrapper(
+      new Promise<any>(async (resolve) => {
+        // const unlock = await this.store.lockCollectionItem(
+        //   '$clients',
+        //   clientId
+        // );
+
+        // First we update the resource
+        return await this.updateResourceSubscribers(
+          { resourceType, resourceId },
+          (prev) => ({
             ...prev,
-            subscriptions: {
-              ...prev.subscriptions,
-              [`${resourceType}:${nextResource.id}`]: {
-                subscribedAt: now,
-              },
+            [clientId]: {
+              subscribedAt: now,
             },
-          }))
+          })
         )
-      )
-      .map(([resource, client]) => ({
-        resource: toOutResource(resourceType)(resource),
-        client,
-      }));
+          .flatMap((nextResource) =>
+            AsyncResult.all(
+              new AsyncOk(nextResource),
+              this.updateClient(clientId, (prev) => ({
+                ...prev,
+                subscriptions: {
+                  ...prev.subscriptions,
+                  [`${resourceType}:${nextResource.id}`]: {
+                    subscribedAt: now,
+                  },
+                },
+              }))
+            )
+          )
+          .map(([resource, client]) => ({
+            resource: this.toOutResource(resourceType)(resource),
+            client,
+          }))
+          .resolve()
+          .then(resolve)
+          // .finally(unlock);
+      })
+    );
+    // .flatMap(() => {
+
     // TODO: Revert the resource subscription in case of a client error
     // This is done this way to save a query of getting the client first!
     //  since we already get it when we call updateClient
@@ -353,7 +375,7 @@ export class SessionStore<
         //   ...resource,
         //   $resource: resourceType,
         // },
-        resource: toOutResource(resourceType)(resource),
+        resource: this.toOutResource(resourceType)(resource),
         client,
       }));
   }
@@ -442,15 +464,20 @@ export class SessionStore<
       }
     );
   }
-}
 
-export const toOutResource =
-  <T extends UnknownRecord>(type: string) =>
-  (r: SessionResource<T>) => ({
-    type,
-    subscribers: r.subscribers,
-    item: {
-      ...r.data,
-      id: r.id,
-    },
-  });
+  private toOutResource =
+    <
+      TResourceType extends SessionCollectionMapOfResourceKeys,
+      T extends UnknownRecord
+    >(
+      type: TResourceType
+    ) =>
+    (r: SessionResource<T>) => ({
+      type,
+      subscribers: r.subscribers,
+      item: {
+        ...r.data,
+        id: r.id,
+      },
+    });
+}

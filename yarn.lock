@@ -5852,6 +5852,11 @@ process-nextick-args@~2.0.0:
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
 
+promise-delegate@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/promise-delegate/-/promise-delegate-1.0.1.tgz#35d50fded6fbc47175e84bab9835f7097427fca4"
+  integrity sha512-TXMJUoZUpP5/imX1+B1aoph/5Di/YIkPqNPNWpSwCvXiFJ80+nVInwt/4jCgL8fNwYYSlrQJxN2y7N5dm7mpkg==
+
 prompts@^2.0.1:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/prompts/-/prompts-2.4.2.tgz#7b57e73b3a48029ad10ebd44f74b01722a4cb069"
@@ -6003,10 +6008,9 @@ redis-lock@0.1.4:
   resolved "https://registry.yarnpkg.com/redis-lock/-/redis-lock-0.1.4.tgz#e83590bee22b5f01cdb65bfbd88d988045356272"
   integrity sha512-7/+zu86XVQfJVx1nHTzux5reglDiyUCDwmW7TSlvVezfhH2YLc/Rc8NE0ejQG+8/0lwKzm29/u/4+ogKeLosiA==
 
-redis-mock@^0.56.3:
-  version "0.56.3"
-  resolved "https://registry.yarnpkg.com/redis-mock/-/redis-mock-0.56.3.tgz#e96471bcc774ddc514c2fc49cdd03cab2baecd89"
-  integrity sha512-ynaJhqk0Qf3Qajnwvy4aOjS4Mdf9IBkELWtjd+NYhpiqu4QCNq6Vf3Q7c++XRPGiKiwRj9HWr0crcwy7EiPjYQ==
+"redis-mock@https://github.com/movesthatmatter/redis-mock.git#fix-set-nx-and-zpopmin":
+  version "0.56.4"
+  resolved "https://github.com/movesthatmatter/redis-mock.git#f205b1719fbe5188c432c1a1f86d970b0ef166d9"
 
 redis-parser@^3.0.0:
   version "3.0.0"
@@ -6054,10 +6058,10 @@ regexpp@^3.2.0:
   resolved "https://registry.yarnpkg.com/regexpp/-/regexpp-3.2.0.tgz#0425a2768d8f23bad70ca4b90461fa2f1213e1b2"
   integrity sha512-pq2bWo9mVD43nbts2wGv17XLiNLya+GklZ8kaDLV2Z08gDCsGpnKn9BFMepvWuHCbyVvY7J5o5+BVvoQbmlJLg==
 
-relational-redis-store@^0.6.11:
-  version "0.6.11"
-  resolved "https://registry.yarnpkg.com/relational-redis-store/-/relational-redis-store-0.6.11.tgz#76f67f82513e0c9fedcbdec3db65ab6bb3185da3"
-  integrity sha512-/IlBuxIn9omVVXvg5sC5wFoSSKyDLIUrFi+ToBAwSGo/OAYIECifzU2GjIV+w3ZOsYmcVYJIiAdkDxfkex/Sgw==
+relational-redis-store@^0.6.12:
+  version "0.6.12"
+  resolved "https://registry.yarnpkg.com/relational-redis-store/-/relational-redis-store-0.6.12.tgz#dc80c6f630f46f9b8156e5021f296f94751ca1d5"
+  integrity sha512-hHSeA0eR648g+wMGtM7GCZmnUJ8oZrfkO0vZPU91hJAzPbp7dPLPyd8V5wjX+ASbx24KuZHlQ94wLmV657vh8A==
   dependencies:
     "@types/deep-equal" "^1.0.1"
     "@types/json-stable-stringify" "^1.0.34"
