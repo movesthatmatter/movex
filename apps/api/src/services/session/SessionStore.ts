@@ -272,48 +272,34 @@ export class SessionStore<
       resourceIdentifierOrString
     );
 
-    return new AsyncResultWrapper(
-      new Promise<any>(async (resolve) => {
-        // const unlock = await this.store.lockCollectionItem(
-        //   '$clients',
-        //   clientId
-        // );
-
-        // First we update the resource
-        return await this.updateResourceSubscribers(
-          { resourceType, resourceId },
-          (prev) => ({
-            ...prev,
-            [clientId]: {
-              subscribedAt: now,
-            },
-          })
-        )
-          .flatMap((nextResource) =>
-            AsyncResult.all(
-              new AsyncOk(nextResource),
-              this.updateClient(clientId, (prev) => ({
-                ...prev,
-                subscriptions: {
-                  ...prev.subscriptions,
-                  [`${resourceType}:${nextResource.id}`]: {
-                    subscribedAt: now,
-                  },
-                },
-              }))
-            )
-          )
-          .map(([resource, client]) => ({
-            resource: this.toOutResource(resourceType)(resource),
-            client,
-          }))
-          .resolve()
-          .then(resolve)
-          // .finally(unlock);
+    return this.updateResourceSubscribers(
+      { resourceType, resourceId },
+      (prev) => ({
+        ...prev,
+        [clientId]: {
+          subscribedAt: now,
+        },
       })
-    );
+    )
+      .flatMap((nextResource) =>
+        AsyncResult.all(
+          new AsyncOk(nextResource),
+          this.updateClient(clientId, (prev) => ({
+            ...prev,
+            subscriptions: {
+              ...prev.subscriptions,
+              [`${resourceType}:${nextResource.id}`]: {
+                subscribedAt: now,
+              },
+            },
+          }))
+        )
+      )
+      .map(([resource, client]) => ({
+        resource: this.toOutResource(resourceType)(resource),
+        client,
+      }));
     // .flatMap(() => {
-
     // TODO: Revert the resource subscription in case of a client error
     // This is done this way to save a query of getting the client first!
     //  since we already get it when we call updateClient
