@@ -29,7 +29,10 @@ export type CollectionMapBase = {
 
 export type UnknownRecord = Record<string, unknown>;
 
-export type UnknownIdentifiableRecord = { id: string } & Record<string, unknown>;
+export type UnknownIdentifiableRecord = { id: string } & Record<
+  string,
+  unknown
+>;
 export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
 type SessionResourceType = string;
@@ -69,6 +72,16 @@ export type SessionResource<TData extends UnknownRecord = {}> = {
       subscribedAt: number;
     }
   >;
+};
+
+export type ClientResource<
+  TResourceType extends string,
+  TData extends UnknownRecord
+> = {
+  type: TResourceType;
+  item: {
+    id: string;
+  } & TData;
 };
 
 // export type ObservableResource<TData extends UnknownRecord = {}> =

@@ -8,7 +8,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
-    "importHelpers": true,
+    "importHelpers": false,
     "strict": true,
     "target": "es2015",
     "module": "esnext",
@@ -17,6 +17,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@mtm/backend": ["libs/backend/src/index.ts"],
+      "@mtm/client-sdk": ["libs/client-sdk/src/index.ts"],
       "@mtm/server-sdk": ["libs/server-sdk/src/index.ts"]
     }
   },

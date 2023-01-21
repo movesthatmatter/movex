@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import { objectKeys } from '../util';
+import { objectKeys } from '../lib/util';
 
 export namespace ServerSdkIO {
   const zId = z.string;

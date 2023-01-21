@@ -2,6 +2,7 @@ import io, { Socket } from 'socket.io-client';
 import { ClientSdkIO as SdkIO } from './io';
 import {
   AnyIdentifiableRecord,
+  ClientResource,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
   SessionResource,
@@ -11,13 +12,13 @@ import {
   UnknownRecord,
   WsResponseResultPayload,
 } from './types';
-import { objectKeys, getRandomInt } from './util';
+import { getRandomInt } from './util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { PromiseDelegate } from 'promise-delegate';
 
-type Events = SdkIO.MsgToResponseMap;
+type Events = Pick<SdkIO.MsgToResponseMap, 'updateResource' | 'removeResource'>;
 
 type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
@@ -36,35 +37,12 @@ export class ClientSdk<
 > {
   private socketInstance: Socket;
 
-  // private socketConnection: Promise<Socket> = new Promise(() => {
-
-  // })
-  // private socketConnectionPromiseDelegate =
-
-  // private socketConnected = false;
-
-  // private socketConnectionObj:
-  //   | {
-  //       connected: false;
-  //       promiseDelegate: PromiseDelegate<Socket>;
-  //     }
-  //   | {
-  //       connected: true;
-  //       promise: Promise<Socket>;
-  //     } = {
-  //   connected: false,
-  //   promiseDelegate: new PromiseDelegate<Socket>(),
-  // };
-
   private socketConnectionDelegate = new PromiseDelegate<Socket>(true);
-
-  // private socketConnection = new PromiseDelegate<Socket>()
-  // getDelayedRejectionPromise<Socket>(5 * 1000);
 
   private pubsy = new Pubsy<
     Events & {
-      _socketConnect: void;
-      _socketDisconnect: void;
+      _socketConnect: Socket;
+      _socketDisconnect: undefined;
     }
   >();
 
@@ -108,9 +86,11 @@ export class ClientSdk<
       // TOOD: Not sure why the 100ms delay needed???
       setTimeout(() => {
         this.socketConnectionDelegate.resolve(this.socketInstance);
-      }, 100)
 
-      this.pubsy.publish('_socketConnect', undefined);
+        console.log('[ClientSdk] Connected with id', this.socketInstance.id);
+      }, 100);
+
+      this.pubsy.publish('_socketConnect', this.socketInstance);
 
       // Set the connection promise to a real socket
       // This needs to be at the end!
@@ -155,32 +135,55 @@ export class ClientSdk<
   }
 
   private handleIncomingMessage(socket: Socket) {
-    objectKeys(SdkIO.msgs).forEach((key) => {
-      socket.on(
-        SdkIO.msgs[key].res,
-        (res: WsResponseResultPayload<any, unknown>) => {
-          if (res.ok) {
-            this.pubsy.publish(key, res.val);
-          }
+    // socket.on(SdkIO.msgNames.updateResource, (res) => {
+    //   console.log('yes got msg', res);
+    // })
+
+    socket.on(
+      SdkIO.msgNames.updateResource,
+      (
+        res: WsResponseResultPayload<
+          SdkIO.MsgToResponseMap['updateResource'],
+          unknown
+        >
+      ) => {
+        if (res.ok) {
+          this.pubsy.publish('updateResource', res.val);
         }
-      );
-    });
+      }
+    );
+
+    // Handle Remove resource
+
+    // [SdkIO.msgNames.updateResource, SdkIO.msgNames.removeResource].forEach(
+    //   (key) => {
+    //     socket.on(
+    //       SdkIO.msgs[key].res,
+    //       // (res: WsResponseResultPayload<any, unknown>) => {
+    //       (res) => {
+    //         // console.log('[client sdk] going to publish', key, res);
+    //         if (res.ok) {
+    //           this.pubsy.publish(key, res.val);
+    //         }
+    //       }
+    //     );
+    //   }
+    // );
   }
 
   get socketConnection() {
     return this.socketConnectionDelegate.promise;
-    // if (this.socketConnectionObj.connected) {
-    //   return this.socketConnectionObj.promise;
-    // }
-
-    // return this.socketConnectionObj.promiseDelegate.promise;
   }
 
   connect() {
     return this.socketInstance.connect();
   }
 
-  onConnect(fn: () => void) {
+  disconnect() {
+    this.socketInstance.close();
+  }
+
+  onConnect(fn: (socket: Socket) => void) {
     return this.pubsy.subscribe('_socketConnect', fn);
   }
 
@@ -188,9 +191,9 @@ export class ClientSdk<
     return this.pubsy.subscribe('_socketDisconnect', fn);
   }
 
-  disconnect() {
-    this.socketInstance.close();
-  }
+  // on<E extends keyof Events>(event: E, fn: (payload: Events[E]) => void) {
+  //   return this.pubsy.subscribe(event, fn);
+  // }
 
   createResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
@@ -263,6 +266,21 @@ export class ClientSdk<
       resourceIdentifier,
     });
   }
+
+  onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
+    fn: (
+      r: ClientResource<TResourceType, ResourceCollectionMap[TResourceType]>
+    ) => void
+  ) {
+    return this.pubsy.subscribe('updateResource', (r) => {
+      fn(
+        r as ClientResource<TResourceType, ResourceCollectionMap[TResourceType]>
+      );
+    });
+  }
+
+  // TBD
+  // onResourceRemoved<TResourceType extends SessionCollectionMapOfResourceKeys>(}
 
   // onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
   //   resourceType: TResourceType,

@@ -69,6 +69,30 @@ export namespace ClientSdkIO {
 
   const genericSessionResource = () => sessionResource(unknownRecord());
 
+  // This is called clientResource b/c this is what gets sent to the client,
+  //  but it could be namaed better probably
+  export const clientResource = <
+    TType extends string,
+    TData extends z.ZodRecord
+  >(
+    type: TType,
+    data: TData
+  ) =>
+    z.object({
+      type: z.literal(type),
+      item: z.intersection(
+        z.object({
+          id: zId(),
+        }),
+        data
+      ),
+    });
+
+  export const genericClientResource = (type: string) =>
+    clientResource(type, unknownRecord());
+
+  // export type ClientResource = z.infer<typeof clientResource>;
+
   export const payloads = z.object({
     // Clients
     createClient: toReqRes(
@@ -122,7 +146,8 @@ export namespace ClientSdkIO {
         resourceIdentifier: genericResourceIdentifier(),
         resourceData: unknownRecord(),
       }),
-      genericSessionResource()
+      // genericSessionResource()
+      genericClientResource('generic')
     ),
     removeResource: toReqRes(
       z.object({

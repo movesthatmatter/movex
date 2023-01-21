@@ -6,12 +6,18 @@ import {
   ServerSDK,
   ServerSDKConfig,
   SessionClient,
+  toWsResponseResultPayloadOk,
   UnknownIdentifiableRecord,
   UnknownRecord,
 } from '@mtm/server-sdk';
 import crypto from 'crypto';
 import { Result } from 'ts-results';
 import { AsyncResult } from 'ts-async-results';
+import * as ClientSdk from '@mtm/client-sdk';
+import { SocketConnections } from './SocketConnections';
+import { objectKeys } from './util';
+
+const { ClientSdkIO } = ClientSdk.io;
 
 type Config = ServerSDKConfig & {
   port?: number;
@@ -29,23 +35,23 @@ type EventHandlers<
   requestHandlers?: (
     serverSdk: ServerSDK<ClientInfo, ResourceCollectionMap>,
     client: SessionClient
-  ) => {
+  ) => Partial<{
     [ReqName in keyof RequestsCollectionMap]: (
       a: RequestsCollectionMap[ReqName][0]
     ) =>
       | Promise<RequestsCollectionMap[ReqName][1]>
       | Promise<Result<RequestsCollectionMap[ReqName][1], any>>
       | AsyncResult<RequestsCollectionMap[ReqName][1], any>;
-  };
+  }>;
   resourceTransformers?: (
     serverSdk: ServerSDK<ClientInfo, ResourceCollectionMap>,
     client: SessionClient
-  ) => {
+  ) => Partial<{
     [ResourceName in keyof ResourceCollectionMap]: TransformerFn<
       ResourceCollectionMap[ResourceName],
       Promise<ResourceCollectionMap[ResourceName]>
     >;
-  };
+  }>;
 };
 
 export const mtmBackendWithExpress = <
@@ -61,117 +67,217 @@ export const mtmBackendWithExpress = <
     RequestsCollectionMap
   > = {}
 ) => {
-  const seshySDK = new ServerSDK<ClientInfo, ResourceCollectionMap>(sdkConfig);
-
-  const clientSocket: SocketServer = new SocketServer(httpServer, {
-    cors: {
-      origin: '*',
-    },
-  });
-
-  // const connectionToClientMap: Record<string, string> = {};
-
   // TODO: This comes from the config or system somehow if we need to track it!
   const serverInstanceId = crypto.randomUUID().slice(-3);
 
-  clientSocket.on('connection', async (clientConn) => {
-    console.log(
-      '[backened] client conn',
-      clientConn.id,
-      clientConn.handshake.query
-    );
-    // connectionToClientMapclientSocket.handshake]
+  const seshySDK = new ServerSDK<ClientInfo, ResourceCollectionMap>(sdkConfig);
 
-    // seshySDK.createClient()
+  const unsunscribersFromSeshySdkConnection: (() => void)[] = [];
 
-    // seshySDK.onBroadcastToSubscribers((r) => {
-    //   console.log('[backened] gonna braodcast to', r.subscribers, r);
-    //   console.log('[backened] gonna braodcast to conn', clientConn.id, clientConn.handshake);
-    // });
+  seshySDK.connect().then((seshyConn) => {
+    console.log('[backend] connected to seshy', seshyConn.id);
 
-    // The combo of serverId + conn.id is needed in order to ensure no duplicates
-    //  when using multiple mahcines. Thinking BIG :D!
-    const clientId = `${serverInstanceId}-${clientConn.id}`;
-    const clientRes = await seshySDK.createClient({ id: clientId }).resolve();
-
-    if (!clientRes.ok) {
-      console.error('[backened] client creation error', clientRes.val);
-
-      return;
-    }
-
-    const $client = clientRes.val;
-
-    // TODO: Here should, notify the client that the $client got created and requests can happen
-
-    clientConn.on('disconnect', (reason) => {
-      console.log('[backened] client disconnected', reason);
-
-      seshySDK.removeClient(clientId);
+    const clientSocket: SocketServer = new SocketServer(httpServer, {
+      cors: {
+        origin: '*',
+      },
     });
 
-    const requestHandlersMap = p.requestHandlers
-      ? p.requestHandlers(seshySDK, $client)
-      : ({} as {
-          [eventName in keyof RequestsCollectionMap]: (a: any) => Promise<any>;
-        });
+    const clientConnections = new SocketConnections();
 
-    clientConn.on(
-      'request',
-      async (
-        [reqName, req]: [keyof RequestsCollectionMap, unknown],
-        acknowledgeCb
-      ) => {
-        const handler = requestHandlersMap[reqName] || (() => req);
+    clientSocket.on('connection', async (clientConn) => {
+      console.log('[backened] connected to client', clientConn.id);
+      // connectionToClientMapclientSocket.handshake]
 
-        const handled = handler(req);
+      // seshySDK.createClient()
 
-        const handledReq = await (AsyncResult.isAsyncResult(handled)
-          ? handled.resolve()
-          : handled);
+      // seshySDK.onBroadcastToSubscribers((r) => {
+      //   console.log('[backened] gonna braodcast to', r.subscribers, r);
+      //   console.log('[backened] gonna braodcast to conn', clientConn.id, clientConn.handshake);
+      // });
 
-        console.group('[backened] On Request:', reqName);
-        console.debug('[backened] Payload', req, '>', handledReq);
-        console.groupEnd();
+      // The combo of serverId + conn.id is needed in order to ensure no duplicates
+      //  when using multiple mahcines. Thinking BIG :D!
+      const clientId = `${serverInstanceId}-${clientConn.id}`;
+      const clientRes = await seshySDK.createClient({ id: clientId }).resolve();
 
-        acknowledgeCb(handledReq);
-      }
-    );
+      clientConnections.add(clientId, clientConn);
 
-    // This only makes sense for resources or clients to transform
-    clientConn.onAny(async (event, req, acknowledgeCb) => {
-      if (event === 'request') {
+      if (!clientRes.ok) {
+        console.error('[backened] client creation error', clientRes.val);
+
         return;
       }
 
-      const reqTransformer =
-        (p.resourceTransformers as any)?.[event] || (() => req);
-      const transformedReq = await reqTransformer(req);
+      const $client = clientRes.val;
 
-      // console.log('[proxy] received from clientSDK', event, req, 'Sending to seshy:', transformedReq);
-      // const transformedRequest = transformer(req);
-      console.group('[backened] OnAny');
-      console.info('[backened] Event', event);
-      console.debug('[backened] Req', req, '>', transformedReq);
-      console.groupEnd();
+      // TODO: Here should, notify the client that the $client got created and requests can happen
 
-      seshySDK.socket?.emit(event, transformedReq, acknowledgeCb);
+      if (p.requestHandlers) {
+        const requestHandlersMap = p.requestHandlers(seshySDK, $client);
 
-      // seshy.socket?.emit(event, msg, async (response: any) => {
-      //   console.log('[proxy] event', event, 'response from seshy:', response);
+        clientConn.on(
+          'request',
+          async (
+            [reqName, req]: [keyof RequestsCollectionMap, unknown],
+            acknowledgeCb
+          ) => {
+            const handler = requestHandlersMap[reqName] || (() => req);
 
-      //   // if (eventTransformers[event]) {
-      //   //   const transformed = eventTransformers[event](response);
-      //   //   acknowledgeCb(transformed);
-      //   // } else {
-      //   //   acknowledgeCb(response);
-      //   // }
-      // });
+            const handled = handler(req);
+
+            const handledReq = await (AsyncResult.isAsyncResult(handled)
+              ? handled.resolve()
+              : handled);
+
+            console.group('[backened] On Request:', reqName);
+            console.debug('[backened] Payload', req, '>', handledReq);
+            console.groupEnd();
+
+            acknowledgeCb(handledReq);
+          }
+        );
+      }
+
+      seshyConn.onAny((event, req) => {
+        console.log('[backend] seshy on any', event, req);
+      });
+
+      // if (p.resourceTransformers) {
+      // This only makes sense for resources or clients to transform
+      clientConn.onAny(async (event, req, acknowledgeCb) => {
+        if (event === 'request') {
+          return;
+        }
+
+        if (p.resourceTransformers) {
+          const reqTransformer =
+            (p.resourceTransformers as any)?.[event] || (() => req);
+          const transformedReq = await reqTransformer(req);
+
+          console.group('[backened] transforming:', `"${event}"`);
+          console.debug(req);
+          console.debug(transformedReq);
+          console.groupEnd();
+
+          seshyConn.emit(event, transformedReq, acknowledgeCb);
+
+          return;
+        }
+
+        try {
+          if (event === ClientSdkIO.msgNames.subscribeToResource) {
+            const { resourceIdentifier } =
+              ClientSdkIO.payloads.shape.subscribeToResource.shape.req.parse(
+                req
+              );
+
+            return seshySDK
+              .subscribeToResource(clientId, resourceIdentifier as any)
+              .resolve()
+              .then(acknowledgeCb);
+          }
+
+          if (event === ClientSdkIO.msgNames.observeResource) {
+            const { resourceIdentifier } =
+              ClientSdkIO.payloads.shape.observeResource.shape.req.parse(req);
+
+            return seshySDK
+              .observeResource(clientId, resourceIdentifier as any)
+              .resolve()
+              .then(acknowledgeCb);
+          }
+
+          if (event === ClientSdkIO.msgNames.unsubscribeFromResource) {
+            const { resourceIdentifier } =
+              ClientSdkIO.payloads.shape.unsubscribeFromResource.shape.req.parse(
+                req
+              );
+
+            return seshySDK
+              .unsubscribeFromResource(clientId, resourceIdentifier as any)
+              .resolve()
+              .then(acknowledgeCb);
+          }
+
+          if (event === ClientSdkIO.msgNames.updateResource) {
+            const payload =
+              ClientSdkIO.payloads.shape.updateResource.shape.req.parse(req);
+
+            return (
+              seshySDK
+                .updateResource(
+                  payload.resourceIdentifier as any,
+                  payload.resourceData as any
+                ) // TODO: fix this anys if given by the backend implementors can work with zod directly, but actually it shouldn't
+                // because that can be further validated outside, this libs houldnt bother w/ that
+                .resolve()
+                .then(acknowledgeCb)
+            );
+          }
+
+          console.info('[backened] proxying:', `"${event}"`);
+          console.debug('[backened]', event, req);
+
+          seshyConn.emit(event, req, () => {
+            acknowledgeCb;
+          });
+        } catch (e) {
+          console.error('[backend] Failed to Parse request', event, 'error', e);
+        }
+      });
+
+      clientConn.on('disconnect', (reason) => {
+        console.log('[backened] client disconnected', reason);
+
+        clientConnections.remove(clientId);
+        seshySDK.removeClient(clientId);
+      });
     });
+
+    unsunscribersFromSeshySdkConnection.push(
+      seshySDK.onBroadcastToSubscribers((r) => {
+        // console.log('')
+        // clientConn.broadcast()
+
+        // TODO: Broadcasting updates to clients
+        // clientConn.emit('updateResource', r);
+        // clientSocket.con()
+        console.log('[backend] broadcasting', r.event, r.payload);
+
+        // const {
+        //   [clientId as keyof typeof r.subscribers]: removed,
+        //   ...subscribersWithoutCurrent
+        // } = r.subscribers || {};
+        const subscribersWithoutCurrent = r.subscribers || {};
+
+        console.log(
+          '[backend] all connected',
+          Object.keys(clientConnections.all)
+        );
+        console.log(
+          '[backend] to subscribers',
+          Object.keys(subscribersWithoutCurrent)
+        );
+
+        objectKeys(subscribersWithoutCurrent).forEach((clientId) => {
+          console.log('[backened] broadcasting to clientId:', clientId);
+          clientConnections
+            .get(clientId)
+            ?.emit(r.event, toWsResponseResultPayloadOk(r.payload));
+        });
+      })
+    );
+  });
+
+  seshySDK.socket?.on('disconnect', () => {
+    // TODO: Make sure this gets called and unset
+    unsunscribersFromSeshySdkConnection.forEach((unsubscribe) => unsubscribe());
   });
 
   // return { backendSocket, seshy };
-  return seshySDK;
+  // return seshySDK;
+  return serverInstanceId;
 };
 
 export const mtmBackend = <

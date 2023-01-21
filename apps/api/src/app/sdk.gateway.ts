@@ -1,4 +1,8 @@
-import { ServerSdkIO, WsResponseAsResult } from '@mtm/server-sdk';
+import {
+  ServerSdkIO,
+  toWsResponseResultPayloadErr,
+  toWsResponseResultPayloadOk,
+} from '@mtm/server-sdk';
 import {
   ConnectedSocket,
   MessageBody,
@@ -11,9 +15,6 @@ import { SessionService } from './session.service';
 
 @WebSocketGateway()
 export class SdkGateway {
-  // @WebSocketServer()
-  // private server?: Server;
-
   constructor(private readonly sessionService: SessionService) {}
 
   handleConnection(socket: Socket) {
@@ -215,30 +216,12 @@ export class SdkGateway {
   }
 }
 
-// TODO: Make the string be part of the responses so it can type check the payload!
-// TODO: Maybe after refactoring to single channels again, w/o req/res!
-const emit = async <T, E>(
-  event: string,
-  ar: AsyncResult<T, E>
-): Promise<WsResponseAsResult<T, E>> => ({
-  event,
-  data: await acknowledge(ar),
-});
-
 const acknowledge = async <T, E>(ar: AsyncResult<T, E>) => {
   const r = await ar.resolve();
 
   return r.ok
-    ? ({
-        ok: true,
-        err: false,
-        val: r.val,
-      } as const)
-    : ({
-        ok: false,
-        err: true,
-        val: r.val,
-      } as const);
+    ? toWsResponseResultPayloadOk(r.val)
+    : toWsResponseResultPayloadErr(r.val);
 };
 
 const getConnectionToken = (socket: Socket) => {

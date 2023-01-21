@@ -5,6 +5,7 @@ import { ServerSdkIO } from '../io';
 import {
   AnyIdentifiableRecord,
   OnlySessionCollectionMapOfResourceKeys,
+  ResourceClientResponse,
   ResourceIdentifier,
   ResourceResponse,
   SessionClient,
@@ -17,6 +18,7 @@ import {
 } from './types';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
+import { toResourceIdentifierString } from './util';
 
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets
@@ -30,6 +32,31 @@ export type ServerSDKConfig = {
   waitForResponseMs?: number;
 };
 
+type PubsyEvents<
+  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>
+> = {
+  onBroadcastToSubscribers:
+    | {
+        event: 'updateResource';
+        subscribers: SessionResource['subscribers'];
+        payload: ResourceClientResponse<
+          ResourceCollectionMap,
+          keyof ResourceCollectionMap
+        >;
+      }
+    | {
+        event: 'removeResource';
+        subscribers: SessionResource['subscribers'];
+        payload: {
+          item: undefined;
+          type: ResourceResponse<
+            ResourceCollectionMap,
+            keyof ResourceCollectionMap
+          >['type'];
+        }; // TBD
+      };
+};
+
 export class ServerSDK<
   ClientInfo extends UnknownRecord = {},
   ResourceCollectionMap extends Record<
@@ -41,12 +68,7 @@ export class ServerSDK<
 > {
   public socket?: Socket;
 
-  private pubsy = new Pubsy<{
-    onBroadcastToSubscribers: ResourceResponse<
-      ResourceCollectionMap,
-      keyof ResourceCollectionMap
-    >;
-  }>();
+  private pubsy = new Pubsy<PubsyEvents<ResourceCollectionMap>>();
 
   private logger: typeof console;
 
@@ -82,6 +104,25 @@ export class ServerSDK<
 
   // This is taken out for now, until further notice!
   // private handleIncomingMessage(socket: Socket) {
+  //   // socket.onAny((res) => {
+  //   //   console.log('[serverdk]on any', res);
+  //   // });
+
+  //   // console.log('[serverdk] ServerSdkIO.msgNames.updateResource', ServerSdkIO.msgNames.updateResource);
+
+  //   // socket.on(ServerSdkIO.msgNames.updateResource, () => {
+
+  //   //   (res: WsResponseResultPayload<any, unknown>) => {
+  //   //     console.log('got update msg', res);
+  //   //     if (res.ok) {
+  //   //       // this.pubsy.publish('onBroadcastToSubscribers', {
+  //   //       //   event: 'updateResource',
+  //   //       //   subscribers: res.val.subscribers,
+  //   //       //   payload: res.val,
+  //   //       // });
+  //   //     }
+  //   //   };
+  //   // });
   //   objectKeys(ServerSdkIO.msgs).forEach((key) => {
   //     socket.on(
   //       ServerSdkIO.msgs[key].res,
@@ -188,8 +229,15 @@ export class ServerSDK<
       resourceIdentifier,
       resourceData,
     }).map(
-      AsyncResult.passThrough((r) => {
-        this.pubsy.publish('onBroadcastToSubscribers', r);
+      AsyncResult.passThrough((nextResource) => {
+        this.pubsy.publish('onBroadcastToSubscribers', {
+          event: 'updateResource',
+          subscribers: nextResource.subscribers,
+          payload: {
+            item: nextResource.item,
+            type: nextResource.type,
+          },
+        });
       })
     );
   }
@@ -259,7 +307,7 @@ export class ServerSDK<
 
   onBroadcastToSubscribers(
     fn: (
-      r: ResourceResponse<ResourceCollectionMap, keyof ResourceCollectionMap>
+      r: PubsyEvents<ResourceCollectionMap>['onBroadcastToSubscribers']
     ) => void
   ) {
     return this.pubsy.subscribe('onBroadcastToSubscribers', fn);
@@ -280,7 +328,7 @@ export class ServerSDK<
   ): AsyncResult<TRes, unknown> => {
     const reqId = `${k}:${String(Math.random()).slice(-3)}`;
 
-    this.logger.info('[ServerSdk]', reqId, 'Request:', req);
+    this.logger.info('[ServerSdk]', reqId, 'Request:', req.id);
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -290,7 +338,7 @@ export class ServerSDK<
           withTimeout(
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
-                this.logger.info('[ServerSdk]', reqId, 'Response Ok:', res);
+                this.logger.info('[ServerSdk]', reqId, 'Response Ok');
                 resolve(new Ok(res.val));
               } else {
                 this.logger.warn('[ServerSdk]', reqId, 'Response Err:', res);
@@ -322,7 +370,24 @@ export class ServerSDK<
   ): AsyncResult<TRes, unknown> => {
     const reqId = `${k}:${String(Math.random()).slice(-5)}`;
 
-    this.logger.info('[ServerSdk]', reqId, 'Request:', req);
+    if (req.resourceIdentifier.resourceId) {
+      this.logger.info(
+        '[ServerSdk]',
+        reqId,
+        'Request:',
+        toResourceIdentifierString({
+          resourceId: req.resourceIdentifier.resourceId,
+          resourceType: req.resourceIdentifier.resourceType,
+        })
+      );
+    } else {
+      this.logger.info(
+        '[ServerSdk]',
+        reqId,
+        'Request:',
+        req.resourceIdentifier
+      );
+    }
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -335,8 +400,8 @@ export class ServerSDK<
                 this.logger.info(
                   '[ServerSdk]',
                   reqId,
-                  ' Response Ok:',
-                  res.val
+                  ' Response Ok'
+                  // res.val
                 );
                 resolve(new Ok(res.val));
               } else {
@@ -377,7 +442,13 @@ export class ServerSDK<
   ): AsyncResult<TRes, unknown> => {
     const reqId = `${k}:${String(Math.random()).slice(-5)}`;
 
-    this.logger.info('[ServerSdk]', reqId, 'Request:', req);
+    this.logger.info(
+      '[ServerSdk]',
+      reqId,
+      'Request:',
+      req.clientId,
+      toResourceIdentifierString(req.resourceIdentifier)
+    );
 
     return AsyncResult.toAsyncResult<TRes, unknown>(
       new Promise((resolve, reject) => {
@@ -387,7 +458,8 @@ export class ServerSDK<
           withTimeout(
             (res: WsResponseResultPayload<TRes, unknown>) => {
               if (res.ok) {
-                this.logger.info('[ServerSdk]', reqId, 'Response Ok:', res);
+                // this.logger.info('[ServerSdk]', reqId, 'Response Ok:', res);
+                this.logger.info('[ServerSdk]', reqId, 'Response Ok');
                 resolve(new Ok(res.val));
               } else {
                 this.logger.warn('[ServerSdk]', reqId, 'Response Err:', res);

@@ -15,9 +15,9 @@ import {
   SessionClient,
   SessionResource,
   SessionStoreCollectionMap,
+  toResourceIdentifier,
   UnknwownSessionResourceCollectionMap,
 } from '@mtm/server-sdk';
-import { toResourceIdentifier } from 'libs/server-sdk/src/util';
 
 // Note:
 // This is currently depending on RRStore, but from what I see
