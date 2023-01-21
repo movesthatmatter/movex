@@ -6,6 +6,7 @@ import {
   ServerSDK,
   ServerSDKConfig,
   SessionClient,
+  SessionResource,
   toWsResponseResultPayloadOk,
   UnknownIdentifiableRecord,
   UnknownRecord,
@@ -32,10 +33,15 @@ type EventHandlers<
   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
   RequestsCollectionMap extends RequestsCollectionMapBase
 > = {
-  requestHandlers?: (
-    serverSdk: ServerSDK<ClientInfo, ResourceCollectionMap>,
-    client: SessionClient
-  ) => Partial<{
+  requestHandlers?: (p: {
+    serverSdk: ServerSDK<ClientInfo, ResourceCollectionMap>;
+    client: SessionClient;
+    broadcastTo: <TEvent extends string, TMsg>(
+      subscribers: SessionResource['subscribers'],
+      event: TEvent,
+      msg: TMsg
+    ) => void;
+  }) => Partial<{
     [ReqName in keyof RequestsCollectionMap]: (
       a: RequestsCollectionMap[ReqName][0]
     ) =>
@@ -85,6 +91,24 @@ export const mtmBackendWithExpress = <
 
     const clientConnections = new SocketConnections();
 
+    const broadcastTo = <TEvent extends string, TMsg>(
+      subscribers: SessionResource['subscribers'],
+      event: TEvent,
+      msg: TMsg
+    ) => {
+      console.log('[backend] broadcast', event, Object.keys(subscribers));
+
+      objectKeys(subscribers).forEach((clientId) => {
+        console.log('[backened] broadcasting to clientId:', clientId);
+        clientConnections
+          .get(clientId)
+          // It isn't needed to wap it in toWsResponseResultPayloadOk here, since it's custom!
+          //  and there's no request/response
+          // ?.emit(`broadcast::${event}`, toWsResponseResultPayloadOk(msg));
+          ?.emit(`broadcast::${event}`, msg);
+      });
+    };
+
     clientSocket.on('connection', async (clientConn) => {
       console.log('[backened] connected to client', clientConn.id);
       // connectionToClientMapclientSocket.handshake]
@@ -114,7 +138,11 @@ export const mtmBackendWithExpress = <
       // TODO: Here should, notify the client that the $client got created and requests can happen
 
       if (p.requestHandlers) {
-        const requestHandlersMap = p.requestHandlers(seshySDK, $client);
+        const requestHandlersMap = p.requestHandlers({
+          serverSdk: seshySDK,
+          client: $client,
+          broadcastTo,
+        });
 
         clientConn.on(
           'request',
@@ -139,9 +167,9 @@ export const mtmBackendWithExpress = <
         );
       }
 
-      seshyConn.onAny((event, req) => {
-        console.log('[backend] seshy on any', event, req);
-      });
+      // seshyConn.onAny((event, req) => {
+      //   console.log('[backend] seshy on any', event, req);
+      // });
 
       // if (p.resourceTransformers) {
       // This only makes sense for resources or clients to transform
@@ -237,35 +265,7 @@ export const mtmBackendWithExpress = <
 
     unsunscribersFromSeshySdkConnection.push(
       seshySDK.onBroadcastToSubscribers((r) => {
-        // console.log('')
-        // clientConn.broadcast()
-
-        // TODO: Broadcasting updates to clients
-        // clientConn.emit('updateResource', r);
-        // clientSocket.con()
-        console.log('[backend] broadcasting', r.event, r.payload);
-
-        // const {
-        //   [clientId as keyof typeof r.subscribers]: removed,
-        //   ...subscribersWithoutCurrent
-        // } = r.subscribers || {};
-        const subscribersWithoutCurrent = r.subscribers || {};
-
-        console.log(
-          '[backend] all connected',
-          Object.keys(clientConnections.all)
-        );
-        console.log(
-          '[backend] to subscribers',
-          Object.keys(subscribersWithoutCurrent)
-        );
-
-        objectKeys(subscribersWithoutCurrent).forEach((clientId) => {
-          console.log('[backened] broadcasting to clientId:', clientId);
-          clientConnections
-            .get(clientId)
-            ?.emit(r.event, toWsResponseResultPayloadOk(r.payload));
-        });
+        broadcastTo(r.subscribers, r.event, r.payload);
       })
     );
   });

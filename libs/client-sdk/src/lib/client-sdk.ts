@@ -43,6 +43,13 @@ export class ClientSdk<
     Events & {
       _socketConnect: Socket;
       _socketDisconnect: undefined;
+
+      // Broadcasts
+      // TODO: This could be typed
+      broadcastedMsg: {
+        event: string;
+        msg: unknown;
+      };
     }
   >();
 
@@ -80,8 +87,12 @@ export class ClientSdk<
       autoConnect: false,
     });
 
+    let unsubscribeOnSocketDisconnnect: Function[] = [];
+
     this.socketInstance.on('connect', () => {
-      this.handleIncomingMessage(this.socketInstance);
+      unsubscribeOnSocketDisconnnect = this.handleIncomingMessage(
+        this.socketInstance
+      );
 
       // TOOD: Not sure why the 100ms delay needed???
       setTimeout(() => {
@@ -124,34 +135,57 @@ export class ClientSdk<
       // TODO: add delegate
       this.socketConnectionDelegate = new PromiseDelegate<Socket>(true);
 
-      // this.socketConnectionObj = {
-      //   connected: false,
-      //   promiseDelegate: new PromiseDelegate<Socket>(),
-      // };
-      // this.socketConnected = false;
-      // Set the connection promise to a long waiting to fail promise
-      // this.socketConnection = getDelayedRejectionPromise<Socket>(50 * 1000);
+      // TODO: Test that the unsubscribptions work correctly
+      unsubscribeOnSocketDisconnnect.forEach((unsubscribe) => unsubscribe());
     });
   }
 
   private handleIncomingMessage(socket: Socket) {
-    // socket.on(SdkIO.msgNames.updateResource, (res) => {
-    //   console.log('yes got msg', res);
-    // })
+    const unsubscribers: Function[] = [];
 
-    socket.on(
-      SdkIO.msgNames.updateResource,
-      (
-        res: WsResponseResultPayload<
-          SdkIO.MsgToResponseMap['updateResource'],
-          unknown
-        >
-      ) => {
-        if (res.ok) {
-          this.pubsy.publish('updateResource', res.val);
-        }
+    // Resource
+
+    const updateResourceHandler = (
+      res: WsResponseResultPayload<
+        SdkIO.MsgToResponseMap['updateResource'],
+        unknown
+      >
+    ) => {
+      if (res.ok) {
+        this.pubsy.publish('updateResource', res.val);
       }
+    };
+
+    socket.on(SdkIO.msgNames.updateResource, updateResourceHandler);
+
+    unsubscribers.push(() =>
+      socket.off(SdkIO.msgNames.updateResource, updateResourceHandler)
     );
+
+    // BroadcastedEvents
+    // TODO: Reuse this from one place only since it's written in the backend as well
+    const BROADCAST_PREFIX = 'broadcast::';
+    const onBroadcastsHandler = (event: string, msg: unknown) => {
+      if (event.slice(0, BROADCAST_PREFIX.length) !== BROADCAST_PREFIX) {
+        // Only handle broadcast messages
+        return;
+      }
+
+      console.log('[client sdk] broaasting', event.slice(BROADCAST_PREFIX.length));
+
+      this.pubsy.publish('broadcastedMsg', {
+        event: event.slice(BROADCAST_PREFIX.length), // Remove the prefix
+        msg,
+      });
+    };
+
+    socket.onAny(onBroadcastsHandler);
+
+    unsubscribers.push(() => {
+      socket.offAny(onBroadcastsHandler);
+    });
+
+    return unsubscribers;
 
     // Handle Remove resource
 
@@ -276,6 +310,17 @@ export class ClientSdk<
       fn(
         r as ClientResource<TResourceType, ResourceCollectionMap[TResourceType]>
       );
+    });
+  }
+
+  onBroadcastedMsg<TEvent extends string, TMsg extends unknown>(
+    fn: (data: { event: TEvent; msg: TMsg }) => void
+  ) {
+    return this.pubsy.subscribe('broadcastedMsg', ({ event, msg }) => {
+      fn({
+        event: event as TEvent,
+        msg: msg as TMsg,
+      });
     });
   }
 
