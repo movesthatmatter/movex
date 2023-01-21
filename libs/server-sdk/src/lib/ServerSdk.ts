@@ -218,6 +218,13 @@ export class ServerSDK<
       .map((r) => r.resource);
   }
 
+  /**
+   * Updates resurce silently
+   *
+   * @param resourceIdentifier
+   * @param resourceData
+   * @returns
+   */
   updateResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TResourceData extends SessionCollectionMap[TResourceType]
@@ -228,7 +235,24 @@ export class ServerSDK<
     return this.emitAndAcknowledgeResources('updateResource', {
       resourceIdentifier,
       resourceData,
-    }).map(
+    });
+  }
+
+  /**
+   * Updates and broadcasts to all the resource subscribers
+   *
+   * @param resourceIdentifier
+   * @param resourceData
+   * @returns
+   */
+  updateResourceAndBroadcast<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TResourceData extends SessionCollectionMap[TResourceType]
+  >(
+    resourceIdentifier: ResourceIdentifier<TResourceType>,
+    resourceData: Partial<UnidentifiableModel<TResourceData>>
+  ) {
+    return this.updateResource(resourceIdentifier, resourceData).map(
       AsyncResult.passThrough((nextResource) => {
         this.pubsy.publish('onBroadcastToSubscribers', {
           event: 'updateResource',

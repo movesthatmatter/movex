@@ -206,7 +206,7 @@ export const mtmBackendWithExpress = <
 
             return (
               seshySDK
-                .updateResource(
+                .updateResourceAndBroadcast(
                   payload.resourceIdentifier as any,
                   payload.resourceData as any
                 ) // TODO: fix this anys if given by the backend implementors can work with zod directly, but actually it shouldn't
