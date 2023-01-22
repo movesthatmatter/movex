@@ -29,7 +29,7 @@
     "socket.io-client": "^4.5.4",
     "supertest": "^6.3.3",
     "superwstest": "^2.0.3",
-    "ts-async-results": "file:.yalc/ts-async-results",
+    "ts-async-results": "0.6.0",
     "ts-pubsy": "^0.2.0",
     "ts-results": "3.3.0",
     "tslib": "^2.4.1",

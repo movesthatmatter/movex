@@ -6907,16 +6907,18 @@ tree-kill@1.2.2:
   resolved "https://registry.yarnpkg.com/tree-kill/-/tree-kill-1.2.2.tgz#4ca09a9092c88b73a7cdc5e8a01b507b0790a0cc"
   integrity sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==
 
-ts-async-results@^0.5.3:
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.5.3.tgz#35c340089f3bb923cf4cd6c767f087c5b19db0ca"
-  integrity sha512-3vDuaiCf5FtGTVZ9RKft/0TV0ZJzt89zFy1lOcKkZQdPrYb06mwWN9DHsnmxnyKqIwNEPZdhv/mRwG+dC5mlIA==
+ts-async-results@0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.6.0.tgz#78c57245fb48de1645c65562a1271b04df490e2b"
+  integrity sha512-ekThTvDCbni4wB0BN8m29LB/H7pnoIZivMvp4xQsqETbjdqdq2lO+Y+jN1A7VgZ8t7xA9Vzhu/fdPjY/RD1nxg==
   dependencies:
     conditional-type-checks "^1.0.5"
     ts-results "^3.0.0"
 
-"ts-async-results@file:.yalc/ts-async-results":
-  version "0.6.0"
+ts-async-results@^0.5.3:
+  version "0.5.3"
+  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.5.3.tgz#35c340089f3bb923cf4cd6c767f087c5b19db0ca"
+  integrity sha512-3vDuaiCf5FtGTVZ9RKft/0TV0ZJzt89zFy1lOcKkZQdPrYb06mwWN9DHsnmxnyKqIwNEPZdhv/mRwG+dC5mlIA==
   dependencies:
     conditional-type-checks "^1.0.5"
     ts-results "^3.0.0"
