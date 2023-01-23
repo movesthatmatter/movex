@@ -1,6 +1,6 @@
 {
-  "name": "mtm-seshy",
-  "version": "0.0.0",
+  "name": "matterio",
+  "version": "0.1.0",
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
