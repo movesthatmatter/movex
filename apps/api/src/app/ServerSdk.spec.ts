@@ -1,8 +1,8 @@
 import MockDate from 'mockdate';
 import { INestApplication } from '@nestjs/common';
-import { ServerSDK, SessionResource } from '@mtm/server-sdk';
+import { ServerSDK } from '@matterio/server-sdk';
 import { bootstrapServer } from '../server';
-import { Err, Ok } from 'ts-results';
+import { Ok } from 'ts-results';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 
 // This depends on the server and it's more of an e2e test, so I'll leave it here

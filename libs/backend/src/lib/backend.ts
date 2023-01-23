@@ -10,11 +10,11 @@ import {
   toWsResponseResultPayloadOk,
   UnknownIdentifiableRecord,
   UnknownRecord,
-} from '@mtm/server-sdk';
+} from '@matterio/server-sdk';
 import crypto from 'crypto';
 import { Result } from 'ts-results';
 import { AsyncResult } from 'ts-async-results';
-import * as ClientSdk from '@mtm/client-sdk';
+import * as ClientSdk from '@matterio/client-sdk';
 import { SocketConnections } from './SocketConnections';
 import { objectKeys } from './util';
 

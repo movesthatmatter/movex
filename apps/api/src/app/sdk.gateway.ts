@@ -2,7 +2,7 @@ import {
   ServerSdkIO,
   toWsResponseResultPayloadErr,
   toWsResponseResultPayloadOk,
-} from '@mtm/server-sdk';
+} from '@matterio/server-sdk';
 import {
   ConnectedSocket,
   MessageBody,

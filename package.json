@@ -9,7 +9,8 @@
     "build-api": "nx build api",
     "test": "nx run-many --all --target=test --skip-nx-cache",
     "deploy-api:staging": "git diff --exit-code HEAD && flyctl deploy -c apps/api/fly.staging.toml --dockerfile apps/api/Dockerfile -e APP_REVISION=$(git rev-parse --short HEAD) --remote-only",
-    "push-all-libs": "cd dist/libs/client-sdk && npm version pre && yalc push && cd -; cd dist/libs/server-sdk && npm version pre && yalc push && cd -; cd dist/libs/backend && npm version pre && yalc push && cd -;"
+    "push-all-libs--locally": "cd dist/libs/client-sdk && npm version pre && yalc push && cd -; cd dist/libs/server-sdk && npm version pre && yalc push && cd -; cd dist/libs/backend && npm version pre && yalc push && cd -;",
+    "build-all-libs": "npx nx run-many --target=build"
   },
   "private": true,
   "dependencies": {

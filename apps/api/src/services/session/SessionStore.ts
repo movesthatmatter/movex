@@ -1,5 +1,5 @@
 import * as RRStore from 'relational-redis-store';
-import { AsyncOk, AsyncResult, AsyncResultWrapper } from 'ts-async-results';
+import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { toSessionError } from './SessionStoreErrors';
 import { getUuid } from './util';
 import {
@@ -17,7 +17,7 @@ import {
   SessionStoreCollectionMap,
   toResourceIdentifier,
   UnknwownSessionResourceCollectionMap,
-} from '@mtm/server-sdk';
+} from '@matterio/server-sdk';
 
 // Note:
 // This is currently depending on RRStore, but from what I see

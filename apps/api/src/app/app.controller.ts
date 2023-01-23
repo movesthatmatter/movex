@@ -1,5 +1,4 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { ResourceIdentifierString } from '@mtm/server-sdk';
 import { SessionService } from './session.service';
 
 @Controller()
