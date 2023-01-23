@@ -1,11 +1,12 @@
 # fly.toml file generated for staging:matterio on 2023-01-10T17:16:58+01:00
 
-app = "staging:matterio-api"
+app = "staging-matterio-api"
 kill_signal = "SIGINT"
 kill_timeout = 5
 processes = []
 
 [env]
+  port=8080
 
 [experimental]
   allowed_public_ports = []
@@ -13,7 +14,7 @@ processes = []
 
 [[services]]
   http_checks = []
-  internal_port = 4444
+  internal_port = 8080
   processes = ["app"]
   protocol = "tcp"
   script_checks = []
