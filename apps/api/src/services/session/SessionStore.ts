@@ -17,7 +17,7 @@ import {
   SessionStoreCollectionMap,
   toResourceIdentifier,
   UnknwownSessionResourceCollectionMap,
-} from '@matterio/server-sdk';
+} from '@matterio/core-util';
 
 // Note:
 // This is currently depending on RRStore, but from what I see

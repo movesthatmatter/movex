@@ -1,8 +1,8 @@
 import io, { Socket } from 'socket.io-client';
-import { ClientSdkIO as SdkIO } from './io';
+import * as ClientSdkIO from './client-sdk-io';
 import {
   AnyIdentifiableRecord,
-  ClientResource,
+  getRandomInt,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
   SessionMatch,
@@ -12,14 +12,17 @@ import {
   UnknownIdentifiableRecord,
   UnknownRecord,
   WsResponseResultPayload,
-} from './types';
-import { getRandomInt } from './util';
+} from '@matterio/core-util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { PromiseDelegate } from 'promise-delegate';
+import { ClientResource } from './types';
 
-type Events = Pick<SdkIO.MsgToResponseMap, 'updateResource' | 'removeResource'>;
+type Events = Pick<
+  ClientSdkIO.MsgToResponseMap,
+  'updateResource' | 'removeResource'
+>;
 
 type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
@@ -148,7 +151,7 @@ export class ClientSdk<
 
     const updateResourceHandler = (
       res: WsResponseResultPayload<
-        SdkIO.MsgToResponseMap['updateResource'],
+        ClientSdkIO.MsgToResponseMap['updateResource'],
         unknown
       >
     ) => {
@@ -157,10 +160,10 @@ export class ClientSdk<
       }
     };
 
-    socket.on(SdkIO.msgNames.updateResource, updateResourceHandler);
+    socket.on(ClientSdkIO.msgNames.updateResource, updateResourceHandler);
 
     unsubscribers.push(() =>
-      socket.off(SdkIO.msgNames.updateResource, updateResourceHandler)
+      socket.off(ClientSdkIO.msgNames.updateResource, updateResourceHandler)
     );
 
     // BroadcastedEvents
@@ -193,10 +196,10 @@ export class ClientSdk<
 
     // Handle Remove resource
 
-    // [SdkIO.msgNames.updateResource, SdkIO.msgNames.removeResource].forEach(
+    // [ClientSdkIO.msgNames.updateResource, ClientSdkIO.msgNames.removeResource].forEach(
     //   (key) => {
     //     socket.on(
-    //       SdkIO.msgs[key].res,
+    //       ClientSdkIO.msgs[key].res,
     //       // (res: WsResponseResultPayload<any, unknown>) => {
     //       (res) => {
     //         // console.log('[client sdk] going to publish', key, res);
@@ -234,7 +237,7 @@ export class ClientSdk<
   //   return AsyncResult.toAsyncResult<TRes, unknown>(
   //     new Promise((resolve, reject) => {
   //       this.socket?.emit(
-  //         ServerSdkIO.msgs[k].req,
+  //         ServerClientSdkIO.msgs[k].req,
   //         req,
   //         withTimeout(
   //           (res: WsResponseResultPayload<TRes, unknown>) => {
@@ -333,6 +336,18 @@ export class ClientSdk<
     });
   }
 
+  private emitAndAcknowledgeSubscriptions = <
+    K extends keyof Pick<
+      typeof ClientSdkIO.msgs,
+      'subscribeToResource' | 'unsubscribeFromResource'
+    >,
+    TReq extends ClientSdkIO.Payloads[K]['req'],
+    TRes = void
+  >(
+    k: K,
+    req: Omit<TReq, 'resourceType'>
+  ) => this.emitAndAcknowledge(k, req).map((s) => s as TRes);
+
   onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
     fn: (
       r: ClientResource<TResourceType, ResourceCollectionMap[TResourceType]>
@@ -421,7 +436,7 @@ export class ClientSdk<
 
   private emitAndAcknowledgeResources = <
     K extends keyof Pick<
-      typeof SdkIO.msgs,
+      typeof ClientSdkIO.msgs,
       | 'createResource'
       | 'observeResource'
       | 'getResource'
@@ -429,7 +444,7 @@ export class ClientSdk<
       | 'updateResource'
     >,
     TResourceType extends SessionCollectionMapOfResourceKeys,
-    TReq extends SdkIO.Payloads[K]['req'],
+    TReq extends ClientSdkIO.Payloads[K]['req'],
     // TRawRes extends ResourceCollectionMap[TResourceType] = ResourceCollectionMap[TResourceType],
     TRawRes extends {
       type: TResourceType;
@@ -444,109 +459,67 @@ export class ClientSdk<
   >(
     k: K,
     req: TReq
-  ): AsyncResult<TRes, unknown> => {
-    const reqId = `${k}:${String(Math.random()).slice(-5)}`;
+  ) =>
+    this.emitAndAcknowledge(k, req)
+      .map((s) => s as TRawRes)
+      .map((s) => s.item as TRes);
 
-    return AsyncResult.toAsyncResult<TRes, unknown>(
-      new Promise(async (resolve, reject) => {
-        const connection = await this.socketConnection;
+  // AsyncResult<TRes, unknown> => {
+  //   return this.emitAndAcknowledge(k, req)
+  //     .map((s) => s as TRawRes)
+  //     .map((s) => s.item as TRes);
 
-        this.logger.info('[ClientSdk]', reqId, 'Resource Request:', req);
+  // const reqId = `${k}:${String(Math.random()).slice(-5)}`;
 
-        connection.emit(
-          SdkIO.msgs[k].req,
-          req,
-          withTimeout(
-            (res: WsResponseResultPayload<TRawRes, unknown>) => {
-              if (res.ok) {
-                this.logger.info(
-                  '[ClientSdk]',
-                  reqId,
-                  ' Resource Response Ok:',
-                  res.val.item
-                );
-                resolve(new Ok(res.val.item as TRes));
-              } else {
-                this.logger.warn(
-                  '[ClientSdk]',
-                  reqId,
-                  'Resource Response Err:',
-                  res.val
-                );
-                reject(new Err(res.val));
-              }
-            },
-            () => {
-              this.logger.warn(
-                '[ClientSdk]',
-                reqId,
-                'Resource Request Timeout:',
-                req
-              );
-              reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
-            },
-            this.config.waitForResponseMs
-          )
-        );
-      })
-    );
-  };
+  // return AsyncResult.toAsyncResult<TRes, unknown>(
+  //   new Promise(async (resolve, reject) => {
+  //     const connection = await this.socketConnection;
 
-  // private emitAndAcknowledgeMatches = <>() => {
-    
-  // }
+  //     this.logger.info('[ClientSdk]', reqId, 'Resource Request:', req);
 
-  private emitAndAcknowledgeSubscriptions = <
-    K extends keyof Pick<
-      typeof SdkIO.msgs,
-      'subscribeToResource' | 'unsubscribeFromResource'
-    >,
-    // TResourceType extends SessionCollectionMapOfResourceKeys,
-    TReq extends SdkIO.Payloads[K]['req'],
-    TRes = void
-  >(
-    k: K,
-    req: Omit<TReq, 'resourceType'>
-  ): AsyncResult<TRes, unknown> => {
-    const reqId = `${k}:${String(Math.random()).slice(-5)}`;
-
-    return AsyncResult.toAsyncResult<TRes, unknown>(
-      new Promise(async (resolve, reject) => {
-        const connection = await this.socketConnection;
-
-        this.logger.info('[ClientSdk]', reqId, 'Request:', req);
-
-        connection.emit(
-          SdkIO.msgs[k].req,
-          req,
-          withTimeout(
-            (res: WsResponseResultPayload<TRes, unknown>) => {
-              if (res.ok) {
-                this.logger.info('[ClientSdk]', reqId, 'Response Ok:', res);
-                resolve(new Ok(res.val));
-              } else {
-                this.logger.warn('[ClientSdk]', reqId, 'Response Err:', res);
-                reject(new Err(res.val));
-              }
-            },
-            () => {
-              this.logger.warn('[ClientSdk]', reqId, 'Request Timeout:', req);
-              // TODO This error could be typed better using a result error
-              reject(new Err('RequestTimeout'));
-            },
-            this.config.waitForResponseMs
-          )
-        );
-      }).catch((e) => e) as any
-    );
-  };
+  //     connection.emit(
+  //       ClientSdkIO.msgs[k].req,
+  //       req,
+  //       withTimeout(
+  //         (res: WsResponseResultPayload<TRawRes, unknown>) => {
+  //           if (res.ok) {
+  //             this.logger.info(
+  //               '[ClientSdk]',
+  //               reqId,
+  //               ' Resource Response Ok:',
+  //               res.val.item
+  //             );
+  //             resolve(new Ok(res.val.item as TRes));
+  //           } else {
+  //             this.logger.warn(
+  //               '[ClientSdk]',
+  //               reqId,
+  //               'Resource Response Err:',
+  //               res.val
+  //             );
+  //             reject(new Err(res.val));
+  //           }
+  //         },
+  //         () => {
+  //           this.logger.warn(
+  //             '[ClientSdk]',
+  //             reqId,
+  //             'Resource Request Timeout:',
+  //             req
+  //           );
+  //           reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
+  //         },
+  //         this.config.waitForResponseMs
+  //       )
+  //     );
+  //   })
+  // );
+  // };
 
   // Matches
   //  Matcheg
 
-  createMatch(p: { matcher: string; playerCount: number }) {
-    
-  }
+  createMatch(p: { matcher: string; playerCount: number }) {}
 
   observeMatch(matchId: SessionMatch['id']) {
     // return this.observeResource({
@@ -570,6 +543,43 @@ export class ClientSdk<
   }
 
   leaveMatch(matchId: SessionMatch['id']) {}
+
+  private emitAndAcknowledgeMatches = () => {};
+
+  private emitAndAcknowledge = <TEvent extends string, TReq>(
+    event: TEvent,
+    req: TReq
+  ): AsyncResult<unknown, unknown> =>
+    AsyncResult.toAsyncResult<unknown, unknown>(
+      new Promise(async (resolve, reject) => {
+        const reqId = `${event}(${String(Math.random()).slice(-3)})`;
+        const connection = await this.socketConnection;
+
+        this.logger.info('[ClientSdk]', reqId, 'Request:', req);
+
+        connection.emit(
+          event,
+          req,
+          withTimeout(
+            (res: WsResponseResultPayload<unknown, unknown>) => {
+              if (res.ok) {
+                this.logger.info('[ClientSdk]', reqId, 'Response Ok:', res);
+                resolve(new Ok(res.val));
+              } else {
+                this.logger.warn('[ClientSdk]', reqId, 'Response Err:', res);
+                reject(new Err(res.val));
+              }
+            },
+            () => {
+              this.logger.warn('[ClientSdk]', reqId, 'Request Timeout:', req);
+              // TODO This error could be typed better using a result error
+              reject(new Err('RequestTimeout'));
+            },
+            this.config.waitForResponseMs
+          )
+        );
+      }).catch((e) => e) as any
+    );
 }
 
 const withTimeout = (

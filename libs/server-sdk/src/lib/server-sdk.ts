@@ -1,7 +1,6 @@
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import { Pubsy } from 'ts-pubsy';
-import { ServerSdkIO } from '../io';
 import {
   AnyIdentifiableRecord,
   OnlySessionCollectionMapOfResourceKeys,
@@ -16,10 +15,12 @@ import {
   UnknownIdentifiableRecord,
   UnknownRecord,
   WsResponseResultPayload,
-} from './types';
+  $MATCHES_KEY,
+} from '@matterio/core-util';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
-import { $MATCHES_KEY } from './util';
+import { ServerSdkIO } from './server-sdk-io';
+
 
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets
@@ -36,7 +37,7 @@ export type ServerSDKConfig = {
 export type CreateMatchProps = {
   matcher: SessionMatch['matcher'];
   playerCount: SessionMatch['playerCount'];
-  players?: SessionMatch['players'];
+  players?: SessionClient['id'][];
 };
 
 type PubsyEvents<
@@ -384,12 +385,15 @@ export class ServerSDK<
 
   // Matches
 
-  createMatch({ matcher, playerCount, players = {} }: CreateMatchProps) {
+  createMatch({ matcher, playerCount, players = [] }: CreateMatchProps) {
     const nextMatch: UnidentifiableModel<SessionMatch> = {
       status: 'waiting',
       playerCount,
       matcher,
-      players,
+      players: players.reduce(
+        (accum, next) => ({ ...accum, [next]: undefined }),
+        {} as { [k: string]: undefined }
+      ),
     };
 
     return this.createResource({
@@ -477,32 +481,30 @@ export class ServerSDK<
   private emitAndAcknowledge = <TEvent extends string, TReq>(
     event: TEvent,
     requestPayload: TReq
-  ): AsyncResult<unknown, unknown> => {
-    const reqId = `${event}:${String(Math.random()).slice(-3)}`;
-
-    this.logger.info(`[ServerSdk] Request(${reqId}):`, event);
-
-    return AsyncResult.toAsyncResult<unknown, unknown>(
+  ): AsyncResult<unknown, unknown> =>
+    AsyncResult.toAsyncResult<unknown, unknown>(
       new Promise((resolve, reject) => {
+        const reqId = `${event}(${String(Math.random()).slice(-3)})`;
+        this.logger.info('[ServerSdk]', event, 'Request');
+
         this.socket?.emit(
           event,
           requestPayload,
           withTimeout(
             (res: WsResponseResultPayload<unknown, unknown>) => {
               if (res.ok) {
-                this.logger.info(`[ServerSdk] Response(${reqId}): ${event} Ok`);
+                this.logger.info('[ServerSdk]', reqId, 'Response Ok');
                 resolve(new Ok(res.val));
               } else {
-                this.logger.info(
-                  `[ServerSdk] Response(${reqId}): ${event} Err`,
-                  res
-                );
+                this.logger.warn('[ServerSdk]', reqId, 'Response Err', res);
                 reject(new Err(res.val));
               }
             },
             () => {
-              this.logger.info(
-                `[ServerSdk] Response(${reqId}): ${event} Err:`,
+              this.logger.warn(
+                '[ServerSdk]',
+                reqId,
+                'Response Err:',
                 'Request Timeout'
               );
               reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
@@ -512,7 +514,6 @@ export class ServerSDK<
         );
       }).catch((e) => e) as any
     );
-  };
 }
 
 const withTimeout = (

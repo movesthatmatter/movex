@@ -1,8 +1,8 @@
 import {
-  ServerSdkIO,
   toWsResponseResultPayloadErr,
   toWsResponseResultPayloadOk,
-} from '@matterio/server-sdk';
+} from '@matterio/core-util';
+import { ServerSdkIO } from '@matterio/server-sdk';
 import {
   ConnectedSocket,
   MessageBody,

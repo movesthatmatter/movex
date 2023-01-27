@@ -3,8 +3,6 @@ export interface WsResponse<T = any> {
   data: T;
 }
 
-export declare type UnidentifiableModel<T extends {}> = Omit<T, 'id'>;
-
 export type WsResponseResultPayload<T, E> =
   | {
       ok: true;
@@ -35,13 +33,15 @@ export type UnknownIdentifiableRecord = { id: string } & Record<
 >;
 export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
-type SessionResourceType = string;
+export type UnidentifiableModel<T extends {}> = Omit<T, 'id'>;
+
+type GenericSessionResourceType = string;
 
 export type SessionClient<Info extends UnknownRecord = {}> = {
   id: string;
   info?: Info; // User Info or whatever
   subscriptions: Record<
-    `${SessionResourceType}:${SessionResource['id']}`,
+    `${GenericSessionResourceType}:${SessionResource['id']}`,
     {
       // resourceType: string; // TODO: This could be part of the resource id
       subscribedAt: number;

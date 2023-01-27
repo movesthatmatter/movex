@@ -2,10 +2,7 @@ import {
   ResourceIdentifier,
   ResourceIdentifierString,
   WsResponseResultPayload,
-} from '.';
-
-export const objectKeys = <O extends object>(o: O) =>
-  Object.keys(o) as (keyof O)[];
+} from '../core-types';
 
 export const toResourceIdentifier = <TResourceType extends string>(
   r: ResourceIdentifier<TResourceType> | ResourceIdentifierString<TResourceType>
@@ -44,9 +41,3 @@ export const toWsResponseResultPayloadErr = <E>(
   val,
 });
 
-// export enum StoreNativeKeys {
-//   $clients = '$clients',
-//   $matches = '$matches',
-// }
-
-export const $MATCHES_KEY: any = '$matches';

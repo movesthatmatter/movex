@@ -1,5 +1,5 @@
+import { SessionResource } from '@matterio/core-util';
 import MockDate from 'mockdate';
-import { SessionResource } from '@matterio/server-sdk';
 import { Store, createMockStore } from 'relational-redis-store';
 import { AsyncResult } from 'ts-async-results';
 import { Ok } from 'ts-results';

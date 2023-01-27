@@ -1,97 +1,15 @@
 import * as z from 'zod';
-import { objectKeys } from './util';
+import { objectKeys, CoreIO } from '@matterio/core-util';
 
-export namespace ClientSdkIO {
-  const zId = z.string;
-
-  const unknownRecord = () => z.record(z.string(), z.unknown());
-
-  type UnknownRecord = z.infer<ReturnType<typeof unknownRecord>>;
-
-  const genericResourceIdentifier = () =>
-    z.object({
-      resourceType: z.string(),
-      resourceId: zId(),
-    });
-
-  const toReqReq = <TReq extends z.ZodTypeAny>(req: TReq) =>
-    z.object({
-      req,
-      res: req,
-    });
-
-  const toReqWithRes = <TReq extends z.ZodTypeAny, TRes extends z.ZodTypeAny>(
-    req: TReq,
-    res: TRes
-  ) =>
-    z.object({
-      req,
-      res,
-    });
-
-  function toReqRes<TReq extends z.ZodTypeAny>(
-    req: TReq
-  ): ReturnType<typeof toReqReq<TReq>>;
-  function toReqRes<TReq extends z.ZodTypeAny, TRes extends z.ZodTypeAny>(
-    req: TReq,
-    res: TRes
-  ): ReturnType<typeof toReqWithRes<TReq, TRes>>;
-  function toReqRes<
-    TReq extends z.ZodTypeAny,
-    TRes extends z.ZodTypeAny = TReq
-  >(req: TReq, res?: TRes) {
-    return res ? toReqWithRes(req, res) : toReqReq(req);
-  }
-
-  const sessionClient = <TInfo extends z.ZodTypeAny>(info?: TInfo) =>
-    z.object({
-      id: zId(),
-      subscriptions: z.record(
-        z.string(),
-        z.object({
-          subscribedAt: z.number(), // This could be an ISO DateTime? not sure needed
-        })
-      ),
-      info: info ? info : z.undefined().optional(),
-    });
-
-  const sessionResource = <TData extends z.ZodRecord>(data: TData) =>
-    z.object({
-      id: zId(),
-      data,
-      subscribers: z.record(
-        sessionClient().shape.id,
-        z.object({
-          subscribedAt: z.number(), // This could be an ISO DateTime? not sure needed
-        })
-      ),
-    });
-
-  const genericSessionResource = () => sessionResource(unknownRecord());
-
-  // This is called clientResource b/c this is what gets sent to the client,
-  //  but it could be namaed better probably
-  export const clientResource = <
-    TType extends string,
-    TData extends z.ZodRecord
-  >(
-    type: TType,
-    data: TData
-  ) =>
-    z.object({
-      type: z.literal(type),
-      item: z.intersection(
-        z.object({
-          id: zId(),
-        }),
-        data
-      ),
-    });
-
-  export const genericClientResource = (type: string) =>
-    clientResource(type, unknownRecord());
-
-  // export type ClientResource = z.infer<typeof clientResource>;
+export namespace ServerSdkIO {
+  const {
+    unknownRecord,
+    zId,
+    toReqRes,
+    sessionClient,
+    genericSessionResource,
+    genericResourceIdentifier,
+  } = CoreIO;
 
   export const payloads = z.object({
     // Clients
@@ -135,19 +53,12 @@ export namespace ClientSdkIO {
       }),
       genericSessionResource()
     ),
-    observeResource: toReqRes(
-      z.object({
-        resourceIdentifier: genericResourceIdentifier(),
-      }),
-      genericSessionResource()
-    ),
     updateResource: toReqRes(
       z.object({
         resourceIdentifier: genericResourceIdentifier(),
         resourceData: unknownRecord(),
       }),
-      // genericSessionResource()
-      genericClientResource('generic')
+      genericSessionResource()
     ),
     removeResource: toReqRes(
       z.object({
@@ -165,19 +76,35 @@ export namespace ClientSdkIO {
     // Subscriptions
     subscribeToResource: toReqRes(
       z.object({
+        clientId: zId(),
         resourceIdentifier: genericResourceIdentifier(),
       }),
-      genericSessionResource()
+      z.object({
+        client: sessionClient(),
+        resource: genericSessionResource(),
+      })
     ),
     unsubscribeFromResource: toReqRes(
       z.object({
+        clientId: zId(),
         resourceIdentifier: genericResourceIdentifier(),
       }),
-      genericSessionResource()
+      z.object({
+        client: sessionClient(),
+        resource: genericSessionResource(),
+      })
     ),
 
-    // Custom Requests
-    request: toReqReq(z.unknown()),
+    // Native Resources
+
+    // Matches
+    createMatch: toReqRes(
+      z.object({
+        matcher: z.string(),
+        playerCount: z.number(),
+        // players: z.
+      })
+    ),
   });
 
   export type Payloads = z.infer<typeof payloads>;
@@ -193,7 +120,7 @@ export namespace ClientSdkIO {
     {} as { [k in keyof typeof msgs]: k }
   );
 
-  export const msgs = objectKeys(payloadsShape).reduce(
+  export const msgs = msgNamesList.reduce(
     (accum, next) => {
       return {
         ...accum,

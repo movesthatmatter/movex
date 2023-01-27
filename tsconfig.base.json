@@ -19,6 +19,7 @@
     "paths": {
       "@matterio/backend": ["libs/backend/src/index.ts"],
       "@matterio/client-sdk": ["libs/client-sdk/src/index.ts"],
+      "@matterio/core-util": ["libs/core-util/src/index.ts"],
       "@matterio/server-sdk": ["libs/server-sdk/src/index.ts"]
     }
   },
