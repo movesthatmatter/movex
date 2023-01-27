@@ -102,13 +102,30 @@ export type AnySessionResourceCollectionMap = Record<
   SessionResource<any>
 >;
 
+export type WaitingMatch = {
+  id: string;
+  status: 'waiting'; // waiting for players
+  playerCount: number;
+  // waitTime:
+  players: Record<SessionClient['id'], undefined>;
+  matcher: string; // this is the matcher pattern: "chess" or "chess:5min" or "chess:5min:white", the more items the more limiting/accurate to match
+};
+
+// Need to rename the "Session"
+export type SessionMatch = WaitingMatch;
+
+export type NativeResourceCollectionMap = {
+  $matches: SessionMatch;
+};
+
 // TODO: Rename to session collection map
 export type SessionStoreCollectionMap<
   ResourcesCollectionMap extends CollectionMapBase
 > = {
   $clients: SessionClient;
   // $topics: Topic<string>;
-} & ResourcesCollectionMap;
+} & NativeResourceCollectionMap &
+  ResourcesCollectionMap;
 
 // This extracts out the $clients and other possible private keys
 export type OnlySessionCollectionMapOfResourceKeys<

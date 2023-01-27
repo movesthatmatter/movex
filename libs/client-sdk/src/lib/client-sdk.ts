@@ -5,6 +5,7 @@ import {
   ClientResource,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
+  SessionMatch,
   SessionResource,
   SessionStoreCollectionMap,
   UnidentifiableModel,
@@ -171,7 +172,10 @@ export class ClientSdk<
         return;
       }
 
-      console.log('[client sdk] broaasting', event.slice(BROADCAST_PREFIX.length));
+      console.log(
+        '[client sdk] broaasting',
+        event.slice(BROADCAST_PREFIX.length)
+      );
 
       this.pubsy.publish('broadcastedMsg', {
         event: event.slice(BROADCAST_PREFIX.length), // Remove the prefix
@@ -225,6 +229,34 @@ export class ClientSdk<
     return this.pubsy.subscribe('_socketDisconnect', fn);
   }
 
+  // TODOL this will be needed most likely for the Identity Management
+  // getClient() {
+  //   return AsyncResult.toAsyncResult<TRes, unknown>(
+  //     new Promise((resolve, reject) => {
+  //       this.socket?.emit(
+  //         ServerSdkIO.msgs[k].req,
+  //         req,
+  //         withTimeout(
+  //           (res: WsResponseResultPayload<TRes, unknown>) => {
+  //             if (res.ok) {
+  //               this.logger.info('[ServerSdk]', reqId, 'Response Ok');
+  //               resolve(new Ok(res.val));
+  //             } else {
+  //               this.logger.warn('[ServerSdk]', reqId, 'Response Err:', res);
+  //               reject(new Err(res.val));
+  //             }
+  //           },
+  //           () => {
+  //             this.logger.warn('[ServerSdk]', reqId, 'Request Timeout:', req);
+  //             reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
+  //           },
+  //           this.config.waitForResponseMs
+  //         )
+  //       );
+  //     }).catch((e) => e) as any
+  //   );
+  // }
+
   // on<E extends keyof Events>(event: E, fn: (payload: Events[E]) => void) {
   //   return this.pubsy.subscribe(event, fn);
   // }
@@ -232,7 +264,7 @@ export class ClientSdk<
   createResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TResourceData extends UnidentifiableModel<
-      ResourceCollectionMap[TResourceType]
+      SessionCollectionMap[TResourceType]
     >
   >(req: {
     resourceType: TResourceType;
@@ -387,51 +419,6 @@ export class ClientSdk<
   //   TReq = RequestsCollectionMap[TReqType]['0'],
   // >(k: TReqType, req: TReq): AsyncResult<void, unknown> {
 
-  // }
-
-  // private emitAndAcknowledgeClients = <
-  //   K extends keyof Pick<
-  //     typeof SdkIO.msgs,
-  //     'createClient' | 'getClient' | 'removeClient'
-  //   >,
-  //   TReq extends SdkIO.Payloads[K]['req'],
-  //   TRes = SessionCollectionMap['$clients']
-  // >(
-  //   k: K,
-  //   req: TReq
-  // ): AsyncResult<TRes, unknown> => {
-  //   const reqId = `${k}:${String(Math.random()).slice(-5)}`;
-
-  //   this.logger.info('[ClientSdk]', reqId, 'Client Request:', req);
-
-  //   return AsyncResult.toAsyncResult<TRes, unknown>(
-  //     new Promise(async (resolve, reject) => {
-  //       const connection = await this.socketConnection;
-
-  //       connection.emit(
-  //         SdkIO.msgs[k].req,
-  //         req,
-  //         withTimeout(
-  //           (res: WsResponseResultPayload<TRes, unknown>) => {
-  //             if (res.ok) {
-  //               this.logger.info('[ClientSdk]', reqId, 'Response Ok:', res);
-  //               resolve(new Ok(res.val));
-  //             } else {
-  //               this.logger.warn('[ClientSdk]', reqId, 'Response Err:', res);
-  //               reject(new Err(res.val));
-  //             }
-  //           },
-  //           () => {
-  //             this.logger.warn('[ClientSdk]', reqId, 'Request Timeout:', req);
-  //             reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
-  //           },
-  //           this.config.waitForResponseMs
-  //         )
-  //       );
-  //     }).catch((e) => e) as any
-  //   );
-  // };
-
   private emitAndAcknowledgeResources = <
     K extends keyof Pick<
       typeof SdkIO.msgs,
@@ -505,6 +492,10 @@ export class ClientSdk<
     );
   };
 
+  // private emitAndAcknowledgeMatches = <>() => {
+    
+  // }
+
   private emitAndAcknowledgeSubscriptions = <
     K extends keyof Pick<
       typeof SdkIO.msgs,
@@ -549,6 +540,36 @@ export class ClientSdk<
       }).catch((e) => e) as any
     );
   };
+
+  // Matches
+  //  Matcheg
+
+  createMatch(p: { matcher: string; playerCount: number }) {
+    
+  }
+
+  observeMatch(matchId: SessionMatch['id']) {
+    // return this.observeResource({
+    //   resourceType: '$match',
+    //   resourceId: matchId,
+    // } as unknown as Parameters<typeof this.observeResource>[0]);
+  }
+
+  subscribeToMatch(matchId: SessionMatch['id']) {}
+
+  joinMatch(matchId: SessionMatch['id']) {
+    // return this.updateResource(
+    //   {
+    //     resourceType: '$match',
+    //     resourceId: matchId,
+    //   } as unknown as Parameters<typeof this.updateResource>[0],
+    //   (prev: SessionMatch) => ({
+    //     // players: [...prev.players, ]
+    //   }) as Parameters<typeof this.updateResource>[1],
+    // );
+  }
+
+  leaveMatch(matchId: SessionMatch['id']) {}
 }
 
 const withTimeout = (

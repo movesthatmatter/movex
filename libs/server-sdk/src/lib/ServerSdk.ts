@@ -9,6 +9,7 @@ import {
   ResourceIdentifier,
   ResourceResponse,
   SessionClient,
+  SessionMatch,
   SessionResource,
   SessionStoreCollectionMap,
   UnidentifiableModel,
@@ -18,18 +19,24 @@ import {
 } from './types';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
-import { toResourceIdentifierString } from './util';
+import { $MATCHES_KEY } from './util';
 
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets
 
-type Events = ServerSdkIO.MsgToResponseMap;
+// type Events = ServerSdkIO.MsgToResponseMap;
 
 export type ServerSDKConfig = {
   url: string;
   apiKey: string;
   logger?: typeof console;
   waitForResponseMs?: number;
+};
+
+export type CreateMatchProps = {
+  matcher: SessionMatch['matcher'];
+  playerCount: SessionMatch['playerCount'];
+  players?: SessionMatch['players'];
 };
 
 type PubsyEvents<
@@ -165,6 +172,19 @@ export class ServerSDK<
     return this.emitAndAcknowledgeClients('removeClient', { id });
   }
 
+  private emitAndAcknowledgeClients = <
+    K extends keyof Pick<
+      typeof ServerSdkIO.msgs,
+      'createClient' | 'getClient' | 'removeClient'
+    >,
+    TReq extends ServerSdkIO.Payloads[K]['req'],
+    TRes = SessionCollectionMap['$clients']
+  >(
+    k: K,
+    req: TReq
+  ) =>
+    this.emitAndAcknowledge(ServerSdkIO.msgs[k].req, req).map((s) => s as TRes);
+
   // getClients = this.sessionStore.getAllClients.bind(this.sessionStore);
 
   // getAllClients = this.sessionStore.getAllClients.bind(this.sessionStore);
@@ -205,14 +225,14 @@ export class ServerSDK<
       resourceId?: SessionResource['id'];
     }
   ) {
-    // TODO: This should actuall happen on the seshy server in order to diminish
+    // TODO: This should actually happen on the seshy server in order to diminish
     //  the trps back and forth!
     // And there ideally they happen all at once in redis! again to diminish the trips!
     return this.createResource(req)
       .flatMap((r) =>
         this.subscribeToResource(clientId, {
           resourceId: r.item.id,
-          resourceType: req.resourceType,
+          resourceType: r.type,
         })
       )
       .map((r) => r.resource);
@@ -291,6 +311,20 @@ export class ServerSDK<
     );
   }
 
+  private emitAndAcknowledgeResources = <
+    K extends keyof Pick<
+      typeof ServerSdkIO.msgs,
+      'createResource' | 'getResource' | 'removeResource' | 'updateResource'
+    >,
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TReq extends ServerSdkIO.Payloads[K]['req'],
+    TRes = ResourceResponse<ResourceCollectionMap, TResourceType>
+  >(
+    k: K,
+    req: TReq
+  ) =>
+    this.emitAndAcknowledge(ServerSdkIO.msgs[k].req, req).map((s) => s as TRes);
+
   // getResourceSubscribers = this.sessionStore.getResourceSubscribers.bind(
   //   this.sessionStore
   // );
@@ -323,12 +357,6 @@ export class ServerSDK<
     });
   }
 
-  // onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
-  //   fn: (r: ResourceResponse<ResourceCollectionMap, TResourceType>) => void
-  // ) {
-  //   this.pubsy.subscribe('updateResource');
-  // }
-
   onBroadcastToSubscribers(
     fn: (
       r: PubsyEvents<ResourceCollectionMap>['onBroadcastToSubscribers']
@@ -336,118 +364,6 @@ export class ServerSDK<
   ) {
     return this.pubsy.subscribe('onBroadcastToSubscribers', fn);
   }
-
-  // private emitAndAcknowledgeResources
-
-  private emitAndAcknowledgeClients = <
-    K extends keyof Pick<
-      typeof ServerSdkIO.msgs,
-      'createClient' | 'getClient' | 'removeClient'
-    >,
-    TReq extends ServerSdkIO.Payloads[K]['req'],
-    TRes = SessionCollectionMap['$clients']
-  >(
-    k: K,
-    req: TReq
-  ): AsyncResult<TRes, unknown> => {
-    const reqId = `${k}:${String(Math.random()).slice(-3)}`;
-
-    this.logger.info('[ServerSdk]', reqId, 'Request:', req.id);
-
-    return AsyncResult.toAsyncResult<TRes, unknown>(
-      new Promise((resolve, reject) => {
-        this.socket?.emit(
-          ServerSdkIO.msgs[k].req,
-          req,
-          withTimeout(
-            (res: WsResponseResultPayload<TRes, unknown>) => {
-              if (res.ok) {
-                this.logger.info('[ServerSdk]', reqId, 'Response Ok');
-                resolve(new Ok(res.val));
-              } else {
-                this.logger.warn('[ServerSdk]', reqId, 'Response Err:', res);
-                reject(new Err(res.val));
-              }
-            },
-            () => {
-              this.logger.warn('[ServerSdk]', reqId, 'Request Timeout:', req);
-              reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
-            },
-            this.config.waitForResponseMs
-          )
-        );
-      }).catch((e) => e) as any
-    );
-  };
-
-  private emitAndAcknowledgeResources = <
-    K extends keyof Pick<
-      typeof ServerSdkIO.msgs,
-      'createResource' | 'getResource' | 'removeResource' | 'updateResource'
-    >,
-    TResourceType extends SessionCollectionMapOfResourceKeys,
-    TReq extends ServerSdkIO.Payloads[K]['req'],
-    TRes = ResourceResponse<ResourceCollectionMap, TResourceType>
-  >(
-    k: K,
-    req: TReq
-  ): AsyncResult<TRes, unknown> => {
-    const reqId = `${k}:${String(Math.random()).slice(-5)}`;
-
-    if (req.resourceIdentifier.resourceId) {
-      this.logger.info(
-        '[ServerSdk]',
-        reqId,
-        'Request:',
-        toResourceIdentifierString({
-          resourceId: req.resourceIdentifier.resourceId,
-          resourceType: req.resourceIdentifier.resourceType,
-        })
-      );
-    } else {
-      this.logger.info(
-        '[ServerSdk]',
-        reqId,
-        'Request:',
-        req.resourceIdentifier
-      );
-    }
-
-    return AsyncResult.toAsyncResult<TRes, unknown>(
-      new Promise((resolve, reject) => {
-        this.socket?.emit(
-          ServerSdkIO.msgs[k].req,
-          req,
-          withTimeout(
-            (res: WsResponseResultPayload<TRes, unknown>) => {
-              if (res.ok) {
-                this.logger.info(
-                  '[ServerSdk]',
-                  reqId,
-                  ' Response Ok'
-                  // res.val
-                );
-                resolve(new Ok(res.val));
-              } else {
-                this.logger.warn(
-                  '[ServerSdk]',
-                  reqId,
-                  ' Response Err:',
-                  res.val
-                );
-                reject(new Err(res.val));
-              }
-            },
-            () => {
-              this.logger.warn('[ServerSdk]', reqId, ' Request Timeout:', req);
-              reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
-            },
-            this.config.waitForResponseMs
-          )
-        );
-      })
-    );
-  };
 
   private emitAndAcknowledgeSubscriptions = <
     K extends keyof Pick<
@@ -463,35 +379,132 @@ export class ServerSDK<
   >(
     k: K,
     req: Omit<TReq, 'resourceType'>
-  ): AsyncResult<TRes, unknown> => {
-    const reqId = `${k}:${String(Math.random()).slice(-5)}`;
+  ) =>
+    this.emitAndAcknowledge(ServerSdkIO.msgs[k].req, req).map((s) => s as TRes);
 
-    this.logger.info(
-      '[ServerSdk]',
-      reqId,
-      'Request:',
-      req.clientId,
-      toResourceIdentifierString(req.resourceIdentifier)
-    );
+  // Matches
 
-    return AsyncResult.toAsyncResult<TRes, unknown>(
+  createMatch({ matcher, playerCount, players = {} }: CreateMatchProps) {
+    const nextMatch: UnidentifiableModel<SessionMatch> = {
+      status: 'waiting',
+      playerCount,
+      matcher,
+      players,
+    };
+
+    return this.createResource({
+      resourceType: $MATCHES_KEY,
+      resourceData: nextMatch as unknown as Parameters<
+        typeof this.createResource
+      >[0]['resourceData'],
+    });
+  }
+
+  createMatchAndSubscribe(
+    clientId: SessionClient['id'],
+    props: CreateMatchProps
+  ) {
+    // TODO: This should actually happen on the seshy server in order to diminish
+    //  the trps back and forth!
+    // And there ideally they happen all at once in redis! again to diminish the trips!
+    return this.createMatch(props)
+      .flatMap((r) =>
+        this.subscribeToResource(clientId, {
+          resourceId: r.item.id,
+          resourceType: r.type,
+        })
+      )
+      .map((r) => r.resource);
+  }
+
+  subscribeToMatch(clientId: SessionClient['id'], matchId: SessionMatch['id']) {
+    return this.subscribeToResource(clientId, {
+      resourceType: $MATCHES_KEY,
+      resourceId: matchId,
+    });
+  }
+
+  joinMatch(clientId: SessionClient['id'], matchId: SessionMatch['id']) {
+    // TODO: This should be done on the SessionStore level, to reduce the double trip
+    //  Can be done with by sending a type of update: APPEND | MERGE | REPLACE
+    //  Look more into what the best pracitices around this are! How many type of updates are there?
+    return this.getResource({
+      resourceType: $MATCHES_KEY,
+      resourceId: matchId,
+    }).flatMap(({ item }) => {
+      const prev = item as unknown as SessionMatch;
+      const nextMatchPlayers: SessionMatch['players'] = {
+        ...prev.players,
+        // Here I'm not sure it should be the client id or the SessionId or even UserId
+        [clientId]: undefined,
+      };
+
+      return this.updateResource(
+        {
+          resourceId: matchId,
+          resourceType: $MATCHES_KEY,
+        },
+        {
+          players: nextMatchPlayers,
+        } as Partial<SessionCollectionMap['$matches']>
+      );
+    });
+  }
+
+  leaveMatch(clientId: SessionClient['id'], matchId: SessionMatch['id']) {
+    // TODO: This should be done on the SessionStore level, to reduce the double trip
+    //  Can be done with by sending a type of update: APPEND | MERGE | REPLACE
+    //  Look more into what the best pracitices around this are! How many type of updates are there?
+    return this.getResource({
+      resourceType: $MATCHES_KEY,
+      resourceId: matchId,
+    }).flatMap(({ item }) => {
+      const prev = item as unknown as SessionMatch;
+      const { [clientId]: _, nextMatchPlayers } = prev.players;
+
+      return this.updateResource(
+        {
+          resourceId: matchId,
+          resourceType: $MATCHES_KEY,
+        },
+        {
+          players: nextMatchPlayers,
+        } as Partial<SessionCollectionMap['$matches']>
+      );
+    });
+  }
+
+  private emitAndAcknowledge = <TEvent extends string, TReq>(
+    event: TEvent,
+    requestPayload: TReq
+  ): AsyncResult<unknown, unknown> => {
+    const reqId = `${event}:${String(Math.random()).slice(-3)}`;
+
+    this.logger.info(`[ServerSdk] Request(${reqId}):`, event);
+
+    return AsyncResult.toAsyncResult<unknown, unknown>(
       new Promise((resolve, reject) => {
         this.socket?.emit(
-          ServerSdkIO.msgs[k].req,
-          req,
+          event,
+          requestPayload,
           withTimeout(
-            (res: WsResponseResultPayload<TRes, unknown>) => {
+            (res: WsResponseResultPayload<unknown, unknown>) => {
               if (res.ok) {
-                // this.logger.info('[ServerSdk]', reqId, 'Response Ok:', res);
-                this.logger.info('[ServerSdk]', reqId, 'Response Ok');
+                this.logger.info(`[ServerSdk] Response(${reqId}): ${event} Ok`);
                 resolve(new Ok(res.val));
               } else {
-                this.logger.warn('[ServerSdk]', reqId, 'Response Err:', res);
+                this.logger.info(
+                  `[ServerSdk] Response(${reqId}): ${event} Err`,
+                  res
+                );
                 reject(new Err(res.val));
               }
             },
             () => {
-              this.logger.warn('[ServerSdk]', reqId, 'Request Timeout:', req);
+              this.logger.info(
+                `[ServerSdk] Response(${reqId}): ${event} Err:`,
+                'Request Timeout'
+              );
               reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
             },
             this.config.waitForResponseMs
