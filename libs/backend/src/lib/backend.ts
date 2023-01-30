@@ -2,19 +2,20 @@ import { Server as SocketServer } from 'socket.io';
 import express from 'express';
 import http from 'node:http';
 import https from 'node:https';
-import crypto from 'crypto';
 import {
   objectKeys,
   SessionClient,
   SessionResource,
   UnknownIdentifiableRecord,
   UnknownRecord,
+  zId,
 } from '@matterio/core-util';
 import { ServerSDK, ServerSDKConfig } from '@matterio/server-sdk';
 import { ClientSdkIO } from '@matterio/client-sdk';
 import { Result } from 'ts-results';
 import { AsyncResult } from 'ts-async-results';
 import { SocketConnections } from './SocketConnections';
+import * as z from 'zod';
 
 type Config = ServerSDKConfig & {
   port?: number;
@@ -57,6 +58,10 @@ type EventHandlers<
   }>;
 };
 
+const handshakeQueryPayload = z.object({
+  clientId: zId().optional(),
+});
+
 export const matterioBackendWithExpress = <
   ClientInfo extends UnknownRecord,
   GameState extends UnknownRecord,
@@ -73,7 +78,8 @@ export const matterioBackendWithExpress = <
   > = {}
 ) => {
   // TODO: This comes from the config or system somehow if we need to track it!
-  const serverInstanceId = crypto.randomUUID().slice(-3);
+  // const serverInstanceId = crypto.randomUUID().slice(-3);
+  const clientConnections = new SocketConnections();
 
   const serverSdk = new ServerSDK<ClientInfo, GameState, ResourceCollectionMap>(
     sdkConfig
@@ -82,15 +88,13 @@ export const matterioBackendWithExpress = <
   const unsunscribersFromserverSdkConnection: (() => void)[] = [];
 
   serverSdk.connect().then((seshyConn) => {
-    console.log('[backend] connected to seshy', seshyConn.id);
+    console.log('[backend] connected to MatterioCloud', seshyConn.id);
 
     const clientSocket: SocketServer = new SocketServer(httpServer, {
       cors: {
         origin: '*',
       },
     });
-
-    const clientConnections = new SocketConnections();
 
     const broadcastTo = <TEvent extends string, TMsg>(
       subscribers: SessionResource['subscribers'],
@@ -102,7 +106,7 @@ export const matterioBackendWithExpress = <
       objectKeys(subscribers).forEach((clientId) => {
         console.log('[backened] broadcasting to clientId:', clientId);
         clientConnections
-          .get(clientId)
+          .getByClientId(clientId)
           // It isn't needed to wap it in toWsResponseResultPayloadOk here, since it's custom!
           //  and there's no request/response
           // ?.emit(`broadcast::${event}`, toWsResponseResultPayloadOk(msg));
@@ -111,7 +115,7 @@ export const matterioBackendWithExpress = <
     };
 
     clientSocket.on('connection', async (clientConn) => {
-      console.log('[backened] connected to client', clientConn.id);
+      // console.log('[backened] connected to client', clientConn.id);
       // connectionToClientMapclientSocket.handshake]
 
       // serverSdk.createClient()
@@ -123,12 +127,37 @@ export const matterioBackendWithExpress = <
 
       // The combo of serverId + conn.id is needed in order to ensure no duplicates
       //  when using multiple mahcines. Thinking BIG :D!
-      const clientId = `${serverInstanceId}-${clientConn.id}`;
+      // const clientId = `${serverInstanceId}-${crypto.randomUUID()}`;
+
+      // const clientId = `${serverInstanceId}-${clientConn.id}`;
+
+      // TODO: Inside the handshake the given client id can be given and passed further
+      // const givenClientId = clientSocketConn.handshake.query.clientId;
+      const handshake = handshakeQueryPayload.safeParse(
+        clientConn.handshake.query
+      );
+
+      if (!handshake.success) {
+        // Cannot proceed as the handshake doesn't work
+        // TODO: Send a error or smtg
+        console.error(
+          '[backened] Connection Handhsake Erorr',
+          clientConn.handshake
+        );
+        return;
+      }
+
+      const clientId = clientConnections.add(
+        clientConn,
+        handshake.data.clientId
+      );
+
+      // const clientId = clientConnections.generateClientId();
       const clientRes = await serverSdk
         .createClient({ id: clientId })
         .resolve();
 
-      clientConnections.add(clientId, clientConn);
+      // clientConnections.add(clientId, clientConn);
 
       if (!clientRes.ok) {
         console.error('[backened] client creation error', clientRes.val);
@@ -137,6 +166,8 @@ export const matterioBackendWithExpress = <
       }
 
       const $client = clientRes.val;
+
+      clientConn.emit('$clientConnected', { clientId });
 
       // TODO: Here should, notify the client that the $client got created and requests can happen
 
@@ -276,7 +307,7 @@ export const matterioBackendWithExpress = <
       clientConn.on('disconnect', (reason) => {
         console.log('[backened] client disconnected', reason);
 
-        clientConnections.remove(clientId);
+        clientConnections.removeByClientId(clientId);
         serverSdk.removeClient(clientId);
       });
     });
@@ -297,7 +328,7 @@ export const matterioBackendWithExpress = <
 
   // return { backendSocket, seshy };
   // return serverSdk;
-  return serverInstanceId;
+  return clientConnections.instanceId;
 };
 
 export const matterioBackend = <

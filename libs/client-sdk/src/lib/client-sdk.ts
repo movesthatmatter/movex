@@ -47,7 +47,7 @@ export class ClientSdk<
 
   private pubsy = new Pubsy<
     Events & {
-      _socketConnect: Socket;
+      _socketConnect: { clientId: string };
       _socketDisconnect: undefined;
 
       // Broadcasts
@@ -61,12 +61,10 @@ export class ClientSdk<
 
   private logger: typeof console;
 
-  private userId: string;
-
   constructor(
     private config: {
       url: string;
-      userId?: string; // Pass in a userId or allow the SDK to generate a random one
+      clientId?: string; // Pass in a userId or allow the SDK to generate a random one
       apiKey: string;
       logger?: typeof console;
       waitForResponseMs?: number;
@@ -74,10 +72,6 @@ export class ClientSdk<
   ) {
     this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
-
-    // TODO: This should probably come from the server when it is random, b/c of duplicates?
-    this.userId =
-      config.userId || String(getRandomInt(10000000000, 999999999999));
 
     this.socketInstance = io(this.config.url, {
       reconnectionDelay: 1000,
@@ -87,7 +81,7 @@ export class ClientSdk<
       upgrade: true,
       rejectUnauthorized: false,
       query: {
-        userId: this.userId,
+        clientId: config.clientId,
         apiKey: this.config.apiKey, // This could change
       },
       autoConnect: false,
@@ -96,43 +90,10 @@ export class ClientSdk<
     let unsubscribeOnSocketDisconnnect: Function[] = [];
 
     this.socketInstance.on('connect', () => {
-      unsubscribeOnSocketDisconnnect = this.handleIncomingMessage(
-        this.socketInstance
-      );
-
-      // TOOD: Not sure why the 100ms delay needed???
-      setTimeout(() => {
-        this.socketConnectionDelegate.resolve(this.socketInstance);
-
-        console.log('[ClientSdk] Connected with id', this.socketInstance.id);
-      }, 100);
-
-      this.pubsy.publish('_socketConnect', this.socketInstance);
-
-      // Set the connection promise to a real socket
-      // This needs to be at the end!
-      // this.socketConnection
-      // this.socketConnection = Promise.resolve(this.socketInstance);
-
-      // TODO: not sure why this needs a timeout here but it seems to be working like this
-      // setTimeout(() => {
-      //   // Take care or previously called socketConnection.promise
-      //   if (
-      //     this.socketConnectionObj.connected === false &&
-      //     this.socketConnectionObj.promiseDelegate.settled === false
-      //   ) {
-      //     this.socketConnectionObj.promiseDelegate.resolve(this.socketInstance);
-      //   }
-
-      //   this.socketConnectionObj = {
-      //     connected: true,
-      //     promise: Promise.resolve(this.socketInstance),
-      //   };
-
-      //   console.log('works wi 10')
-      // }, 10);
-
-      this.logger.info('[ClientSdk] Connected Succesfully');
+      unsubscribeOnSocketDisconnnect = [
+        ...this.handleConnection(this.socketInstance),
+        ...this.handleIncomingMessage(this.socketInstance),
+      ];
     });
 
     this.socketInstance.on('disconnect', () => {
@@ -144,6 +105,27 @@ export class ClientSdk<
       // TODO: Test that the unsubscribptions work correctly
       unsubscribeOnSocketDisconnnect.forEach((unsubscribe) => unsubscribe());
     });
+  }
+
+  private handleConnection(socket: Socket) {
+    const unsubscribers: Function[] = [];
+    // TODO: Type this with zod
+    const $clientConnectHandler = (payload: { clientId: string }) => {
+      this.logger.info('[ClientSdk] Connected Succesfully', payload);
+
+      // Resolve the socket promise now!
+      this.socketConnectionDelegate.resolve(this.socketInstance);
+
+      this.pubsy.publish('_socketConnect', payload);
+    };
+
+    // TODO: Type the EventName
+    socket.on('$clientConnected', $clientConnectHandler);
+    unsubscribers.push(() =>
+      socket.off('$clientConnected', $clientConnectHandler)
+    );
+
+    return unsubscribers;
   }
 
   private handleIncomingMessage(socket: Socket) {
@@ -226,7 +208,9 @@ export class ClientSdk<
     this.socketInstance.close();
   }
 
-  onConnect(fn: (socket: Socket) => void) {
+  onConnect(fn: (p: { clientId: string }) => void) {
+    // TODO: This gets called only when the server returned ta specific Client Identifiction message
+
     return this.pubsy.subscribe('_socketConnect', fn);
   }
 
@@ -470,6 +454,7 @@ export class ClientSdk<
   //  Matcheg
 
   createMatch(req: CreateMatchReq<GameState>) {
+    // req.
     return this.emitAndAcknowledgeMatches('createMatch', req);
   }
 
