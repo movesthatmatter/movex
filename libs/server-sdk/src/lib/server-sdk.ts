@@ -386,17 +386,20 @@ export class ServerSDK<
     players = [],
     game,
   }: CreateMatchReq<GameState>) {
+    console.log('server sdk, players', players);
     const nextMatch: UnidentifiableModel<SessionMatch> = {
       status: 'waiting',
       playerCount,
       matcher,
       players: players.reduce(
-        (accum, next) => ({ ...accum, [next]: undefined }),
-        {} as { [k: string]: undefined }
+        (accum, next) => ({ ...accum, [next]: '' }),
+        {} as { [k: string]: '' }
       ),
       winner: undefined,
       game,
     };
+
+    console.log('server sdk, props', nextMatch);
 
     return this.createResource({
       resourceType: $MATCHES_KEY,
@@ -442,7 +445,7 @@ export class ServerSDK<
       const nextMatchPlayers: SessionMatch['players'] = {
         ...prev.players,
         // Here I'm not sure it should be the client id or the SessionId or even UserId
-        [clientId]: undefined,
+        [clientId]: '',
       };
 
       return this.updateResource(
@@ -475,7 +478,7 @@ export class ServerSDK<
         },
         {
           players: nextMatchPlayers,
-        } as Partial<SessionCollectionMap['$matches']>
+        } as unknown as Partial<SessionCollectionMap['$matches']>
       );
     });
   }

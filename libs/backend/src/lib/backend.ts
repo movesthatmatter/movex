@@ -284,15 +284,25 @@ export const matterioBackendWithExpress = <
             const payload =
               ClientSdkIO.payloads.shape.createMatch.shape.req.parse(req);
 
-            return serverSdk
-              .createMatch({
-                ...payload,
-                // TODO: fix this anys if given by the backend implementors can work with zod directly, but actually it shouldn't
-                // because that can be further validated outside, this libs houldnt bother w/ that
-                game: payload.game as GameState,
-              })
-              .resolve()
-              .then(acknowledgeCb);
+            console.log('create match payload', payload);
+
+            return (
+              serverSdk
+                // TODO: This might not always be desired - to subscribe right away so it might need to change!
+                .createMatchAndSubscribe(clientId, {
+                  ...payload,
+                  // TODO: fix this anys if given by the backend implementors can work with zod directly, but actually it shouldn't
+                  // because that can be further validated outside, this libs houldnt bother w/ that
+                  game: payload.game as GameState,
+
+                  // Add the client as player as well
+                  // TODO: This might need to be configured on the client!
+                  players: [clientId]
+                })
+                .map((s) => s.item) // TODO: Should this be set here??
+                .resolve()
+                .then(acknowledgeCb)
+            );
           }
 
           console.info('[backened] proxying:', `"${event}"`);

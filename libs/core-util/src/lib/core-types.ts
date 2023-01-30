@@ -104,11 +104,13 @@ export type AnySessionResourceCollectionMap = Record<
 
 export type PlayerIdentifier = SessionClient['id'];
 
+export type EmptyString = ``;
+
 export type BaseMatch<TGame extends UnknownRecord = UnknownRecord> = {
   id: string;
   playerCount: number;
   // waitTime:
-  players: Record<PlayerIdentifier, undefined>;
+  players: Record<PlayerIdentifier, EmptyString>;
   matcher: string; // this is the matcher pattern: "chess" or "chess:5min" or "chess:5min:white", the more items the more limiting/accurate to match
   game: TGame;
 };
