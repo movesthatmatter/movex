@@ -147,6 +147,8 @@ export const matterioBackendWithExpress = <
         return;
       }
 
+      console.log('[backend] connection handshake', handshake);
+
       const clientId = clientConnections.add(
         clientConn,
         handshake.data.clientId

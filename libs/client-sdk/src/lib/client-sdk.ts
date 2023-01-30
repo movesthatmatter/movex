@@ -81,7 +81,7 @@ export class ClientSdk<
       upgrade: true,
       rejectUnauthorized: false,
       query: {
-        clientId: config.clientId,
+        ...(config.clientId ? { clientId: config.clientId } : {}),
         apiKey: this.config.apiKey, // This could change
       },
       autoConnect: false,
