@@ -102,20 +102,45 @@ export type AnySessionResourceCollectionMap = Record<
   SessionResource<any>
 >;
 
-export type WaitingMatch = {
+export type PlayerIdentifier = SessionClient['id'];
+
+export type BaseMatch<TGame extends UnknownRecord = UnknownRecord> = {
   id: string;
-  status: 'waiting'; // waiting for players
   playerCount: number;
   // waitTime:
-  players: Record<SessionClient['id'], undefined>;
+  players: Record<PlayerIdentifier, undefined>;
   matcher: string; // this is the matcher pattern: "chess" or "chess:5min" or "chess:5min:white", the more items the more limiting/accurate to match
+  game: TGame;
 };
 
-// Need to rename the "Session"
-export type SessionMatch = WaitingMatch;
+export type WaitingMatch<TGame extends UnknownRecord = UnknownRecord> =
+  BaseMatch<TGame> & {
+    status: 'waiting'; // waiting for players
+    winner: undefined;
+  };
 
-export type NativeResourceCollectionMap = {
-  $matches: SessionMatch;
+export type InProgressMatch<TGame extends UnknownRecord = UnknownRecord> =
+  BaseMatch<TGame> & {
+    status: 'inProgress'; // waiting for players
+    winner: undefined;
+  };
+
+export type CompletedMatch<TGame extends UnknownRecord = UnknownRecord> =
+  BaseMatch<TGame> & {
+    status: 'completed'; // waiting for players
+    winner: PlayerIdentifier;
+  };
+
+// Need to rename the "Session"
+export type SessionMatch<TGame extends UnknownRecord = UnknownRecord> =
+  | WaitingMatch<TGame>
+  | InProgressMatch<TGame>
+  | CompletedMatch<TGame>;
+
+export type NativeResourceCollectionMap<
+  TGame extends UnknownRecord = UnknownRecord
+> = {
+  $matches: SessionMatch<TGame>;
 };
 
 // TODO: Rename to session collection map
@@ -150,4 +175,11 @@ export type ResourceClientResponse<
 > = {
   type: TResourceType;
   item: ResourceCollectionMap[TResourceType];
+};
+
+export type CreateMatchReq<TGame extends UnknownRecord> = {
+  matcher: SessionMatch['matcher'];
+  playerCount: SessionMatch['playerCount'];
+  players?: SessionClient['id'][];
+  game: TGame
 };

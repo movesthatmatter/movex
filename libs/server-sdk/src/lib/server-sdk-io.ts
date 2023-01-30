@@ -1,5 +1,10 @@
 import * as z from 'zod';
-import { objectKeys, CoreIO } from '@matterio/core-util';
+import {
+  objectKeys,
+  CoreIO,
+  SessionMatch,
+  SessionClient,
+} from '@matterio/core-util';
 
 export namespace ServerSdkIO {
   const {
@@ -102,7 +107,9 @@ export namespace ServerSdkIO {
       z.object({
         matcher: z.string(),
         playerCount: z.number(),
-        // players: z.
+
+        players: z.array(zId()).optional(),
+        game: unknownRecord(),
       })
     ),
   });
@@ -157,4 +164,20 @@ export namespace ServerSdkIO {
   );
 
   export type MsgToResponseMap = z.infer<typeof msgToResponseMap>;
+
+  const msgToRequestMap = z.object(
+    objectKeys(msgs).reduce(
+      (accum, next) => {
+        return {
+          ...accum,
+          [next]: payloadsShape[next].shape.req,
+        };
+      },
+      {} as {
+        [k in keyof typeof msgs]: typeof payloadsShape[k]['shape']['req'];
+      }
+    )
+  );
+
+  export type MsgToRequestMap = z.infer<typeof msgToRequestMap>;
 }

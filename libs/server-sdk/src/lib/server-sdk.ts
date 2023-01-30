@@ -16,11 +16,11 @@ import {
   UnknownRecord,
   WsResponseResultPayload,
   $MATCHES_KEY,
+  CreateMatchReq,
 } from '@matterio/core-util';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { ServerSdkIO } from './server-sdk-io';
-
 
 // This is what creates the bridge between the seshy api
 // server and the client's server via sockets
@@ -32,12 +32,6 @@ export type ServerSDKConfig = {
   apiKey: string;
   logger?: typeof console;
   waitForResponseMs?: number;
-};
-
-export type CreateMatchProps = {
-  matcher: SessionMatch['matcher'];
-  playerCount: SessionMatch['playerCount'];
-  players?: SessionClient['id'][];
 };
 
 type PubsyEvents<
@@ -67,6 +61,7 @@ type PubsyEvents<
 
 export class ServerSDK<
   ClientInfo extends UnknownRecord = {},
+  GameState extends UnknownRecord = {},
   ResourceCollectionMap extends Record<
     string,
     UnknownIdentifiableRecord
@@ -385,7 +380,12 @@ export class ServerSDK<
 
   // Matches
 
-  createMatch({ matcher, playerCount, players = [] }: CreateMatchProps) {
+  createMatch({
+    matcher,
+    playerCount,
+    players = [],
+    game,
+  }: CreateMatchReq<GameState>) {
     const nextMatch: UnidentifiableModel<SessionMatch> = {
       status: 'waiting',
       playerCount,
@@ -394,6 +394,8 @@ export class ServerSDK<
         (accum, next) => ({ ...accum, [next]: undefined }),
         {} as { [k: string]: undefined }
       ),
+      winner: undefined,
+      game,
     };
 
     return this.createResource({
@@ -406,7 +408,7 @@ export class ServerSDK<
 
   createMatchAndSubscribe(
     clientId: SessionClient['id'],
-    props: CreateMatchProps
+    props: CreateMatchReq<GameState>
   ) {
     // TODO: This should actually happen on the seshy server in order to diminish
     //  the trps back and forth!

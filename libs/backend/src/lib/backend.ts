@@ -26,11 +26,12 @@ type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
 type EventHandlers<
   ClientInfo extends UnknownRecord,
+  GameState extends UnknownRecord,
   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
   RequestsCollectionMap extends RequestsCollectionMapBase
 > = {
   requestHandlers?: (p: {
-    serverSdk: ServerSDK<ClientInfo, ResourceCollectionMap>;
+    serverSdk: ServerSDK<ClientInfo, GameState, ResourceCollectionMap>;
     client: SessionClient;
     broadcastTo: <TEvent extends string, TMsg>(
       subscribers: SessionResource['subscribers'],
@@ -56,8 +57,9 @@ type EventHandlers<
   }>;
 };
 
-export const mtmBackendWithExpress = <
+export const matterioBackendWithExpress = <
   ClientInfo extends UnknownRecord,
+  GameState extends UnknownRecord,
   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
   RequestsCollectionMap extends RequestsCollectionMapBase
 >(
@@ -65,6 +67,7 @@ export const mtmBackendWithExpress = <
   sdkConfig: ServerSDKConfig,
   p: EventHandlers<
     ClientInfo,
+    GameState,
     ResourceCollectionMap,
     RequestsCollectionMap
   > = {}
@@ -72,11 +75,13 @@ export const mtmBackendWithExpress = <
   // TODO: This comes from the config or system somehow if we need to track it!
   const serverInstanceId = crypto.randomUUID().slice(-3);
 
-  const seshySDK = new ServerSDK<ClientInfo, ResourceCollectionMap>(sdkConfig);
+  const serverSdk = new ServerSDK<ClientInfo, GameState, ResourceCollectionMap>(
+    sdkConfig
+  );
 
-  const unsunscribersFromSeshySdkConnection: (() => void)[] = [];
+  const unsunscribersFromserverSdkConnection: (() => void)[] = [];
 
-  seshySDK.connect().then((seshyConn) => {
+  serverSdk.connect().then((seshyConn) => {
     console.log('[backend] connected to seshy', seshyConn.id);
 
     const clientSocket: SocketServer = new SocketServer(httpServer, {
@@ -109,9 +114,9 @@ export const mtmBackendWithExpress = <
       console.log('[backened] connected to client', clientConn.id);
       // connectionToClientMapclientSocket.handshake]
 
-      // seshySDK.createClient()
+      // serverSdk.createClient()
 
-      // seshySDK.onBroadcastToSubscribers((r) => {
+      // serverSdk.onBroadcastToSubscribers((r) => {
       //   console.log('[backened] gonna braodcast to', r.subscribers, r);
       //   console.log('[backened] gonna braodcast to conn', clientConn.id, clientConn.handshake);
       // });
@@ -119,7 +124,9 @@ export const mtmBackendWithExpress = <
       // The combo of serverId + conn.id is needed in order to ensure no duplicates
       //  when using multiple mahcines. Thinking BIG :D!
       const clientId = `${serverInstanceId}-${clientConn.id}`;
-      const clientRes = await seshySDK.createClient({ id: clientId }).resolve();
+      const clientRes = await serverSdk
+        .createClient({ id: clientId })
+        .resolve();
 
       clientConnections.add(clientId, clientConn);
 
@@ -135,7 +142,7 @@ export const mtmBackendWithExpress = <
 
       if (p.requestHandlers) {
         const requestHandlersMap = p.requestHandlers({
-          serverSdk: seshySDK,
+          serverSdk: serverSdk,
           client: $client,
           broadcastTo,
         });
@@ -196,7 +203,7 @@ export const mtmBackendWithExpress = <
                 req
               );
 
-            return seshySDK
+            return serverSdk
               .subscribeToResource(clientId, resourceIdentifier as any)
               .resolve()
               .then(acknowledgeCb);
@@ -206,7 +213,7 @@ export const mtmBackendWithExpress = <
             const { resourceIdentifier } =
               ClientSdkIO.payloads.shape.observeResource.shape.req.parse(req);
 
-            return seshySDK
+            return serverSdk
               .observeResource(clientId, resourceIdentifier as any)
               .resolve()
               .then(acknowledgeCb);
@@ -218,7 +225,7 @@ export const mtmBackendWithExpress = <
                 req
               );
 
-            return seshySDK
+            return serverSdk
               .unsubscribeFromResource(clientId, resourceIdentifier as any)
               .resolve()
               .then(acknowledgeCb);
@@ -229,7 +236,7 @@ export const mtmBackendWithExpress = <
               ClientSdkIO.payloads.shape.updateResource.shape.req.parse(req);
 
             return (
-              seshySDK
+              serverSdk
                 .updateResourceAndBroadcast(
                   payload.resourceIdentifier as any,
                   payload.resourceData as any
@@ -238,6 +245,21 @@ export const mtmBackendWithExpress = <
                 .resolve()
                 .then(acknowledgeCb)
             );
+          }
+
+          if (event === ClientSdkIO.msgNames.createMatch) {
+            const payload =
+              ClientSdkIO.payloads.shape.createMatch.shape.req.parse(req);
+
+            return serverSdk
+              .createMatch({
+                ...payload,
+                // TODO: fix this anys if given by the backend implementors can work with zod directly, but actually it shouldn't
+                // because that can be further validated outside, this libs houldnt bother w/ that
+                game: payload.game as GameState,
+              })
+              .resolve()
+              .then(acknowledgeCb);
           }
 
           console.info('[backened] proxying:', `"${event}"`);
@@ -255,29 +277,32 @@ export const mtmBackendWithExpress = <
         console.log('[backened] client disconnected', reason);
 
         clientConnections.remove(clientId);
-        seshySDK.removeClient(clientId);
+        serverSdk.removeClient(clientId);
       });
     });
 
-    unsunscribersFromSeshySdkConnection.push(
-      seshySDK.onBroadcastToSubscribers((r) => {
+    unsunscribersFromserverSdkConnection.push(
+      serverSdk.onBroadcastToSubscribers((r) => {
         broadcastTo(r.subscribers, r.event, r.payload);
       })
     );
   });
 
-  seshySDK.socket?.on('disconnect', () => {
+  serverSdk.socket?.on('disconnect', () => {
     // TODO: Make sure this gets called and unset
-    unsunscribersFromSeshySdkConnection.forEach((unsubscribe) => unsubscribe());
+    unsunscribersFromserverSdkConnection.forEach((unsubscribe) =>
+      unsubscribe()
+    );
   });
 
   // return { backendSocket, seshy };
-  // return seshySDK;
+  // return serverSdk;
   return serverInstanceId;
 };
 
-export const mtmBackend = <
+export const matterioBackend = <
   ClientInfo extends UnknownRecord,
+  GameState extends UnknownRecord,
   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
   RequestsCollectionMap extends RequestsCollectionMapBase
 >(
@@ -285,6 +310,7 @@ export const mtmBackend = <
   callback?: (server: http.Server | https.Server) => void,
   p: EventHandlers<
     ClientInfo,
+    GameState,
     ResourceCollectionMap,
     RequestsCollectionMap
   > = {}
@@ -292,7 +318,7 @@ export const mtmBackend = <
   const app = express();
   const server = http.createServer(app);
 
-  const mtm = mtmBackendWithExpress(server, sdkConfig, p);
+  const mtm = matterioBackendWithExpress(server, sdkConfig, p);
 
   server.listen(port, () => callback?.(server));
 

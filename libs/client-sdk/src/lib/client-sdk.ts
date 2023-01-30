@@ -2,6 +2,7 @@ import io, { Socket } from 'socket.io-client';
 import * as ClientSdkIO from './client-sdk-io';
 import {
   AnyIdentifiableRecord,
+  CreateMatchReq,
   getRandomInt,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
@@ -28,6 +29,7 @@ type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
 export class ClientSdk<
   ClientInfo extends UnknownRecord = {},
+  GameState extends UnknownRecord = {},
   ResourceCollectionMap extends Record<
     string,
     UnknownIdentifiableRecord
@@ -464,62 +466,12 @@ export class ClientSdk<
       .map((s) => s as TRawRes)
       .map((s) => s.item as TRes);
 
-  // AsyncResult<TRes, unknown> => {
-  //   return this.emitAndAcknowledge(k, req)
-  //     .map((s) => s as TRawRes)
-  //     .map((s) => s.item as TRes);
-
-  // const reqId = `${k}:${String(Math.random()).slice(-5)}`;
-
-  // return AsyncResult.toAsyncResult<TRes, unknown>(
-  //   new Promise(async (resolve, reject) => {
-  //     const connection = await this.socketConnection;
-
-  //     this.logger.info('[ClientSdk]', reqId, 'Resource Request:', req);
-
-  //     connection.emit(
-  //       ClientSdkIO.msgs[k].req,
-  //       req,
-  //       withTimeout(
-  //         (res: WsResponseResultPayload<TRawRes, unknown>) => {
-  //           if (res.ok) {
-  //             this.logger.info(
-  //               '[ClientSdk]',
-  //               reqId,
-  //               ' Resource Response Ok:',
-  //               res.val.item
-  //             );
-  //             resolve(new Ok(res.val.item as TRes));
-  //           } else {
-  //             this.logger.warn(
-  //               '[ClientSdk]',
-  //               reqId,
-  //               'Resource Response Err:',
-  //               res.val
-  //             );
-  //             reject(new Err(res.val));
-  //           }
-  //         },
-  //         () => {
-  //           this.logger.warn(
-  //             '[ClientSdk]',
-  //             reqId,
-  //             'Resource Request Timeout:',
-  //             req
-  //           );
-  //           reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
-  //         },
-  //         this.config.waitForResponseMs
-  //       )
-  //     );
-  //   })
-  // );
-  // };
-
   // Matches
   //  Matcheg
 
-  createMatch(p: { matcher: string; playerCount: number }) {}
+  createMatch(req: CreateMatchReq<GameState>) {
+    return this.emitAndAcknowledgeMatches('createMatch', req);
+  }
 
   observeMatch(matchId: SessionMatch['id']) {
     // return this.observeResource({
@@ -544,7 +496,24 @@ export class ClientSdk<
 
   leaveMatch(matchId: SessionMatch['id']) {}
 
-  private emitAndAcknowledgeMatches = () => {};
+  private emitAndAcknowledgeMatches = <
+    K extends keyof Pick<typeof ClientSdkIO.msgs, 'createMatch'>,
+    TReq extends ClientSdkIO.Payloads[K]['req'],
+    // TRawRes extends ResourceCollectionMap[TResourceType] = ResourceCollectionMap[TResourceType],
+    // TRawRes extends {
+    //   type: TResourceType;
+    //   item: ResourceCollectionMap[TResourceType];
+    //   subscribers: SessionCollectionMap[TResourceType]['subscribers'];
+    // } = {
+    //   type: TResourceType;
+    //   item: ResourceCollectionMap[TResourceType];
+    //   subscribers: SessionCollectionMap[TResourceType]['subscribers'];
+    // },
+    TRes = SessionMatch<GameState> // TODO: This should prob be better typed
+  >(
+    k: K,
+    req: TReq
+  ) => this.emitAndAcknowledge(k, req).map((s) => s as TRes);
 
   private emitAndAcknowledge = <TEvent extends string, TReq>(
     event: TEvent,

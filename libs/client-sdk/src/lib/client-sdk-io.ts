@@ -30,30 +30,6 @@ export const genericClientResource = (type: string) =>
   clientResource(type, unknownRecord());
 
 export const payloads = z.object({
-  // Clients
-  createClient: toReqRes(
-    z.object({
-      id: zId().optional(),
-      info: unknownRecord().optional(),
-    }),
-    sessionClient()
-  ),
-  getClient: toReqRes(
-    z.object({
-      id: zId(),
-    }),
-    sessionClient()
-  ),
-  removeClient: toReqRes(
-    z.object({
-      id: zId(),
-    }),
-    z.object({
-      id: zId(),
-      subscriptions: genericSessionResource().shape.subscribers,
-    })
-  ),
-
   // Resources
   createResource: toReqRes(
     z.object({
@@ -114,6 +90,16 @@ export const payloads = z.object({
 
   // Custom Requests
   request: toReqReq(z.unknown()),
+
+  // Matches
+  createMatch: toReqRes(
+    z.object({
+      matcher: z.string(),
+      playerCount: z.number(),
+      players: z.array(zId()).optional(),
+      game: unknownRecord(),
+    }),
+  ),
 });
 
 export type Payloads = z.infer<typeof payloads>;

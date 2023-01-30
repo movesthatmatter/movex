@@ -67,3 +67,15 @@ export const sessionResource = <TData extends z.ZodRecord>(data: TData) =>
   });
 
 export const genericSessionResource = () => sessionResource(unknownRecord());
+
+export const baseSessionMatch = <TGame extends z.ZodRecord>(game: TGame) =>
+  z.object({
+    id: zId(),
+    playerCount: z.number(),
+    // waitTime:
+    players: z.record(zId(), z.undefined()),
+    matcher: z.string(), // this is the matcher pattern: "chess" or "chess:5min" or "chess:5min:white", the more items the more limiting/accurate to match
+    game,
+  });
+
+export const sessionMatch = baseSessionMatch;
