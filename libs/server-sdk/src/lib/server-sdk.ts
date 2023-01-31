@@ -386,7 +386,6 @@ export class ServerSDK<
     players = [],
     game,
   }: CreateMatchReq<GameState>) {
-    console.log('server sdk, players', players);
     const nextMatch: UnidentifiableModel<SessionMatch> = {
       status: 'waiting',
       playerCount,
@@ -398,8 +397,6 @@ export class ServerSDK<
       winner: undefined,
       game,
     };
-
-    console.log('server sdk, props', nextMatch);
 
     return this.createResource({
       resourceType: $MATCHES_KEY,

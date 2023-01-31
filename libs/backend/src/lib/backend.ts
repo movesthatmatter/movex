@@ -284,8 +284,6 @@ export const matterioBackendWithExpress = <
             const payload =
               ClientSdkIO.payloads.shape.createMatch.shape.req.parse(req);
 
-            console.log('create match payload', payload);
-
             return (
               serverSdk
                 // TODO: This might not always be desired - to subscribe right away so it might need to change!
@@ -297,12 +295,23 @@ export const matterioBackendWithExpress = <
 
                   // Add the client as player as well
                   // TODO: This might need to be configured on the client!
-                  players: [clientId]
+                  players: [clientId],
                 })
                 .map((s) => s.item) // TODO: Should this be set here??
                 .resolve()
                 .then(acknowledgeCb)
             );
+          }
+
+          if (event === ClientSdkIO.msgNames.observeMatch) {
+            const payload =
+              ClientSdkIO.payloads.shape.observeMatch.shape.req.parse(req);
+
+            return serverSdk
+              .subscribeToMatch(clientId, payload.matchId)
+              .map((s) => s.resource.item)
+              .resolve()
+              .then(acknowledgeCb);
           }
 
           console.info('[backened] proxying:', `"${event}"`);

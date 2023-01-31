@@ -454,15 +454,11 @@ export class ClientSdk<
   //  Matcheg
 
   createMatch(req: CreateMatchReq<GameState>) {
-    // req.
     return this.emitAndAcknowledgeMatches('createMatch', req);
   }
 
   observeMatch(matchId: SessionMatch['id']) {
-    // return this.observeResource({
-    //   resourceType: '$match',
-    //   resourceId: matchId,
-    // } as unknown as Parameters<typeof this.observeResource>[0]);
+    return this.emitAndAcknowledgeMatches('observeMatch', { matchId });
   }
 
   subscribeToMatch(matchId: SessionMatch['id']) {}
@@ -482,7 +478,10 @@ export class ClientSdk<
   leaveMatch(matchId: SessionMatch['id']) {}
 
   private emitAndAcknowledgeMatches = <
-    K extends keyof Pick<typeof ClientSdkIO.msgs, 'createMatch'>,
+    K extends keyof Pick<
+      typeof ClientSdkIO.msgs,
+      'createMatch' | 'observeMatch'
+    >,
     TReq extends ClientSdkIO.Payloads[K]['req'],
     // TRawRes extends ResourceCollectionMap[TResourceType] = ResourceCollectionMap[TResourceType],
     // TRawRes extends {

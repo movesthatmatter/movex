@@ -8,6 +8,7 @@ import {
   genericSessionResource,
   genericResourceIdentifier,
   objectKeys,
+  sessionMatch,
 } from '@matterio/core-util';
 
 // This is called clientResource b/c this is what gets sent to the client,
@@ -98,7 +99,13 @@ export const payloads = z.object({
       playerCount: z.number(),
       players: z.array(zId()).optional(),
       game: unknownRecord(),
+    })
+  ),
+  observeMatch: toReqRes(
+    z.object({
+      matchId: zId(),
     }),
+    sessionMatch(unknownRecord())
   ),
 });
 
