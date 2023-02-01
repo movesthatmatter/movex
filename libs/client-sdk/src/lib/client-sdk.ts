@@ -1,29 +1,25 @@
 import io, { Socket } from 'socket.io-client';
 import * as ClientSdkIO from './client-sdk-io';
 import {
+  $MATCHES_KEY,
   AnyIdentifiableRecord,
   CreateMatchReq,
-  getRandomInt,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
   SessionMatch,
-  SessionResource,
   SessionStoreCollectionMap,
   UnidentifiableModel,
   UnknownIdentifiableRecord,
   UnknownRecord,
   WsResponseResultPayload,
+  GenericResource,
+  toResourceIdentifierObj,
 } from '@matterio/core-util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { PromiseDelegate } from 'promise-delegate';
 import { ClientResource } from './types';
-
-type Events = Pick<
-  ClientSdkIO.MsgToResponseMap,
-  'updateResource' | 'removeResource'
->;
 
 type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
@@ -46,13 +42,13 @@ export class ClientSdk<
   private socketConnectionDelegate = new PromiseDelegate<Socket>(true);
 
   private pubsy = new Pubsy<
-    Events & {
+    Pick<ClientSdkIO.MsgToResponseMap, 'updateResource' | 'removeResource'> & {
       _socketConnect: { clientId: string };
       _socketDisconnect: undefined;
 
       // Broadcasts
-      // TODO: This could be typed
-      broadcastedMsg: {
+      // TODO: This MUST be typed
+      clientBroadcastedMsg: {
         event: string;
         msg: unknown;
       };
@@ -160,11 +156,11 @@ export class ClientSdk<
       }
 
       console.log(
-        '[client sdk] broaasting',
+        '[client sdk] broadcasting',
         event.slice(BROADCAST_PREFIX.length)
       );
 
-      this.pubsy.publish('broadcastedMsg', {
+      this.pubsy.publish('clientBroadcastedMsg', {
         event: event.slice(BROADCAST_PREFIX.length), // Remove the prefix
         msg,
       });
@@ -218,38 +214,6 @@ export class ClientSdk<
     return this.pubsy.subscribe('_socketDisconnect', fn);
   }
 
-  // TODOL this will be needed most likely for the Identity Management
-  // getClient() {
-  //   return AsyncResult.toAsyncResult<TRes, unknown>(
-  //     new Promise((resolve, reject) => {
-  //       this.socket?.emit(
-  //         ServerClientSdkIO.msgs[k].req,
-  //         req,
-  //         withTimeout(
-  //           (res: WsResponseResultPayload<TRes, unknown>) => {
-  //             if (res.ok) {
-  //               this.logger.info('[ServerSdk]', reqId, 'Response Ok');
-  //               resolve(new Ok(res.val));
-  //             } else {
-  //               this.logger.warn('[ServerSdk]', reqId, 'Response Err:', res);
-  //               reject(new Err(res.val));
-  //             }
-  //           },
-  //           () => {
-  //             this.logger.warn('[ServerSdk]', reqId, 'Request Timeout:', req);
-  //             reject(new Err('RequestTimeout')); // TODO This error could be typed better using a result error
-  //           },
-  //           this.config.waitForResponseMs
-  //         )
-  //       );
-  //     }).catch((e) => e) as any
-  //   );
-  // }
-
-  // on<E extends keyof Events>(event: E, fn: (payload: Events[E]) => void) {
-  //   return this.pubsy.subscribe(event, fn);
-  // }
-
   createResource<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TResourceData extends UnidentifiableModel<
@@ -258,7 +222,7 @@ export class ClientSdk<
   >(req: {
     resourceType: TResourceType;
     resourceData: TResourceData;
-    resourceId?: SessionResource['id'];
+    resourceId?: GenericResource['id'];
   }) {
     return this.emitAndAcknowledgeResources('createResource', {
       resourceIdentifier: {
@@ -300,18 +264,48 @@ export class ClientSdk<
 
   observeResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
     resourceIdentifier: ResourceIdentifier<TResourceType>
+    // subsriberFn?: (
+    //   r: ClientResource<TResourceType, ResourceCollectionMap[TResourceType]>
+    // ) => void
   ) {
+    // if (subsriberFn) {
+    //   this.pubsy.subscribe()
+    // }
+
     return this.emitAndAcknowledgeResources('observeResource', {
       resourceIdentifier,
     });
   }
 
   subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
-    resourceIdentifier: ResourceIdentifier<TResourceType>
+    resourceIdentifier: ResourceIdentifier<TResourceType>,
+    subsriberFn: (
+      r: ClientResource<TResourceType, ResourceCollectionMap[TResourceType]>
+    ) => void
   ) {
-    return this.emitAndAcknowledgeSubscriptions('subscribeToResource', {
-      resourceIdentifier,
+    const { resourceId, resourceType } =
+      toResourceIdentifierObj(resourceIdentifier);
+
+    const unsubscriber = this.pubsy.subscribe('updateResource', (r) => {
+      // Only be called for the given resource!
+      if (r.type === resourceType && r.item.id === resourceId) {
+        subsriberFn(
+          r as ClientResource<
+            TResourceType,
+            ResourceCollectionMap[TResourceType]
+          >
+        );
+      }
     });
+
+    this.emitAndAcknowledgeSubscriptions('subscribeToResource', {
+      resourceIdentifier,
+    }).mapErr(() => {
+      // I believe this be called if an error occured!
+      unsubscriber();
+    });
+
+    return unsubscriber;
   }
 
   unsubscribeFromResource<
@@ -349,7 +343,7 @@ export class ClientSdk<
   onBroadcastedMsg<TEvent extends string, TMsg extends unknown>(
     fn: (data: { event: TEvent; msg: TMsg }) => void
   ) {
-    return this.pubsy.subscribe('broadcastedMsg', ({ event, msg }) => {
+    return this.pubsy.subscribe('clientBroadcastedMsg', ({ event, msg }) => {
       fn({
         event: event as TEvent,
         msg: msg as TMsg,
@@ -451,36 +445,47 @@ export class ClientSdk<
       .map((s) => s.item as TRes);
 
   // Matches
-  //  Matcheg
-
   createMatch(req: CreateMatchReq<GameState>) {
     return this.emitAndAcknowledgeMatches('createMatch', req);
   }
 
-  observeMatch(matchId: SessionMatch['id']) {
-    return this.emitAndAcknowledgeMatches('observeMatch', { matchId });
+  getMatch(matchId: SessionMatch['id']) {
+    return this.emitAndAcknowledgeMatches('getMatch', { matchId });
   }
 
-  subscribeToMatch(matchId: SessionMatch['id']) {}
+  // observeMatch(matchId: SessionMatch['id'], subscribeFn?: () => {}) {
+  //   if (subscribeFn) {
+
+  //   }
+
+  //   return this.emitAndAcknowledgeMatches('observeMatch', { matchId });
+  // }
+
+  subscribeToMatch(
+    matchId: SessionMatch['id'],
+    subsriberFn: (r: SessionMatch) => void
+  ) {
+    return this.subscribeToResource(
+      {
+        resourceType: $MATCHES_KEY,
+        resourceId: matchId,
+      },
+      (r) => subsriberFn(r.item as unknown as SessionMatch)
+    );
+  }
 
   joinMatch(matchId: SessionMatch['id']) {
-    // return this.updateResource(
-    //   {
-    //     resourceType: '$match',
-    //     resourceId: matchId,
-    //   } as unknown as Parameters<typeof this.updateResource>[0],
-    //   (prev: SessionMatch) => ({
-    //     // players: [...prev.players, ]
-    //   }) as Parameters<typeof this.updateResource>[1],
-    // );
+    return this.emitAndAcknowledgeMatches('joinMatch', { matchId });
   }
 
-  leaveMatch(matchId: SessionMatch['id']) {}
+  leaveMatch(matchId: SessionMatch['id']) {
+    return this.emitAndAcknowledgeMatches('leaveMatch', { matchId });
+  }
 
   private emitAndAcknowledgeMatches = <
     K extends keyof Pick<
       typeof ClientSdkIO.msgs,
-      'createMatch' | 'observeMatch'
+      'createMatch' | 'joinMatch' | 'leaveMatch' | 'getMatch'
     >,
     TReq extends ClientSdkIO.Payloads[K]['req'],
     // TRawRes extends ResourceCollectionMap[TResourceType] = ResourceCollectionMap[TResourceType],

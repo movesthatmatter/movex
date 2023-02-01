@@ -4,12 +4,10 @@ import { Pubsy } from 'ts-pubsy';
 import {
   AnyIdentifiableRecord,
   OnlySessionCollectionMapOfResourceKeys,
-  ResourceClientResponse,
   ResourceIdentifier,
-  ResourceResponse,
+  ServerResource,
   SessionClient,
   SessionMatch,
-  SessionResource,
   SessionStoreCollectionMap,
   UnidentifiableModel,
   UnknownIdentifiableRecord,
@@ -17,6 +15,7 @@ import {
   WsResponseResultPayload,
   $MATCHES_KEY,
   CreateMatchReq,
+  GenericResource,
 } from '@matterio/core-util';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
@@ -34,30 +33,40 @@ export type ServerSDKConfig = {
   waitForResponseMs?: number;
 };
 
-type PubsyEvents<
-  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>
-> = {
-  onBroadcastToSubscribers:
-    | {
-        event: 'updateResource';
-        subscribers: SessionResource['subscribers'];
-        payload: ResourceClientResponse<
-          ResourceCollectionMap,
-          keyof ResourceCollectionMap
-        >;
-      }
-    | {
-        event: 'removeResource';
-        subscribers: SessionResource['subscribers'];
-        payload: {
-          item: undefined;
-          type: ResourceResponse<
-            ResourceCollectionMap,
-            keyof ResourceCollectionMap
-          >['type'];
-        }; // TBD
-      };
-};
+// type PubsyEvents<
+//   // ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>
+// > = {
+
+//   onBroadcastToSubscribers:
+//     | {
+//         event: 'updateResource';
+//         subscribers: SessionResource['subscribers'];
+//         payload: ResourceClientResponse<
+//           ResourceCollectionMap,
+//           keyof ResourceCollectionMap
+//         >;
+//       }
+//     | {
+//         event: 'removeResource';
+//         subscribers: SessionResource['subscribers'];
+//         payload: {
+//           item: undefined;
+//           type: ResourceResponse<
+//             ResourceCollectionMap,
+//             keyof ResourceCollectionMap
+//           >['type'];
+//         }; // TBD
+//       };
+// };
+
+type PubsyEvents = Pick<
+  ServerSdkIO.MsgToResponseMap,
+  'updateResource' | 'removeResource'
+  > & {
+    // updateResource: ServerResource<{}>
+    // TBD
+    updateResource: any;
+  };
 
 export class ServerSDK<
   ClientInfo extends UnknownRecord = {},
@@ -71,7 +80,7 @@ export class ServerSDK<
 > {
   public socket?: Socket;
 
-  private pubsy = new Pubsy<PubsyEvents<ResourceCollectionMap>>();
+  private pubsy = new Pubsy<PubsyEvents>();
 
   private logger: typeof console;
 
@@ -197,7 +206,7 @@ export class ServerSDK<
   >(req: {
     resourceType: TResourceType;
     resourceData: TResourceData;
-    resourceId?: SessionResource['id'];
+    resourceId?: GenericResource['id'];
   }) {
     return this.emitAndAcknowledgeResources('createResource', {
       resourceIdentifier: {
@@ -218,7 +227,7 @@ export class ServerSDK<
     req: {
       resourceType: TResourceType;
       resourceData: TResourceData;
-      resourceId?: SessionResource['id'];
+      resourceId?: GenericResource['id'];
     }
   ) {
     // TODO: This should actually happen on the seshy server in order to diminish
@@ -251,36 +260,39 @@ export class ServerSDK<
     return this.emitAndAcknowledgeResources('updateResource', {
       resourceIdentifier,
       resourceData,
-    });
+    }).map(AsyncResult.passThrough((r) => {
+      this.pubsy.publish('updateResource', r);
+    }));
   }
 
-  /**
-   * Updates and broadcasts to all the resource subscribers
-   *
-   * @param resourceIdentifier
-   * @param resourceData
-   * @returns
-   */
-  updateResourceAndBroadcast<
-    TResourceType extends SessionCollectionMapOfResourceKeys,
-    TResourceData extends SessionCollectionMap[TResourceType]
-  >(
-    resourceIdentifier: ResourceIdentifier<TResourceType>,
-    resourceData: Partial<UnidentifiableModel<TResourceData>>
-  ) {
-    return this.updateResource(resourceIdentifier, resourceData).map(
-      AsyncResult.passThrough((nextResource) => {
-        this.pubsy.publish('onBroadcastToSubscribers', {
-          event: 'updateResource',
-          subscribers: nextResource.subscribers,
-          payload: {
-            item: nextResource.item,
-            type: nextResource.type,
-          },
-        });
-      })
-    );
-  }
+  // /**
+  //  * Updates and broadcasts to all the resource subscribers
+  //  *
+  //  * @param resourceIdentifier
+  //  * @param resourceData
+  //  * @returns
+  //  */
+  // updateResourceAndBroadcast<
+  //   TResourceType extends SessionCollectionMapOfResourceKeys,
+  //   TResourceData extends SessionCollectionMap[TResourceType]
+  // >(
+  //   resourceIdentifier: ResourceIdentifier<TResourceType>,
+  //   resourceData: Partial<UnidentifiableModel<TResourceData>>
+  // ) {
+  //   return this.updateResource(resourceIdentifier, resourceData).map(
+  //     AsyncResult.passThrough((nextResource) => {
+  //       // this.pubsy.publish()
+  //       // this.pubsy.publish('onBroadcastToSubscribers', {
+  //       //   event: 'updateResource',
+  //       //   subscribers: nextResource.subscribers,
+  //       //   payload: {
+  //       //     item: nextResource.item,
+  //       //     type: nextResource.type,
+  //       //   },
+  //       // });
+  //     })
+  //   );
+  // }
 
   removeResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
     resourceIdentifier: ResourceIdentifier<TResourceType>
@@ -298,14 +310,14 @@ export class ServerSDK<
     });
   }
 
-  observeResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
-    clientId: SessionClient['id'],
-    resourceIdentifier: ResourceIdentifier<TResourceType>
-  ) {
-    return this.subscribeToResource(clientId, resourceIdentifier).map(
-      (r) => r.resource
-    );
-  }
+  // observeResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
+  //   clientId: SessionClient['id'],
+  //   resourceIdentifier: ResourceIdentifier<TResourceType>
+  // ) {
+  //   return this.subscribeToResource(clientId, resourceIdentifier).map(
+  //     (r) => r.resource
+  //   );
+  // }
 
   private emitAndAcknowledgeResources = <
     K extends keyof Pick<
@@ -314,7 +326,7 @@ export class ServerSDK<
     >,
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TReq extends ServerSdkIO.Payloads[K]['req'],
-    TRes = ResourceResponse<ResourceCollectionMap, TResourceType>
+    TRes = ServerResource<ResourceCollectionMap, TResourceType>
   >(
     k: K,
     req: TReq
@@ -353,13 +365,13 @@ export class ServerSDK<
     });
   }
 
-  onBroadcastToSubscribers(
-    fn: (
-      r: PubsyEvents<ResourceCollectionMap>['onBroadcastToSubscribers']
-    ) => void
-  ) {
-    return this.pubsy.subscribe('onBroadcastToSubscribers', fn);
-  }
+  // onBroadcastToSubscribers(
+  //   fn: (
+  //     r: PubsyEvents<ResourceCollectionMap>['onBroadcastToSubscribers']
+  //   ) => void
+  // ) {
+  //   return this.pubsy.subscribe('onBroadcastToSubscribers', fn);
+  // }
 
   private emitAndAcknowledgeSubscriptions = <
     K extends keyof Pick<
@@ -369,7 +381,7 @@ export class ServerSDK<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TReq extends ServerSdkIO.Payloads[K]['req'],
     TRes = {
-      resource: ResourceResponse<ResourceCollectionMap, TResourceType>;
+      resource: ServerResource<ResourceCollectionMap, TResourceType>;
       client: SessionCollectionMap['$clients'];
     }
   >(
@@ -423,6 +435,13 @@ export class ServerSDK<
       .map((r) => r.resource);
   }
 
+  getMatch(matchId: SessionMatch['id']) {
+    return this.getResource({
+      resourceType: $MATCHES_KEY,
+      resourceId: matchId,
+    });
+  }
+
   subscribeToMatch(clientId: SessionClient['id'], matchId: SessionMatch['id']) {
     return this.subscribeToResource(clientId, {
       resourceType: $MATCHES_KEY,
@@ -434,10 +453,7 @@ export class ServerSDK<
     // TODO: This should be done on the SessionStore level, to reduce the double trip
     //  Can be done with by sending a type of update: APPEND | MERGE | REPLACE
     //  Look more into what the best pracitices around this are! How many type of updates are there?
-    return this.getResource({
-      resourceType: $MATCHES_KEY,
-      resourceId: matchId,
-    }).flatMap(({ item }) => {
+    return this.getMatch(matchId).flatMap(({ item }) => {
       const prev = item as unknown as SessionMatch;
       const nextMatchPlayers: SessionMatch['players'] = {
         ...prev.players,
@@ -461,10 +477,7 @@ export class ServerSDK<
     // TODO: This should be done on the SessionStore level, to reduce the double trip
     //  Can be done with by sending a type of update: APPEND | MERGE | REPLACE
     //  Look more into what the best pracitices around this are! How many type of updates are there?
-    return this.getResource({
-      resourceType: $MATCHES_KEY,
-      resourceId: matchId,
-    }).flatMap(({ item }) => {
+    return this.getMatch(matchId).flatMap(({ item }) => {
       const prev = item as unknown as SessionMatch;
       const { [clientId]: _, nextMatchPlayers } = prev.players;
 

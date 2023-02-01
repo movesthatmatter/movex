@@ -3,9 +3,9 @@ import express from 'express';
 import http from 'node:http';
 import https from 'node:https';
 import {
+  GenericResource,
   objectKeys,
   SessionClient,
-  SessionResource,
   UnknownIdentifiableRecord,
   UnknownRecord,
   zId,
@@ -35,7 +35,7 @@ type EventHandlers<
     serverSdk: ServerSDK<ClientInfo, GameState, ResourceCollectionMap>;
     client: SessionClient;
     broadcastTo: <TEvent extends string, TMsg>(
-      subscribers: SessionResource['subscribers'],
+      subscribers: GenericResource['subscribers'],
       event: TEvent,
       msg: TMsg
     ) => void;
@@ -97,20 +97,22 @@ export const matterioBackendWithExpress = <
     });
 
     const broadcastTo = <TEvent extends string, TMsg>(
-      subscribers: SessionResource['subscribers'],
+      subscribers: GenericResource['subscribers'],
       event: TEvent,
       msg: TMsg
     ) => {
       console.log('[backend] broadcast', event, Object.keys(subscribers));
 
       objectKeys(subscribers).forEach((clientId) => {
-        console.log('[backened] broadcasting to clientId:', clientId);
-        clientConnections
-          .getByClientId(clientId)
+        const conn = clientConnections.getByClientId(clientId)
+        console.log('[backened] broadcasting to clientId:', clientId, conn);
+        console.log('[backened] broadcasting to clientId all conn all:', Object.keys(clientConnections.all));
+        console.log('[backened] broadcasting to clientId all conn map:', clientConnections.allConnectionsClientsMap);
+        
           // It isn't needed to wap it in toWsResponseResultPayloadOk here, since it's custom!
           //  and there's no request/response
           // ?.emit(`broadcast::${event}`, toWsResponseResultPayloadOk(msg));
-          ?.emit(`broadcast::${event}`, msg);
+          conn?.emit(`broadcast::${event}`, msg);
       });
     };
 
@@ -242,15 +244,15 @@ export const matterioBackendWithExpress = <
               .then(acknowledgeCb);
           }
 
-          if (event === ClientSdkIO.msgNames.observeResource) {
-            const { resourceIdentifier } =
-              ClientSdkIO.payloads.shape.observeResource.shape.req.parse(req);
+          // if (event === ClientSdkIO.msgNames.observeResource) {
+          //   const { resourceIdentifier } =
+          //     ClientSdkIO.payloads.shape.observeResource.shape.req.parse(req);
 
-            return serverSdk
-              .observeResource(clientId, resourceIdentifier as any)
-              .resolve()
-              .then(acknowledgeCb);
-          }
+          //   return serverSdk
+          //     .observeResource(clientId, resourceIdentifier as any)
+          //     .resolve()
+          //     .then(acknowledgeCb);
+          // }
 
           if (event === ClientSdkIO.msgNames.unsubscribeFromResource) {
             const { resourceIdentifier } =
@@ -303,13 +305,46 @@ export const matterioBackendWithExpress = <
             );
           }
 
-          if (event === ClientSdkIO.msgNames.observeMatch) {
+          if (event === ClientSdkIO.msgNames.getMatch) {
             const payload =
-              ClientSdkIO.payloads.shape.observeMatch.shape.req.parse(req);
+              ClientSdkIO.payloads.shape.getMatch.shape.req.parse(req);
 
             return serverSdk
               .subscribeToMatch(clientId, payload.matchId)
               .map((s) => s.resource.item)
+              .resolve()
+              .then(acknowledgeCb);
+          }
+
+          // if (event === ClientSdkIO.msgNames.observeMatch) {
+          //   const payload =
+          //     ClientSdkIO.payloads.shape.observeMatch.shape.req.parse(req);
+
+          //   return serverSdk
+          //     .subscribeToMatch(clientId, payload.matchId)
+          //     .map((s) => s.resource.item)
+          //     .resolve()
+          //     .then(acknowledgeCb);
+          // }
+
+          if (event === ClientSdkIO.msgNames.joinMatch) {
+            const payload =
+              ClientSdkIO.payloads.shape.joinMatch.shape.req.parse(req);
+
+            return serverSdk
+              .joinMatch(clientId, payload.matchId)
+              .map((s) => s.item)
+              .resolve()
+              .then(acknowledgeCb);
+          }
+
+          if (event === ClientSdkIO.msgNames.leaveMatch) {
+            const payload =
+              ClientSdkIO.payloads.shape.leaveMatch.shape.req.parse(req);
+
+            return serverSdk
+              .joinMatch(clientId, payload.matchId)
+              .map((s) => s.item)
               .resolve()
               .then(acknowledgeCb);
           }
@@ -335,6 +370,7 @@ export const matterioBackendWithExpress = <
 
     unsunscribersFromserverSdkConnection.push(
       serverSdk.onBroadcastToSubscribers((r) => {
+        console.log('[backedn] onBroadcastToSubscribers called', r);
         broadcastTo(r.subscribers, r.event, r.payload);
       })
     );

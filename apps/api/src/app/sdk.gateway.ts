@@ -1,4 +1,5 @@
 import {
+  ResourceIdentifierStr,
   toWsResponseResultPayloadErr,
   toWsResponseResultPayloadOk,
 } from '@matterio/core-util';
@@ -134,7 +135,12 @@ export class SdkGateway {
       return;
     }
 
-    return acknowledge(session.getResource(req.resourceIdentifier));
+    return acknowledge(
+      session.getResource(
+        // TODO: Type this Resource Identifier as string!!!
+        req.resourceIdentifier as ResourceIdentifierStr<string>
+      )
+    );
   }
 
   @SubscribeMessage(ServerSdkIO.msgs.updateResource.req)
@@ -152,7 +158,11 @@ export class SdkGateway {
     }
 
     return acknowledge(
-      session.updateResourceData(msg.resourceIdentifier, msg.resourceData)
+      session.updateResourceData(
+        // TODO: Type this Resource Identifier as string!!!
+        msg.resourceIdentifier as ResourceIdentifierStr<string>,
+        msg.resourceData
+      )
     );
   }
 
@@ -171,7 +181,9 @@ export class SdkGateway {
     }
 
     return acknowledge(
-      session.removeResource(msg.resourceIdentifier).map((r) => r.item)
+      session
+        .removeResource(msg.resourceIdentifier as ResourceIdentifierStr<string>)
+        .map((r) => r.item)
     );
   }
 
@@ -192,7 +204,10 @@ export class SdkGateway {
     }
 
     return acknowledge(
-      session.subscribeToResource(msg.clientId, msg.resourceIdentifier)
+      session.subscribeToResource(
+        msg.clientId,
+        msg.resourceIdentifier as ResourceIdentifierStr<string>
+      )
     );
   }
 
@@ -211,7 +226,10 @@ export class SdkGateway {
     }
 
     return acknowledge(
-      session.unsubscribeFromResource(msg.clientId, msg.resourceIdentifier)
+      session.unsubscribeFromResource(
+        msg.clientId,
+        msg.resourceIdentifier as ResourceIdentifierStr<string>
+      )
     );
   }
 }

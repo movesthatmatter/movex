@@ -1,3 +1,5 @@
+import { AnyRecord } from 'dns';
+
 export interface WsResponse<T = any> {
   event: string;
   data: T;
@@ -35,13 +37,42 @@ export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
 export type UnidentifiableModel<T extends {}> = Omit<T, 'id'>;
 
-type GenericSessionResourceType = string;
+export type Resource<
+  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
+  TResourceType extends keyof ResourceCollectionMap
+> = {
+  type: TResourceType;
+  id: string;
+  item: ResourceCollectionMap[TResourceType];
+  subscribers: Record<
+    SessionClient['id'],
+    {
+      subscribedAt: number;
+    }
+  >;
+};
+
+export type ServerResource<
+  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
+  TResourceType extends keyof ResourceCollectionMap
+> = Resource<ResourceCollectionMap, TResourceType>;
+
+export type ClientResource<
+  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
+  TResourceType extends keyof ResourceCollectionMap
+> = Pick<ServerResource<ResourceCollectionMap, TResourceType>, 'item' | 'type'>;
+
+export type GenericResource = Resource<
+  Record<string, UnknownIdentifiableRecord>,
+  keyof UnknownRecord
+>;
+export type GenericResourceType = GenericResource['type'];
 
 export type SessionClient<Info extends UnknownRecord = {}> = {
   id: string;
   info?: Info; // User Info or whatever
   subscriptions: Record<
-    `${GenericSessionResourceType}:${SessionResource['id']}`,
+    ResourceIdentifierStr<GenericResourceType>,
     {
       // resourceType: string; // TODO: This could be part of the resource id
       subscribedAt: number;
@@ -63,43 +94,39 @@ export type SessionClient<Info extends UnknownRecord = {}> = {
 
 // type CollectionMapBaseItem = RRStore.CollectionMapBase[any];
 
-export type SessionResource<TData extends UnknownRecord = {}> = {
-  id: string;
-  data: TData;
-  subscribers: Record<
-    SessionClient['id'],
-    {
-      subscribedAt: number;
-    }
-  >;
-};
+// TODO: Rename to StoreResource and don't export
+// TOOD: Move only in SessionStore maybe
+// type SessionResource<TData extends UnknownRecord = {}> = {
+//   id: string;
+//   data: TData;
+//   subscribers: Record<
+//     SessionClient['id'],
+//     {
+//       subscribedAt: number;
+//     }
+//   >;
+// };
 
 // export type ObservableResource<TData extends UnknownRecord = {}> =
 // Resource<TData> & {
 //   topic: Topic<string>['id'];
 // };
 
-export type ResourceIdentifier<TResourceType extends string> = {
+export type ResourceIdentifierObj<TResourceType extends string> = {
   resourceType: TResourceType;
-  resourceId: SessionResource['id'];
+  resourceId: GenericResource['id'];
 };
 
-export type ResourceIdentifierString<TResourceType extends string> =
-  `${TResourceType}:${SessionResource['id']}`;
+export type ResourceIdentifierStr<TResourceType extends string> =
+  `${TResourceType}:${GenericResource['id']}`;
+
+export type ResourceIdentifier<TResourceType extends string> =
+  | ResourceIdentifierObj<TResourceType>
+  | ResourceIdentifierStr<TResourceType>;
 
 export type StringKeys<TRecord extends UnknownRecord> = Extract<
   keyof TRecord,
   string
->;
-
-export type UnknwownSessionResourceCollectionMap = Record<
-  string,
-  SessionResource<UnknownRecord>
->;
-
-export type AnySessionResourceCollectionMap = Record<
-  string,
-  SessionResource<any>
 >;
 
 export type PlayerIdentifier = SessionClient['id'];
@@ -133,7 +160,7 @@ export type CompletedMatch<TGame extends UnknownRecord = UnknownRecord> =
     winner: PlayerIdentifier;
   };
 
-// Need to rename the "Session"
+// TODO Need to rename the "Session"
 export type SessionMatch<TGame extends UnknownRecord = UnknownRecord> =
   | WaitingMatch<TGame>
   | InProgressMatch<TGame>
@@ -160,28 +187,9 @@ export type OnlySessionCollectionMapOfResourceKeys<
   SessionCollectionMap = SessionStoreCollectionMap<ResourceCollectionMap>
 > = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<{}>>>;
 
-export type ResourceResponse<
-  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
-  TResourceType extends keyof ResourceCollectionMap
-  // SessionCollectionMapOfResourceKeys extends OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap> = OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap>
-> = {
-  type: TResourceType;
-  item: ResourceCollectionMap[TResourceType];
-  subscribers: SessionResource['subscribers'];
-};
-
-export type ResourceClientResponse<
-  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
-  TResourceType extends keyof ResourceCollectionMap
-  // SessionCollectionMapOfResourceKeys extends OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap> = OnlySessionCollectionMapOfResourceKeys<ResourceCollectionMap>
-> = {
-  type: TResourceType;
-  item: ResourceCollectionMap[TResourceType];
-};
-
 export type CreateMatchReq<TGame extends UnknownRecord> = {
   matcher: SessionMatch['matcher'];
   playerCount: SessionMatch['playerCount'];
   players?: SessionClient['id'][];
-  game: TGame
+  game: TGame;
 };

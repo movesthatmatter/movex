@@ -44,7 +44,7 @@ export class SocketConnections {
   }
 
   getByConnectionId(connId: string) {
-    return this.connectionsById[encodeConnectionId(connId)];
+    return this.connectionsById[connId];
   }
 
   getByClientId(clientId: string) {
@@ -56,9 +56,13 @@ export class SocketConnections {
   get all() {
     return this.connectionsById;
   }
+
+  get allConnectionsClientsMap() {
+    return this.connectionsClientsMap;
+  }
 }
 
-const CONN_PREFIX = '_conn';
+const CONN_PREFIX = '_conn:';
 type EncodedConnectionId = `${typeof CONN_PREFIX}${string}`;
 
 const encodeConnectionId = (id: string): EncodedConnectionId =>
@@ -66,7 +70,7 @@ const encodeConnectionId = (id: string): EncodedConnectionId =>
 const decodeConnectionId = (encodedId: EncodedConnectionId): string =>
   encodedId.slice(CONN_PREFIX.length);
 
-const CLIENT_PREFIX = '_conn';
+const CLIENT_PREFIX = '_client:';
 type EncodedClientId = `${typeof CLIENT_PREFIX}${string}`;
 
 const encodeClientId = (id: string): EncodedClientId => `${CLIENT_PREFIX}${id}`;

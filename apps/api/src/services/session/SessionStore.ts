@@ -8,16 +8,18 @@ import {
   UnknownRecord,
 } from 'relational-redis-store';
 import {
-  AnySessionResourceCollectionMap,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
-  ResourceIdentifierString,
   SessionClient,
-  SessionResource,
   SessionStoreCollectionMap,
-  toResourceIdentifier,
-  UnknwownSessionResourceCollectionMap,
+  toResourceIdentifierObj,
+  toResourceIdentifierStr,
 } from '@matterio/core-util';
+import {
+  SessionResource,
+  UnknwownSessionResourceCollectionMap,
+  AnySessionResourceCollectionMap,
+} from './types';
 
 // Note:
 // This is currently depending on RRStore, but from what I see
@@ -102,7 +104,7 @@ export class SessionStore<
           ...subscriptionNames.map((sub) =>
             this.removeResourceSubscriber(
               id,
-              toResourceIdentifier(
+              toResourceIdentifierStr(
                 sub
               ) as ResourceIdentifier<SessionCollectionMapOfResourceKeys>
             )
@@ -169,7 +171,7 @@ export class SessionStore<
       )
       .map((r) => ({
         ...r,
-        item: this.toOutResource(resourceType)(r.item),
+        item: this.toOutResource(resourceType, r.item),
       }));
   }
 
@@ -179,15 +181,12 @@ export class SessionStore<
       SessionCollectionMap[TResourceType]['data']
     >
   >(
-    resourceIdentifier:
-      | ResourceIdentifier<TResourceType>
-      | ResourceIdentifierString<TResourceType>,
+    rId: ResourceIdentifier<TResourceType>,
     dataGetter:
       | Partial<TResourceData>
       | ((prev: TResourceData) => Partial<TResourceData>)
   ) {
-    const { resourceId, resourceType } =
-      toResourceIdentifier(resourceIdentifier);
+    const { resourceId, resourceType } = toResourceIdentifierObj(rId);
 
     return this.store
       .updateItemInCollection(
@@ -213,7 +212,7 @@ export class SessionStore<
           foreignKeys: {} as any,
         }
       )
-      .map(this.toOutResource(resourceType));
+      .map((r) => this.toOutResource(resourceType, r));
     // .map(({ item }) =>
     //   objectKeys(item.subscribers).reduce(
     //     (accum, nextId) => ({
@@ -236,16 +235,14 @@ export class SessionStore<
     // });
   }
 
-  getResource<TResourceType extends SessionCollectionMapOfResourceKeys>({
-    resourceType,
-    resourceId,
-  }: {
-    resourceType: TResourceType;
-    resourceId: SessionResource['id'];
-  }) {
+  getResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
+    rId: ResourceIdentifier<TResourceType>
+  ) {
+    const { resourceId, resourceType } = toResourceIdentifierObj(rId);
+
     return this.store
-      .getItemInCollection(resourceType as string, resourceId)
-      .map(this.toOutResource(resourceType));
+      .getItemInCollection(resourceType, resourceId)
+      .map((r) => this.toOutResource(resourceType, r));
   }
 
   getAllResourcesOfType<
@@ -269,25 +266,16 @@ export class SessionStore<
 
   subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
     clientId: SessionClient['id'],
-    resourceIdentifierOrString:
-      | ResourceIdentifier<TResourceType>
-      | ResourceIdentifierString<TResourceType>
+    rId: ResourceIdentifier<TResourceType>
   ) {
     const now = new Date().getTime();
 
-    const { resourceId, resourceType } = toResourceIdentifier(
-      resourceIdentifierOrString
-    );
-
-    return this.updateResourceSubscribers(
-      { resourceType, resourceId },
-      (prev) => ({
-        ...prev,
-        [clientId]: {
-          subscribedAt: now,
-        },
-      })
-    )
+    return this.updateResourceSubscribers(rId, (prev) => ({
+      ...prev,
+      [clientId]: {
+        subscribedAt: now,
+      },
+    }))
       .flatMap((nextResource) =>
         AsyncResult.all(
           new AsyncOk(nextResource),
@@ -295,7 +283,7 @@ export class SessionStore<
             ...prev,
             subscriptions: {
               ...prev.subscriptions,
-              [`${resourceType}:${nextResource.id}`]: {
+              [toResourceIdentifierStr(rId)]: {
                 subscribedAt: now,
               },
             },
@@ -303,7 +291,10 @@ export class SessionStore<
         )
       )
       .map(([resource, client]) => ({
-        resource: this.toOutResource(resourceType)(resource),
+        resource: this.toOutResource(
+          toResourceIdentifierObj(rId).resourceType,
+          resource
+        ),
         client,
       }));
     // .flatMap(() => {
@@ -317,18 +308,16 @@ export class SessionStore<
   private updateResourceSubscribers<
     TResourceType extends SessionCollectionMapOfResourceKeys
   >(
-    identifier:
-      | ResourceIdentifier<TResourceType>
-      | ResourceIdentifierString<TResourceType>,
+    rId: ResourceIdentifier<TResourceType>,
     updateFn: (
       prev: SessionResource['subscribers']
     ) => SessionResource['subscribers']
   ) {
-    const { resourceId, resourceType } = toResourceIdentifier(identifier);
+    const { resourceId, resourceType } = toResourceIdentifierObj(rId);
 
     return this.store
       .updateItemInCollection(
-        resourceType as string,
+        resourceType,
         resourceId,
         (prev) => ({
           ...prev,
@@ -343,60 +332,42 @@ export class SessionStore<
 
   unsubscribeFromResource<
     TResourceType extends SessionCollectionMapOfResourceKeys
-  >(
-    clientId: SessionClient['id'],
-    { resourceType, resourceId }: ResourceIdentifier<TResourceType>
-  ) {
+  >(clientId: SessionClient['id'], rId: ResourceIdentifier<TResourceType>) {
     return this.getClient(clientId) // Remove in favor of an optimized read
       .flatMap((client) => {
         // TODO: This MUST BE a transaction!!!
-        return this.removeResourceSubscriber(client.id, {
-          resourceType,
-          resourceId,
-        }).flatMap((nextResource) =>
-          AsyncResult.all(
-            new AsyncOk(nextResource),
-            this.removeClientSubscription(clientId, {
-              resourceId,
-              resourceType,
-            })
-          )
+        return this.removeResourceSubscriber(client.id, rId).flatMap(
+          (nextResource) =>
+            AsyncResult.all(
+              new AsyncOk(nextResource),
+              this.removeClientSubscription(clientId, rId)
+            )
         );
       })
       .map(([resource, client]) => ({
-        // resource: {
-        //   ...resource,
-        //   $resource: resourceType,
-        // },
-        resource: this.toOutResource(resourceType)(resource),
+        resource: this.toOutResource(
+          toResourceIdentifierObj(rId).resourceType,
+          resource
+        ),
         client,
       }));
   }
 
   private removeResourceSubscriber<
     TResourceType extends SessionCollectionMapOfResourceKeys
-  >(
-    clientId: SessionClient['id'],
-    { resourceType, resourceId }: ResourceIdentifier<TResourceType>
-  ) {
+  >(clientId: SessionClient['id'], rId: ResourceIdentifier<TResourceType>) {
     return this.updateResourceSubscribers(
-      {
-        resourceType,
-        resourceId,
-      },
+      rId,
       ({ [clientId]: _, ...remainingSubscribers }) => remainingSubscribers
     );
   }
 
   private removeClientSubscription<
     TResourceType extends SessionCollectionMapOfResourceKeys
-  >(
-    clientId: SessionClient['id'],
-    { resourceId, resourceType }: ResourceIdentifier<TResourceType>
-  ) {
+  >(clientId: SessionClient['id'], rId: ResourceIdentifier<TResourceType>) {
     return this.updateClient(clientId, (prev) => {
       const {
-        [`${resourceType}:${resourceId}` as any]: removed,
+        [toResourceIdentifierStr(rId)]: removed,
         ...remainingSubscriptions
       } = prev.subscriptions;
 
@@ -421,56 +392,46 @@ export class SessionStore<
     return this.getClient(clientId).map((client) => client.subscriptions);
   }
 
-  removeResource<TResourceType extends SessionCollectionMapOfResourceKeys>({
-    resourceId,
-    resourceType,
-  }: {
-    resourceType: TResourceType;
-    resourceId: SessionResource['id'];
-  }) {
+  removeResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
+    rId: ResourceIdentifier<TResourceType>
+  ) {
     // This should be a TRANSACTION
-    return this.getResource({ resourceType, resourceId }).flatMap(
-      (prevResource) => {
-        return AsyncResult.all(
-          // TODO: Optimization: This could be batched at Redis level
-          ...objectKeys(prevResource.subscribers).map((cliendId) =>
-            this.removeClientSubscription(cliendId, {
-              resourceId,
-              resourceType,
-            })
-          )
+    return this.getResource(rId).flatMap((prevResource) => {
+      const { resourceId, resourceType } = toResourceIdentifierObj(rId);
+
+      return AsyncResult.all(
+        // TODO: Optimization: This could be batched at Redis level
+        ...objectKeys(prevResource.subscribers).map((cliendId) =>
+          this.removeClientSubscription(cliendId, rId)
         )
-          .flatMap(() =>
-            this.store.removeItemInCollection(
-              resourceType as string,
-              resourceId
-            )
-          )
-          .map((removedResource) => ({
-            ...removedResource,
-            item: {
-              resourceType,
-              resourceId,
-              subscribers: prevResource.subscribers,
-            },
-          }));
-      }
-    );
+      )
+        .flatMap(() =>
+          this.store.removeItemInCollection(resourceType as string, resourceId)
+        )
+        .map((removedResource) => ({
+          ...removedResource,
+          item: {
+            resourceType,
+            resourceId,
+            subscribers: prevResource.subscribers,
+          },
+        }));
+    });
   }
 
-  private toOutResource =
-    <
-      TResourceType extends SessionCollectionMapOfResourceKeys,
-      T extends UnknownRecord
-    >(
-      type: TResourceType
-    ) =>
-    (r: SessionResource<T>) => ({
-      type,
-      subscribers: r.subscribers,
-      item: {
-        ...r.data,
-        id: r.id,
-      },
-    });
+  private toOutResource = <
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    T extends UnknownRecord
+  >(
+    type: TResourceType,
+    r: SessionResource<T>
+  ) => ({
+    type,
+    id: r.id,
+    subscribers: r.subscribers,
+    item: {
+      ...r.data,
+      id: r.id,
+    },
+  });
 }

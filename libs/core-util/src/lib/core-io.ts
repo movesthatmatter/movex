@@ -5,10 +5,13 @@ export const zId = z.string;
 export const unknownRecord = () => z.record(z.string(), z.unknown());
 
 export const genericResourceIdentifier = () =>
-  z.object({
-    resourceType: z.string(),
-    resourceId: zId(),
-  });
+  z.union([
+    z.object({
+      resourceType: z.string(),
+      resourceId: zId(),
+    }),
+    z.string(),
+  ]);
 
 export const toReqReq = <TReq extends z.ZodTypeAny>(req: TReq) =>
   z.object({
@@ -42,6 +45,8 @@ export function toReqRes<
   return res ? toReqWithRes(req, res) : toReqReq(req);
 }
 
+// TODO: Rename to StoreResource and don't export
+// TOOD: Move only in SessionStore maybe
 export const sessionClient = <TInfo extends z.ZodTypeAny>(info?: TInfo) =>
   z.object({
     id: zId(),
@@ -54,6 +59,8 @@ export const sessionClient = <TInfo extends z.ZodTypeAny>(info?: TInfo) =>
     info: info ? info : z.undefined().optional(),
   });
 
+// TODO: Rename to StoreResource and don't export
+// TOOD: Move only in SessionStore maybe
 export const sessionResource = <TData extends z.ZodRecord>(data: TData) =>
   z.object({
     id: zId(),
@@ -66,8 +73,12 @@ export const sessionResource = <TData extends z.ZodRecord>(data: TData) =>
     ),
   });
 
+// TODO: Rename to StoreResource and don't export
+// TOOD: Move only in SessionStore maybe
 export const genericSessionResource = () => sessionResource(unknownRecord());
 
+// TODO: Rename to StoreResource and don't export
+// TOOD: Move only in SessionStore maybe
 export const baseSessionMatch = <TGame extends z.ZodRecord>(game: TGame) =>
   z.object({
     id: zId(),
@@ -78,4 +89,6 @@ export const baseSessionMatch = <TGame extends z.ZodRecord>(game: TGame) =>
     game,
   });
 
+// TODO: Rename to StoreResource and don't export
+// TOOD: Move only in SessionStore maybe
 export const sessionMatch = baseSessionMatch;

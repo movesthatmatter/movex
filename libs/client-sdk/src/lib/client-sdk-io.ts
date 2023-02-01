@@ -4,7 +4,6 @@ import {
   zId,
   toReqReq,
   toReqRes,
-  sessionClient,
   genericSessionResource,
   genericResourceIdentifier,
   objectKeys,
@@ -80,13 +79,13 @@ export const payloads = z.object({
     z.object({
       resourceIdentifier: genericResourceIdentifier(),
     }),
-    genericSessionResource()
+    z.void()
   ),
   unsubscribeFromResource: toReqRes(
     z.object({
       resourceIdentifier: genericResourceIdentifier(),
     }),
-    genericSessionResource()
+    z.void()
   ),
 
   // Custom Requests
@@ -101,7 +100,25 @@ export const payloads = z.object({
       game: unknownRecord(),
     })
   ),
-  observeMatch: toReqRes(
+  getMatch: toReqRes(
+    z.object({
+      matchId: zId(),
+    }),
+    sessionMatch(unknownRecord())
+  ),
+  // subscribeToMatch: toReqRes(
+  //   z.object({
+  //     matchId: zId(),
+  //   }),
+  //   sessionMatch(unknownRecord())
+  // ),
+  joinMatch: toReqRes(
+    z.object({
+      matchId: zId(),
+    }),
+    sessionMatch(unknownRecord())
+  ),
+  leaveMatch: toReqRes(
     z.object({
       matchId: zId(),
     }),

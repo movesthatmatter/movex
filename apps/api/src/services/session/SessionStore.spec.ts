@@ -1,9 +1,9 @@
-import { SessionResource } from '@matterio/core-util';
 import MockDate from 'mockdate';
 import { Store, createMockStore } from 'relational-redis-store';
 import { AsyncResult } from 'ts-async-results';
 import { Ok } from 'ts-results';
 import { SessionStore } from './SessionStore';
+import { SessionResource } from './types';
 
 let mockUUIDCount = 0;
 const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
@@ -347,6 +347,7 @@ describe('SessionStore', () => {
         length: 1,
         item: {
           type: 'room',
+          id: get_MOCKED_UUID(1),
           item: {
             id: get_MOCKED_UUID(1),
             type: 'play',
@@ -374,6 +375,7 @@ describe('SessionStore', () => {
         length: 1,
         item: {
           type: 'room',
+          id: 'test-res-1',
           item: {
             id: 'test-res-1',
             type: 'play',
@@ -413,6 +415,7 @@ describe('SessionStore', () => {
 
       const expected = new Ok({
         type: 'game',
+        id: get_MOCKED_UUID(2),
         item: {
           id: get_MOCKED_UUID(2),
           type: 'maha',
@@ -568,6 +571,7 @@ describe('SessionStore', () => {
         },
         resource: {
           type: 'room',
+          id: resourceId,
           item: {
             id: resourceId,
             type: 'play',
@@ -782,6 +786,7 @@ describe('SessionStore', () => {
         },
         resource: {
           type: 'room',
+          id: resourceId,
           item: {
             id: resourceId,
             type: 'play',

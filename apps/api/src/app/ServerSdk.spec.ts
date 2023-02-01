@@ -193,6 +193,7 @@ describe('Resources', () => {
       .map((actual) => {
         expect(actual).toEqual({
           type: 'room',
+          id: actual.item.id,
           item: {
             id: actual.item.id,
             type: 'play',
@@ -222,6 +223,7 @@ describe('Resources', () => {
         .map(([createdResource, actual]) => {
           expect(actual).toEqual({
             type: 'room',
+            id: createdResource.item.id,
             item: {
               id: createdResource.item.id,
               type: 'play',
@@ -248,6 +250,7 @@ describe('Resources', () => {
         .map((resource) => {
           expect(resource).toEqual({
             type: 'room',
+            id: 'tr1',
             item: { id: 'tr1', type: 'play' },
             subscribers: {},
           });
@@ -275,6 +278,7 @@ describe('Resources', () => {
         .map((actual) => {
           expect(actual).toEqual({
             type: 'room',
+            id: actual.item.id,
             item: {
               id: actual.item.id,
               type: 'meetup',
@@ -346,6 +350,7 @@ describe('Resources', () => {
           AsyncResult.passThrough(([updatedResource, client]) => {
             expect(updatedResource).toEqual({
               type: 'room',
+              id: updatedResource.item.id,
               item: {
                 id: updatedResource.item.id,
                 type: 'meetup',
