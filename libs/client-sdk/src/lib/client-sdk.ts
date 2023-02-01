@@ -15,12 +15,12 @@ import {
   GenericResource,
   toResourceIdentifierObj,
   ClientResource,
+  toResourceIdentifierStr,
 } from '@matterio/core-util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { PromiseDelegate } from 'promise-delegate';
-
 
 type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
@@ -288,6 +288,12 @@ export class ClientSdk<
       toResourceIdentifierObj(resourceIdentifier);
 
     const unsubscriber = this.pubsy.subscribe('updateResource', (r) => {
+      console.log(
+        '[client-sdk] subscriber for',
+        toResourceIdentifierStr(resourceIdentifier),
+        ' received onUpdateResource',
+        r
+      );
       // Only be called for the given resource!
       if (r.type === resourceType && r.item.id === resourceId) {
         subsriberFn(

@@ -374,6 +374,8 @@ export const matterioBackendWithExpress = <
     });
 
     unsunscribersFromserverSdkConnection.push(
+
+      // TODO: Refactor this into its own!
       serverSdk.on('updateResource', (r) => {
         console.log('[backedn] updateResource', r);
 
@@ -393,7 +395,7 @@ export const matterioBackendWithExpress = <
             clientConnections.allConnectionsClientsMap
           );
 
-          conn?.emit('updateResource', r.item);
+          conn?.emit('updateResource', toWsResponseResultPayloadOk(r));
         });
       })
       // serverSdk.onBroadcastToSubscribers((r) => {
