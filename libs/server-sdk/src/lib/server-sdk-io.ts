@@ -1,21 +1,16 @@
 import * as z from 'zod';
 import {
   objectKeys,
-  CoreIO,
-  SessionMatch,
-  SessionClient,
+  genericResource,
+  unknownRecord,
+  zId,
+  toReqRes,
+  sessionClient,
+  genericResourceIdentifier,
+  serverResource,
 } from '@matterio/core-util';
 
 export namespace ServerSdkIO {
-  const {
-    unknownRecord,
-    zId,
-    toReqRes,
-    sessionClient,
-    genericSessionResource,
-    genericResourceIdentifier,
-  } = CoreIO;
-
   export const payloads = z.object({
     // Clients
     createClient: toReqRes(
@@ -37,7 +32,7 @@ export namespace ServerSdkIO {
       }),
       z.object({
         id: zId(),
-        subscriptions: genericSessionResource().shape.subscribers,
+        subscriptions: sessionClient().shape.subscriptions,
       })
     ),
 
@@ -50,32 +45,30 @@ export namespace ServerSdkIO {
         }),
         resourceData: unknownRecord(),
       }),
-      genericSessionResource()
+      genericResource()
     ),
     getResource: toReqRes(
       z.object({
         resourceIdentifier: genericResourceIdentifier(),
       }),
-      genericSessionResource()
+      genericResource()
     ),
     updateResource: toReqRes(
       z.object({
         resourceIdentifier: genericResourceIdentifier(),
         resourceData: unknownRecord(),
       }),
-      genericSessionResource()
+      genericResource()
     ),
     removeResource: toReqRes(
       z.object({
         resourceIdentifier: genericResourceIdentifier(),
       }),
-      z.intersection(
-        genericResourceIdentifier(),
-        z.object({
-          // $removed: z.boolean(),
-          subscribers: genericSessionResource().shape.subscribers,
-        })
-      )
+      z.object({
+        // $removed: z.boolean(),
+        resourceIdentifier: genericResourceIdentifier(),
+        subscribers: genericResource().shape.subscribers,
+      })
     ),
 
     // Subscriptions
@@ -86,7 +79,7 @@ export namespace ServerSdkIO {
       }),
       z.object({
         client: sessionClient(),
-        resource: genericSessionResource(),
+        resource: genericResource(),
       })
     ),
     unsubscribeFromResource: toReqRes(
@@ -96,7 +89,7 @@ export namespace ServerSdkIO {
       }),
       z.object({
         client: sessionClient(),
-        resource: genericSessionResource(),
+        resource: genericResource(),
       })
     ),
 

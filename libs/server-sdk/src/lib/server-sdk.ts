@@ -21,11 +21,6 @@ import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { ServerSdkIO } from './server-sdk-io';
 
-// This is what creates the bridge between the seshy api
-// server and the client's server via sockets
-
-// type Events = ServerSdkIO.MsgToResponseMap;
-
 export type ServerSDKConfig = {
   url: string;
   apiKey: string;
@@ -33,40 +28,10 @@ export type ServerSDKConfig = {
   waitForResponseMs?: number;
 };
 
-// type PubsyEvents<
-//   // ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>
-// > = {
-
-//   onBroadcastToSubscribers:
-//     | {
-//         event: 'updateResource';
-//         subscribers: SessionResource['subscribers'];
-//         payload: ResourceClientResponse<
-//           ResourceCollectionMap,
-//           keyof ResourceCollectionMap
-//         >;
-//       }
-//     | {
-//         event: 'removeResource';
-//         subscribers: SessionResource['subscribers'];
-//         payload: {
-//           item: undefined;
-//           type: ResourceResponse<
-//             ResourceCollectionMap,
-//             keyof ResourceCollectionMap
-//           >['type'];
-//         }; // TBD
-//       };
-// };
-
 type PubsyEvents = Pick<
   ServerSdkIO.MsgToResponseMap,
   'updateResource' | 'removeResource'
-  > & {
-    // updateResource: ServerResource<{}>
-    // TBD
-    updateResource: any;
-  };
+>;
 
 export class ServerSDK<
   ClientInfo extends UnknownRecord = {},
@@ -260,9 +225,11 @@ export class ServerSDK<
     return this.emitAndAcknowledgeResources('updateResource', {
       resourceIdentifier,
       resourceData,
-    }).map(AsyncResult.passThrough((r) => {
-      this.pubsy.publish('updateResource', r);
-    }));
+    }).map(
+      AsyncResult.passThrough((r) => {
+        this.pubsy.publish('updateResource', r);
+      })
+    );
   }
 
   // /**

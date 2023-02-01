@@ -6,6 +6,7 @@ import {
   GenericResource,
   objectKeys,
   SessionClient,
+  toWsResponseResultPayloadOk,
   UnknownIdentifiableRecord,
   UnknownRecord,
   zId,
@@ -34,7 +35,7 @@ type EventHandlers<
   requestHandlers?: (p: {
     serverSdk: ServerSDK<ClientInfo, GameState, ResourceCollectionMap>;
     client: SessionClient;
-    broadcastTo: <TEvent extends string, TMsg>(
+    emitToClients: <TEvent extends string, TMsg>(
       subscribers: GenericResource['subscribers'],
       event: TEvent,
       msg: TMsg
@@ -96,23 +97,27 @@ export const matterioBackendWithExpress = <
       },
     });
 
-    const broadcastTo = <TEvent extends string, TMsg>(
-      subscribers: GenericResource['subscribers'],
+    const emitToClients = <TEvent extends string, TMsg>(
+      $clients: Record<SessionClient['id'], any>,
       event: TEvent,
       msg: TMsg
     ) => {
-      console.log('[backend] broadcast', event, Object.keys(subscribers));
-
-      objectKeys(subscribers).forEach((clientId) => {
-        const conn = clientConnections.getByClientId(clientId)
+      objectKeys($clients).forEach((clientId) => {
+        const conn = clientConnections.getByClientId(clientId);
         console.log('[backened] broadcasting to clientId:', clientId, conn);
-        console.log('[backened] broadcasting to clientId all conn all:', Object.keys(clientConnections.all));
-        console.log('[backened] broadcasting to clientId all conn map:', clientConnections.allConnectionsClientsMap);
-        
-          // It isn't needed to wap it in toWsResponseResultPayloadOk here, since it's custom!
-          //  and there's no request/response
-          // ?.emit(`broadcast::${event}`, toWsResponseResultPayloadOk(msg));
-          conn?.emit(`broadcast::${event}`, msg);
+        console.log(
+          '[backened] broadcasting to clientId all conn all:',
+          Object.keys(clientConnections.all)
+        );
+        console.log(
+          '[backened] broadcasting to clientId all conn map:',
+          clientConnections.allConnectionsClientsMap
+        );
+
+        // It isn't needed to wap it in toWsResponseResultPayloadOk here, since it's custom!
+        //  and there's no request/response
+        // ?.emit(`broadcast::${event}`, toWsResponseResultPayloadOk(msg));
+        conn?.emit(`broadcast::${event}`, msg);
       });
     };
 
@@ -179,7 +184,7 @@ export const matterioBackendWithExpress = <
         const requestHandlersMap = p.requestHandlers({
           serverSdk: serverSdk,
           client: $client,
-          broadcastTo,
+          emitToClients,
         });
 
         clientConn.on(
@@ -272,7 +277,7 @@ export const matterioBackendWithExpress = <
 
             return (
               serverSdk
-                .updateResourceAndBroadcast(
+                .updateResource(
                   payload.resourceIdentifier as any,
                   payload.resourceData as any
                 ) // TODO: fix this anys if given by the backend implementors can work with zod directly, but actually it shouldn't
@@ -369,10 +374,34 @@ export const matterioBackendWithExpress = <
     });
 
     unsunscribersFromserverSdkConnection.push(
-      serverSdk.onBroadcastToSubscribers((r) => {
-        console.log('[backedn] onBroadcastToSubscribers called', r);
-        broadcastTo(r.subscribers, r.event, r.payload);
+      serverSdk.on('updateResource', (r) => {
+        console.log('[backedn] updateResource', r);
+
+        objectKeys(r.subscribers).forEach((clientId) => {
+          const conn = clientConnections.getByClientId(clientId);
+          console.log(
+            '[backened] emitting updateResource to clientId:',
+            clientId,
+            conn
+          );
+          console.log(
+            '[backened] emitting updateResource to clientId all conn all:',
+            Object.keys(clientConnections.all)
+          );
+          console.log(
+            '[backened] emitting updateResource to clientId all conn map:',
+            clientConnections.allConnectionsClientsMap
+          );
+
+          conn?.emit('updateResource', r.item);
+        });
       })
+      // serverSdk.onBroadcastToSubscribers((r) => {
+      //   console.log('[backedn] onBroadcastToSubscribers called', r);
+      //   emitToClients(r.subscribers, r.event, r.payload);
+      // })
+
+      // serverSdk.onUp
     );
   });
 

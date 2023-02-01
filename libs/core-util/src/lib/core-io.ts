@@ -1,8 +1,12 @@
 import * as z from 'zod';
+import { UnknownRecord } from './core-types';
 
 export const zId = z.string;
 
 export const unknownRecord = () => z.record(z.string(), z.unknown());
+
+export const unknownIdentifiableRecord = () =>
+  z.intersection(z.object({ id: zId() }), unknownRecord());
 
 export const genericResourceIdentifier = () =>
   z.union([
@@ -59,23 +63,69 @@ export const sessionClient = <TInfo extends z.ZodTypeAny>(info?: TInfo) =>
     info: info ? info : z.undefined().optional(),
   });
 
-// TODO: Rename to StoreResource and don't export
-// TOOD: Move only in SessionStore maybe
-export const sessionResource = <TData extends z.ZodRecord>(data: TData) =>
+// const baseResource = z.object({
+//   id: zId(),
+//   subscribers:
+//   ),
+// });
+
+export const resourceSubscribers = () =>
+  z.record(
+    sessionClient().shape.id,
+    z.object({
+      subscribedAt: z.number(), // This could be an ISO DateTime? not sure needed
+    })
+  );
+
+export const resource = <TType extends string, TData extends z.ZodRecord>(
+  type: TType,
+  data: TData
+) =>
   z.object({
     id: zId(),
-    data,
-    subscribers: z.record(
-      sessionClient().shape.id,
-      z.object({
-        subscribedAt: z.number(), // This could be an ISO DateTime? not sure needed
-      })
-    ),
+    type: z.literal(type),
+    subscribers: resourceSubscribers(),
+    item: z.intersection(z.object({ id: zId() }), data),
   });
 
-// TODO: Rename to StoreResource and don't export
-// TOOD: Move only in SessionStore maybe
-export const genericSessionResource = () => sessionResource(unknownRecord());
+// alias
+export const serverResource = resource;
+
+export const genericResource = () =>
+  z.object({
+    id: zId(),
+    type: z.string(),
+    subscribers: resourceSubscribers(),
+    item: unknownIdentifiableRecord(),
+  });
+
+export const clientResource = <TType extends string, TData extends z.ZodRecord>(
+  type: TType,
+  data: TData
+) =>
+  z.object({
+    id: zId(),
+    type: z.literal(type),
+    item: z.intersection(z.object({ id: zId() }), data),
+  });
+
+// export type ClientResource<
+//   TResourceType extends string,
+//   TData extends UnknownRecord
+// > = {
+//   type: TResourceType;
+//   id: string;
+//   item: {
+//     id: string;
+//   } & TData;
+// };
+
+export const genericClientResource = () =>
+  z.object({
+    id: zId(),
+    type: z.string(),
+    item: unknownIdentifiableRecord(),
+  });
 
 // TODO: Rename to StoreResource and don't export
 // TOOD: Move only in SessionStore maybe

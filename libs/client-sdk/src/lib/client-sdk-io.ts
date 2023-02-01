@@ -4,30 +4,11 @@ import {
   zId,
   toReqReq,
   toReqRes,
-  genericSessionResource,
   genericResourceIdentifier,
   objectKeys,
   sessionMatch,
+  genericClientResource,
 } from '@matterio/core-util';
-
-// This is called clientResource b/c this is what gets sent to the client,
-//  but it could be namaed better probably
-export const clientResource = <TType extends string, TData extends z.ZodRecord>(
-  type: TType,
-  data: TData
-) =>
-  z.object({
-    type: z.literal(type),
-    item: z.intersection(
-      z.object({
-        id: zId(),
-      }),
-      data
-    ),
-  });
-
-export const genericClientResource = (type: string) =>
-  clientResource(type, unknownRecord());
 
 export const payloads = z.object({
   // Resources
@@ -39,19 +20,19 @@ export const payloads = z.object({
       }),
       resourceData: unknownRecord(),
     }),
-    genericSessionResource()
+    genericClientResource()
   ),
   getResource: toReqRes(
     z.object({
       resourceIdentifier: genericResourceIdentifier(),
     }),
-    genericSessionResource()
+    genericClientResource()
   ),
   observeResource: toReqRes(
     z.object({
       resourceIdentifier: genericResourceIdentifier(),
     }),
-    genericSessionResource()
+    genericClientResource()
   ),
   updateResource: toReqRes(
     z.object({
@@ -59,19 +40,13 @@ export const payloads = z.object({
       resourceData: unknownRecord(),
     }),
     // genericSessionResource()
-    genericClientResource('generic')
+    genericClientResource()
   ),
   removeResource: toReqRes(
     z.object({
       resourceIdentifier: genericResourceIdentifier(),
     }),
-    z.intersection(
-      genericResourceIdentifier(),
-      z.object({
-        // $removed: z.boolean(),
-        subscribers: genericSessionResource().shape.subscribers,
-      })
-    )
+    genericResourceIdentifier()
   ),
 
   // Subscriptions

@@ -14,12 +14,13 @@ import {
   WsResponseResultPayload,
   GenericResource,
   toResourceIdentifierObj,
+  ClientResource,
 } from '@matterio/core-util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { PromiseDelegate } from 'promise-delegate';
-import { ClientResource } from './types';
+
 
 type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
@@ -280,7 +281,7 @@ export class ClientSdk<
   subscribeToResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
     resourceIdentifier: ResourceIdentifier<TResourceType>,
     subsriberFn: (
-      r: ClientResource<TResourceType, ResourceCollectionMap[TResourceType]>
+      r: ClientResource<ResourceCollectionMap, TResourceType>
     ) => void
   ) {
     const { resourceId, resourceType } =
@@ -290,10 +291,7 @@ export class ClientSdk<
       // Only be called for the given resource!
       if (r.type === resourceType && r.item.id === resourceId) {
         subsriberFn(
-          r as ClientResource<
-            TResourceType,
-            ResourceCollectionMap[TResourceType]
-          >
+          r as unknown as ClientResource<ResourceCollectionMap, TResourceType>
         );
       }
     });
@@ -329,14 +327,10 @@ export class ClientSdk<
   ) => this.emitAndAcknowledge(k, req).map((s) => s as TRes);
 
   onResourceUpdated<TResourceType extends SessionCollectionMapOfResourceKeys>(
-    fn: (
-      r: ClientResource<TResourceType, ResourceCollectionMap[TResourceType]>
-    ) => void
+    fn: (r: ClientResource<ResourceCollectionMap, TResourceType>) => void
   ) {
     return this.pubsy.subscribe('updateResource', (r) => {
-      fn(
-        r as ClientResource<TResourceType, ResourceCollectionMap[TResourceType]>
-      );
+      fn(r as unknown as ClientResource<ResourceCollectionMap, TResourceType>);
     });
   }
 
