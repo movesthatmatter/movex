@@ -446,7 +446,7 @@ export class ServerSDK<
     //  Look more into what the best pracitices around this are! How many type of updates are there?
     return this.getMatch(matchId).flatMap(({ item }) => {
       const prev = item as unknown as SessionMatch;
-      const { [clientId]: _, nextMatchPlayers } = prev.players;
+      const { [clientId]: _, ...nextMatchPlayers } = prev.players;
 
       return this.updateResource(
         {

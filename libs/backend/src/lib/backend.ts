@@ -348,7 +348,7 @@ export const matterioBackendWithExpress = <
               ClientSdkIO.payloads.shape.leaveMatch.shape.req.parse(req);
 
             return serverSdk
-              .joinMatch(clientId, payload.matchId)
+              .leaveMatch(clientId, payload.matchId)
               .map((s) => s.item)
               .resolve()
               .then(acknowledgeCb);
