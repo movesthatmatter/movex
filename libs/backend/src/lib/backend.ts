@@ -374,26 +374,25 @@ export const matterioBackendWithExpress = <
     });
 
     unsunscribersFromserverSdkConnection.push(
-
       // TODO: Refactor this into its own!
       serverSdk.on('updateResource', (r) => {
-        console.log('[backedn] updateResource', r);
+        // console.log('[backedn] updateResource', r);
 
         objectKeys(r.subscribers).forEach((clientId) => {
           const conn = clientConnections.getByClientId(clientId);
-          console.log(
-            '[backened] emitting updateResource to clientId:',
-            clientId,
-            conn
-          );
-          console.log(
-            '[backened] emitting updateResource to clientId all conn all:',
-            Object.keys(clientConnections.all)
-          );
-          console.log(
-            '[backened] emitting updateResource to clientId all conn map:',
-            clientConnections.allConnectionsClientsMap
-          );
+          // console.log(
+          //   '[backened] emitting updateResource to clientId:',
+          //   clientId,
+          //   conn
+          // );
+          // console.log(
+          //   '[backened] emitting updateResource to clientId all conn all:',
+          //   Object.keys(clientConnections.all)
+          // );
+          // console.log(
+          //   '[backened] emitting updateResource to clientId all conn map:',
+          //   clientConnections.allConnectionsClientsMap
+          // );
 
           conn?.emit('updateResource', toWsResponseResultPayloadOk(r));
         });

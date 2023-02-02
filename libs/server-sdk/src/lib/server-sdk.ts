@@ -370,8 +370,8 @@ export class ServerSDK<
       playerCount,
       matcher,
       players: players.reduce(
-        (accum, next) => ({ ...accum, [next]: '' }),
-        {} as { [k: string]: '' }
+        (accum, next) => ({ ...accum, [next]: true }),
+        {} as SessionMatch['players']
       ),
       winner: undefined,
       game,
@@ -425,7 +425,7 @@ export class ServerSDK<
       const nextMatchPlayers: SessionMatch['players'] = {
         ...prev.players,
         // Here I'm not sure it should be the client id or the SessionId or even UserId
-        [clientId]: '',
+        [clientId]: true,
       };
 
       return this.updateResource(

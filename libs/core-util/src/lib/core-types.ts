@@ -137,7 +137,7 @@ export type BaseMatch<TGame extends UnknownRecord = UnknownRecord> = {
   id: string;
   playerCount: number;
   // waitTime:
-  players: Record<PlayerIdentifier, EmptyString>;
+  players: Record<PlayerIdentifier, true>;
   matcher: string; // this is the matcher pattern: "chess" or "chess:5min" or "chess:5min:white", the more items the more limiting/accurate to match
   game: TGame;
 };

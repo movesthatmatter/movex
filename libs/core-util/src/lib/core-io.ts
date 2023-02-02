@@ -134,7 +134,7 @@ export const baseSessionMatch = <TGame extends z.ZodRecord>(game: TGame) =>
     id: zId(),
     playerCount: z.number(),
     // waitTime:
-    players: z.record(zId(), z.undefined()),
+    players: z.record(zId(), z.literal(true)),
     matcher: z.string(), // this is the matcher pattern: "chess" or "chess:5min" or "chess:5min:white", the more items the more limiting/accurate to match
     game,
   });
