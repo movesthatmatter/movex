@@ -70,7 +70,7 @@ export const payloads = z.object({
   createMatch: toReqRes(
     z.object({
       matcher: z.string(),
-      playerCount: z.number(),
+      playersTotal: z.number(),
       players: z.array(zId()).optional(),
       game: unknownRecord(),
     })

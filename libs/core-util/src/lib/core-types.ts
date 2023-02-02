@@ -135,7 +135,7 @@ export type EmptyString = ``;
 
 export type BaseMatch<TGame extends UnknownRecord = UnknownRecord> = {
   id: string;
-  playerCount: number;
+  playersTotal: number;
   // waitTime:
   players: Record<PlayerIdentifier, true>;
   matcher: string; // this is the matcher pattern: "chess" or "chess:5min" or "chess:5min:white", the more items the more limiting/accurate to match
@@ -189,7 +189,7 @@ export type OnlySessionCollectionMapOfResourceKeys<
 
 export type CreateMatchReq<TGame extends UnknownRecord> = {
   matcher: SessionMatch['matcher'];
-  playerCount: SessionMatch['playerCount'];
-  players?: SessionClient['id'][];
+  playersTotal: SessionMatch['playersTotal'];
   game: TGame;
+  players?: SessionClient['id'][];
 };

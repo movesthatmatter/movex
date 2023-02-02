@@ -361,13 +361,13 @@ export class ServerSDK<
 
   createMatch({
     matcher,
-    playerCount,
+    playersTotal,
     players = [],
     game,
   }: CreateMatchReq<GameState>) {
     const nextMatch: UnidentifiableModel<SessionMatch> = {
       status: 'waiting',
-      playerCount,
+      playersTotal,
       matcher,
       players: players.reduce(
         (accum, next) => ({ ...accum, [next]: true }),
