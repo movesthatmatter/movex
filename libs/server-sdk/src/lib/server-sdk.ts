@@ -209,7 +209,7 @@ export class ServerSDK<
   }
 
   /**
-   * Updates resurce silently
+   * Updates the resources and publishes the "updateResource" event
    *
    * @param resourceIdentifier
    * @param resourceData
@@ -222,14 +222,35 @@ export class ServerSDK<
     resourceIdentifier: ResourceIdentifier<TResourceType>,
     resourceData: Partial<UnidentifiableModel<TResourceData>>
   ) {
-    return this.emitAndAcknowledgeResources('updateResource', {
-      resourceIdentifier,
-      resourceData,
-    }).map(
+    return this.updateResourceSilently(resourceIdentifier, resourceData).map(
       AsyncResult.passThrough((r) => {
         this.pubsy.publish('updateResource', r);
       })
     );
+  }
+
+  /**
+   * Updates resurce w/o publishing the "updateResource" event
+   * This is used when changes are made to a resource but the clients shouldn't be notified (yet)
+   * // Although, if this is the mechanism to obfuscate data then it isn't really good b/c once they fetch the
+   * // new resource again it will just get the final state. So the best would be for the secret data to be kept somewhere else
+   * //  Like a ghost resource?
+   *
+   * @param resourceIdentifier
+   * @param resourceData
+   * @returns
+   */
+  updateResourceSilently<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TResourceData extends SessionCollectionMap[TResourceType]
+  >(
+    resourceIdentifier: ResourceIdentifier<TResourceType>,
+    resourceData: Partial<UnidentifiableModel<TResourceData>>
+  ) {
+    return this.emitAndAcknowledgeResources('updateResource', {
+      resourceIdentifier,
+      resourceData,
+    });
   }
 
   // /**
