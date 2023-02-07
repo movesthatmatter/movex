@@ -8,6 +8,8 @@ import {
   UnknownRecord,
 } from 'relational-redis-store';
 import {
+  invoke,
+  NestedObjectUtil,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
   SessionClient,
@@ -20,6 +22,7 @@ import {
   UnknwownSessionResourceCollectionMap,
   AnySessionResourceCollectionMap,
 } from './types';
+import immutableObjectPath from 'object-path-immutable';
 
 // Note:
 // This is currently depending on RRStore, but from what I see
@@ -235,14 +238,21 @@ export class SessionStore<
     // });
   }
 
+  /**
+   *
+   * @param rId
+   * @param forClientId: Optional for retrieving a Private resource with the Private Fragments applied
+   * @returns
+   */
   getResource<TResourceType extends SessionCollectionMapOfResourceKeys>(
-    rId: ResourceIdentifier<TResourceType>
+    rId: ResourceIdentifier<TResourceType>,
+    forClientId?: SessionClient['id']
   ) {
     const { resourceId, resourceType } = toResourceIdentifierObj(rId);
 
     return this.store
       .getItemInCollection(resourceType, resourceId)
-      .map((r) => this.toOutResource(resourceType, r));
+      .map((r) => this.toOutResource(resourceType, r, forClientId));
   }
 
   getAllResourcesOfType<
@@ -420,18 +430,128 @@ export class SessionStore<
   }
 
   private toOutResource = <
-    TResourceType extends SessionCollectionMapOfResourceKeys,
-    T extends UnknownRecord
+    TResourceType extends SessionCollectionMapOfResourceKeys
   >(
     type: TResourceType,
-    r: SessionResource<T>
-  ) => ({
-    type,
-    id: r.id,
-    subscribers: r.subscribers,
-    item: {
-      ...r.data,
+    r: SessionCollectionMap[TResourceType],
+    forClientId?: SessionClient['id']
+  ) => {
+    // Apply the private fragments for the given client
+    const item: SessionCollectionMap[TResourceType]['data'] & {
+      id: SessionResource['id'];
+    } = invoke(() => {
+      const clientPrivateFragments = forClientId
+        ? r.fragments?.[forClientId]
+        : undefined;
+
+      const publicItem: SessionCollectionMap[TResourceType]['data'] & {
+        id: SessionResource['id'];
+      } = {
+        ...r.data,
+        id: r.id,
+      };
+
+      if (!clientPrivateFragments) {
+        return publicItem;
+      }
+
+      // Apply the fragments
+      return objectKeys(clientPrivateFragments).reduce(
+        (prev, nextFragmentPathStr) =>
+          immutableObjectPath.merge(
+            prev,
+            nextFragmentPathStr,
+            clientPrivateFragments[nextFragmentPathStr]
+          ),
+        publicItem
+      );
+    });
+
+    return {
+      type,
       id: r.id,
-    },
-  });
+      subscribers: r.subscribers,
+      item,
+    };
+  };
+
+  // private applyPrivateFragmentsToResourceItem() => {
+
+  // }
+
+  addResourcePrivateFragment<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TPath extends NestedObjectUtil.PathsTuple<
+      ResourceCollectionMap[TResourceType]['data']
+    >
+  >(
+    clientId: SessionClient['id'],
+    rId: ResourceIdentifier<TResourceType>,
+    path: TPath,
+    privateFragment: NestedObjectUtil.DeepIndex<
+      ResourceCollectionMap[TResourceType]['data'],
+      TPath
+    >,
+    publicFragment?: NestedObjectUtil.DeepIndex<
+      ResourceCollectionMap[TResourceType]['data'],
+      TPath
+    >
+  ) {
+    return this.updateResourceFragments(
+      clientId,
+      rId,
+      path,
+      privateFragment,
+      publicFragment
+    ).map(() => undefined);
+  }
+
+  private updateResourceFragments<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TPath extends NestedObjectUtil.PathsTuple<
+      ResourceCollectionMap[TResourceType]['data']
+    >
+  >(
+    clientId: SessionClient['id'],
+    rId: ResourceIdentifier<TResourceType>,
+    path: TPath,
+    privateFragment: NestedObjectUtil.DeepIndex<
+      ResourceCollectionMap[TResourceType]['data'],
+      TPath
+    >,
+    publicFragment?: NestedObjectUtil.DeepIndex<
+      ResourceCollectionMap[TResourceType]['data'],
+      TPath
+    >
+  ) {
+    const { resourceId, resourceType } = toResourceIdentifierObj(rId);
+
+    return this.store
+      .updateItemInCollection(
+        resourceType,
+        resourceId,
+        (prev) => ({
+          // This could be called with an APPEND flag so it solves the double trip
+          ...prev,
+          // TODO: Apply the public fragment at the given path
+          // ...publicFragment && ({
+          //   data: {
+          //     ...prev.data,
+          //     []
+          //   }
+          // }),
+          fragments: {
+            ...prev.fragments,
+            [clientId]: {
+              [path.join('.')]: privateFragment,
+            },
+          },
+        }),
+        {
+          foreignKeys: {}, // TODO: This guy needs to be given from outside
+        } as any // TODO: Can I fix this any?
+      )
+      .map((r) => this.toOutResource(resourceType, r))
+      .mapErr(toSessionError);
+  }
 }

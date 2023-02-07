@@ -4026,6 +4026,11 @@ is-plain-object@^2.0.4:
   dependencies:
     isobject "^3.0.1"
 
+is-plain-object@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/is-plain-object/-/is-plain-object-5.0.0.tgz#4427f50ab3429e9025ea7d52e9043a9ef4159344"
+  integrity sha512-VRSzKkbMm5jMDoKLbltAkFQ5Qr7VDiTFGXxYFXXowVj387GeGNOCsOH6Msy00SGZ3Fp84b1Naa1psqgcCIEP5Q==
+
 is-potential-custom-element-name@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/is-potential-custom-element-name/-/is-potential-custom-element-name-1.0.1.tgz#171ed6f19e3ac554394edf78caa05784a45bebb5"
@@ -5299,6 +5304,19 @@ object-keys@^1.1.1:
   resolved "https://registry.yarnpkg.com/object-keys/-/object-keys-1.1.1.tgz#1c47f272df277f3b1daf061677d9c82e2322c60e"
   integrity sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==
 
+object-path-immutable@^4.1.2:
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/object-path-immutable/-/object-path-immutable-4.1.2.tgz#d78e3587f03c9a41f83dd6465cfef5a9eb390bb4"
+  integrity sha512-Bfrox46OegMkQXL872EzEjofMyBxk/2hgiy99NkCkYFegn6Dm9FvV2jY2Tnp9qLj2QL0TLii12CuPpzonkjJrA==
+  dependencies:
+    is-plain-object "^5.0.0"
+    object-path "^0.11.8"
+
+object-path@^0.11.8:
+  version "0.11.8"
+  resolved "https://registry.yarnpkg.com/object-path/-/object-path-0.11.8.tgz#ed002c02bbdd0070b78a27455e8ae01fc14d4742"
+  integrity sha512-YJjNZrlXJFM42wTBn6zgOJVar9KFJvzx6sTWDte8sWZF//cnjl0BxHNpfZx+ZffXX63A9q0b1zsFiBX4g4X5KA==
+
 object.assign@^4.1.4:
   version "4.1.4"
   resolved "https://registry.yarnpkg.com/object.assign/-/object.assign-4.1.4.tgz#9673c7c7c351ab8c4d0b516f4343ebf4dfb7799f"
@@ -6058,10 +6076,10 @@ regexpp@^3.2.0:
   resolved "https://registry.yarnpkg.com/regexpp/-/regexpp-3.2.0.tgz#0425a2768d8f23bad70ca4b90461fa2f1213e1b2"
   integrity sha512-pq2bWo9mVD43nbts2wGv17XLiNLya+GklZ8kaDLV2Z08gDCsGpnKn9BFMepvWuHCbyVvY7J5o5+BVvoQbmlJLg==
 
-relational-redis-store@^0.6.12:
-  version "0.6.12"
-  resolved "https://registry.yarnpkg.com/relational-redis-store/-/relational-redis-store-0.6.12.tgz#dc80c6f630f46f9b8156e5021f296f94751ca1d5"
-  integrity sha512-hHSeA0eR648g+wMGtM7GCZmnUJ8oZrfkO0vZPU91hJAzPbp7dPLPyd8V5wjX+ASbx24KuZHlQ94wLmV657vh8A==
+relational-redis-store@^0.6.14:
+  version "0.6.14"
+  resolved "https://registry.yarnpkg.com/relational-redis-store/-/relational-redis-store-0.6.14.tgz#4c153e7366505c600b606a59a850c779b538747c"
+  integrity sha512-TJD4lViApFYw0Unb6oJL/2m0yez4KOMT7aQ2RI7rnmm+XiUkqe4dNB4A8U0QOoeP4Apa/Xd8JV1jr+CWvy6dew==
   dependencies:
     "@types/deep-equal" "^1.0.1"
     "@types/json-stable-stringify" "^1.0.34"
@@ -6072,7 +6090,7 @@ relational-redis-store@^0.6.12:
     json-stable-stringify "^1.0.2"
     redis "3.0.2"
     redis-lock "0.1.4"
-    ts-async-results "^0.5.3"
+    ts-async-results v0.7
     tslib "^2.4.1"
 
 require-directory@^2.1.1:
@@ -6907,18 +6925,10 @@ tree-kill@1.2.2:
   resolved "https://registry.yarnpkg.com/tree-kill/-/tree-kill-1.2.2.tgz#4ca09a9092c88b73a7cdc5e8a01b507b0790a0cc"
   integrity sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==
 
-ts-async-results@0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.6.0.tgz#78c57245fb48de1645c65562a1271b04df490e2b"
-  integrity sha512-ekThTvDCbni4wB0BN8m29LB/H7pnoIZivMvp4xQsqETbjdqdq2lO+Y+jN1A7VgZ8t7xA9Vzhu/fdPjY/RD1nxg==
-  dependencies:
-    conditional-type-checks "^1.0.5"
-    ts-results "^3.0.0"
-
-ts-async-results@^0.5.3:
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.5.3.tgz#35c340089f3bb923cf4cd6c767f087c5b19db0ca"
-  integrity sha512-3vDuaiCf5FtGTVZ9RKft/0TV0ZJzt89zFy1lOcKkZQdPrYb06mwWN9DHsnmxnyKqIwNEPZdhv/mRwG+dC5mlIA==
+ts-async-results@v0.7:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.7.0.tgz#b8e0aa250d95901726dfb5a573fff8ca71edbf4f"
+  integrity sha512-g7Qj1a3MzAf+Kk2MNBATIu+blOU3RYv125lbxtAkVy9UatzxRjgBcblVuQbi4ntUQ09jMz2Hww8MusHusFwUXw==
   dependencies:
     conditional-type-checks "^1.0.5"
     ts-results "^3.0.0"

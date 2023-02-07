@@ -22,3 +22,5 @@ export function getRandomInt(givenMin: number, givenMax: number) {
 
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+export const invoke = <T>(fn: () => T): T => fn();

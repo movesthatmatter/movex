@@ -1,4 +1,108 @@
-import { AnyRecord } from 'dns';
+export namespace NestedObjectUtil {
+  // The Paths Types is taken from https://stackoverflow.com/a/58436959/2093626
+
+  type Prev = [
+    never,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    ...0[]
+  ];
+
+  type Join<K, P> = K extends string | number
+    ? P extends string | number
+      ? `${K}${'' extends P ? '' : '.'}${P}`
+      : never
+    : never;
+
+  // type Split<S extends string, D extends string> =
+  //   string extends S ? string[] :
+  //   S extends '' ? [] :
+  //   S extends `${infer T}${D}${infer U}` ? [T, ...Split<U, D>] : [S];
+  export type Keys = readonly PropertyKey[];
+
+  export type Paths<T, D extends number = 10> = [D] extends [never]
+    ? never
+    : T extends object
+    ? {
+        [K in keyof T]-?: K extends string | number
+          ? `${K}` | Join<K, Paths<T[K], Prev[D]>>
+          : never;
+      }[keyof T]
+    : '';
+
+  type Cons<H, T> = T extends readonly any[]
+    ? ((h: H, ...t: T) => void) extends (...r: infer R) => void
+      ? R
+      : never
+    : never;
+
+  export type PathsTuple<T, D extends number = 10> = [D] extends [never]
+    ? never
+    : T extends object
+    ? {
+        [K in keyof T]-?:
+          | [K]
+          | (PathsTuple<T[K], Prev[D]> extends infer P
+              ? P extends []
+                ? never
+                : Cons<K, P>
+              : never);
+      }[keyof T]
+    : [];
+
+  export type LeavesTuple<T, D extends number = 10> = [D] extends [never]
+    ? never
+    : T extends object
+    ? { [K in keyof T]-?: Cons<K, LeavesTuple<T[K], Prev[D]>> }[keyof T]
+    : [];
+  // export type AtPath<T, P extends Paths<T, D>, D extends number = 10> = [D] extends [never]
+  //   ? never
+  //   : T extends object
+  //   ? {
+  //       [K in keyof T]-?: K extends string | number
+  //         ? `${K}` | Join<K, Paths<T[K], Prev[D]>>
+  //         : never;
+  //     }[keyof T]
+  //   : '';
+
+  export type Leaves<T, D extends number = 10> = [D] extends [never]
+    ? never
+    : T extends object
+    ? { [K in keyof T]-?: Join<K, Leaves<T[K], Prev[D]>> }[keyof T]
+    : '';
+
+  // The Deep index is taken from this amazin answer
+  // https://stackoverflow.com/a/61648690/2093626
+  export type DeepIndex<T, KS extends Keys, Fail = undefined> = KS extends [
+    infer F,
+    ...infer R
+  ]
+    ? F extends keyof T
+      ? R extends Keys
+        ? DeepIndex<T[F], R, Fail>
+        : Fail
+      : Fail
+    : T;
+}
 
 export interface WsResponse<T = any> {
   event: string;
@@ -37,13 +141,13 @@ export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
 export type UnidentifiableModel<T extends {}> = Omit<T, 'id'>;
 
-export type Resource<
-  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
-  TResourceType extends keyof ResourceCollectionMap
+export type ResourceShape<
+  TResourceType extends PropertyKey,
+  TData extends UnknownRecord
 > = {
   type: TResourceType;
   id: string;
-  item: ResourceCollectionMap[TResourceType];
+  item: { id: string } & TData;
   subscribers: Record<
     SessionClient['id'],
     {
@@ -51,6 +155,11 @@ export type Resource<
     }
   >;
 };
+
+export type Resource<
+  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
+  TResourceType extends keyof ResourceCollectionMap
+> = ResourceShape<TResourceType, ResourceCollectionMap[TResourceType]>;
 
 export type ServerResource<
   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
@@ -66,6 +175,12 @@ export type GenericResource = Resource<
   Record<string, UnknownIdentifiableRecord>,
   keyof UnknownRecord
 >;
+
+export type GenericResourceOfType<TResourceType extends string> = Resource<
+  Record<string, UnknownIdentifiableRecord>,
+  TResourceType
+>;
+
 export type GenericResourceType = GenericResource['type'];
 
 export type SessionClient<Info extends UnknownRecord = {}> = {

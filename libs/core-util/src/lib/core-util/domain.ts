@@ -1,4 +1,7 @@
 import {
+  GenericResource,
+  GenericResourceOfType,
+  Resource,
   ResourceIdentifierObj,
   ResourceIdentifierStr,
   WsResponseResultPayload,
@@ -40,3 +43,11 @@ export const toWsResponseResultPayloadErr = <E>(
   err: true,
   val,
 });
+
+export const getResourceRId = <TResourceType extends string>(
+  r: GenericResourceOfType<TResourceType>
+) =>
+  toResourceIdentifierStr({
+    resourceType: r.type,
+    resourceId: r.id,
+  });
