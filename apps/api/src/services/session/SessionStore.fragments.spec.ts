@@ -145,7 +145,7 @@ describe('SessionStore Fragments', () => {
 
   test('stores a private fragment', async () => {
     const additionRes = await session
-      .addResourcePrivateFragment(
+      .addResourceFragment(
         defaultClientId,
         getResourceRId(createdResource),
         ['submission'],
@@ -162,11 +162,11 @@ describe('SessionStore Fragments', () => {
     expect(additionRes).toBe(undefined);
   });
 
-  describe('Get Private/Public Resource', () => {
+  describe('gets Private/Public Version of Resource', () => {
     describe('Non Nested Keys', () => {
       beforeEach(async () => {
         await session
-          .addResourcePrivateFragment(
+          .addResourceFragment(
             defaultClientId,
             getResourceRId(createdResource),
             ['submission'],
@@ -214,7 +214,7 @@ describe('SessionStore Fragments', () => {
     describe('Nested keys', () => {
       beforeEach(async () => {
         await session
-          .addResourcePrivateFragment(
+          .addResourceFragment(
             defaultClientId,
             getResourceRId(createdResource),
             ['submission', 'white'],
@@ -247,13 +247,81 @@ describe('SessionStore Fragments', () => {
               status: 'none',
               white: {
                 canDraw: false,
-                moves: ['WhiteMove1', 'WhteMove2'],
+                moves: ['WhiteMove1', 'WhiteMove2'],
               },
               black: createdResource.item.submission.black,
             },
           },
         });
       });
+    });
+  });
+
+  describe('Reconciliation', () => {
+    test('Applies all the fragments to the public and removes them', async () => {
+      const { item: client1 } = await session.createClient().resolveUnwrap();
+      const { item: client2 } = await session.createClient().resolveUnwrap();
+
+      await session
+        .addResourceFragment(
+          client1.id,
+          getResourceRId(createdResource),
+          ['submission'],
+          {
+            status: 'partial:revealed',
+            white: {
+              canDraw: false,
+              moves: ['WhiteMove1', 'WhiteMove2', 'WhiteMove3'],
+            },
+          }
+        )
+        .resolveUnwrap();
+
+      await session
+        .addResourceFragment(
+          client2.id,
+          getResourceRId(createdResource),
+          ['submission'],
+          {
+            status: 'partial:revealed',
+            black: {
+              canDraw: false,
+              moves: ['BlackMove1'],
+            },
+          }
+        )
+        .resolveUnwrap();
+
+      const expected = {
+        ...createdResource,
+        item: {
+          ...createdResource.item,
+          submission: {
+            status: 'partial:revealed',
+            white: {
+              canDraw: false,
+              moves: ['WhiteMove1', 'WhiteMove2', 'WhiteMove3'],
+            },
+            black: {
+              canDraw: false,
+              moves: ['BlackMove1'],
+            },
+          },
+        },
+      };
+
+      const actual = await session
+        .reconcileResourceFragments(getResourceRId(createdResource))
+        .resolveUnwrap();
+
+      const actualPrivate = await session
+        .getResource(getResourceRId(createdResource), client2.id)
+        .resolveUnwrap();
+
+      expect(actual).toEqual(expected);
+
+      // The resource is the same for the private one as well
+      expect(actualPrivate).toEqual(expected);
     });
   });
 });

@@ -8,10 +8,12 @@ import {
   UnknownRecord,
 } from 'relational-redis-store';
 import {
+  GenericResource,
   invoke,
   NestedObjectUtil,
   OnlySessionCollectionMapOfResourceKeys,
   ResourceIdentifier,
+  ResourceShape,
   SessionClient,
   SessionStoreCollectionMap,
   toResourceIdentifierObj,
@@ -21,6 +23,7 @@ import {
   SessionResource,
   UnknwownSessionResourceCollectionMap,
   AnySessionResourceCollectionMap,
+  FragmentsByPath,
 } from './types';
 import immutableObjectPath from 'object-path-immutable';
 
@@ -437,49 +440,66 @@ export class SessionStore<
     forClientId?: SessionClient['id']
   ) => {
     // Apply the private fragments for the given client
-    const item: SessionCollectionMap[TResourceType]['data'] & {
-      id: SessionResource['id'];
-    } = invoke(() => {
+    const itemData: SessionCollectionMap[TResourceType]['data'] = invoke(() => {
       const clientPrivateFragments = forClientId
         ? r.fragments?.[forClientId]
         : undefined;
 
-      const publicItem: SessionCollectionMap[TResourceType]['data'] & {
-        id: SessionResource['id'];
-      } = {
-        ...r.data,
-        id: r.id,
-      };
-
       if (!clientPrivateFragments) {
-        return publicItem;
+        return r.data;
       }
 
-      // Apply the fragments
-      return objectKeys(clientPrivateFragments).reduce(
-        (prev, nextFragmentPathStr) =>
-          immutableObjectPath.merge(
-            prev,
-            nextFragmentPathStr,
-            clientPrivateFragments[nextFragmentPathStr]
-          ),
-        publicItem
+      return SessionStore.applyFragmentsToResource(
+        r.data,
+        clientPrivateFragments
       );
+
+      // // Apply the fragments
+      // return objectKeys(clientPrivateFragments).reduce(
+      //   (prev, nextFragmentPathStr) =>
+      //     immutableObjectPath.merge(
+      //       prev,
+      //       nextFragmentPathStr,
+      //       clientPrivateFragments[nextFragmentPathStr]
+      //     ),
+      //   publicItem
+      // );
     });
 
     return {
       type,
       id: r.id,
       subscribers: r.subscribers,
-      item,
+      item: {
+        id: r.id,
+        ...itemData,
+      },
     };
+  };
+
+  private static applyFragmentsToResource = <
+    TResourceData extends UnknownRecord
+  >(
+    resourceData: TResourceData,
+    fragments: FragmentsByPath<TResourceData>
+  ): TResourceData => {
+    // Apply the fragments
+    return objectKeys(fragments).reduce(
+      (prev, nextFragmentPathStr) =>
+        immutableObjectPath.merge(
+          prev,
+          nextFragmentPathStr,
+          fragments[nextFragmentPathStr]
+        ),
+      resourceData
+    ) as TResourceData;
   };
 
   // private applyPrivateFragmentsToResourceItem() => {
 
   // }
 
-  addResourcePrivateFragment<
+  addResourceFragment<
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TPath extends NestedObjectUtil.PathsTuple<
       ResourceCollectionMap[TResourceType]['data']
@@ -547,6 +567,63 @@ export class SessionStore<
             },
           },
         }),
+        {
+          foreignKeys: {}, // TODO: This guy needs to be given from outside
+        } as any // TODO: Can I fix this any?
+      )
+      .map((r) => this.toOutResource(resourceType, r))
+      .mapErr(toSessionError);
+  }
+
+  /**
+   * This Reconciles all the fragments present and deletes them
+   *
+   * @param rId
+   * @returns The Public Resource after all the fragments have been applied!
+   */
+  reconcileResourceFragments<
+    TResourceType extends SessionCollectionMapOfResourceKeys
+  >(rId: ResourceIdentifier<TResourceType>) {
+    return this.updateResource(rId, (prev) => {
+      const { fragments } = prev;
+
+      if (!fragments) {
+        return prev;
+      }
+
+      // TODO: Do we need an order for the fragments by client? Probably!
+      // Iterate over all the fragments by ClientId
+      return objectKeys(fragments).reduce((accum, clientId) => {
+        return {
+          ...accum,
+          data: {
+            ...accum.data,
+            ...SessionStore.applyFragmentsToResource(
+              accum.data,
+              fragments[clientId]
+            ),
+          },
+          // Remove the fragments once it is applied!
+          fragments: undefined,
+        };
+      }, prev);
+    });
+  }
+
+  private updateResource<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TResource extends SessionCollectionMap[TResourceType]
+  >(
+    rId: ResourceIdentifier<TResourceType>,
+    next: Partial<TResource> | ((prev: TResource) => Partial<TResource>)
+  ) {
+    const { resourceId, resourceType } = toResourceIdentifierObj(rId);
+
+    return this.store
+      .updateItemInCollection(
+        resourceType,
+        resourceId,
+        next as any,
         {
           foreignKeys: {}, // TODO: This guy needs to be given from outside
         } as any // TODO: Can I fix this any?

@@ -4,7 +4,12 @@ export type EmptyCollectionStoreOptions = {
   foreignKeys: {};
 };
 
-type FragmentPath = string;
+export type FragmentPath = string;
+
+export type FragmentsByPath<TData extends UnknownRecord> = Record<
+  FragmentPath,
+  Partial<TData>
+>;
 
 export type SessionResource<TData extends UnknownRecord = {}> = {
   id: string;
@@ -16,7 +21,7 @@ export type SessionResource<TData extends UnknownRecord = {}> = {
     }
   >;
   // TODO: Might need a mor einvolved way to store and index this based on client ids and paths but for now this should do
-  fragments?: Record<SessionClient['id'], Record<FragmentPath, Partial<TData>>>;
+  fragments?: Record<SessionClient['id'], FragmentsByPath<TData>>;
   // fragments?: Record<FragmentPath, Record<SessionClient['id'], Partial<TData>>>;
 };
 
