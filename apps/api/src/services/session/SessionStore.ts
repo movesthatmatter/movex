@@ -508,13 +508,17 @@ export class SessionStore<
     clientId: SessionClient['id'],
     rId: ResourceIdentifier<TResourceType>,
     path: TPath,
-    privateFragment: NestedObjectUtil.DeepIndex<
-      ResourceCollectionMap[TResourceType]['data'],
-      TPath
+    privateFragment: Partial<
+      NestedObjectUtil.DeepIndex<
+        ResourceCollectionMap[TResourceType]['data'],
+        TPath
+      >
     >,
-    publicFragment?: NestedObjectUtil.DeepIndex<
-      ResourceCollectionMap[TResourceType]['data'],
-      TPath
+    publicFragment?: Partial<
+      NestedObjectUtil.DeepIndex<
+        ResourceCollectionMap[TResourceType]['data'],
+        TPath
+      >
     >
   ) {
     return this.updateResourceFragments(
@@ -535,44 +539,41 @@ export class SessionStore<
     clientId: SessionClient['id'],
     rId: ResourceIdentifier<TResourceType>,
     path: TPath,
-    privateFragment: NestedObjectUtil.DeepIndex<
-      ResourceCollectionMap[TResourceType]['data'],
-      TPath
+    privateFragment: Partial<
+      NestedObjectUtil.DeepIndex<
+        ResourceCollectionMap[TResourceType]['data'],
+        TPath
+      >
     >,
-    publicFragment?: NestedObjectUtil.DeepIndex<
-      ResourceCollectionMap[TResourceType]['data'],
-      TPath
+    publicFragment?: Partial<
+      NestedObjectUtil.DeepIndex<
+        ResourceCollectionMap[TResourceType]['data'],
+        TPath
+      >
     >
   ) {
-    const { resourceId, resourceType } = toResourceIdentifierObj(rId);
+    const pathStr = path.join('.');
 
-    return this.store
-      .updateItemInCollection(
-        resourceType,
-        resourceId,
-        (prev) => ({
-          // This could be called with an APPEND flag so it solves the double trip
-          ...prev,
-          // TODO: Apply the public fragment at the given path
-          // ...publicFragment && ({
-          //   data: {
-          //     ...prev.data,
-          //     []
-          //   }
-          // }),
-          fragments: {
-            ...prev.fragments,
-            [clientId]: {
-              [path.join('.')]: privateFragment,
-            },
-          },
-        }),
-        {
-          foreignKeys: {}, // TODO: This guy needs to be given from outside
-        } as any // TODO: Can I fix this any?
-      )
-      .map((r) => this.toOutResource(resourceType, r))
-      .mapErr(toSessionError);
+    return this.updateResource(rId, (prev) => ({
+      // This could be called with an APPEND flag so it solves the double trip
+      ...prev,
+
+      // If there is a publicFragment given, set it
+      ...(publicFragment && {
+        data: {
+          ...prev.data,
+          ...SessionStore.applyFragmentsToResource(prev.data, {
+            [pathStr]: publicFragment,
+          }),
+        },
+      }),
+      fragments: {
+        ...prev.fragments,
+        [clientId]: {
+          [pathStr]: privateFragment,
+        },
+      },
+    }));
   }
 
   /**

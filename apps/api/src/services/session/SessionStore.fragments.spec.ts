@@ -164,7 +164,7 @@ describe('SessionStore Fragments', () => {
 
   describe('gets Private/Public Version of Resource', () => {
     describe('Non Nested Keys', () => {
-      beforeEach(async () => {
+      test('Gets the public version of the resource', async () => {
         await session
           .addResourceFragment(
             defaultClientId,
@@ -179,9 +179,7 @@ describe('SessionStore Fragments', () => {
             }
           )
           .resolveUnwrap();
-      });
 
-      test('Gets the public version of the resource', async () => {
         const actual = await session
           .getResource(getResourceRId(createdResource))
           .resolveUnwrap();
@@ -190,6 +188,21 @@ describe('SessionStore Fragments', () => {
       });
 
       test('Gets the private version of the resource', async () => {
+        await session
+          .addResourceFragment(
+            defaultClientId,
+            getResourceRId(createdResource),
+            ['submission'],
+            {
+              status: 'partial:revealed',
+              white: {
+                canDraw: false,
+                moves: ['Move1', 'Move2'],
+              },
+            }
+          )
+          .resolveUnwrap();
+
         const actualPrivateResource = await session
           .getResource(getResourceRId(createdResource), defaultClientId)
           .resolveUnwrap();
@@ -209,10 +222,66 @@ describe('SessionStore Fragments', () => {
           },
         });
       });
+
+      test('Sets the public fragment as well', async () => {
+        await session
+          .addResourceFragment(
+            defaultClientId,
+            getResourceRId(createdResource),
+            ['submission', 'white'],
+            {
+              canDraw: false,
+              moves: ['Move1', 'Move2'],
+            },
+            {
+              canDraw: false,
+              moves: [],
+            }
+          )
+          .resolveUnwrap();
+
+        const actualPrivateResource = await session
+          .getResource(getResourceRId(createdResource), defaultClientId)
+          .resolveUnwrap();
+
+        expect(actualPrivateResource).toEqual({
+          ...createdResource,
+          item: {
+            ...createdResource.item,
+            submission: {
+              status: 'none',
+              white: {
+                canDraw: false,
+                moves: ['Move1', 'Move2'],
+              },
+              black: createdResource.item.submission.black,
+            },
+          },
+        });
+
+        const actualPublicResource = await session
+          .getResource(getResourceRId(createdResource))
+          .resolveUnwrap();
+
+        expect(actualPublicResource).toEqual({
+          ...createdResource,
+          item: {
+            ...createdResource.item,
+            submission: {
+              status: 'none',
+              white: {
+                canDraw: false,
+                moves: [],
+              },
+              black: createdResource.item.submission.black,
+            },
+          },
+        });
+      });
     });
 
     describe('Nested keys', () => {
-      beforeEach(async () => {
+      test('Gets the public version of the resource', async () => {
         await session
           .addResourceFragment(
             defaultClientId,
@@ -224,9 +293,7 @@ describe('SessionStore Fragments', () => {
             }
           )
           .resolveUnwrap();
-      });
 
-      test('Gets the public version of the resource', async () => {
         const actual = await session
           .getResource(getResourceRId(createdResource))
           .resolveUnwrap();
@@ -235,6 +302,18 @@ describe('SessionStore Fragments', () => {
       });
 
       test('Gets the private version of the resource', async () => {
+        await session
+          .addResourceFragment(
+            defaultClientId,
+            getResourceRId(createdResource),
+            ['submission', 'white'],
+            {
+              canDraw: false,
+              moves: ['WhiteMove1', 'WhiteMove2'],
+            }
+          )
+          .resolveUnwrap();
+
         const actualPrivateResource = await session
           .getResource(getResourceRId(createdResource), defaultClientId)
           .resolveUnwrap();
