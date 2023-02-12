@@ -24,3 +24,8 @@ export function getRandomInt(givenMin: number, givenMax: number) {
 }
 
 export const invoke = <T>(fn: () => T): T => fn();
+
+export const delay = (ms = 500) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });

@@ -1,4 +1,6 @@
 import {
+  ClientResourceShape,
+  GenericClientResourceShapeOfType,
   GenericResource,
   GenericResourceOfType,
   Resource,
@@ -45,7 +47,7 @@ export const toWsResponseResultPayloadErr = <E>(
 });
 
 export const getResourceRId = <TResourceType extends string>(
-  r: GenericResourceOfType<TResourceType>
+  r: GenericClientResourceShapeOfType<TResourceType>
 ) =>
   toResourceIdentifierStr({
     resourceType: r.type,

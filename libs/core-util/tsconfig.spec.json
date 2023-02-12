@@ -16,5 +16,5 @@
     "**/*.test.jsx",
     "**/*.spec.jsx",
     "**/*.d.ts"
-  ]
+, "../backend/src/lib/resource-action-handler/index.spec.ts"  ]
 }

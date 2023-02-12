@@ -16,17 +16,25 @@ import {
   toResourceIdentifierObj,
   ClientResource,
   toResourceIdentifierStr,
+  ActionsCollectionMapBase,
+  Action,
+  ResourceReducerMap,
+  ResourceShape,
+  GenericAction,
+  ClientResourceShape,
 } from '@matterio/core-util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { PromiseDelegate } from 'promise-delegate';
+import { dispatchFactory } from './resource-reducer.ts/resource-reducer';
 
 type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
 export class ClientSdk<
   ClientInfo extends UnknownRecord = {},
   GameState extends UnknownRecord = {},
+  ActionsCollectionMap extends ActionsCollectionMapBase = {},
   ResourceCollectionMap extends Record<
     string,
     UnknownIdentifiableRecord
@@ -409,11 +417,6 @@ export class ClientSdk<
     );
   }
 
-  // broadcast<
-  //   TReqType extends keyof RequestsCollectionMap,
-  //   TReq = RequestsCollectionMap[TReqType]['0'],
-  // >(k: TReqType, req: TReq): AsyncResult<void, unknown> {
-
   private emitAndAcknowledgeResources = <
     K extends keyof Pick<
       typeof ClientSdkIO.msgs,
@@ -425,24 +428,15 @@ export class ClientSdk<
     >,
     TResourceType extends SessionCollectionMapOfResourceKeys,
     TReq extends ClientSdkIO.Payloads[K]['req'],
-    // TRawRes extends ResourceCollectionMap[TResourceType] = ResourceCollectionMap[TResourceType],
-    TRawRes extends {
-      type: TResourceType;
-      item: ResourceCollectionMap[TResourceType];
-      subscribers: SessionCollectionMap[TResourceType]['subscribers'];
-    } = {
-      type: TResourceType;
-      item: ResourceCollectionMap[TResourceType];
-      subscribers: SessionCollectionMap[TResourceType]['subscribers'];
-    },
-    TRes = ResourceCollectionMap[TResourceType]
+    TRes extends ClientResourceShape<
+      TResourceType,
+      ResourceCollectionMap[TResourceType]
+    > = ClientResourceShape<TResourceType, ResourceCollectionMap[TResourceType]>
   >(
     k: K,
     req: TReq
-  ) =>
-    this.emitAndAcknowledge(k, req)
-      .map((s) => s as TRawRes)
-      .map((s) => s.item as TRes);
+  ) => this.emitAndAcknowledge(k, req).map((s) => s as TRes);
+  // .map((s) => s.item as TRes);
 
   // Matches
   createMatch(req: CreateMatchReq<GameState>) {
@@ -538,6 +532,96 @@ export class ClientSdk<
         );
       }).catch((e) => e) as any
     );
+
+  // Resource Updates via Actions
+  registerResourceReducer<
+    TResourceType extends SessionCollectionMapOfResourceKeys,
+    TResource extends ResourceShape<
+      TResourceType,
+      SessionCollectionMap[TResourceType]
+    > = ResourceShape<TResourceType, SessionCollectionMap[TResourceType]>
+  >(
+    rId: ResourceIdentifier<TResourceType>,
+    actionsHandler: ResourceReducerMap<TResource, ActionsCollectionMap>,
+    onUpdate?: (state: TResource['item']) => void
+  ) {
+    // this.observeResource(rId)
+    // Get the resource and subscribe to it
+    let prebatchedActions: GenericAction[] = [];
+
+    // let remoteDispatch: <TActionType extends keyof ActionsCollectionMap>(
+    //   type: TActionType,
+    //   payload: ActionsCollectionMap[TActionType]
+    // ) => void;
+    let cachedState: TResource['item'];
+
+    // TODO: Ideally we have on getAndSubscribe call only
+    this.getResource(rId).map((res) => {
+      cachedState = res as unknown as TResource['item'];
+      // remoteDispatch = registerResourceReducer(res as , actionsHandler, onUpdate);
+    });
+
+    this.subscribeToResource(rId, (r) => {
+      // TODO: Why is this different from get?
+      cachedState = r.item as unknown as TResource['item'];
+      // remoteDispatch = registerResourceReducer(r.item as , actionsHandler, onUpdate);
+    });
+
+    // return dispatchFactory()
+
+    // const dispatch = <TActionType extends keyof ActionsCollectionMap>(
+    //   type: TActionType,
+    //   payload: ActionsCollectionMap[TActionType]
+
+    //   // Here - it needs to handle the private action one as well
+    //   // NEXT - Implement this on the backend and check public/private
+    //   // Next Next - implement in on maha and change the whole game strategy to this
+    // ) => {
+    //   if (!cachedState) {
+    //     prebatchedActions.push({
+    //       type,
+    //       payload,
+    //     });
+
+    //     return;
+    //   }
+
+    //   if (prebatchedActions.length > 0) {
+    //     prebatchedActions = [];
+    //   }
+
+    //   const handlerFn = actionsHandler[type];
+    //   if (!handlerFn) {
+    //     return;
+    //   }
+
+    //   // this is actually the next state
+    //   cachedState = handlerFn(cachedState, { type, payload });
+    //   onUpdate?.(cachedState);
+    // };
+
+    // return dispatch;
+  }
+
+  // // This dispatches public actions, that will automatically broadcast to all subscribers of the resource
+  // dispatchResourceAction<TActionType extends keyof ActionsCollectionMap>(
+  //   action: Action<TActionType, ActionsCollectionMap[TActionType]>
+  // ) {}
+
+  // // This dispatches private actions (update private state) and public actions (update public state and broadcast to all)
+  // dispatchResourcePrivateAction<
+  //   TPrivateActionType extends keyof ActionsCollectionMap,
+  //   TPublicActionType extends keyof ActionsCollectionMap
+  // >(
+  //   privateAction: Action<
+  //     TPrivateActionType,
+  //     ActionsCollectionMap[TPrivateActionType]
+  //   >,
+  //   publicAction?: Action<
+  //     TPrivateActionType,
+  //     ActionsCollectionMap[TPrivateActionType]
+  //   >
+  // ) {}
 }
 
 const withTimeout = (

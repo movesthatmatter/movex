@@ -156,6 +156,11 @@ export type ResourceShape<
   >;
 };
 
+export type ClientResourceShape<
+  TResourceType extends PropertyKey,
+  TData extends UnknownRecord
+> = Pick<ResourceShape<TResourceType, TData>, 'type' | 'id' | 'item'>;
+
 export type Resource<
   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
   TResourceType extends keyof ResourceCollectionMap
@@ -170,6 +175,15 @@ export type ClientResource<
   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
   TResourceType extends keyof ResourceCollectionMap
 > = Pick<ServerResource<ResourceCollectionMap, TResourceType>, 'item' | 'type'>;
+
+export type GenericClientResource = ClientResource<
+  Record<string, UnknownIdentifiableRecord>,
+  keyof UnknownRecord
+>;
+
+export type GenericClientResourceShapeOfType<
+  TResourceType extends PropertyKey
+> = ClientResourceShape<TResourceType, UnknownRecord>;
 
 export type GenericResource = Resource<
   Record<string, UnknownIdentifiableRecord>,

@@ -37,7 +37,7 @@ export class SocketConnections {
     this.connectionsClientsMap = restConnectionsToClientMap;
   }
 
-  removeByClientId(clientId: string) {
+   removeByClientId(clientId: string) {
     return this.removeByConnectionId(
       this.connectionsClientsMap[encodeClientId(clientId)]
     );
