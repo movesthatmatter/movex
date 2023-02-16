@@ -1,1 +1,2 @@
-export * from './resource-reducer';
+export * from './types';
+export * as ClientResourceReducer from './resource-reducer';

@@ -542,12 +542,12 @@ export class ClientSdk<
     > = ResourceShape<TResourceType, SessionCollectionMap[TResourceType]>
   >(
     rId: ResourceIdentifier<TResourceType>,
-    actionsHandler: ResourceReducerMap<TResource, ActionsCollectionMap>,
+    reducersMap: ResourceReducerMap<TResource, ActionsCollectionMap>,
     onUpdate?: (state: TResource['item']) => void
   ) {
     // this.observeResource(rId)
     // Get the resource and subscribe to it
-    let prebatchedActions: GenericAction[] = [];
+    // let prebatchedActions: GenericAction[] = [];
 
     // let remoteDispatch: <TActionType extends keyof ActionsCollectionMap>(
     //   type: TActionType,
@@ -556,18 +556,33 @@ export class ClientSdk<
     let cachedState: TResource['item'];
 
     // TODO: Ideally we have on getAndSubscribe call only
-    this.getResource(rId).map((res) => {
-      cachedState = res as unknown as TResource['item'];
-      // remoteDispatch = registerResourceReducer(res as , actionsHandler, onUpdate);
-    });
+    // this.getResource(rId).map((res) => {
+    //   cachedState = res as unknown as TResource['item'];
+    //   // remoteDispatch = registerResourceReducer(res as , actionsHandler, onUpdate);
+    // });
 
-    this.subscribeToResource(rId, (r) => {
-      // TODO: Why is this different from get?
-      cachedState = r.item as unknown as TResource['item'];
-      // remoteDispatch = registerResourceReducer(r.item as , actionsHandler, onUpdate);
-    });
+    // // TODO: VERY IMPORTANT: when the states aren't the same when it comes from the server, 
+    // //  
+    // this.subscribeToResource(rId, (r) => {
+    //   // TODO: Why is this different from get?
+    //   cachedState = r.item as unknown as TResource['item'];
+    // });
 
-    // return dispatchFactory()
+    return dispatchFactory<TResource, ActionsCollectionMap>(
+      this.getResource(rId).resolve() as unknown as Promise<TResource>,
+      reducersMap,
+      (next) => {
+        // TODO: Add the remote sync and logic for when it's not the same!
+        // Here I need to create request the action and wait for the ack
+        //   If they are the same, all good
+        //   Otherwise there needs to be a solution. 
+        //   Also, when an update comes (which couldb)
+
+        // this.
+
+        onUpdate?.(next);
+      }
+    );
 
     // const dispatch = <TActionType extends keyof ActionsCollectionMap>(
     //   type: TActionType,

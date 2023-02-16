@@ -1,7 +1,7 @@
 import { sessionClient, unknownRecord, zId } from '@matterio/core-util';
 import z from 'zod';
 
-// @deprecate
+// @deprecate this file as it isn't really used!
 export const sessionResource = <TData extends z.ZodRecord>(data: TData) =>
   z.object({
     id: zId(),

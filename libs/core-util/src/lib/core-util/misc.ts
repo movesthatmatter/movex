@@ -29,3 +29,26 @@ export const delay = (ms = 500) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+
+export const range = (length: number, startAt = 0) =>
+  Array.from({ length }, (_, i) => i + startAt);
+
+export const noop = () => {};
+
+export const orThrow = <T>(t: T) => {
+  if (t === undefined || t === null) {
+    throw `orThrow: Given Param is ${typeof t}`;
+  }
+
+  return t;
+};
+
+// Use this to get inherited keys as well
+export const keyInObject = <X extends {}, Y extends PropertyKey>(
+  obj: X,
+  prop: Y
+): obj is X & Record<Y, unknown> => prop in obj;
+
+export const isObject = (o: unknown): o is object => {
+  return typeof o === 'object' && !Array.isArray(o) && o !== null;
+};

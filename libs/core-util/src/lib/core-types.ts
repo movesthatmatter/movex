@@ -174,7 +174,7 @@ export type ServerResource<
 export type ClientResource<
   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
   TResourceType extends keyof ResourceCollectionMap
-> = Pick<ServerResource<ResourceCollectionMap, TResourceType>, 'item' | 'type'>;
+> = Pick<ServerResource<ResourceCollectionMap, TResourceType>, 'item' | 'type' | 'id'>;
 
 export type GenericClientResource = ClientResource<
   Record<string, UnknownIdentifiableRecord>,
