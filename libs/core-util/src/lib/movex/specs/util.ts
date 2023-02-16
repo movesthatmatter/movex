@@ -21,16 +21,14 @@ export const createMasterEnv = <
 >({
   genesisState,
   reducerMap,
-  clientCount,
-}: // networkLag = 0, // Default to no lag
-{
+  clientCountorIds,
+}: {
   genesisState: TState;
   reducerMap: TReducerMap;
-  clientCount: number;
-  // networkLag: Number;
+  clientCountorIds: number | string[];
 }) => {
   const stateUpdatePubsy = new Pubsy<{
-    [key in `onDeprecatedNetworkExpensiveStateUpdateTo:${string}`]: CheckedState<TState>[1];
+    [key in `onDeprecatedNetworkExpensiveStateUpdateTo:${string}`]: CheckedState<TState>;
   }>();
 
   const actionPubsy = new Pubsy<{
@@ -61,14 +59,17 @@ export const createMasterEnv = <
     ActionsCollectionMap
   >(reducerMap);
 
-  const clientIds = range(clientCount).map((_, i) => `::client::${i}`);
+  const clientIds = Array.isArray(clientCountorIds)
+    ? clientCountorIds
+    : range(clientCountorIds).map((_, i) => `::client::${i}`);
 
   return {
     get,
+    getPublic: () => store.public,
     clients: clientIds.map((clientId) => {
       return {
-        subscribeToMasterUpdates: (
-          fn: (next: CheckedState<TState>[1]) => void
+        subscribeToNetworkExpensiveMasterUpdates: (
+          fn: (next: CheckedState<TState>) => void
         ) =>
           stateUpdatePubsy.subscribe(
             `onDeprecatedNetworkExpensiveStateUpdateTo:${clientId}`,
@@ -99,16 +100,15 @@ export const createMasterEnv = <
 
               const nextChecksum = store.public[1];
 
-              // Only send the checksum
-              stateUpdatePubsy.publish(
-                `onDeprecatedNetworkExpensiveStateUpdateTo:${clientId}`,
-                nextChecksum
-              );
-
               // Forward the action to all the clients except me
               clientIds
                 .filter((cid) => cid !== clientId)
                 .forEach((peerClientId) => {
+                  stateUpdatePubsy.publish(
+                    `onDeprecatedNetworkExpensiveStateUpdateTo:${peerClientId}`,
+                    store.public
+                  );
+
                   actionPubsy.publish(`onFwdActionTo:${peerClientId}`, {
                     action: actionOrActionTuple,
                     nextChecksum,
@@ -128,10 +128,15 @@ export const createMasterEnv = <
                 applyActionToReducer(store.public[0], publicAction)
               );
 
-              // Forward the pulic action to all the clients except me
+              // Forward the public action to all the clients except me
               clientIds
                 .filter((cid) => cid !== clientId)
                 .forEach((peerClientId) => {
+                  stateUpdatePubsy.publish(
+                    `onDeprecatedNetworkExpensiveStateUpdateTo:${peerClientId}`,
+                    store.public
+                  );
+
                   actionPubsy.publish(`onFwdActionTo:${peerClientId}`, {
                     action: publicAction,
                     nextChecksum: store.public[1],
