@@ -1,3 +1,5 @@
+import { Pubsy } from 'ts-pubsy';
+import { Err, Ok, Result } from 'ts-results';
 import { StringKeys } from '../core-types';
 import { invoke } from '../core-util';
 import {
@@ -10,9 +12,16 @@ import {
   ActionOrActionTuple,
   ActionsCollectionMapBase,
   CheckedState,
+  Checksum,
+  DispatchedEvent,
   MovexReducerMap,
 } from './types';
-import { computeCheckedState, createDispatcher } from './util';
+import {
+  computeCheckedState,
+  createDispatcher,
+  getReducerApplicator,
+  isAction,
+} from './util';
 
 // TODO: The actions should be inferred by the reducer map, since the payloads are given there, no?
 
@@ -34,7 +43,9 @@ export class MovexResource<
 {
   private $checkedState: Observable<CheckedState<TState>>;
 
-  // private $state: Observable<TState>;
+  private pubsy = new Pubsy<{
+    onDispatched: DispatchedEvent<CheckedState<TState>, ActionsCollectionMap>;
+  }>();
 
   // private _dispatch
   private dispatcher: <TActionType extends StringKeys<ActionsCollectionMap>>(
@@ -43,8 +54,13 @@ export class MovexResource<
 
   private unsubscribers: (() => any)[] = [];
 
+  private reducerApplicator = getReducerApplicator<
+    TState,
+    ActionsCollectionMap
+  >(this.reducerMap);
+
   constructor(
-    reducerMap: TReducerMap,
+    private reducerMap: TReducerMap,
     initialCheckedState: CheckedState<TState>
   ) {
     this.$checkedState = new Observable(initialCheckedState);
@@ -54,7 +70,11 @@ export class MovexResource<
     const { dispatch, unsubscribe } = createDispatcher<
       TState,
       ActionsCollectionMap
-    >(this.$checkedState, reducerMap);
+    >(this.$checkedState, reducerMap, {
+      onDispatched: (p) => {
+        this.pubsy.publish('onDispatched', p);
+      },
+    });
 
     this.dispatcher = dispatch;
     this.unsubscribers.push(unsubscribe);
@@ -69,9 +89,64 @@ export class MovexResource<
     this.dispatcher(actionOrActionTuple);
   }
 
-  onUpdate(fn: (state: CheckedState<TState>) => void) {
+  // The diff between this and the dispatch is that this happens in sync and it returns
+  // The dispatch MIGHT not happen in sync
+  applyAction<TActionType extends StringKeys<ActionsCollectionMap>>(
+    actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>
+  ) {
+    const nextCheckedState =
+      this.getNextCheckedStateFromAction(actionOrActionTuple);
+
+    this.$checkedState.update(nextCheckedState);
+
+    return nextCheckedState;
+  }
+
+  reconciliateAction<TActionType extends StringKeys<ActionsCollectionMap>>(
+    actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>,
+    expectedNextChecksum: Checksum
+  ): Result<CheckedState<TState>, 'ChecksumMismatch'> {
+    const nextCheckedState =
+      this.getNextCheckedStateFromAction(actionOrActionTuple);
+
+    if (nextCheckedState[1] !== expectedNextChecksum) {
+      return new Err('ChecksumMismatch');
+    }
+
+    this.$checkedState.update(nextCheckedState);
+
+    return new Ok(nextCheckedState);
+  }
+
+  private getNextCheckedStateFromAction<
+    TActionType extends StringKeys<ActionsCollectionMap>
+  >(
+    actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>
+  ) {
+    // Always apply the local action (which is the action of the private action in case of a tuple)
+    const localAction = isAction(actionOrActionTuple)
+      ? actionOrActionTuple
+      : actionOrActionTuple[0];
+
+    const nextState = this.reducerApplicator(
+      this.getUncheckedState(),
+      localAction
+    );
+
+    return computeCheckedState(nextState);
+  }
+
+  onUpdated(fn: (state: CheckedState<TState>) => void) {
     // return this.$checkedState.onUpdate(([state]) => fn(state));
     return this.$checkedState.onUpdate(fn);
+  }
+
+  onDispatched(
+    fn: (
+      event: DispatchedEvent<CheckedState<TState>, ActionsCollectionMap>
+    ) => void
+  ) {
+    return this.pubsy.subscribe('onDispatched', fn);
   }
 
   get() {

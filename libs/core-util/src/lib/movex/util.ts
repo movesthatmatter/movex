@@ -18,7 +18,9 @@ import {
 import {
   Action,
   ActionOrActionTuple,
+  AnyActionOrActionTupleOf,
   CheckedState,
+  DispatchedEvent,
   GenericAction,
   MovexReducerMap,
 } from './types';
@@ -53,7 +55,6 @@ export const createDispatcher = <
     ActionsCollectionMap
   > = MovexReducerMap<TState, ActionsCollectionMap>
 >(
-  // initialResource: Promise<TResource> | TResource,
   $checkedState: Observable<CheckedState<TState>>,
   reducerMap: TReducerMap,
   onEvents?: {
@@ -62,16 +63,10 @@ export const createDispatcher = <
     // This is in order to have more control at the client's end. where they can easily check the checksum's or even instance
     //  if there was any update
     onDispatched?: (
-      next: CheckedState<TState>,
-      prev: CheckedState<TState>,
-      action: AnyActionOf<ActionsCollectionMap>,
-      pairedAction?: AnyPublicActionOf<ActionsCollectionMap>
+      event: DispatchedEvent<CheckedState<TState>, ActionsCollectionMap>
     ) => void;
     onStateUpdated?: (
-      next: CheckedState<TState>,
-      prev: CheckedState<TState>,
-      action: AnyActionOf<ActionsCollectionMap>,
-      pairedAction?: AnyPublicActionOf<ActionsCollectionMap>
+      event: DispatchedEvent<CheckedState<TState>, ActionsCollectionMap>
     ) => void;
   }
 ) => {
@@ -139,20 +134,18 @@ export const createDispatcher = <
       applyAction(currentCheckedState[0], localAction)
     );
 
-    onDispatched(
-      nextCheckedState,
-      currentCheckedState,
-      localAction,
-      remoteAction
-    );
+    onDispatched({
+      next: nextCheckedState,
+      prev: currentCheckedState,
+      action: actionOrActionTuple,
+    });
 
     if (!checkedStateEquals(currentCheckedState, nextCheckedState)) {
-      onStateUpdated(
-        nextCheckedState,
-        currentCheckedState,
-        localAction,
-        remoteAction
-      );
+      onStateUpdated({
+        next: nextCheckedState,
+        prev: currentCheckedState,
+        action: actionOrActionTuple,
+      });
 
       // console.log('going to update', nextCheckedState);
       $checkedState.update(nextCheckedState);

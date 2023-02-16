@@ -229,16 +229,17 @@ describe('Master-Client Orchestration', () => {
         count: 2,
       };
 
-      expect(bSpy).toHaveBeenCalledWith(computeCheckedState(expectedState));
-      expect(cSpy).toHaveBeenCalledWith(computeCheckedState(expectedState));
+      const expected = computeCheckedState(expectedState);
+
+      expect(actualChecksum).toBe(expected[1]);
+
+      expect(bSpy).toHaveBeenCalledWith(expected);
+      expect(cSpy).toHaveBeenCalledWith(expected);
       expect(aSpy).not.toHaveBeenCalled();
     });
   });
 
-  test('Punlic Actions with 2 clients', () => {
-    // This cannot be updated
-    // const genesisCheckedState = computeCheckedState(initialState);
-
+  test('Public Actions with 2 clients', async () => {
     const masterEnv = createMasterEnv<State, ActionsMap>({
       genesisState: initialState,
       reducerMap: reducer,
@@ -247,33 +248,76 @@ describe('Master-Client Orchestration', () => {
 
     const [whiteClient, blackClient] = masterEnv.clients;
 
-    // whiteClient.
+    const whiteClientXResource = new MovexResource<State, ActionsMap>(
+      reducer,
+      masterEnv.getPublic()
+    );
 
-    // whiteClient.subscribeToNetworkExpensiveMasterUpdates()
+    const blackClientXResource = new MovexResource<State, ActionsMap>(
+      reducer,
+      masterEnv.getPublic()
+    );
 
-    // const masterXResource = new MovexResource<State, ActionsMap>(
-    //   reducer,
-    //   genesisCheckedState
-    // );
+    const expectedMasterState = computeCheckedState({
+      ...initialState,
+      count: 5,
+    });
 
-    // const whiteClientXResource = new MovexResource<State, ActionsMap>(
-    //   reducer,
-    //   genesisCheckedState
-    // );
+    blackClient.onFwdAction((fwd) => {
+      const nextCheckedState = blackClientXResource.applyAction(fwd.action);
 
-    // const blackClientXResource = new MovexResource<State, ActionsMap>(
-    //   reducer,
-    //   genesisCheckedState
-    // );
+      const [_, nextChecksum] = nextCheckedState;
 
-    // masterXResource.onUpdate((nextCheckedState) => {
-    //   whiteClientXResource.update(nextCheckedState);
-    //   blackClientXResource.update(nextCheckedState);
-    // });
+      // This is very important check, ensuring the checksums and states are equal accross all stakeholders
+      expect(nextChecksum).toBe(fwd.nextChecksum);
+      expect(nextCheckedState).toEqual(expectedMasterState);
+
+      // Do stuff if the acks aren't the same like ask master for reconciliatory updates
+    });
+
+    whiteClientXResource.onDispatched((event) => {
+      whiteClient.emitAction(event.action);
+    });
+
+    blackClientXResource.onDispatched((event) => {
+      blackClient.emitAction(event.action);
+    });
+
+    whiteClientXResource.dispatch({
+      type: 'changeCount',
+      payload: 5,
+    });
+
+    expect(masterEnv.getPublic()).toEqual(expectedMasterState);
+
+    expect(whiteClientXResource.get()).toEqual(expectedMasterState);
+
+    // And even the peer client got the next state! Yey!
+    expect(blackClientXResource.get()).toEqual(expectedMasterState);
   });
 
-  test('with private', () => {
-    // with the current public implementatino wwe have the issue of not getting private states
-    // so need a way to get that, the simpler the betetr
-  });
+  // test('with private', () => {
+  //   // with the current public implementatino wwe have the issue of not getting private states
+  //   // so need a way to get that, the simpler the better
+
+  //   const masterEnv = createMasterEnv<State, ActionsMap>({
+  //     genesisState: initialState,
+  //     reducerMap: reducer,
+  //     clientCountorIds: ['white', 'black'],
+  //   });
+
+  //   const [whiteClient, blackClient] = masterEnv.clients;
+
+  //   const whiteClientXResource = new MovexResource<State, ActionsMap>(
+  //     reducer,
+  //     masterEnv.getPublic()
+  //   );
+
+  //   const blackClientXResource = new MovexResource<State, ActionsMap>(
+  //     reducer,
+  //     masterEnv.getPublic()
+  //   );
+  // });
+
+  // Test with many more peers
 });

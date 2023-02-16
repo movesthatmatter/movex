@@ -121,6 +121,28 @@ export type ActionOrActionTuple<
 > =
   | Action<TActionType, ActionCollectionMap[TActionType]>
   | [
+      privateAction: PrivateAction<
+        TActionType,
+        ActionCollectionMap[TActionType]
+      >,
+      publicAction: PublicAction<TActionType, ActionCollectionMap[TActionType]>
+    ];
+
+export type AnyActionOrActionTupleOf<
+  ActionCollectionMap extends ActionsCollectionMapBase,
+  TActionType extends StringKeys<ActionCollectionMap> = StringKeys<ActionCollectionMap>
+> =
+  | Action<TActionType, ActionCollectionMap[TActionType]>
+  | [
       PrivateAction<TActionType, ActionCollectionMap[TActionType]>,
       PublicAction<TActionType, ActionCollectionMap[TActionType]>
     ];
+
+export type DispatchedEvent<
+  TState,
+  ActionMap extends ActionsCollectionMapBase
+> = {
+  next: TState;
+  prev: TState;
+  action: AnyActionOrActionTupleOf<ActionMap>;
+};

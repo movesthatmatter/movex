@@ -10,7 +10,7 @@ export const getNextStateFrom = <T>(prev: T, a: NextStateGetter<T>) => {
 export interface IObservable<T> {
   // state: T;
   get: () => T;
-  onUpdate: (fn: (state: T) => void) => () => void;
+  onUpdated: (fn: (state: T) => void) => () => void;
   update: (getNextState: T | ((prev: T) => T)) => void;
 }
 
@@ -35,6 +35,9 @@ export class Observable<T> {
 
   update(nextStateGetter: NextStateGetter<T>) {
     this._state = getNextStateFrom(this._state, nextStateGetter);
+
+    // TODO: Should it only call onUpdate when there actually is an update??
+    //  Or should I leave that to the implementation
 
     this.pubsy.publish('onUpdate', this._state);
 

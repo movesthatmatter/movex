@@ -1,3 +1,4 @@
+import { Err, Ok } from 'ts-results';
 import { MovexResource } from '../MovexResource';
 import { computeCheckedState, createMovexReducerMap } from '../util';
 
@@ -31,7 +32,7 @@ describe('Observable', () => {
     }),
   });
 
-  test('simple actions with only dispatched updates', () => {
+  test('Dispatch Local Actions', () => {
     // TODO: Ideally only by getting the reducer we know the state
     const xResource = new MovexResource<State, ActionsMap>(
       reducer,
@@ -44,6 +45,43 @@ describe('Observable', () => {
     });
 
     expect(xResource.getUncheckedState()).toEqual({ count: 1 });
+
+    xResource.onUpdated((nextCheckedState) => {
+      expect(nextCheckedState).toEqual(
+        computeCheckedState({
+          count: 4,
+        })
+      );
+    });
+
+    xResource.dispatch({
+      type: 'incrementBy',
+      payload: 3,
+    });
+
+    expect(xResource.getUncheckedState()).toEqual({ count: 4 });
+  });
+
+  test('Apply Local Actions', () => {
+    const xResource = new MovexResource<State, ActionsMap>(
+      reducer,
+      computeCheckedState(initialState)
+    );
+
+    xResource.applyAction({
+      type: 'increment',
+      payload: undefined,
+    });
+
+    expect(xResource.getUncheckedState()).toEqual({ count: 1 });
+
+    xResource.onUpdated((nextCheckedState) => {
+      expect(nextCheckedState).toEqual(
+        computeCheckedState({
+          count: 4,
+        })
+      );
+    });
 
     xResource.dispatch({
       type: 'incrementBy',
@@ -81,15 +119,61 @@ describe('Observable', () => {
 
       expect(xResource.getUncheckedState()).toEqual({ count: 39 });
     });
-  });
 
-  describe('multiple resoure orchestration', () => {
-    const xResource = new MovexResource<State, ActionsMap>(
-      reducer,
-      computeCheckedState(initialState)
-    );
+    describe('Reconciliate Action', () => {
+      test('Updates when matching', () => {
+        const xResource = new MovexResource<State, ActionsMap>(
+          reducer,
+          computeCheckedState(initialState)
+        );
 
-    xResource
+        const updateSpy = jest.fn();
+        xResource.onUpdated(updateSpy);
+
+        const [incrementedState, incrementedStateChecksum] =
+          computeCheckedState({
+            ...initialState,
+            count: initialState.count + 1,
+          });
+
+        const actual = xResource.reconciliateAction(
+          {
+            type: 'increment',
+            payload: undefined,
+          },
+          incrementedStateChecksum
+        );
+
+        expect(actual).toEqual(
+          new Ok([incrementedState, incrementedStateChecksum])
+        );
+
+        expect(updateSpy).toHaveBeenCalledWith([
+          incrementedState,
+          incrementedStateChecksum,
+        ]);
+      });
+
+      test('Fails when NOT matching and does not update', () => {
+        const xResource = new MovexResource<State, ActionsMap>(
+          reducer,
+          computeCheckedState(initialState)
+        );
+
+        const updateSpy = jest.fn();
+        xResource.onUpdated(updateSpy);
+
+        const actual = xResource.reconciliateAction(
+          {
+            type: 'increment',
+            payload: undefined,
+          },
+          'wrong_checksum'
+        );
+
+        expect(actual.val).toEqual('ChecksumMismatch');
+      });
+    });
   });
 
   // TODO: test xresource destroy which unsubscribes
