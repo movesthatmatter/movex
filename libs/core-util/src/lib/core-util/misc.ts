@@ -52,3 +52,6 @@ export const keyInObject = <X extends {}, Y extends PropertyKey>(
 export const isObject = (o: unknown): o is object => {
   return typeof o === 'object' && !Array.isArray(o) && o !== null;
 };
+
+export const isFunction = (x: unknown): x is Function =>
+  typeof x === 'function';

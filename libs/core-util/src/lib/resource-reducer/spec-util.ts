@@ -8,15 +8,11 @@ import {
 } from '../core-util';
 import { createDispatcher } from './resource-reducer';
 import {
-  Action,
   ActionOrActionTuple,
   ActionsCollectionMapBase,
-  PrivateAction,
-  PublicAction,
   ResourceAndChecksum,
   ResourceReducerMap,
   StateAndChecksum,
-  ValAndChecksum,
 } from './types';
 import * as deepObject from 'deep-object-diff';
 import { hashObject } from './util';
@@ -367,9 +363,12 @@ export const createMasterEnvironment = <
                   console.log();
                   console.log();
 
-
                   const nextState = getResourceObj(clientId);
-                  console.debug('going to update pubsy', nextState.resource, nextState.checksum);
+                  console.debug(
+                    'going to update pubsy',
+                    nextState.resource,
+                    nextState.checksum
+                  );
 
                   pubsy.publish('onResourceUpdated', nextState);
                 },
@@ -452,7 +451,11 @@ export const createClientEnvironment = <
 
   // $resource.onUpdate((next) => {
   client.subscribeToMasterResourceUpdates((next) => {
-    console.debug('client.subscribeToMasterResourceUpdates', client.clientId, next);
+    console.debug(
+      'client.subscribeToMasterResourceUpdates',
+      client.clientId,
+      next
+    );
 
     if (
       // next.resource.item === store.current.state ||
