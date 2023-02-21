@@ -57,8 +57,10 @@ export type GenericAction = GenericPrivateAction | GenericPublicAction;
 //   payload: TAction['payload']
 // ) => void;
 
+export type MovexState = Record<string, any>;
+
 export type MovexReducerMap<
-  TState,
+  TState extends MovexState,
   ActionsCollectionMap extends ActionsCollectionMapBase
 > = Partial<
   {
@@ -69,7 +71,7 @@ export type MovexReducerMap<
   } & NativeMovexReducerMap<TState>
 >;
 
-export type NativeMovexReducerMap<TState> = {
+export type NativeMovexReducerMap<TState extends MovexState> = {
   $canReconcile: (
     state: TState,
     action: {
@@ -137,6 +139,22 @@ export type AnyActionOrActionTupleOf<
       PrivateAction<TActionType, ActionCollectionMap[TActionType]>,
       PublicAction<TActionType, ActionCollectionMap[TActionType]>
     ];
+
+export type CheckedAction<
+  TActionType extends StringKeys<ActionCollectionMap>,
+  ActionCollectionMap extends ActionsCollectionMapBase
+> = {
+  action: ActionOrActionTuple<TActionType, ActionCollectionMap>;
+  checksum: Checksum;
+};
+
+export type AnyCheckedAction<
+  ActionCollectionMap extends ActionsCollectionMapBase,
+  TActionType extends StringKeys<ActionCollectionMap> = StringKeys<ActionCollectionMap>
+> = {
+  action: AnyActionOrActionTupleOf<ActionCollectionMap, TActionType>;
+  checksum: Checksum;
+};
 
 export type DispatchedEvent<
   TState,

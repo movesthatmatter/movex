@@ -11,10 +11,12 @@ import {
 import {
   ActionOrActionTuple,
   ActionsCollectionMapBase,
+  CheckedAction,
   CheckedState,
   Checksum,
   DispatchedEvent,
   MovexReducerMap,
+  MovexState,
 } from './types';
 import {
   computeCheckedState,
@@ -33,7 +35,7 @@ import {
 
 // TODO: Need to find a clean way to not have to initialize tiwht the given TState and even reducer?
 export class MovexResource<
-  TState,
+  TState extends MovexState,
   ActionsCollectionMap extends ActionsCollectionMapBase,
   TReducerMap extends MovexReducerMap<
     TState,
@@ -89,8 +91,13 @@ export class MovexResource<
     this.dispatcher(actionOrActionTuple);
   }
 
-  // The diff between this and the dispatch is that this happens in sync and it returns
-  // The dispatch MIGHT not happen in sync
+  /**
+   * The diffence between this and the dispatch is that this happens in sync and returns the next state,
+   * while dispatch() MIGHT not happen in sync and doesn't return
+   *
+   * @param actionOrActionTuple
+   * @returns
+   */
   applyAction<TActionType extends StringKeys<ActionsCollectionMap>>(
     actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>
   ) {
@@ -102,14 +109,21 @@ export class MovexResource<
     return nextCheckedState;
   }
 
+  /**
+   * Same as applyAction() except it fails on mismatching checksums
+   *
+   * @param actionOrActionTuple
+   * @param expectedNextChecksum
+   * @returns
+   */
   reconciliateAction<TActionType extends StringKeys<ActionsCollectionMap>>(
-    actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>,
-    expectedNextChecksum: Checksum
+    checkedAction: CheckedAction<TActionType, ActionsCollectionMap>
   ): Result<CheckedState<TState>, 'ChecksumMismatch'> {
-    const nextCheckedState =
-      this.getNextCheckedStateFromAction(actionOrActionTuple);
+    const nextCheckedState = this.getNextCheckedStateFromAction(
+      checkedAction.action
+    );
 
-    if (nextCheckedState[1] !== expectedNextChecksum) {
+    if (nextCheckedState[1] !== checkedAction.checksum) {
       return new Err('ChecksumMismatch');
     }
 

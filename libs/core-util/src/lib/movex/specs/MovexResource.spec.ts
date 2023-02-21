@@ -1,4 +1,4 @@
-import { Err, Ok } from 'ts-results';
+import { Ok } from 'ts-results';
 import { MovexResource } from '../MovexResource';
 import { computeCheckedState, createMovexReducerMap } from '../util';
 
@@ -136,13 +136,13 @@ describe('Observable', () => {
             count: initialState.count + 1,
           });
 
-        const actual = xResource.reconciliateAction(
-          {
+        const actual = xResource.reconciliateAction({
+          action: {
             type: 'increment',
             payload: undefined,
           },
-          incrementedStateChecksum
-        );
+          checksum: incrementedStateChecksum,
+        });
 
         expect(actual).toEqual(
           new Ok([incrementedState, incrementedStateChecksum])
@@ -163,13 +163,13 @@ describe('Observable', () => {
         const updateSpy = jest.fn();
         xResource.onUpdated(updateSpy);
 
-        const actual = xResource.reconciliateAction(
-          {
+        const actual = xResource.reconciliateAction({
+          action: {
             type: 'increment',
             payload: undefined,
           },
-          'wrong_checksum'
-        );
+          checksum: 'wrong_checksum',
+        });
 
         expect(actual.val).toEqual('ChecksumMismatch');
       });

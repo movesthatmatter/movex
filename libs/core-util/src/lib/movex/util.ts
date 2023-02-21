@@ -23,7 +23,10 @@ import {
   DispatchedEvent,
   GenericAction,
   MovexReducerMap,
+  MovexState,
 } from './types';
+import microdiff from 'microdiff';
+import micropatch from 'micropatch';
 
 export const hashObject = (val: NotUndefined) => hash.MD5(val);
 
@@ -33,7 +36,7 @@ export const isAction = (a: unknown): a is GenericAction => {
 
 export const createMovexReducerMap = <
   ActionsCollectionMap extends ActionsCollectionMapBase,
-  TState
+  TState extends MovexState
 >(
   initialState: TState
 ) => {
@@ -48,7 +51,7 @@ export const createMovexReducerMap = <
 // NEXT - Implement this on the backend and check public/private
 // Next Next - implement in on maha and change the whole game strategy to this
 export const createDispatcher = <
-  TState,
+  TState extends MovexState,
   ActionsCollectionMap extends ActionsCollectionMapBase,
   TReducerMap extends MovexReducerMap<
     TState,
@@ -160,7 +163,7 @@ export const createDispatcher = <
 
 export const getReducerApplicator =
   <
-    TState,
+    TState extends MovexState,
     ActionsCollectionMap extends ActionsCollectionMapBase,
     TReducerMap extends MovexReducerMap<
       TState,
