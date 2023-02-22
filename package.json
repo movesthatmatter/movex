@@ -4,15 +4,13 @@
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
-    "tsc-all": "tsc -b apps/api libs/server-sdk",
+    "tsc-all": "tsc -b libs/server-sdk",
     "build": "nx build",
-    "build-api": "nx build api",
     "test": "nx run-many --all --target=test --skip-nx-cache",
-    "deploy-api:staging": "git diff --exit-code HEAD && flyctl deploy -c apps/api/fly.staging.toml --dockerfile apps/api/Dockerfile -e APP_REVISION=$(git rev-parse --short HEAD) --remote-only",
-    "push-all-libs--locally": "cd dist/libs/client-sdk && npm version pre && yalc push && cd -; cd dist/libs/server-sdk && npm version pre && yalc push && cd -; cd dist/libs/backend && npm version pre && yalc push && cd -; cd dist/libs/core-util && npm version pre && yalc push && cd -;",
+    "push-all-libs--locally": "cd dist/libs/movex && npm version pre && yalc push && cd -; cd dist/libs/movex-server && npm version pre && yalc push && cd -",
     "build-all-libs": "npx nx run-many --target=build"
   },
-  "private": true,
+  "private": false,
   "dependencies": {
     "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^9.0.0",
