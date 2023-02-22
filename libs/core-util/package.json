@@ -1,6 +1,6 @@
 {
-  "name": "@matterio/core-util",
-  "version": "0.1.5",
+  "name": "movex-core-util",
+  "version": "0.0.0",
   "exports": {
     ".": "./src/index.js",
     "./io": "./src/lib/core-io.js"

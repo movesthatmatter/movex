@@ -1,19 +1,18 @@
 import { Pubsy } from 'ts-pubsy';
 import { Err, Ok, Result } from 'ts-results';
-import { StringKeys } from '../core-types';
-import { invoke } from '../core-util';
 import {
   getNextStateFrom,
+  invoke,
   IObservable,
   NextStateGetter,
   Observable,
-} from '../core-util/Observable';
+  StringKeys,
+} from 'movex-core-util';
 import {
   ActionOrActionTuple,
   ActionsCollectionMapBase,
   CheckedAction,
   CheckedState,
-  Checksum,
   DispatchedEvent,
   MovexReducerMap,
   MovexState,

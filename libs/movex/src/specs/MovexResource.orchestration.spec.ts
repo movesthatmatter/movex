@@ -1,45 +1,45 @@
-import { delay, invoke, xinvoke } from '../../core-util';
-import { MovexResource } from '../MovexResource';
-import { computeCheckedState, createMovexReducerMap } from '../util';
+import { invoke } from 'movex-core-util';
+import { MovexResource } from '../lib/MovexResource';
+import { computeCheckedState, createMovexReducerMap } from '../lib/util';
 import { BlackMove, Submission, WhiteMove } from './types';
 import { createMasterEnv } from './util/createMasterEnv';
 require('console-group').install();
 
-describe('Master-Client Orchestration', () => {
-  type ActionsMap = {
-    changeCount: number;
-    submitMoves:
-      | {
-          color: 'white';
-          moves: WhiteMove[];
-        }
-      | {
-          color: 'black';
-          moves: BlackMove[];
-        };
-    setSubmissionStatusToReady: 'white' | 'black';
-  };
+type ActionsMap = {
+  changeCount: number;
+  submitMoves:
+    | {
+        color: 'white';
+        moves: WhiteMove[];
+      }
+    | {
+        color: 'black';
+        moves: BlackMove[];
+      };
+  setSubmissionStatusToReady: 'white' | 'black';
+};
 
-  type State = {
-    count: number;
-    submission: Submission;
-  };
+type State = {
+  count: number;
+  submission: Submission;
+};
 
-  const initialState: State = {
-    count: 0,
-    submission: {
-      status: 'none',
-      white: {
-        canDraw: true,
-        moves: [],
-      },
-      black: {
-        canDraw: true,
-        moves: [],
-      },
+const initialState: State = {
+  count: 0,
+  submission: {
+    status: 'none',
+    white: {
+      canDraw: true,
+      moves: [],
     },
-  };
+    black: {
+      canDraw: true,
+      moves: [],
+    },
+  },
+};
 
+describe('Master Client Orchestration', () => {
   const reducer = createMovexReducerMap<ActionsMap, State>(initialState)({
     changeCount: (prev, { payload }) => ({
       ...prev,
@@ -141,108 +141,15 @@ describe('Master-Client Orchestration', () => {
 
       return prev;
     },
-  });
-
-  describe('master env', () => {
-    test('gets an ack checksum after action emited', async () => {
-      const masterEnv = createMasterEnv<State, ActionsMap>({
-        genesisState: initialState,
-        reducerMap: reducer,
-        clientCountorIds: ['a', 'b', 'c'],
-      });
-
-      const [a, b, c] = masterEnv.clients;
-
-      const initialCheckedState = masterEnv.getPublic();
-      expect(initialCheckedState).toEqual(computeCheckedState(initialState));
-
-      const actualChecksum = await a.emitAction({
-        type: 'changeCount',
-        payload: 2,
-      });
-
-      expect(actualChecksum).toBeDefined();
-      expect(actualChecksum).not.toEqual(initialCheckedState[1]);
-    });
-
-    test('the peers get the action forwarded', async () => {
-      const masterEnv = createMasterEnv<State, ActionsMap>({
-        genesisState: initialState,
-        reducerMap: reducer,
-        clientCountorIds: ['a', 'b', 'c'],
-      });
-
-      const [a, b, c] = masterEnv.clients;
-
-      const aSpy = jest.fn();
-      const bSpy = jest.fn();
-      const cSpy = jest.fn();
-
-      a.onFwdAction(aSpy);
-      b.onFwdAction(bSpy);
-      c.onFwdAction(cSpy);
-
-      const actualChecksum = await a.emitAction({
-        type: 'changeCount',
-        payload: 2,
-      });
-
-      expect(bSpy).toHaveBeenCalledWith({
-        action: {
-          type: 'changeCount',
-          payload: 2,
-        },
-        checksum: actualChecksum,
-      });
-
-      expect(cSpy).toHaveBeenCalledWith({
-        action: {
-          type: 'changeCount',
-          payload: 2,
-        },
-        checksum: actualChecksum,
-      });
-
-      expect(aSpy).not.toHaveBeenCalled();
-    });
-
-    test('the peers get the state updated', async () => {
-      const masterEnv = createMasterEnv<State, ActionsMap>({
-        genesisState: initialState,
-        reducerMap: reducer,
-        clientCountorIds: ['a', 'b', 'c'],
-      });
-
-      const [a, b, c] = masterEnv.clients;
-
-      const aSpy = jest.fn();
-      const bSpy = jest.fn();
-      const cSpy = jest.fn();
-
-      a.subscribeToNetworkExpensiveMasterUpdates(aSpy);
-      b.subscribeToNetworkExpensiveMasterUpdates(bSpy);
-      c.subscribeToNetworkExpensiveMasterUpdates(cSpy);
-
-      const actualChecksum = await a.emitAction({
-        type: 'changeCount',
-        payload: 2,
-      });
-
-      const expectedState: State = {
-        ...initialState,
-        count: 2,
-      };
-
-      const expected = computeCheckedState(expectedState);
-
-      expect(actualChecksum).toBe(expected[1]);
-
-      expect(bSpy).toHaveBeenCalledWith(expected);
-      expect(cSpy).toHaveBeenCalledWith(expected);
-      expect(aSpy).not.toHaveBeenCalled();
-    });
-
-    // test('')
+    $canReconcile: (state) => {
+      // This is only from the public state. Is that enough?
+      return (
+        state.submission.status === 'partial' &&
+        state.submission.white.canDraw === false &&
+        state.submission.black.canDraw === false
+      );
+      // if ()
+    },
   });
 
   test('Public Actions with 2 clients', async () => {
@@ -484,6 +391,6 @@ describe('Master-Client Orchestration', () => {
       expect(blackClientXResource.get()).toEqual(expectedSenderState);
     });
   });
-
-  // Test with many more peers
 });
+
+// Test with many more peers

@@ -1,11 +1,13 @@
 import { Pubsy } from 'ts-pubsy';
-import { StringKeys } from '../../../core-types';
-import { range } from '../../../core-util';
+import { range, StringKeys } from 'movex-core-util';
 import {
   getStateDiff,
   PrivateFragment,
   reconciliatePrivateFragments,
-} from '../../movexReconciliator';
+  computeCheckedState,
+  getReducerApplicator,
+  isAction,
+} from '../../lib/util';
 import {
   ActionOrActionTuple,
   ActionsCollectionMapBase,
@@ -14,12 +16,7 @@ import {
   Checksum,
   MovexReducerMap,
   MovexState,
-} from '../../types';
-import {
-  computeCheckedState,
-  getReducerApplicator,
-  isAction,
-} from '../../util';
+} from '../../lib/types';
 
 export const createMasterEnv = <
   TState extends MovexState,
@@ -201,7 +198,7 @@ export const createMasterEnv = <
                 });
 
               // Ack the checksum from the private action
-              return get(clientId)[1];
+              resolve(get(clientId)[1]);
             }
           });
         },

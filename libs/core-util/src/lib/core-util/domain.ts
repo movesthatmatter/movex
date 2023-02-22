@@ -1,9 +1,5 @@
 import {
-  ClientResourceShape,
   GenericClientResourceShapeOfType,
-  GenericResource,
-  GenericResourceOfType,
-  Resource,
   ResourceIdentifierObj,
   ResourceIdentifierStr,
   WsResponseResultPayload,

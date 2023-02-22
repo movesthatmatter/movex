@@ -7,13 +7,7 @@
  *  the server needs to know (and since it's running on the client as well it isn't really server code)
  */
 
-import {
-  ClientResourceShape,
-  GenericClientResource,
-  GenericResource,
-  ResourceShape,
-  StringKeys,
-} from '../core-types';
+import { GenericClientResource, StringKeys } from 'movex-core-util';
 
 export type ActionsCollectionMapBase = Record<string, unknown>;
 
@@ -63,50 +57,53 @@ export type GenericAction = GenericPrivateAction | GenericPublicAction;
 //   payload: TAction['payload']
 // ) => void;
 
-export type ResourceReducerMap<
-  TResource extends GenericClientResource,
-  ActionsCollectionMap extends ActionsCollectionMapBase,
-  TState extends TResource['item'] = TResource['item']
+export type MovexState = Record<string, any>;
+
+export type MovexReducerMap<
+  TState extends MovexState,
+  ActionsCollectionMap extends ActionsCollectionMapBase
 > = Partial<
   {
     [k in StringKeys<ActionsCollectionMap>]: (
       state: TState,
       action: Action<k, ActionsCollectionMap[k]>
     ) => TState;
-  } & NativeResourceReducerMap<TResource>
+  } & NativeMovexReducerMap<TState>
 >;
 
-export type NativeResourceReducerMap<TResource extends GenericClientResource> =
-  {
-    $canReconcile: (
-      state: TResource['item'],
-      action: {
-        type: '$canReconcile';
-        payload: undefined;
-      }
-    ) => boolean;
-  };
+export type NativeMovexReducerMap<TState extends MovexState> = {
+  $canReconcile: (
+    state: TState,
+    action: {
+      type: '$canReconcile';
+      payload: undefined;
+    }
+  ) => boolean;
+};
 
-export type GenericResourceReducerMap = ResourceReducerMap<
+export type GenericMovexReducerMap = MovexReducerMap<
   GenericClientResource,
   ActionsCollectionMapBase
 >;
 
 export type ValAndChecksum<T> = [T, string];
 
-export type ResourceAndChecksum<
-  TResource extends GenericResource | GenericClientResource
-> = {
-  resource: TResource;
+// export type ResourceAndChecksum<
+//   TResource extends GenericResource | GenericClientResource
+// > = {
+//   resource: TResource;
 
-  // This is the TResource['item']'s checksum
-  checksum: string;
-};
+//   // This is the TResource['item']'s checksum
+//   checksum: string;
+// };
 
-export type StateAndChecksum<T> = {
-  state: T;
-  checksum: string;
-};
+export type Checksum = string;
+export type CheckedState<T> = [state: T, checksum: Checksum];
+
+// export type StateAndChecksum<T> = {
+//   state: T;
+//   checksum: string;
+// };
 
 export type DispatchFn = <
   TActionType extends StringKeys<ActionCollectionMap>,
@@ -126,6 +123,44 @@ export type ActionOrActionTuple<
 > =
   | Action<TActionType, ActionCollectionMap[TActionType]>
   | [
+      privateAction: PrivateAction<
+        TActionType,
+        ActionCollectionMap[TActionType]
+      >,
+      publicAction: PublicAction<TActionType, ActionCollectionMap[TActionType]>
+    ];
+
+export type AnyActionOrActionTupleOf<
+  ActionCollectionMap extends ActionsCollectionMapBase,
+  TActionType extends StringKeys<ActionCollectionMap> = StringKeys<ActionCollectionMap>
+> =
+  | Action<TActionType, ActionCollectionMap[TActionType]>
+  | [
       PrivateAction<TActionType, ActionCollectionMap[TActionType]>,
       PublicAction<TActionType, ActionCollectionMap[TActionType]>
     ];
+
+export type CheckedAction<
+  TActionType extends StringKeys<ActionCollectionMap>,
+  ActionCollectionMap extends ActionsCollectionMapBase
+> = {
+  action: ActionOrActionTuple<TActionType, ActionCollectionMap>;
+  checksum: Checksum;
+};
+
+export type AnyCheckedAction<
+  ActionCollectionMap extends ActionsCollectionMapBase,
+  TActionType extends StringKeys<ActionCollectionMap> = StringKeys<ActionCollectionMap>
+> = {
+  action: AnyActionOrActionTupleOf<ActionCollectionMap, TActionType>;
+  checksum: Checksum;
+};
+
+export type DispatchedEvent<
+  TState,
+  ActionMap extends ActionsCollectionMapBase
+> = {
+  next: TState;
+  prev: TState;
+  action: AnyActionOrActionTupleOf<ActionMap>;
+};

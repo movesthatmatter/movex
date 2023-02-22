@@ -1,6 +1,6 @@
 import { Ok } from 'ts-results';
-import { MovexResource } from '../MovexResource';
-import { computeCheckedState, createMovexReducerMap } from '../util';
+import { MovexResource } from '../lib/MovexResource';
+import { computeCheckedState, createMovexReducerMap } from '../lib/util';
 
 describe('Observable', () => {
   type ActionsMap = {

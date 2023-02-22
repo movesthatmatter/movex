@@ -1,6 +1,6 @@
 import deepClone from 'deep-clone';
 import { Submission } from './types';
-import { getJSONPatchDiff, reconciliatePrivateFragments } from '../movexReconciliator';
+import { getJSONPatchDiff, reconciliatePrivateFragments } from '../lib/util';
 
 // describe('state as primitive', () => {
 //   type State = number;

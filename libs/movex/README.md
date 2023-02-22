@@ -2,15 +2,6 @@
 
 Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation.
 
-1. [Why?](#why-what-makes-it-unique)
-   1. [Matterio Libraries](#matterio-library)
-      1. [@matterio/client](#matterioclient)
-      2. [@matterio/server](#matterioserver)
-      3. [To Do](#product-todo)
-   2. [Matterio Cloud](#matterio-cloud)
-2. [Marketing](#marketing)
-   1. [Landing Page](#landing-page)
-
 ---
 
 ## Why? 
@@ -207,7 +198,7 @@ type ActionsMap = {
 ```ts 
 // gameReducer.ts
 
-import { createResourceReducer } from 'matterio/client';
+import { createResourceReducer } from 'movex';
 
 // This will be both run by the client and the server
 export default createResourceReducer<ActionsMap, Resource>({
@@ -248,10 +239,10 @@ export const useResourceReducer = <
   Resource
 >(rId: ResourceIdentifier<TResourceType>, reducer: Reducer<Resource, ActionsMap>) => {
   // This comes from the Provider
-  const matterio = useMatterio();
+  const movex = useMovex();
 
   const [state, setState] = setState<Resouce['item']>();
-  const dispatch = matterio.registerResourceReducer<ActionsMap>(
+  const dispatch = movex.registerResourceReducer<ActionsMap>(
     rId, 
     reducer, 
     (nextResourceItem) => {

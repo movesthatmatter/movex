@@ -1,32 +1,26 @@
 import hash from 'object-hash';
-import { StringKeys } from '../core-types';
+import * as jsonpatch from 'fast-json-patch';
 import {
   invoke,
   isObject,
   keyInObject,
   noop,
   NotUndefined,
-} from '../core-util';
-import { Observable } from '../core-util/Observable';
-import {
-  ActionsCollectionMapBase,
-  AnyActionOf,
-  AnyPublicActionOf,
-  GenericPrivateAction,
-  GenericPublicAction,
-} from '../resource-reducer';
+  Observable,
+  StringKeys,
+} from 'movex-core-util';
 import {
   Action,
   ActionOrActionTuple,
-  AnyActionOrActionTupleOf,
+  ActionsCollectionMapBase,
   CheckedState,
   DispatchedEvent,
   GenericAction,
+  GenericPrivateAction,
+  GenericPublicAction,
   MovexReducerMap,
   MovexState,
 } from './types';
-import microdiff from 'microdiff';
-import micropatch from 'micropatch';
 
 export const hashObject = (val: NotUndefined) => hash.MD5(val);
 
@@ -199,3 +193,50 @@ export const checkedStateEquals = <
   b: B
   // They are the same if the instances are the same [0] or if the checksums are the same [1]
 ) => a[0] === b[0] || a[1] === b[1];
+
+// import { Difference } from './diff';
+//
+// export type StateDiff = Difference;
+
+// export const getJSONDiff = <
+//   A extends Record<string, any> | any[],
+//   B extends Record<string, any> | any[]
+// >(
+//   a: A,
+//   b: B
+// ): StateDiff => (microdiff as any)(a, b, { cyclesFix: false });
+
+export const getJSONPatchDiff = <
+  A extends Record<string, any> | any[],
+  B extends Record<string, any> | any[]
+>(
+  a: A,
+  b: B
+) => jsonpatch.compare(a, b);
+
+type JsonPatch = jsonpatch.Operation[];
+
+export type PrivateFragment = JsonPatch;
+
+export const reconciliatePrivateFragments = <TState extends MovexState>(
+  state: TState,
+  fragmentsInOrder: PrivateFragment[]
+): TState => {
+  const allFragmentsInOrder = fragmentsInOrder.reduce(
+    // Here there could be some logic on finding the same path in the diff,
+    //  and apply some optimization or heuristic for the reconciliation
+    (accum, next) => [...accum, ...next],
+    []
+  );
+
+  return allFragmentsInOrder.reduce(
+    jsonpatch.applyReducer,
+    // This is expensive but otherwise the state gets mutated. Need to look into maybe another way?
+    jsonpatch.deepClone(state)
+  );
+};
+
+export const getStateDiff = <A extends MovexState, B extends MovexState>(
+  a: A,
+  b: B
+) => getJSONPatchDiff(a, b);
