@@ -6,23 +6,16 @@ import {
   MovexReducerMap,
   MovexState,
 } from './types';
-import { computeCheckedState, getReducerApplicator, isAction } from './util';
-import {
-  getNextStateFrom,
-  NextStateGetter,
-  StringKeys,
-} from 'movex-core-util';
+import { getReducerApplicator, isAction } from './util';
+import { AsyncStore, NextStateGetter, StringKeys } from 'movex-core-util';
 
-type AsyncStore<TState extends MovexState> = {
-  get: (id: string) => AsyncResult<TState, unknown>;
-  update: (
-    id: string,
-    next: NextStateGetter<TState>
-  ) => AsyncResult<TState, unknown>;
-  remove: (id: string) => AsyncResult<void, unknown>;
-};
 
-export class MovexMaster<
+/**
+ * This Class works with a Resource Type (not Resource Identificator),
+ * and thus is able to handle all resource of type at a time, b/c it runs 
+ * on the backend (most likely)
+ */
+export class MovexResourceMaster<
   TState extends MovexState,
   ActionsCollectionMap extends ActionsCollectionMapBase,
   TReducerMap extends MovexReducerMap<

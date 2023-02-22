@@ -31,8 +31,11 @@ import {
 //     action.type
 //   }
 // })
-
 // TODO: Need to find a clean way to not have to initialize tiwht the given TState and even reducer?
+//
+// Question:
+//    Is this really a resource or more like a state? Well if it's the end result it could be a resource yeah
+//    Or the combination of the ClientResource with Movex
 export class MovexResource<
   TState extends MovexState,
   ActionsCollectionMap extends ActionsCollectionMapBase,

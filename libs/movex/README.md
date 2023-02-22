@@ -1,36 +1,44 @@
 # Movex
 
-Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation.
+Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation w/o the need to write Server Specific Code.
 
 ---
 
-## Why? 
+## Why? What makes it unique?
 
-Movex is uniq in the combination of the following features:
+Movex combines the following features out of the box:
 
-1. Server Authoritative with Deterministic Propagation out of the box
-2. Easy way to work with state – via actions
-3. Write only client code. The server code and multiplayer mode is incidental (out of the box)
-   - It works just as well on the client only (locally) as on the server. 
-4. Out of the box state sync 
+1. Local and Remote State Synchornization across all peers and server
+2. Server Authoritative with Deterministic Propagation. Why is that important? Read [here](https://gafferongames.com/post/deterministic_lockstep/) or [here](https://longwelwind.net/blog/networking-turn-based-game/).
+3. Easy, functional way to handle the state via Actions & Reducers
+4. Write only client code. (The server code and multiplayer mode is incidental)!!! 🥳
 
 ## How does it work?
 
-At its core Movex is a local Redux/Flux like store that incidentally happens to syncrhnize remote state. Wihout writing any code for that or for the server!
+At its core Movex is a local Redux/Flux-like store that incidentally synchronizes the state with all the peers involved as well as with the server. Without having to write any specific code for that or for the server!
 
-### Resources
+There are a few key concepts to know:
+1. Reducers 
+2. Resources
+3. Actions
+4. State & Private State
 
-A Resource at its very basic is the combination of Data (State) and Subscribers (Clients). 
-
-There are some native resources like $match, $room or $chatHistory but you can simply create a new resource by:
-
-TBD
-
-### Resource Reducers
+### Reducers
 
 Each resource, needs a reducer that will modify it's state via [Actions](#actions).
 
 A reducer, is almost the same as a Redux or React's useReducer, reducer. It's where the business/game logic lives.
+
+```ts
+// Api might change
+
+const counterReducer = {
+  increment: (state, action: Action<undefined>) => state,
+  decrement: (state, action: Action<undefined>) => state,
+  changeTo: (state, action: Action<number>) => state,
+}
+
+```
 
 **It's a simple, deterministically mechanism that given the same input it returns the same output.** (This might depend on a few things, but for a general turn based game without physics it should)! 
 
@@ -45,6 +53,44 @@ __But the server is the authority! And here is what it does:__
 2. Sends an acknowledgemnt back to the sender
 3. Forwards the action to the rest of the clients (subscribed to that resource)
 4. Computes and Stores secret (private) state until a future _revelation_ event. (see the section on Secret State & Private Actions ) 
+
+### Resources
+
+A Resource at its very basic is the combination of Data (State) and Subscribers (Clients). 
+
+There are some native resources like $match, $room or $chatHistory but you can simply create a new resource, as follows:
+
+```ts
+// Api might change
+
+const counterReducer = movex.createReducer({
+  resourceType: 'counter', // This is the resource type
+  reducer: {
+    increment: (state, action: Action<undefined>) => state,
+    decrement: (state, action: Action<undefined>) => state,
+    changeTo: (state, action: Action<number>) => state,
+  },
+  // this is the state that will be used on the client before the resource is retieved from api
+  // it can also be used to infer the state 
+  defaultState: {} as TState, 
+});
+
+const movex = new Movex({
+  resourceReducers: [counterResourceReducer], // an array of them given from the reducer files
+  config: MovexClientConfig
+});
+
+// use it
+movex.resources.counter.create(rid, state);
+
+// movex.resources is MovexResource({});
+movex.resources.counter.onUpdated((nextState) => {
+  console.log('got next state', nextState);
+});
+
+movex.resources.counter.dispatch({ type: changeTo, payload: 33 });
+
+```
 
 ### Actions
 
@@ -101,13 +147,13 @@ The server will call the reducer with the private action, but knowing behind the
 
 #### Reconciliation Action
 
-TBD
+The Reconciliation Action is what determines when the private fragments of the state should reconcile back into a next public version.
 
 ### State Reconciliation
 
-What I'm thinking is to take advantage of the chcksums even more. Each forward/ack action will return the prev and next checksum to the clients. 
+Movex takes advantage of the state checksums. Each forward/ack action will return the prev and next checksum to the clients. 
 
-The clients will match the locally computer next checksum vs the remote received one.
+The clients will match the locally computed next checksum vs the remote received one.
 - If they match all is good
 - If they don't match here is the strategy:
 
@@ -177,93 +223,110 @@ These are more complex b/c they allow for nesting.
 
 ## Usage on the Client
 
-The client actually could act as the state keeper. The whole server sync it just incidental, but the changes are kept locally as well as in a remote store!
+The client acts as the state keeper. The whole server sync it just incidental, but the changes are kept locally as well as in a remote store!
 
-Tha means the resource has its own store locally.
+That means the resource has its own store locally.
 
 ```ts
-/// resources/action-types.ts
+// src: resource-reducers/counter.ts
 
-type ActionsMap = {
-  // Private Action
-  submitMoves: {
-    color: Color;
-    moves: Move[];
-  };
-  // Public Action
-  playerSubmitted: Color;
-}
-```
-
-```ts 
-// gameReducer.ts
-
-import { createResourceReducer } from 'movex';
-
-// This will be both run by the client and the server
-export default createResourceReducer<ActionsMap, Resource>({
-  // Private Move
-  submitMoves: (prev, { payload }) => {
-    // On the client, this will be run optimistically to set the state right away
-
-    // On the server it will run to get the authority
-    // After it runs on the server it send an ack to the sender, and DOESN'T broadcast to the rest since it's private
+export default movex.createReducer({
+  resourceType: 'counter', // This is the resource type
+  actionsMap: {
+    increment: (state, action: Action<undefined>) => state,
+    decrement: (state, action: Action<undefined>) => state,
+    changeTo: (state, action: Action<number>) => state,
   },
-  // Public Move
-  playerSubmitted: (prev, { payload }) => {
-    return {
-
-      ...prev,
-    }
-  },
-
-  // This will only be called on the backend after a private method is called.
-  // With this the paired public could be optional, b/c the reconciliation mechanism is here!
-  $reconcileCheck: (prev): boolean => {
-    return prev.white.submitted && prev.black.submitted;
-  }
+  // this is the state that will be used on the client before the resource is retieved from api
+  // it can also be used to infer the state 
+  defaultState: {} as TState, 
 });
 
+// In this way this is the way the actions are inferred
+
 ```
 
+#### Vanilla TS
 
 ```ts
-// useResourceReducer.ts (for react)
 
-import { setState } from 'react';
-import { ClientSdk } from 'client-sdk';
+// instantiate it
+const movex = new Movex({
+  resourceReducers: [counterResourceReducer], // an array of them given from the reducer files
+  config: MovexClientConfig
+});
 
-export const useResourceReducer = <
-  TResourceType extends Resource['type'],
-  ActionsMap,
-  Resource
->(rId: ResourceIdentifier<TResourceType>, reducer: Reducer<Resource, ActionsMap>) => {
-  // This comes from the Provider
-  const movex = useMovex();
+// use it
+movex.resources.create(rid, state);
 
-  const [state, setState] = setState<Resouce['item']>();
-  const dispatch = movex.registerResourceReducer<ActionsMap>(
-    rId, 
-    reducer, 
-    (nextResourceItem) => {
-      setState(nextResourceItem);
-    })
+// movex.resources is MovexResource({});
+movex.resources.counter.onUpdated((nextState) => {
+  console.log('got next state', nextState);
+})
 
-  return [dispatch, state];
+```
+
+#### With React
+
+```tsx
+// src: App.tsx
+
+const AppComponent() {
+  const movex = useInstance(new Movex({
+    resourceReducers: [counterResourceReducer], // an array of them given from the reducer files
+    config: ClientSDKConfig
+  }));
+
+  const [counterRid, setCounterRid] = useState<Movex.ResourceIdentifier>();
+
+  useEffect(() => {
+    
+  }, [movex])
+
+  // if (!counterId) {
+  //   return null;
+  // }
+
+  return (
+    <div>
+      {counterRid ? (
+        <CounterComponent rid={counterRid}>
+      ) : (
+        <button
+          // When the resource get's created the default state becomes it's state once the response is returned
+          action={() => movex.createResource('counter', state).map(setCounterRid)}
+        >
+          Create Counter
+        </button>
+      )}
+    </div>
+  )
 }
 ```
 
-```ts
-// use it somewhere in react
+```tsx
+// src: Counter.tsx
+import { useResourceReducer } from 'movex-react';
 
-import { useResourceReducer } from './useResourceReducer';
-import gameReducer from './gameReducer';
+const CounterComponent({rid: Movex.ResourceIdentifier<'counter'>}) {
+  const [counter, dispatchCounterAction] = useResourceReducer(movex, myCounterResourceId);
 
-const [dispatchGameActions, gameState] = useResourceReducer(
-  { id: 1, type: 'game'},
-  gameReducer
-)
+  return (
+    <div>
+      <span>Counter: {counter}</span>
 
+      {/* Actions */}
+      <button onClick={() => dispatchCounterAction({type: 'increment', payload: undefined})}>
+        Increment
+      </button>
+      <button onClick={() => dispatchCounterAction({type: 'decrement', /* payload could be ommited when undefined */ })}>
+        Decrement
+      </button>
+      <button onClick={() => dispatchCounterAction('changeTo', 34)}> {/* this shows an even simpler api */}
+        Change to
+      </button>
+    </div>
+  )
+}f
 ```
 
-For react there will be a hook to register the reducer. 
