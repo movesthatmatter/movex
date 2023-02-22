@@ -1,21 +1,21 @@
 {
-  "name": "core-util",
+  "name": "movex-core-util",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/core-util/src",
+  "sourceRoot": "libs/movex-core-util/src",
   "projectType": "library",
   "targets": {
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["libs/core-util/**/*.ts"]
+        "lintFilePatterns": ["libs/movex-core-util/**/*.ts"]
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "libs/core-util/jest.config.ts",
+        "jestConfig": "libs/movex-core-util/jest.config.ts",
         "passWithNoTests": true
       }
     },
@@ -23,11 +23,11 @@
       "executor": "@nrwl/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/core-util",
-        "tsConfig": "libs/core-util/tsconfig.lib.json",
-        "packageJson": "libs/core-util/package.json",
-        "main": "libs/core-util/src/index.ts",
-        "assets": ["libs/core-util/*.md"]
+        "outputPath": "dist/libs/movex-core-util",
+        "tsConfig": "libs/movex-core-util/tsconfig.lib.json",
+        "packageJson": "libs/movex-core-util/package.json",
+        "main": "libs/movex-core-util/src/index.ts",
+        "assets": ["libs/movex-core-util/*.md"]
       }
     }
   },

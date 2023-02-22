@@ -7,7 +7,11 @@ import {
   MovexState,
 } from './types';
 import { computeCheckedState, getReducerApplicator, isAction } from './util';
-import { getNextStateFrom, NextStateGetter, StringKeys } from 'movex-core-util';
+import {
+  getNextStateFrom,
+  NextStateGetter,
+  StringKeys,
+} from 'movex-core-util';
 
 type AsyncStore<TState extends MovexState> = {
   get: (id: string) => AsyncResult<TState, unknown>;

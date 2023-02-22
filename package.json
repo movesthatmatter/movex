@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
-    "tsc-all": "tsc -b libs/movex libs/movex-server libs/core-util",
+    "tsc-all": "tsc -b libs/movex libs/movex-server libs/movex-core-util",
     "build": "nx build",
     "test": "nx run-many --all --target=test --skip-nx-cache",
     "push-all-libs--locally": "cd dist/libs/movex && npm version pre && yalc push && cd -; cd dist/libs/movex-server && npm version pre && yalc push && cd -; cd dist/libs/core-util && npm version pre && yalc push && cd -",
