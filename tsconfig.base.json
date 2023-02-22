@@ -18,10 +18,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@matterio/backend": ["libs/backend/src/index.ts"],
-      "@matterio/client-sdk": ["libs/client-sdk/src/index.ts"],
       "@matterio/core-util": ["libs/core-util/src/index.ts"],
-      "@matterio/server-sdk": ["libs/server-sdk/src/index.ts"],
       "movex": ["libs/movex/src/index.ts"],
       "movex-server": ["libs/movex-server/src/index.ts"]
     }
