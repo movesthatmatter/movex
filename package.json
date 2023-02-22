@@ -1,13 +1,13 @@
 {
-  "name": "matterio",
-  "version": "0.1.0",
+  "name": "movex",
+  "version": "0.0.0-0",
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
-    "tsc-all": "tsc -b libs/server-sdk",
+    "tsc-all": "tsc -b libs/movex libs/movex-server libs/core-util",
     "build": "nx build",
     "test": "nx run-many --all --target=test --skip-nx-cache",
-    "push-all-libs--locally": "cd dist/libs/movex && npm version pre && yalc push && cd -; cd dist/libs/movex-server && npm version pre && yalc push && cd -",
+    "push-all-libs--locally": "cd dist/libs/movex && npm version pre && yalc push && cd -; cd dist/libs/movex-server && npm version pre && yalc push && cd -; cd dist/libs/core-util && npm version pre && yalc push && cd -",
     "build-all-libs": "npx nx run-many --target=build"
   },
   "private": false,

@@ -18,9 +18,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@matterio/core-util": ["libs/core-util/src/index.ts"],
       "movex": ["libs/movex/src/index.ts"],
-      "movex-server": ["libs/movex-server/src/index.ts"]
+      "movex-server": ["libs/movex-server/src/index.ts"],
+      "movex-core-util": ["libs/core-util/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
