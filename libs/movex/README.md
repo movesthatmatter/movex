@@ -1,8 +1,31 @@
-# What is Movex?
+- [Movex](#movex)
+- [Why? What makes it unique?](#why-what-makes-it-unique)
+- [How does it work?](#how-does-it-work)
+  - [Resources](#resources)
+  - [Reducers](#reducers)
+      - [Client Runner](#client-runner)
+      - [Server Runner](#server-runner)
+  - [Actions](#actions)
+    - [Public Actions](#public-actions)
+    - [Private Actions \& Secret State](#private-actions--secret-state)
+    - [Revelatory Action (Check)](#revelatory-action-check)
+  - [How Does the Private Action/Secret State actually works?](#how-does-the-private-actionsecret-state-actually-works)
+  - [Remote State Mismatch Resynchronization (WIP)](#remote-state-mismatch-resynchronization-wip)
+  - [Private State Deltas Reconciliation Strategy (WIP)](#private-state-deltas-reconciliation-strategy-wip)
+        - [Primitives](#primitives)
+        - [Complex Data types (Arrays \& Objects)](#complex-data-types-arrays--objects)
+          - [Array](#array)
+- [Usage on the Client](#usage-on-the-client)
+      - [Vanilla TS](#vanilla-ts)
+      - [With React](#with-react)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+--- 
+
+# Movex
 
 Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation w/o the need to write Server Specific Code.
-
----
 
 # Why? What makes it unique?
 
