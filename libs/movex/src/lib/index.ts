@@ -1,22 +1,15 @@
+import io, { Socket } from 'socket.io-client';
 import { MovexClient, MovexClientConfig } from './MovexClient';
 import { MovexResource } from './MovexResource';
-import { GenericAction, MovexState } from './types';
 import { computeCheckedState } from './util';
-import io, { Socket } from 'socket.io-client';
+import { objectKeys } from 'movex-core-util';
+import { ResourceFileCollectionBase } from './tools/resourceFile';
 
-// Type Resource Reducers
-type ResourceReducer<TType extends string, TState extends MovexState> = {
-  type: TType;
-  defaultState: TState;
-  // TOOD: Ideally this state can be inferred
-  actionsMap: Record<string, (state: TState, action: GenericAction) => TState>;
-};
-
-type GenericResourceReducer = ResourceReducer<string, MovexState>;
-
-export const createMovexInstance = (
-  config: MovexClientConfig & {},
-  resourceReducers: GenericResourceReducer[],
+export const createMovexInstance = <
+  TResourceFileCollection extends ResourceFileCollectionBase
+>(
+  config: MovexClientConfig,
+  resourceFiles: TResourceFileCollection,
   ioClient?: Socket
 ) => {
   // This is ued like this so it can be tested!
@@ -38,16 +31,24 @@ export const createMovexInstance = (
 
   const client = new MovexClient(socket, config);
 
-  // client.
-  const resourcesMap = resourceReducers.reduce((accum, nextReducer) => {
-    return {
-      ...accum,
-      [nextReducer.type]: new MovexResource(
-        nextReducer.actionsMap,
-        computeCheckedState(nextReducer.defaultState)
-      ),
-    };
-  }, {} as Record<string, MovexResource<MovexState, any>>);
+  const resourcesMap = objectKeys(resourceFiles).reduce(
+    (accum, key) => {
+      const file = resourceFiles[key];
+
+      return {
+        ...accum,
+        [file.name]: new MovexResource(
+          file.reducer,
+          computeCheckedState(file.defaultState)
+        ),
+      };
+    },
+    {} as {
+      [k in keyof TResourceFileCollection]: MovexResource<
+        TResourceFileCollection[k]
+      >;
+    }
+  );
 
   return {
     client,

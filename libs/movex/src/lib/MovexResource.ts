@@ -8,21 +8,16 @@ import {
   Observable,
   StringKeys,
 } from 'movex-core-util';
+import { computeCheckedState } from './util';
+import { ActionOrActionTuple, CheckedAction, isAction } from './tools/action';
+import { GenericResourceFile } from './tools/resourceFile';
+import { CheckedState, MovexState } from './core-types';
 import {
-  ActionOrActionTuple,
-  ActionsCollectionMapBase,
-  CheckedAction,
-  CheckedState,
-  DispatchedEvent,
-  MovexReducerMap,
-  MovexState,
-} from './types';
-import {
-  computeCheckedState,
   createDispatcher,
+  DispatchedEvent,
   getReducerApplicator,
-  isAction,
-} from './util';
+} from './tools/dispatch';
+import { MovexReducerMap } from './tools/reducer';
 
 // TODO: The actions should be inferred by the reducer map, since the payloads are given there, no?
 
@@ -37,8 +32,9 @@ import {
 //    Is this really a resource or more like a state? Well if it's the end result it could be a resource yeah
 //    Or the combination of the ClientResource with Movex
 export class MovexResource<
-  TState extends MovexState,
-  ActionsCollectionMap extends ActionsCollectionMapBase,
+  TResourceFile extends GenericResourceFile,
+  ActionsCollectionMap extends TResourceFile['actions'] = TResourceFile['actions'],
+  TState extends MovexState = TResourceFile['defaultState'],
   TReducerMap extends MovexReducerMap<
     TState,
     ActionsCollectionMap

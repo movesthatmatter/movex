@@ -1,4 +1,4 @@
-import { createMovexInstance } from '../lib/Movex';
+import { createMovexInstance } from '../lib';
 import { Action } from '../lib/types';
 import { createMovexReducerMap } from '../lib/util';
 
@@ -31,9 +31,7 @@ const reducer = createMovexReducerMap<ActionsMap, State>(initialState)({
   }),
 });
 
-type ResourceCollectionMap = {
-
-}
+type ResourceCollectionMap = {};
 
 test('works', () => {
   const instance = createMovexInstance(
@@ -47,12 +45,12 @@ test('works', () => {
         defaultState: {
           count: 1,
         },
-        actionsMap: reducer,
-        // actionsMap: {
-        //   increment: (state, action: Action<'increment', { n: number }>) => {
-        //     return state;
-        //   },
-        // },
+        // actionsMap: reducer,
+        reducer: {
+          increment: (state, action: Action<'increment', { n: number }>) => {
+            return state;
+          },
+        },
       },
     ]
   );

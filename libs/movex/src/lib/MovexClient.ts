@@ -22,7 +22,7 @@ import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { PromiseDelegate } from 'promise-delegate';
-import { ActionsCollectionMapBase } from './types';
+import { ActionsCollectionMapBase } from './tools/action';
 
 type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
