@@ -26,3 +26,11 @@ export type MovexReducerMap<
     action: Action<k, ActionsCollectionMap[k]>
   ) => TState;
 };
+
+export type MovexReducer = <
+  TState extends MovexState,
+  Action extends { type: string; payload?: unknown }
+>(
+  state: TState,
+  action: Action
+) => TState;

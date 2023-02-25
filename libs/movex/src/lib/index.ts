@@ -3,10 +3,10 @@ import { MovexClient, MovexClientConfig } from './MovexClient';
 import { MovexResource } from './MovexResource';
 import { computeCheckedState } from './util';
 import { objectKeys } from 'movex-core-util';
-import { ResourceFileCollectionBase } from './tools/resourceFile';
+import { ResourceFileCollectionMapBase } from './tools/resourceFile';
 
 export const createMovexInstance = <
-  TResourceFileCollection extends ResourceFileCollectionBase
+  TResourceFileCollection extends ResourceFileCollectionMapBase
 >(
   config: MovexClientConfig,
   resourceFiles: TResourceFileCollection,

@@ -19,13 +19,9 @@ import {
   GenericPublicAction,
 } from './tools/action';
 import { CheckedState, MovexState } from './core-types';
-import {
-  MovexReducerFromActionsMap,
-  MovexReducerMap,
-} from './tools/reducer';
+import { MovexReducerFromActionsMap, MovexReducerMap } from './tools/reducer';
 
 export const hashObject = (val: NotUndefined) => hash.MD5(val);
-
 
 // export const createMovexReducerMap = <
 //   ActionsCollectionMap extends ActionsCollectionMapBase,
@@ -39,7 +35,6 @@ export const hashObject = (val: NotUndefined) => hash.MD5(val);
 //     reducerMap: TReducerMap
 //   ) => reducerMap;
 // };
-
 
 export const computeCheckedState = <T>(state: T): CheckedState<T> => [
   state,

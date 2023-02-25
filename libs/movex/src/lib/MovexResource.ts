@@ -17,7 +17,7 @@ import {
   DispatchedEvent,
   getReducerApplicator,
 } from './tools/dispatch';
-import { MovexReducerMap } from './tools/reducer';
+import { MovexReducer, MovexReducerMap } from './tools/reducer';
 
 // TODO: The actions should be inferred by the reducer map, since the payloads are given there, no?
 
@@ -33,12 +33,15 @@ import { MovexReducerMap } from './tools/reducer';
 //    Or the combination of the ClientResource with Movex
 export class MovexResource<
   TResourceFile extends GenericResourceFile,
-  ActionsCollectionMap extends TResourceFile['actions'] = TResourceFile['actions'],
-  TState extends MovexState = TResourceFile['defaultState'],
-  TReducerMap extends MovexReducerMap<
-    TState,
-    ActionsCollectionMap
-  > = MovexReducerMap<TState, ActionsCollectionMap>
+  // ActionsCollectionMap extends TResourceFile['actions'] = TResourceFile['actions'],
+  // TState extends MovexState = TResourceFile['defaultState'],
+  TReducer extends MovexReducer,
+  TState extends MovexState = Parameters<TReducer>[0],
+  // TActions
+  // TReducerMap extends MovexReducerMap<
+  //   TState,
+  //   ActionsCollectionMap
+  // > = MovexReducerMap<TState, ActionsCollectionMap>
 > implements IObservable<CheckedState<TState>>
 {
   private $checkedState: Observable<CheckedState<TState>>;
