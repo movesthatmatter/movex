@@ -8,6 +8,8 @@ import { Checksum } from '../core-types';
 
 // The Action type here is copied from deox https://github.com/the-dr-lazy/deox/blob/master/src/create-action.ts
 
+// TODO: ith the new Reducer Refactoring, all of the action with collection map and generic actions can be removed I believe
+
 export type BaseAction<
   TType extends string,
   TPayload = undefined
@@ -35,6 +37,9 @@ export type Action<TType extends string, TPayload = undefined> =
 
 export type ActionsCollectionMapBase = UnknownRecord;
 
+export type AnyPublicAction = PublicAction<string>;
+export type AnyPrivateAction = PrivateAction<string>;
+
 export type AnyActionOf<
   ActionsCollectionMap extends ActionsCollectionMapBase,
   TType extends StringKeys<ActionsCollectionMap> = StringKeys<ActionsCollectionMap>
@@ -58,6 +63,12 @@ export type GenericAction = GenericPrivateAction | GenericPublicAction;
 
 export type AnyAction = Action<string>;
 
+export type UnknownAction = Action<string, unknown>;
+
+export type GenericActionOrActionTuple =
+  | GenericPublicAction
+  | [GenericPrivateAction, GenericPublicAction];
+
 export type CheckedAction<
   TActionType extends StringKeys<ActionCollectionMap>,
   ActionCollectionMap extends ActionsCollectionMapBase
@@ -66,13 +77,24 @@ export type CheckedAction<
   checksum: Checksum;
 };
 
-export type AnyCheckedAction<
-  ActionCollectionMap extends ActionsCollectionMapBase,
-  TActionType extends StringKeys<ActionCollectionMap> = StringKeys<ActionCollectionMap>
-> = {
-  action: AnyActionOrActionTupleOf<ActionCollectionMap, TActionType>;
+export type GenericCheckedAction = {
+  action: GenericActionOrActionTuple;
   checksum: Checksum;
 };
+
+export type AnyCheckedAction = {
+  action: AnyActionOrActionTuple;
+  checksum: Checksum;
+};
+
+export type ToPrivateAction<A extends AnyAction> = Omit<A, 'isPrivate'> & {
+  isPrivate: true;
+};
+export type ToPublicAction<A extends AnyAction> = Omit<A, 'isPrivate'> & {
+  isPrivate?: false;
+};
+
+export type AnyActionTuple = [AnyPrivateAction, AnyPublicAction];
 
 export type ActionOrActionTuple<
   TActionType extends StringKeys<ActionCollectionMap>,
@@ -86,6 +108,9 @@ export type ActionOrActionTuple<
       >,
       publicAction: PublicAction<TActionType, ActionCollectionMap[TActionType]>
     ];
+
+export type AnyActionOrActionTuple = AnyPublicAction | AnyActionTuple;
+
 export type AnyActionOrActionTupleOf<
   ActionCollectionMap extends ActionsCollectionMapBase,
   TActionType extends StringKeys<ActionCollectionMap> = StringKeys<ActionCollectionMap>
@@ -95,6 +120,10 @@ export type AnyActionOrActionTupleOf<
       PrivateAction<TActionType, ActionCollectionMap[TActionType]>,
       PublicAction<TActionType, ActionCollectionMap[TActionType]>
     ];
+
+export type ActionOrActionTupleFromAction<TAction extends AnyAction> =
+  | TAction
+  | [ToPrivateAction<TAction>, ToPublicAction<TAction>];
 
 export type ActionFromActionCreator<
   Creator extends ReturnType<typeof createActionCreator>
@@ -222,6 +251,6 @@ export function createActionCreator<
   });
 }
 
-export const isAction = (a: unknown): a is GenericAction => {
-  return isObject(a) && keyInObject(a, 'type') && keyInObject(a, 'payload');
+export const isAction = (a: unknown): a is AnyAction => {
+  return isObject(a) && keyInObject(a, 'type');
 };

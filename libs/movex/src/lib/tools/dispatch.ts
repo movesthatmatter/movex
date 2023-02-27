@@ -3,76 +3,46 @@ import { CheckedState, MovexState } from '../core-types';
 import { checkedStateEquals, computeCheckedState } from '../util';
 import {
   Action,
-  ActionOrActionTuple,
+  ActionOrActionTupleFromAction,
   ActionsCollectionMapBase,
-  AnyActionOrActionTupleOf,
-  GenericPrivateAction,
-  GenericPublicAction,
+  AnyAction,
+  AnyActionOrActionTuple,
+  AnyActionTuple,
+  // GenericActionOrActionTuple,
   isAction,
-  PrivateAction,
-  PublicAction,
 } from './action';
-import { MovexReducerMap } from './reducer';
+import { MovexReducer, MovexReducerMap } from './reducer';
 
-export type DispatchFn = <
-  TActionType extends StringKeys<ActionCollectionMap>,
-  ActionCollectionMap extends ActionsCollectionMapBase
->(
-  actionOrActionTuple:
-    | PublicAction<TActionType, ActionCollectionMap[TActionType]>
-    | [
-        PrivateAction<TActionType, ActionCollectionMap[TActionType]>,
-        PublicAction<TActionType, ActionCollectionMap[TActionType]>
-      ]
-) => void;
+export type DispatchFn = (actionOrActionTuple: AnyActionOrActionTuple) => void;
 
-export type DispatchedEvent<
-  TState,
-  ActionMap extends ActionsCollectionMapBase
-> = {
+export type DispatchedEvent<TState, TAction extends AnyAction> = {
   next: TState;
   prev: TState;
-  action: AnyActionOrActionTupleOf<ActionMap>;
+  action: ActionOrActionTupleFromAction<TAction>;
 };
 
 // Here - it needs to handle the private action one as well
 // NEXT - Implement this on the backend and check public/private
 // Next Next - implement in on maha and change the whole game strategy to this
 export const createDispatcher = <
-  TState extends MovexState,
-  ActionsCollectionMap extends ActionsCollectionMapBase,
-  TReducerMap extends MovexReducerMap<
-    TState,
-    ActionsCollectionMap
-  > = MovexReducerMap<TState, ActionsCollectionMap>
+  TState = any,
+  TAction extends AnyAction = AnyAction
 >(
   $checkedState: Observable<CheckedState<TState>>,
-  reducerMap: TReducerMap,
+  reducer: MovexReducer<TState, TAction>,
   onEvents?: {
     // This will be called any time an action got dispatched
     // Even if the state didn't update!
     // This is in order to have more control at the client's end. where they can easily check the checksum's or even instance
     //  if there was any update
-    onDispatched?: (
-      event: DispatchedEvent<CheckedState<TState>, ActionsCollectionMap>
-    ) => void;
-    onStateUpdated?: (
-      event: DispatchedEvent<CheckedState<TState>, ActionsCollectionMap>
-    ) => void;
+    onDispatched?: (event: DispatchedEvent<CheckedState<TState>, TAction>) => void;
+    onStateUpdated?: (event: DispatchedEvent<CheckedState<TState>, TAction>) => void;
   }
 ) => {
   const { onDispatched = noop, onStateUpdated = noop } = onEvents || {};
 
   // the actions that were batched before the initial state had a chance to resolve
-  let prebatchedActions: (
-    | GenericPublicAction
-    | GenericPrivateAction
-    | [GenericPrivateAction, GenericPublicAction]
-  )[] = [];
-
-  // let { item: prevState } = await initialResource;
-  // let prevState: TResource['item'];
-  // let prevChecksum: string;
+  let prebatchedActions: (AnyAction | AnyActionTuple)[] = [];
 
   // let currentStateAndChecksum: StateAndChecksum<TResource['item']>;
   let currentCheckedState: CheckedState<TState>;
@@ -100,12 +70,12 @@ export const createDispatcher = <
 
   onStateReceived($checkedState.get());
 
-  const applyAction = getReducerApplicator<TState, ActionsCollectionMap>(
-    reducerMap
-  );
+  // const applyAction = getReducerApplicator<TState, ActionsCollectionMap>(
+  //   reducerMap
+  // );
 
-  const dispatch = <TActionType extends StringKeys<ActionsCollectionMap>>(
-    actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>
+  const dispatch = (
+    actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) => {
     const [localAction, remoteAction] = invoke(() => {
       if (isAction(actionOrActionTuple)) {
@@ -122,7 +92,7 @@ export const createDispatcher = <
     }
 
     const nextCheckedState = computeCheckedState(
-      applyAction(currentCheckedState[0], localAction)
+      reducer(currentCheckedState[0], localAction as TAction)
     );
 
     onDispatched({
@@ -138,7 +108,7 @@ export const createDispatcher = <
         action: actionOrActionTuple,
       });
 
-      // console.log('going to update', nextCheckedState);
+      // console.log('going to update', nextCheckedStaxe);
       $checkedState.update(nextCheckedState);
 
       // Only if different update them
@@ -173,5 +143,3 @@ export const getReducerApplicator =
     // This is actually the next state
     return reducer(state, action);
   };
-
-

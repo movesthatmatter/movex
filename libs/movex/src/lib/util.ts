@@ -23,18 +23,20 @@ import { MovexReducerFromActionsMap, MovexReducerMap } from './tools/reducer';
 
 export const hashObject = (val: NotUndefined) => hash.MD5(val);
 
-// export const createMovexReducerMap = <
-//   ActionsCollectionMap extends ActionsCollectionMapBase,
-//   TState extends MovexState
-// >(
-//   initialState: TState
-// ) => {
-//   // Do we need to do smtg with the initialState?
 
-//   return <TReducerMap extends MovexReducerMap<TState, ActionsCollectionMap>>(
-//     reducerMap: TReducerMap
-//   ) => reducerMap;
-// };
+// TODO: Deprecate this as its not usefule anymore I believe
+export const createMovexReducerMap = <
+  ActionsCollectionMap extends ActionsCollectionMapBase,
+  TState extends MovexState
+>(
+  initialState: TState
+) => {
+  // Do we need to do smtg with the initialState?
+
+  return <TReducerMap extends MovexReducerMap<TState, ActionsCollectionMap>>(
+    reducerMap: TReducerMap
+  ) => reducerMap;
+};
 
 export const computeCheckedState = <T>(state: T): CheckedState<T> => [
   state,
@@ -92,9 +94,33 @@ export const reconciliatePrivateFragments = <TState extends MovexState>(
   );
 };
 
-export const getStateDiff = <A extends MovexState, B extends MovexState>(
+// export const getStateDiff = <A extends MovexState, B extends MovexState>(
+//   a: A,
+//   b: B
+// ) => getJSONPatchDiff(a, b);
+
+export const getStateDiff = <A, B extends A>(
   a: A,
   b: B
-) => getJSONPatchDiff(a, b);
+): jsonpatch.Operation[] => {
+  if ((isObject(a) && isObject(b)) || (Array.isArray(a) && Array.isArray(b))) {
+    return getJSONPatchDiff(a, b);
+  }
 
-// export const resourceFile = () => {};
+  // Primitives
+  // should this really be spporting primitives as well? Why not?
+  // TODO:
+  if (a !== b) {
+    return [
+      {
+        // Is this correct or what should happen in case of primitives?
+        path: '',
+        op: 'replace',
+        value: b,
+      },
+    ];
+  }
+
+  // TODO: Empty array if the same??
+  return [];
+};

@@ -1,5 +1,4 @@
 import * as z from 'zod';
-import { UnknownRecord } from './core-types';
 
 export const zId = z.string;
 

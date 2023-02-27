@@ -22,7 +22,9 @@ import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { PromiseDelegate } from 'promise-delegate';
-import { ActionsCollectionMapBase } from './tools/action';
+import { ActionsCollectionMapBase, AnyAction } from './tools/action';
+import { MovexReducer } from './tools/reducer';
+import { MovexResource } from './MovexResource';
 
 type RequestsCollectionMapBase = Record<string, [unknown, unknown]>;
 
@@ -521,6 +523,13 @@ export class MovexClient<
         );
       }).catch((e) => e) as any
     );
+
+  registerResource<S, A extends AnyAction>(
+    type: string,
+    reducer: MovexReducer<S, A>
+  ) {
+    return new MovexResource(reducer);
+  }
 
   // Resource Updates via Actions
   // registerResourceReducer<

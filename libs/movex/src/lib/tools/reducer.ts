@@ -5,6 +5,8 @@ import {
   ActionCreatorsMapBase,
   ActionFromActionCreator,
   ActionsCollectionMapBase,
+  AnyAction,
+  GenericAction,
 } from './action';
 
 export type MovexReducerFromActionsMap<
@@ -27,10 +29,12 @@ export type MovexReducerMap<
   ) => TState;
 };
 
-export type MovexReducer = <
-  TState extends MovexState,
-  Action extends { type: string; payload?: unknown }
->(
-  state: TState,
-  action: Action
-) => TState;
+// export type MovexReducer<
+//   TState extends MovexState = MovexState,
+//   TAction extends AnyAction = AnyAction
+// > = (state: TState, action: TAction) => TState;
+
+export type MovexReducer<S = any, A extends AnyAction = AnyAction> = (
+  state: S,
+  action: A
+) => S;

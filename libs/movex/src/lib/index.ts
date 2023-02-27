@@ -4,12 +4,11 @@ import { MovexResource } from './MovexResource';
 import { computeCheckedState } from './util';
 import { objectKeys } from 'movex-core-util';
 import { ResourceFileCollectionMapBase } from './tools/resourceFile';
+import { MovexReducer } from './tools/reducer';
+import { AnyAction } from './tools/action';
 
-export const createMovexInstance = <
-  TResourceFileCollection extends ResourceFileCollectionMapBase
->(
+export const createMovexInstance = (
   config: MovexClientConfig,
-  resourceFiles: TResourceFileCollection,
   ioClient?: Socket
 ) => {
   // This is ued like this so it can be tested!
@@ -31,30 +30,22 @@ export const createMovexInstance = <
 
   const client = new MovexClient(socket, config);
 
-  const resourcesMap = objectKeys(resourceFiles).reduce(
-    (accum, key) => {
-      const file = resourceFiles[key];
+  return client;
 
-      return {
-        ...accum,
-        [file.name]: new MovexResource(
-          file.reducer,
-          computeCheckedState(file.defaultState)
-        ),
-      };
-    },
-    {} as {
-      [k in keyof TResourceFileCollection]: MovexResource<
-        TResourceFileCollection[k]
-      >;
-    }
-  );
+  // return {
+  //   client,
 
-  return {
-    client,
+  //   // TODO: If I can infer this from the given reducers it would be amazing!
+  //   //  If not I have to pass in some weird action maps
+  //   // resources: resourcesMap,
 
-    // TODO: If I can infer this from the given reducers it would be amazing!
-    //  If not I have to pass in some weird action maps
-    resources: resourcesMap,
-  };
+  //   registerResource: <S, A extends AnyAction>(
+  //     name: string,
+  //     reducer: MovexReducer<S, A>
+  //   ) => {
+  //     client.
+
+  //     return;
+  //   },
+  // };
 };

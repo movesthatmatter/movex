@@ -1,12 +1,6 @@
 import { createMovexInstance } from '../lib';
-import { createActionCreator } from '../lib/tools/action';
-import { createResourceFile } from '../lib/tools/resourceFile';
-
-type ActionsMap = {
-  increment: undefined;
-  decrement: undefined;
-  incrementBy: number;
-};
+import { Action } from '../lib/tools/action';
+import { computeCheckedState } from '../lib/util';
 
 type State = {
   count: number;
@@ -16,64 +10,35 @@ const initialState: State = {
   count: 0,
 };
 
-// const reducer = createMovexReducerMap<ActionsMap, State>(initialState)({
-//   increment: (prev) => ({
-//     ...prev,
-//     count: prev.count + 1,
-//   }),
-//   decrement: (prev) => ({
-//     ...prev,
-//     count: prev.count - 1,
-//   }),
-//   incrementBy: (prev, { payload }) => ({
-//     ...prev,
-//     count: prev.count + payload,
-//   }),
-// });
+type CounterActions =
+  | Action<'increment'>
+  | Action<'change', number>
+  | Action<'incrementBy', number>;
 
-type ResourceCollectionMap = {};
-
-test('works', () => {
-  const counter = createResourceFile(
-    'counter',
-    {
-      count: 0,
-    },
-    {
-      increment2: createActionCreator(
-        'increment',
-        (resolve) => (p: number) => resolve(p)
-      ),
+test('Initial State', () => {
+  const counterReducer = (state = initialState, action: CounterActions) => {
+    if (action.type === 'increment') {
+      return {
+        ...state,
+        count: state.count + 1,
+      };
     }
-    // actionsMap: reducer,
-    // {
-    //   // incrementasda: (state, action) => {
-    //   //   return state;
-    //   // },
-    //   // incre
-    // },
-    // $canPublicizePrivateState: () => {
-    //   return true;
-    // },
-  )({
-    increment2: (state, action) => {
-      return state;
-    },
+
+    return state;
+  };
+
+  const instance = createMovexInstance({
+    url: 'n/a',
+    apiKey: 'n/a',
   });
 
-  const instance = createMovexInstance(
-    {
-      url: 'n/a',
-      apiKey: 'n/a',
-    },
-    {
-      counter,
-      // counter: ,
-    }
-  );
+  const resource = instance.registerResource('counter', counterReducer);
 
-  // instance.resources.
+  const expected = computeCheckedState({
+    count: 0,
+  });
 
-  // to be used
-  // instance.resources.counter.get(); // TODO: counter is any
+  expect(resource.get()).toEqual(expected);
 });
+
+// TODO: Add more tests
