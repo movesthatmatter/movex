@@ -1,4 +1,5 @@
-<img width="400" alt="logo_b@2x" src="https://user-images.githubusercontent.com/2099521/221382702-e655e567-0a5f-4520-b4f6-1dcfc73d2d86.png">
+<img width="540" alt="logo_c@2x" src="https://user-images.githubusercontent.com/2099521/221956423-bd0b1b46-a8ed-4b25-8a1c-14cdcb1de716.png">
+
 
 - [Movex](#movex)
 - [Why? What makes it unique?](#why-what-makes-it-unique)
