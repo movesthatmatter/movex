@@ -1,32 +1,9 @@
+import counterReducer from './util/counterReducer';
+import gameReducer, { initialGameState } from './util/gameReducer';
 import { createMovexInstance } from '../lib';
-import { Action } from '../lib/tools/action';
 import { computeCheckedState } from '../lib/util';
 
-type State = {
-  count: number;
-};
-
-const initialState: State = {
-  count: 0,
-};
-
-type CounterActions =
-  | Action<'increment'>
-  | Action<'change', number>
-  | Action<'incrementBy', number>;
-
 test('Initial State', () => {
-  const counterReducer = (state = initialState, action: CounterActions) => {
-    if (action.type === 'increment') {
-      return {
-        ...state,
-        count: state.count + 1,
-      };
-    }
-
-    return state;
-  };
-
   const instance = createMovexInstance({
     url: 'n/a',
     apiKey: 'n/a',
@@ -36,6 +13,59 @@ test('Initial State', () => {
 
   const expected = computeCheckedState({
     count: 0,
+  });
+
+  expect(resource.get()).toEqual(expected);
+});
+
+test('Dispatch Punblic Action', () => {
+  const instance = createMovexInstance({
+    url: 'n/a',
+    apiKey: 'n/a',
+  });
+
+  const resource = instance.registerResource('counter', counterReducer);
+
+  resource.dispatch({ type: 'increment' });
+
+  const expected = computeCheckedState({
+    count: 1,
+  });
+
+  expect(resource.get()).toEqual(expected);
+});
+
+test('Dispatch Private Action', () => {
+  const instance = createMovexInstance({
+    url: 'n/a',
+    apiKey: 'n/a',
+  });
+
+  const resource = instance.registerResource('counter', gameReducer);
+
+  resource.dispatchPrivate(
+    {
+      type: 'submitMoves',
+      payload: {
+        color: 'white',
+        moves: ['w:e2-e4', 'w:d2-d4'],
+      },
+      isPrivate: true,
+    },
+
+    { type: 'readySubmissionState', payload: { color: 'white' } }
+  );
+
+  const expected = computeCheckedState({
+    ...initialGameState,
+    submission: {
+      ...initialGameState.submission,
+      status: 'partial',
+      white: {
+        canDraw: false,
+        moves: ['w:e2-e4', 'w:d2-d4'],
+      },
+    },
   });
 
   expect(resource.get()).toEqual(expected);

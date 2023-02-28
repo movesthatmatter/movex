@@ -87,10 +87,15 @@ export type AnyCheckedAction = {
   checksum: Checksum;
 };
 
-export type ToPrivateAction<A extends AnyAction> = Omit<A, 'isPrivate'> & {
+export type ToCheckedAction<TAction extends AnyAction> = {
+  action: TAction;
+  checksum: Checksum;
+};
+
+export type ToPrivateAction<A extends AnyAction> = A & {
   isPrivate: true;
 };
-export type ToPublicAction<A extends AnyAction> = Omit<A, 'isPrivate'> & {
+export type ToPublicAction<A extends AnyAction> = A & {
   isPrivate?: false;
 };
 
@@ -122,7 +127,7 @@ export type AnyActionOrActionTupleOf<
     ];
 
 export type ActionOrActionTupleFromAction<TAction extends AnyAction> =
-  | TAction
+  | ToPublicAction<TAction>
   | [ToPrivateAction<TAction>, ToPublicAction<TAction>];
 
 export type ActionFromActionCreator<

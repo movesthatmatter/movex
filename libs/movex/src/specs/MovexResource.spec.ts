@@ -1,51 +1,12 @@
 import { Ok } from 'ts-results';
 import { MovexResource } from '../lib/MovexResource';
-import { Action } from '../lib/tools/action';
 import { computeCheckedState } from '../lib/util';
+import counterReducer, { initialCounterState } from './util/counterReducer';
 
 describe('Observable', () => {
-  type State = {
-    count: number;
-  };
-
-  const initialState: State = {
-    count: 0,
-  };
-
-  const reducer = (
-    prev = initialState,
-    action:
-      | Action<'increment'>
-      | Action<'decrement'>
-      | Action<'incrementBy', number>
-  ) => {
-    if (action.type === 'increment') {
-      return {
-        ...prev,
-        count: prev.count + 1,
-      };
-    }
-
-    if (action.type === 'decrement') {
-      return {
-        ...prev,
-        count: prev.count - 1,
-      };
-    }
-
-    if (action.type == 'incrementBy') {
-      return {
-        ...prev,
-        count: prev.count + action.payload,
-      };
-    }
-
-    return prev;
-  };
-
   test('Dispatch Local Actions', () => {
     // TODO: Ideally only by getting the reducer we know the state
-    const xResource = new MovexResource(reducer);
+    const xResource = new MovexResource(counterReducer);
 
     xResource.dispatch({
       type: 'increment',
@@ -70,7 +31,7 @@ describe('Observable', () => {
   });
 
   test('Apply Local Actions', () => {
-    const xResource = new MovexResource(reducer);
+    const xResource = new MovexResource(counterReducer);
 
     xResource.applyAction({
       type: 'increment',
@@ -97,11 +58,10 @@ describe('Observable', () => {
   describe('External Updates', () => {
     test('updates the unchecked state', () => {
       // TODO: Ideally only by getting the reducer we know the state
-      const xResource = new MovexResource(reducer);
+      const xResource = new MovexResource(counterReducer);
 
       xResource.dispatch({
         type: 'increment',
-        payload: undefined,
       });
 
       expect(xResource.getUncheckedState()).toEqual({ count: 1 });
@@ -114,7 +74,6 @@ describe('Observable', () => {
 
       xResource.dispatch({
         type: 'decrement',
-        payload: undefined,
       });
 
       expect(xResource.getUncheckedState()).toEqual({ count: 39 });
@@ -122,15 +81,15 @@ describe('Observable', () => {
 
     describe('Reconciliate Action', () => {
       test('Updates when matching', () => {
-        const xResource = new MovexResource(reducer);
+        const xResource = new MovexResource(counterReducer);
 
         const updateSpy = jest.fn();
         xResource.onUpdated(updateSpy);
 
         const [incrementedState, incrementedStateChecksum] =
           computeCheckedState({
-            ...initialState,
-            count: initialState.count + 1,
+            ...initialCounterState,
+            count: initialCounterState.count + 1,
           });
 
         const actual = xResource.reconciliateAction({
@@ -151,7 +110,7 @@ describe('Observable', () => {
       });
 
       test('Fails when NOT matching and does not update', () => {
-        const xResource = new MovexResource(reducer);
+        const xResource = new MovexResource(counterReducer);
 
         const updateSpy = jest.fn();
         xResource.onUpdated(updateSpy);

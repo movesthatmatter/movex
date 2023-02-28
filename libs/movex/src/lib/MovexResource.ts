@@ -5,17 +5,16 @@ import {
   invoke,
   IObservable,
   NextStateGetter,
-  NotUndefined,
   Observable,
 } from 'movex-core-util';
 import { computeCheckedState } from './util';
 import {
-  Action,
   ActionOrActionTupleFromAction,
   AnyAction,
-  AnyActionOrActionTuple,
-  AnyCheckedAction,
   isAction,
+  ToCheckedAction,
+  ToPrivateAction,
+  ToPublicAction,
 } from './tools/action';
 import { CheckedState } from './core-types';
 import { createDispatcher, DispatchedEvent } from './tools/dispatch';
@@ -47,15 +46,16 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
 
   private unsubscribers: (() => any)[] = [];
 
-  constructor(private reducer: MovexReducer<TState, TAction>) {
-    // Passing undefined here in order to get the default state
-    const initialState = reducer(
-      undefined as TState,
-      { type: '_init' } as TAction
-    ); // This returns the initial state
+  constructor(
+    private reducer: MovexReducer<TState, TAction>,
 
+    // Passing undefined here in order to get the default state
+    initialCheckedState = computeCheckedState(
+      reducer(undefined as TState, { type: '_init' } as TAction)
+    )
+  ) {
     // TODO: Not sure this will alawys work correctly as we need to get the initial state somehow
-    this.$checkedState = new Observable(computeCheckedState(initialState));
+    this.$checkedState = new Observable(initialCheckedState);
 
     // this.$state = this.$checkedState.map((s) => s[0]);
 
@@ -76,8 +76,15 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
   /**
    * This is the dispatch for this Movex Resource
    */
-  dispatch(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
-    this.dispatcher(actionOrActionTuple);
+  dispatch(action: ToPublicAction<TAction>) {
+    this.dispatcher(action);
+  }
+
+  dispatchPrivate(
+    privateAction: ToPrivateAction<TAction>,
+    publicAction: ToPublicAction<TAction>
+  ) {
+    this.dispatcher([privateAction, publicAction]);
   }
 
   /**
@@ -87,7 +94,7 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
    * @param actionOrActionTuple
    * @returns
    */
-  applyAction(actionOrActionTuple: AnyActionOrActionTuple) {
+  applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
     const nextCheckedState =
       this.getNextCheckedStateFromAction(actionOrActionTuple);
     this.$checkedState.update(nextCheckedState);
@@ -102,10 +109,11 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
    * @returns
    */
   reconciliateAction(
-    checkedAction: AnyCheckedAction
+    checkedAction: ToCheckedAction<TAction>
   ): Result<CheckedState<TState>, 'ChecksumMismatch'> {
     const nextCheckedState = this.getNextCheckedStateFromAction(
-      checkedAction.action
+      // Maybe worth making it a real public action but it's just for types
+      checkedAction.action as ToPublicAction<TAction>
     );
 
     if (nextCheckedState[1] !== checkedAction.checksum) {
@@ -118,7 +126,7 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
   }
 
   private getNextCheckedStateFromAction(
-    actionOrActionTuple: AnyActionOrActionTuple
+    actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
     // Always apply the local action (which is the action of the private action in case of a tuple)
     const localAction = isAction(actionOrActionTuple)
@@ -171,92 +179,3 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
     this.unsubscribers.forEach(invoke);
   }
 }
-
-// type State = {
-//   counter: 0;
-// };
-
-// type IncrementAction = Action<'increment'>;
-
-// const incrementAction: IncrementAction = {
-//   type: 'increment',
-// };
-
-// const withAction = (a: AnyAction) => a;
-
-// withAction(incrementAction);
-
-// const defaultState: State = {
-//   counter: 0,
-// };
-
-// // This is what gets saved and run on both client and server, just this little file
-// const incrementReducer = (
-//   state = defaultState,
-//   action: Action<'increment'> // | Action<'incrementBy', number>
-// ) => {
-//   return state;
-// };
-
-// type GameState = {
-//   name: 'maha';
-// };
-
-// const defaultGameState: GameState = {
-//   name: 'maha',
-// };
-
-// const gameReducer = (
-//   state = defaultGameState,
-//   action:
-//     | Action<'move'>
-//     | Action<'attack', { coord: string }>
-//     | Action<'incrementBy', number>
-// ) => {
-//   if (action.type === 'attack') {
-//     action.payload.coord;
-//   }
-
-//   return state;
-// };
-
-// const acceptReducer = <S, A extends AnyAction>(reducer: MovexReducer<S, A>) => {
-//   type Distribute<U> = U extends Action<string, NotUndefined> ? U : U;
-
-//   return {} as {
-//     s: Parameters<typeof reducer>[0];
-//     a: Parameters<typeof reducer>[1];
-//     as: Distribute<Parameters<typeof reducer>[1]>;
-//   };
-// };
-
-// acceptReducer(gameReducer).as;
-
-// const xRes = new MovexResource(gameReducer); // This will workaas well
-
-// xRes.dispatch({
-//   type: 'move',
-// });
-// xRes.dispatch({
-//   type: ''
-// })
-
-// const createReducer = <TState extends MovexState>(
-//   state: TState,
-//   fn: (state: TState, action: AnyAction) => TState
-// ) => {
-//   return fn(state, action);
-// };
-
-// This is what a reducer file looks like
-// export default createReducer<IncrementAction>({ counter: 0 }, (state, action) => {
-//   return state;
-// });
-
-// reducer({ counter: 0 }, incrementAction);
-
-// const xRes = new MovexResource(reducer); // This will workaas well
-
-// TODO: here the dispatch could actually infer all the actions from the passed Action Type
-// Probably, but this is later on, it should work w/o that inference just like reduc
-// xRes.dispatch({ type: '' });

@@ -6,7 +6,6 @@ import {
   ActionFromActionCreator,
   ActionsCollectionMapBase,
   AnyAction,
-  GenericAction,
 } from './action';
 
 export type MovexReducerFromActionsMap<
@@ -34,7 +33,7 @@ export type MovexReducerMap<
 //   TAction extends AnyAction = AnyAction
 // > = (state: TState, action: TAction) => TState;
 
-export type MovexReducer<S = any, A extends AnyAction = AnyAction> = (
+export type MovexReducer<S = any, A extends AnyAction = AnyAction> = ((
   state: S,
   action: A
-) => S;
+) => S) & { $canReconcileState?: (s: S) => boolean };
