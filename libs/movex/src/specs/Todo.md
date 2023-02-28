@@ -6,11 +6,13 @@ tags: []
 
 ## Doing
 
-- Make the types work between resources and create movex instance on client.
-  - Maybe redefine the Resource Reducer Input, The Resource Handler
+- Add reconciliation handler
 
 ## To Do
 
 ## Backlog
 
 ## Done
+
+- Make the types work between resources and create movex instance on client.
+  - Maybe redefine the Resource Reducer Input, The Resource Handler

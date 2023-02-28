@@ -3,7 +3,7 @@ import { MovexResource } from '../lib/MovexResource';
 import { computeCheckedState } from '../lib/util';
 import gameReducer, { initialGameState } from './util/gameReducer';
 import { createMasterEnv } from './util/createMasterEnv';
-require('console-group').install();
+// require('console-group').install();
 
 describe('Master Client Orchestration', () => {
   test('Public Actions with 2 clients', async () => {

@@ -15,18 +15,11 @@ import {
 } from '../../lib/tools/action';
 import { MovexReducer } from '../../lib/tools/reducer';
 
-// export const createMasterEnv2 = <TState, TAction extends AnyAction>(
-//   genesisState: TState,
-//   reducer: MovexReducer<TState, TAction>,
-//   clientCountOrIds: number | string[]
-// ) => {};
-
 export const createMasterEnv = <TState, TAction extends AnyAction>({
   genesisState,
   reducer,
   clientCountOrIdsAsString,
-}: // ,
-{
+}: {
   genesisState: TState;
   reducer: MovexReducer<TState, TAction>;
   clientCountOrIdsAsString: number | string[];

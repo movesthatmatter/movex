@@ -5,7 +5,6 @@ import counterReducer, { initialCounterState } from './util/counterReducer';
 
 describe('Observable', () => {
   test('Dispatch Local Actions', () => {
-    // TODO: Ideally only by getting the reducer we know the state
     const xResource = new MovexResource(counterReducer);
 
     xResource.dispatch({
@@ -57,7 +56,6 @@ describe('Observable', () => {
 
   describe('External Updates', () => {
     test('updates the unchecked state', () => {
-      // TODO: Ideally only by getting the reducer we know the state
       const xResource = new MovexResource(counterReducer);
 
       xResource.dispatch({
