@@ -58,16 +58,16 @@ This makes working with a resource a breeze. Here's an example:
 ```ts
 // *Note the Api can change
 
-const { counter } = movex.resources;
+const counterResource = movex.registerResource(counterReducer);
 
-const resourceIdentifier = counter.create({ val: 0 });
+const resourceIdentifier = counter.create();
 
 // movex.resources is MovexResource({});
-counter.onUpdated(resourceIdentifier, (nextState) => {
+counterResource.onUpdated(resourceIdentifier, (nextState) => {
   console.log('got next state', nextState);
 });
 
-counter.dispatch(resourceIdentifier, { type: 'increment' });
+counterResource.dispatch(resourceIdentifier, { type: 'increment' });
 
 ```
 
@@ -88,12 +88,45 @@ Example of a reducer:
 ```ts
 // *Api might change
 
-const counterReducer = {
-  increment: (state, action: Action<undefined>) => state,
-  decrement: (state, action: Action<undefined>) => state,
-  changeTo: (state, action: Action<number>) => state,
-}
+import { Action } from 'movex';
 
+export type CounterState = {
+  count: number;
+};
+
+export const initialCounterState: CounterState = {
+  count: 0,
+};
+
+export type CounterActions =
+  | Action<'increment'>
+  | Action<'decrement'>
+  | Action<'incrementBy', number>;
+
+export default (state = initialCounterState, action: CounterActions) => {
+  if (action.type === 'increment') {
+    return {
+      ...state,
+      count: state.count + 1,
+    };
+  }
+
+  if (action.type === 'decrement') {
+    return {
+      ...state,
+      count: state.count - 1,
+    };
+  }
+
+  if (action.type === 'incrementBy') {
+    return {
+      ...state,
+      count: state.count + action.payload,
+    };
+  }
+
+  return state;
+};
 ```
 
 It's a simple, deterministic mechanism that when given the same input, it always returns the same output.
@@ -157,7 +190,7 @@ type PrivateAction = {
 
 ### Revelatory Action (Check)
 
-The Revelatory Action (Check) is what determines when the private fragments of the state should reconcile back into a next public version.
+The Revelatory Action (Check) is what determines when the private fragments of the State should reconcile back into a next public version.
 
 It is part of the Reducer, and it is the only code that runs only on the Server, but it's minimal and part of the same Reducer that runs on the Client, which makes movex almoooost serverless :).
 
@@ -179,6 +212,16 @@ type State = {
 
 const counterReducer = {
   submitMoves: (state, action): State => {
+    
+  },
+  setSubmitted: (state, action): State => {
+    
+  },
+
+}
+
+const gameReducer = (state = initialCounterState, action: CounterActions) => {
+  if (action.type === 'submitMoves') {
     const { payload } = action;
 
     return {
@@ -189,8 +232,9 @@ const counterReducer = {
         moves: payload.moves, // reveal the moves
       }
     };
-  },
-  setSubmitted: (state, action): State => {
+  }
+
+  if (action.type === 'setSubmitted') {
     const { payload } = action;
 
     return {
@@ -203,19 +247,21 @@ const counterReducer = {
         moves: [], // hide the moves
       }
     };
-  },
-
-  // This is not really an action here as it doesn't process the next state
-  //  but returns true when it's time to reveal all the private states by 
-  //  reconciling them all into the Public State
-  $canRevealPrivateState: (state): boolean => {
-    // If both players submitted than it's time to Reveal the moves!!!
-    return state.playerA.submitted && state.playerB.submitted;
   }
+
+  return state;
+};
+
+// As a static method on the reducer function to check wether the  
+//  It returns true when it's time to reveal all the private states by 
+//  reconciling them all into the Public State
+gameReducer.$canRevealPrivateState: (state): boolean => {
+  // If both players submitted than it's time to Reveal the moves!!!
+  return state.playerA.submitted && state.playerB.submitted;
 }
 
 dispatchPrivate(
-// Private Function
+  resourceIdentifier,
 {
   type: 'submitMoves',
   payload: {
@@ -223,8 +269,7 @@ dispatchPrivate(
     moves: ['e2e4', 'f2f4'],
   }
   isPrivate: true, 
-}, 
-// Paired Public Function
+},
 {
   type: 'setSubmitted',
   payload: {
@@ -334,23 +379,47 @@ The client acts as the state keeper. The whole server sync it just incidental, b
 That means the resource has its own store locally.
 
 ```ts
-// Note: Api might change
-// src: resource-reducers/counter.ts
+// *Api might change
 
-export default movex.createReducer({
-  resourceType: 'counter', // This is the resource type
-  actionsMap: {
-    increment: (state, action: Action<undefined>) => state,
-    decrement: (state, action: Action<undefined>) => state,
-    changeTo: (state, action: Action<number>) => state,
-  },
-  // this is the state that will be used on the client before the resource is retieved from api
-  // it can also be used to infer the state 
-  defaultState: {} as TState, 
-});
+import { Action } from 'movex';
 
-// In this way this is the way the actions are inferred
+export type CounterState = {
+  count: number;
+};
 
+export const initialCounterState: CounterState = {
+  count: 0,
+};
+
+export type CounterActions =
+  | Action<'increment'>
+  | Action<'decrement'>
+  | Action<'incrementBy', number>;
+
+export default (state = initialCounterState, action: CounterActions) => {
+  if (action.type === 'increment') {
+    return {
+      ...state,
+      count: state.count + 1,
+    };
+  }
+
+  if (action.type === 'decrement') {
+    return {
+      ...state,
+      count: state.count - 1,
+    };
+  }
+
+  if (action.type === 'incrementBy') {
+    return {
+      ...state,
+      count: state.count + action.payload,
+    };
+  }
+
+  return state;
+};
 ```
 
 #### Vanilla TS
@@ -359,16 +428,15 @@ export default movex.createReducer({
 // Note: Api might change
 
 // instantiate it
-const movex = new Movex({
-  resourceReducers: [counterResourceReducer], // an array of them given from the reducer files
-  config: MovexClientConfig
-});
+const movex = new Movex(config: MovexClientConfig);
+
+const conterResource = movex.registerResource('counter', counterResourceReducer);
 
 // use it
-const resourceIdentifier = movex.resources.create(state);
+const counterResourceIdentifier = conterResource.create();
 
 // movex.resources is MovexResource({});
-movex.resources.counter.onUpdated(resourceIdentifier, (nextState) => {
+counterResource.onUpdated(counterResourceIdentifier, (nextState) => {
   console.log('got next state', nextState);
 })
 
@@ -382,9 +450,10 @@ movex.resources.counter.onUpdated(resourceIdentifier, (nextState) => {
 
 const AppComponent() {
   const movex = useInstance(new Movex({
-    resourceReducers: [counterResourceReducer],     // an array of them given from the reducer files
     config: ClientSDKConfig
   }));
+
+  const counterResource = useMemo(() => movex.registerResource(counterReducer), [movex])
 
   const [counterRid, setCounterRid] = useState<Movex.ResourceIdentifier>();
 
@@ -395,7 +464,7 @@ const AppComponent() {
       ) : (
         <button
           // When the resource get's created the default state becomes it' state once the response is returned
-          action={() => movex.createResource('counter', state).map(setCounterRid)}
+          action={() => counterResource.create().map(setCounterRid)}
         >
           Create Counter
         </button>
@@ -411,7 +480,7 @@ const AppComponent() {
 import { useResourceReducer } from 'movex-react';
 
 const CounterComponent({rid: Movex.ResourceIdentifier<'counter'>}) {
-  const [counter, dispatchCounterAction] = useResourceReducer(movex, myCounterResourceId);
+  const [counter, dispatchCounterAction] = useResourceReducer(movex, rid);
 
   return (
     <div>

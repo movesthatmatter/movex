@@ -1,4 +1,4 @@
-import { Action, createActionCreator } from '../../lib/tools/action';
+import { Action } from '../../lib/tools/action';
 
 export type CounterState = {
   count: number;
