@@ -1,47 +1,14 @@
 import { Ok } from 'ts-results';
 import { MovexResource } from '../lib/MovexResource';
-import { computeCheckedState, createMovexReducerMap } from '../lib/util';
+import { computeCheckedState } from '../lib/util';
+import counterReducer, { initialCounterState } from './util/counterReducer';
 
 describe('Observable', () => {
-  type ActionsMap = {
-    increment: undefined;
-    decrement: undefined;
-    incrementBy: number;
-  };
-
-  type State = {
-    count: number;
-  };
-
-  const initialState: State = {
-    count: 0,
-  };
-
-  const reducer = createMovexReducerMap<ActionsMap, State>(initialState)({
-    increment: (prev) => ({
-      ...prev,
-      count: prev.count + 1,
-    }),
-    decrement: (prev) => ({
-      ...prev,
-      count: prev.count - 1,
-    }),
-    incrementBy: (prev, { payload }) => ({
-      ...prev,
-      count: prev.count + payload,
-    }),
-  });
-
   test('Dispatch Local Actions', () => {
-    // TODO: Ideally only by getting the reducer we know the state
-    const xResource = new MovexResource<State, ActionsMap>(
-      reducer,
-      computeCheckedState(initialState)
-    );
+    const xResource = new MovexResource(counterReducer);
 
     xResource.dispatch({
       type: 'increment',
-      payload: undefined,
     });
 
     expect(xResource.getUncheckedState()).toEqual({ count: 1 });
@@ -63,14 +30,10 @@ describe('Observable', () => {
   });
 
   test('Apply Local Actions', () => {
-    const xResource = new MovexResource<State, ActionsMap>(
-      reducer,
-      computeCheckedState(initialState)
-    );
+    const xResource = new MovexResource(counterReducer);
 
     xResource.applyAction({
       type: 'increment',
-      payload: undefined,
     });
 
     expect(xResource.getUncheckedState()).toEqual({ count: 1 });
@@ -93,15 +56,10 @@ describe('Observable', () => {
 
   describe('External Updates', () => {
     test('updates the unchecked state', () => {
-      // TODO: Ideally only by getting the reducer we know the state
-      const xResource = new MovexResource<State, ActionsMap>(
-        reducer,
-        computeCheckedState(initialState)
-      );
+      const xResource = new MovexResource(counterReducer);
 
       xResource.dispatch({
         type: 'increment',
-        payload: undefined,
       });
 
       expect(xResource.getUncheckedState()).toEqual({ count: 1 });
@@ -114,7 +72,6 @@ describe('Observable', () => {
 
       xResource.dispatch({
         type: 'decrement',
-        payload: undefined,
       });
 
       expect(xResource.getUncheckedState()).toEqual({ count: 39 });
@@ -122,24 +79,20 @@ describe('Observable', () => {
 
     describe('Reconciliate Action', () => {
       test('Updates when matching', () => {
-        const xResource = new MovexResource<State, ActionsMap>(
-          reducer,
-          computeCheckedState(initialState)
-        );
+        const xResource = new MovexResource(counterReducer);
 
         const updateSpy = jest.fn();
         xResource.onUpdated(updateSpy);
 
         const [incrementedState, incrementedStateChecksum] =
           computeCheckedState({
-            ...initialState,
-            count: initialState.count + 1,
+            ...initialCounterState,
+            count: initialCounterState.count + 1,
           });
 
         const actual = xResource.reconciliateAction({
           action: {
             type: 'increment',
-            payload: undefined,
           },
           checksum: incrementedStateChecksum,
         });
@@ -155,10 +108,7 @@ describe('Observable', () => {
       });
 
       test('Fails when NOT matching and does not update', () => {
-        const xResource = new MovexResource<State, ActionsMap>(
-          reducer,
-          computeCheckedState(initialState)
-        );
+        const xResource = new MovexResource(counterReducer);
 
         const updateSpy = jest.fn();
         xResource.onUpdated(updateSpy);
@@ -166,7 +116,6 @@ describe('Observable', () => {
         const actual = xResource.reconciliateAction({
           action: {
             type: 'increment',
-            payload: undefined,
           },
           checksum: 'wrong_checksum',
         });

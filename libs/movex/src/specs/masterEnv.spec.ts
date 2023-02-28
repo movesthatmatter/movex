@@ -1,40 +1,24 @@
-import { computeCheckedState, createMovexReducerMap } from '../lib/util';
+import { computeCheckedState } from '../lib/util';
+import counterReducer, {
+  CounterState,
+  initialCounterState,
+} from './util/counterReducer';
 import { createMasterEnv } from './util/createMasterEnv';
-require('console-group').install();
-
-type ActionsMap = {
-  changeCount: number;
-};
-
-type State = {
-  count: number;
-};
-
-const initialState: State = {
-  count: 0,
-};
-
-const reducer = createMovexReducerMap<ActionsMap, State>(initialState)({
-  changeCount: (prev, { payload }) => ({
-    ...prev,
-    count: payload,
-  }),
-});
 
 test('gets an ack checksum after action emited', async () => {
-  const masterEnv = createMasterEnv<State, ActionsMap>({
-    genesisState: initialState,
-    reducerMap: reducer,
-    clientCountorIds: ['a', 'b', 'c'],
+  const masterEnv = createMasterEnv({
+    genesisState: initialCounterState,
+    reducer: counterReducer,
+    clientCountOrIdsAsString: ['a', 'b', 'c'],
   });
 
   const [a, b, c] = masterEnv.clients;
 
   const initialCheckedState = masterEnv.getPublic();
-  expect(initialCheckedState).toEqual(computeCheckedState(initialState));
+  expect(initialCheckedState).toEqual(computeCheckedState(initialCounterState));
 
   const actualChecksum = await a.emitAction({
-    type: 'changeCount',
+    type: 'change',
     payload: 2,
   });
 
@@ -43,10 +27,10 @@ test('gets an ack checksum after action emited', async () => {
 });
 
 test('the peers get the action forwarded', async () => {
-  const masterEnv = createMasterEnv<State, ActionsMap>({
-    genesisState: initialState,
-    reducerMap: reducer,
-    clientCountorIds: ['a', 'b', 'c'],
+  const masterEnv = createMasterEnv({
+    genesisState: initialCounterState,
+    reducer: counterReducer,
+    clientCountOrIdsAsString: ['a', 'b', 'c'],
   });
 
   const [a, b, c] = masterEnv.clients;
@@ -60,13 +44,13 @@ test('the peers get the action forwarded', async () => {
   c.onFwdAction(cSpy);
 
   const actualChecksum = await a.emitAction({
-    type: 'changeCount',
+    type: 'change',
     payload: 2,
   });
 
   expect(bSpy).toHaveBeenCalledWith({
     action: {
-      type: 'changeCount',
+      type: 'change',
       payload: 2,
     },
     checksum: actualChecksum,
@@ -74,7 +58,7 @@ test('the peers get the action forwarded', async () => {
 
   expect(cSpy).toHaveBeenCalledWith({
     action: {
-      type: 'changeCount',
+      type: 'change',
       payload: 2,
     },
     checksum: actualChecksum,
@@ -84,10 +68,10 @@ test('the peers get the action forwarded', async () => {
 });
 
 test('the peers get the state updated', async () => {
-  const masterEnv = createMasterEnv<State, ActionsMap>({
-    genesisState: initialState,
-    reducerMap: reducer,
-    clientCountorIds: ['a', 'b', 'c'],
+  const masterEnv = createMasterEnv({
+    genesisState: initialCounterState,
+    reducer: counterReducer,
+    clientCountOrIdsAsString: ['a', 'b', 'c'],
   });
 
   const [a, b, c] = masterEnv.clients;
@@ -101,12 +85,12 @@ test('the peers get the state updated', async () => {
   c.subscribeToNetworkExpensiveMasterUpdates(cSpy);
 
   const actualChecksum = await a.emitAction({
-    type: 'changeCount',
+    type: 'change',
     payload: 2,
   });
 
-  const expectedState: State = {
-    ...initialState,
+  const expectedState: CounterState = {
+    ...initialCounterState,
     count: 2,
   };
 

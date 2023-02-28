@@ -5,3 +5,6 @@ export type NotUndefined =
   | boolean
   | null
   | NotUndefined[];
+
+export type UnknownRecord = Record<string, unknown>;
+export type AnyRecord = Record<string, any>;

@@ -16,5 +16,5 @@
     "**/*.test.jsx",
     "**/*.spec.jsx",
     "**/*.d.ts"
-  ]
+, "src/specs/masterEnv.tospec.ts", "src/specs/masterEnv.todospec.ts", "src/specs/MovexResource.orchestration.todospec.ts"  ]
 }

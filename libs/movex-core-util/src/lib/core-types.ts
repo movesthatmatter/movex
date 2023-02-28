@@ -1,3 +1,5 @@
+import { UnknownRecord } from './core-util';
+
 export namespace NestedObjectUtil {
   // The Paths Types is taken from https://stackoverflow.com/a/58436959/2093626
 
@@ -130,8 +132,6 @@ export type CollectionMapBase = {
     id: string;
   } & object;
 };
-
-export type UnknownRecord = Record<string, unknown>;
 
 export type UnknownIdentifiableRecord = { id: string } & Record<
   string,

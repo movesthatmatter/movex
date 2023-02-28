@@ -1,178 +1,32 @@
 import { invoke } from 'movex-core-util';
 import { MovexResource } from '../lib/MovexResource';
-import { computeCheckedState, createMovexReducerMap } from '../lib/util';
-import { BlackMove, Submission, WhiteMove } from './types';
+import { computeCheckedState } from '../lib/util';
+import gameReducer, { initialGameState } from './util/gameReducer';
 import { createMasterEnv } from './util/createMasterEnv';
-require('console-group').install();
-
-type ActionsMap = {
-  changeCount: number;
-  submitMoves:
-    | {
-        color: 'white';
-        moves: WhiteMove[];
-      }
-    | {
-        color: 'black';
-        moves: BlackMove[];
-      };
-  setSubmissionStatusToReady: 'white' | 'black';
-};
-
-type State = {
-  count: number;
-  submission: Submission;
-};
-
-const initialState: State = {
-  count: 0,
-  submission: {
-    status: 'none',
-    white: {
-      canDraw: true,
-      moves: [],
-    },
-    black: {
-      canDraw: true,
-      moves: [],
-    },
-  },
-};
+// require('console-group').install();
 
 describe('Master Client Orchestration', () => {
-  const reducer = createMovexReducerMap<ActionsMap, State>(initialState)({
-    changeCount: (prev, { payload }) => ({
-      ...prev,
-      count: payload,
-    }),
-    submitMoves: (prev, { payload: { color, moves } }) => {
-      if (prev.submission.status === 'partial') {
-        return {
-          ...prev,
-          submission: {
-            ...prev.submission,
-            [color]: {
-              canDraw: false,
-              moves,
-            },
-          },
-        };
-      }
-
-      if (
-        !(
-          prev.submission.status === 'none' ||
-          prev.submission.status === 'preparing'
-        )
-      ) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        submission: {
-          status: 'partial',
-          ...(color === 'black'
-            ? {
-                white: {
-                  canDraw: true,
-                  moves: [],
-                },
-                black: {
-                  canDraw: false,
-                  moves,
-                },
-              }
-            : {
-                white: {
-                  canDraw: false,
-                  moves,
-                },
-                black: {
-                  canDraw: true,
-                  moves: [],
-                },
-              }),
-        },
-      };
-    },
-    setSubmissionStatusToReady: (prev, { payload: color, type }) => {
-      if (prev.submission.status === 'partial') {
-        const next = {
-          ...prev,
-          submission: {
-            ...prev.submission,
-            [color]: {
-              canDraw: false,
-              moves: [],
-            },
-          },
-        };
-
-        return next;
-      }
-
-      if (
-        prev.submission.status === 'none' ||
-        prev.submission.status === 'preparing'
-      ) {
-        return {
-          ...prev,
-          submission: {
-            status: 'partial',
-            ...(color === 'black'
-              ? {
-                  white: prev.submission.white,
-                  black: {
-                    canDraw: false,
-                    moves: [],
-                  },
-                }
-              : {
-                  black: prev.submission.black,
-                  white: {
-                    canDraw: false,
-                    moves: [],
-                  },
-                }),
-          },
-        };
-      }
-
-      return prev;
-    },
-    $canReconcile: (state) => {
-      // This is only from the public state. Is that enough?
-      return (
-        state.submission.status === 'partial' &&
-        state.submission.white.canDraw === false &&
-        state.submission.black.canDraw === false
-      );
-      // if ()
-    },
-  });
-
   test('Public Actions with 2 clients', async () => {
-    const masterEnv = createMasterEnv<State, ActionsMap>({
-      genesisState: initialState,
-      reducerMap: reducer,
-      clientCountorIds: ['white', 'black'],
+    const masterEnv = createMasterEnv({
+      genesisState: initialGameState,
+      reducer: gameReducer,
+      clientCountOrIdsAsString: ['white', 'black'],
     });
 
     const [whiteClient, blackClient] = masterEnv.clients;
 
-    const whiteClientXResource = new MovexResource<State, ActionsMap>(
-      reducer,
+    const whiteClientXResource = new MovexResource(
+      gameReducer,
       masterEnv.getPublic()
     );
 
-    const blackClientXResource = new MovexResource<State, ActionsMap>(
-      reducer,
+    const blackClientXResource = new MovexResource(
+      gameReducer,
       masterEnv.getPublic()
     );
 
     const expectedMasterState = computeCheckedState({
-      ...initialState,
+      ...initialGameState,
       count: 5,
     });
 
@@ -191,7 +45,7 @@ describe('Master Client Orchestration', () => {
     });
 
     whiteClientXResource.dispatch({
-      type: 'changeCount',
+      type: 'change',
       payload: 5,
     });
 
@@ -203,21 +57,26 @@ describe('Master Client Orchestration', () => {
     expect(blackClientXResource.get()).toEqual(expectedMasterState);
   });
 
-  test('with private', () => {
-    const masterEnv = createMasterEnv<State, ActionsMap>({
-      genesisState: initialState,
-      reducerMap: reducer,
-      clientCountorIds: ['white', 'black'],
+  test('Private with 2 clients/players', () => {
+    const masterEnv = createMasterEnv({
+      genesisState: initialGameState,
+      reducer: gameReducer,
+      clientCountOrIdsAsString: ['white', 'black'],
     });
 
-    const [whiteClient, blackClient] = masterEnv.clients;
+    // Overwrite this to add 3 clients just
+    // gameReducer.$canReconcileState = (state) => {
+    //   return true;
+    // };
 
-    const whiteClientXResource = new MovexResource<State, ActionsMap>(
-      reducer,
+    const [whiteClient, blackClient, blueClient] = masterEnv.clients;
+
+    const whiteClientXResource = new MovexResource(
+      gameReducer,
       masterEnv.getPublic()
     );
-    const blackClientXResource = new MovexResource<State, ActionsMap>(
-      reducer,
+    const blackClientXResource = new MovexResource(
+      gameReducer,
       masterEnv.getPublic()
     );
 
@@ -249,7 +108,7 @@ describe('Master Client Orchestration', () => {
 
     // White's Turn
     invoke(() => {
-      whiteClientXResource.dispatch([
+      whiteClientXResource.dispatchPrivate(
         {
           type: 'submitMoves',
           payload: {
@@ -259,15 +118,17 @@ describe('Master Client Orchestration', () => {
           isPrivate: true,
         },
         {
-          type: 'setSubmissionStatusToReady',
-          payload: 'white',
-        },
-      ]);
+          type: 'readySubmissionState',
+          payload: {
+            color: 'white',
+          },
+        }
+      );
 
       const expectedPublicState = computeCheckedState({
-        ...initialState,
+        ...initialGameState,
         submission: {
-          ...initialState.submission,
+          ...initialGameState.submission,
           status: 'partial',
           white: {
             canDraw: false,
@@ -283,9 +144,9 @@ describe('Master Client Orchestration', () => {
       // This is the sender private
       // White
       const expectedSenderState = computeCheckedState({
-        ...initialState,
+        ...initialGameState,
         submission: {
-          ...initialState.submission,
+          ...initialGameState.submission,
           status: 'partial',
           white: {
             canDraw: false,
@@ -311,7 +172,7 @@ describe('Master Client Orchestration', () => {
     // Black's Turn
 
     invoke(() => {
-      blackClientXResource.dispatch([
+      blackClientXResource.dispatchPrivate(
         {
           type: 'submitMoves',
           payload: {
@@ -325,13 +186,15 @@ describe('Master Client Orchestration', () => {
           isPrivate: true,
         },
         {
-          type: 'setSubmissionStatusToReady',
-          payload: 'black',
-        },
-      ]);
+          type: 'readySubmissionState',
+          payload: {
+            color: 'black',
+          },
+        }
+      );
 
       const expectedPublicState = computeCheckedState({
-        ...initialState,
+        ...initialGameState,
         submission: {
           status: 'partial',
           white: {
@@ -345,9 +208,24 @@ describe('Master Client Orchestration', () => {
         },
       });
 
+      const expectedReconciliatedPublicState = computeCheckedState({
+        ...initialGameState,
+        submission: {
+          status: 'partial',
+          white: {
+            canDraw: false,
+            moves: ['w:E2-E4', 'w:D2-D4'],
+          },
+          black: {
+            canDraw: false,
+            moves: ['b:E7-E6'],
+          },
+        },
+      });
+
       // White
       const expectedPeerState = computeCheckedState({
-        ...initialState,
+        ...initialGameState,
         submission: {
           status: 'partial',
           white: {
@@ -363,7 +241,7 @@ describe('Master Client Orchestration', () => {
 
       // Black
       const expectedSenderState = computeCheckedState({
-        ...initialState,
+        ...initialGameState,
         submission: {
           status: 'partial',
           white: {
@@ -380,15 +258,17 @@ describe('Master Client Orchestration', () => {
       // The public action gets set
 
       // Master gets the new public state
-      expect(masterEnv.getPublic()).toEqual(expectedPublicState);
+      expect(masterEnv.getPublic()).toEqual(expectedReconciliatedPublicState);
 
       // Peer gets the new public state
-      expect(whiteClientXResource.get()).toEqual(expectedPeerState);
+      // expect(whiteClientXResource.get()).toEqual(expectedPeerState);
+      expect(whiteClientXResource.get()).toEqual(expectedReconciliatedPublicState);
 
       // The Private Action gets set
 
       // And sender gets the new private state
-      expect(blackClientXResource.get()).toEqual(expectedSenderState);
+      // expect(blackClientXResource.get()).toEqual(expectedSenderState);
+      expect(blackClientXResource.get()).toEqual(expectedReconciliatedPublicState);
     });
   });
 });

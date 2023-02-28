@@ -6,91 +6,85 @@ import {
   IObservable,
   NextStateGetter,
   Observable,
-  StringKeys,
 } from 'movex-core-util';
+import { computeCheckedState } from './util';
 import {
-  ActionOrActionTuple,
-  ActionsCollectionMapBase,
-  CheckedAction,
-  CheckedState,
-  DispatchedEvent,
-  MovexReducerMap,
-  MovexState,
-} from './types';
-import {
-  computeCheckedState,
-  createDispatcher,
-  getReducerApplicator,
+  ActionOrActionTupleFromAction,
+  AnyAction,
   isAction,
-} from './util';
+  ToCheckedAction,
+  ToPrivateAction,
+  ToPublicAction,
+} from './tools/action';
+import { CheckedState } from './core-types';
+import { createDispatcher, DispatchedEvent } from './tools/dispatch';
+import { MovexReducer } from './tools/reducer';
 
-// TODO: The actions should be inferred by the reducer map, since the payloads are given there, no?
+// TODO Feb 25th
+// Today I'm changing the way the reducer works from now, it's simply a redux redcuer of shape (state, action) and both the state and action are defined
+//  at creation time
+// and the actions are created by the users, movex.createAction maybe, or can even do a deox if needed but not worrying ab that!
+// This is easier to reason about, easier to work with and to get adopted as it's redux or useReducer
 
-// const getReducerMap = <TState>() => ({
-//   increment: (state: TState, action: Action<'increment', string>) => {
-//     action.type
-//   }
-// })
-// TODO: Need to find a clean way to not have to initialize tiwht the given TState and even reducer?
-//
-// Question:
-//    Is this really a resource or more like a state? Well if it's the end result it could be a resource yeah
-//    Or the combination of the ClientResource with Movex
-export class MovexResource<
-  TState extends MovexState,
-  ActionsCollectionMap extends ActionsCollectionMapBase,
-  TReducerMap extends MovexReducerMap<
-    TState,
-    ActionsCollectionMap
-  > = MovexReducerMap<TState, ActionsCollectionMap>
-> implements IObservable<CheckedState<TState>>
+// This has the old way of dealing with map actions
+// But that was pretty hard to type and not in line with useReducer and Redux
+// If something like that is needed I can just use deox, which makes more sense since it's just simpler to reason about as well as in line with the whole redusx reducer
+
+// TODO: Now extracat all the given actions into the dispatch
+export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
+  implements IObservable<CheckedState<TState>>
 {
   private $checkedState: Observable<CheckedState<TState>>;
 
   private pubsy = new Pubsy<{
-    onDispatched: DispatchedEvent<CheckedState<TState>, ActionsCollectionMap>;
+    onDispatched: DispatchedEvent<CheckedState<TState>, TAction>;
   }>();
 
-  // private _dispatch
-  private dispatcher: <TActionType extends StringKeys<ActionsCollectionMap>>(
-    actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>
+  private dispatcher: (
+    actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) => void;
 
   private unsubscribers: (() => any)[] = [];
 
-  private reducerApplicator = getReducerApplicator<
-    TState,
-    ActionsCollectionMap
-  >(this.reducerMap);
-
   constructor(
-    private reducerMap: TReducerMap,
-    initialCheckedState: CheckedState<TState>
+    private reducer: MovexReducer<TState, TAction>,
+
+    // Passing undefined here in order to get the default state
+    initialCheckedState = computeCheckedState(
+      reducer(undefined as TState, { type: '_init' } as TAction)
+    )
   ) {
+    // TODO: Not sure this will alawys work correctly as we need to get the initial state somehow
     this.$checkedState = new Observable(initialCheckedState);
 
     // this.$state = this.$checkedState.map((s) => s[0]);
 
-    const { dispatch, unsubscribe } = createDispatcher<
-      TState,
-      ActionsCollectionMap
-    >(this.$checkedState, reducerMap, {
-      onDispatched: (p) => {
-        this.pubsy.publish('onDispatched', p);
-      },
-    });
+    const { dispatch, unsubscribe } = createDispatcher<TState, TAction>(
+      this.$checkedState,
+      this.reducer,
+      {
+        onDispatched: (p) => {
+          this.pubsy.publish('onDispatched', p);
+        },
+      }
+    );
 
     this.dispatcher = dispatch;
     this.unsubscribers.push(unsubscribe);
   }
 
   /**
-   * This is te dispatch for this Movex Resource
+   * This is the dispatch for this Movex Resource
    */
-  dispatch<TActionType extends StringKeys<ActionsCollectionMap>>(
-    actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>
+  dispatch(action: ToPublicAction<TAction>) {
+    this.dispatcher(action);
+  }
+
+  dispatchPrivate(
+    privateAction: ToPrivateAction<TAction>,
+    publicAction: ToPublicAction<TAction>
   ) {
-    this.dispatcher(actionOrActionTuple);
+    this.dispatcher([privateAction, publicAction]);
   }
 
   /**
@@ -100,14 +94,10 @@ export class MovexResource<
    * @param actionOrActionTuple
    * @returns
    */
-  applyAction<TActionType extends StringKeys<ActionsCollectionMap>>(
-    actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>
-  ) {
+  applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
     const nextCheckedState =
       this.getNextCheckedStateFromAction(actionOrActionTuple);
-
     this.$checkedState.update(nextCheckedState);
-
     return nextCheckedState;
   }
 
@@ -118,11 +108,12 @@ export class MovexResource<
    * @param expectedNextChecksum
    * @returns
    */
-  reconciliateAction<TActionType extends StringKeys<ActionsCollectionMap>>(
-    checkedAction: CheckedAction<TActionType, ActionsCollectionMap>
+  reconciliateAction(
+    checkedAction: ToCheckedAction<TAction>
   ): Result<CheckedState<TState>, 'ChecksumMismatch'> {
     const nextCheckedState = this.getNextCheckedStateFromAction(
-      checkedAction.action
+      // Maybe worth making it a real public action but it's just for types
+      checkedAction.action as ToPublicAction<TAction>
     );
 
     if (nextCheckedState[1] !== checkedAction.checksum) {
@@ -134,19 +125,17 @@ export class MovexResource<
     return new Ok(nextCheckedState);
   }
 
-  private getNextCheckedStateFromAction<
-    TActionType extends StringKeys<ActionsCollectionMap>
-  >(
-    actionOrActionTuple: ActionOrActionTuple<TActionType, ActionsCollectionMap>
+  private getNextCheckedStateFromAction(
+    actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
     // Always apply the local action (which is the action of the private action in case of a tuple)
     const localAction = isAction(actionOrActionTuple)
       ? actionOrActionTuple
       : actionOrActionTuple[0];
 
-    const nextState = this.reducerApplicator(
+    const nextState = this.reducer(
       this.getUncheckedState(),
-      localAction
+      localAction as TAction
     );
 
     return computeCheckedState(nextState);
@@ -158,9 +147,7 @@ export class MovexResource<
   }
 
   onDispatched(
-    fn: (
-      event: DispatchedEvent<CheckedState<TState>, ActionsCollectionMap>
-    ) => void
+    fn: (event: DispatchedEvent<CheckedState<TState>, TAction>) => void
   ) {
     return this.pubsy.subscribe('onDispatched', fn);
   }

@@ -1,62 +1,74 @@
-import { createMovexInstance } from '../lib/Movex';
-import { Action } from '../lib/types';
-import { createMovexReducerMap } from '../lib/util';
+import counterReducer from './util/counterReducer';
+import gameReducer, { initialGameState } from './util/gameReducer';
+import { createMovexInstance } from '../lib';
+import { computeCheckedState } from '../lib/util';
 
-type ActionsMap = {
-  increment: undefined;
-  decrement: undefined;
-  incrementBy: number;
-};
+test('Initial State', () => {
+  const instance = createMovexInstance({
+    url: 'n/a',
+    apiKey: 'n/a',
+  });
 
-type State = {
-  count: number;
-};
+  const resource = instance.registerResource('counter', counterReducer);
 
-const initialState: State = {
-  count: 0,
-};
+  const expected = computeCheckedState({
+    count: 0,
+  });
 
-const reducer = createMovexReducerMap<ActionsMap, State>(initialState)({
-  increment: (prev) => ({
-    ...prev,
-    count: prev.count + 1,
-  }),
-  decrement: (prev) => ({
-    ...prev,
-    count: prev.count - 1,
-  }),
-  incrementBy: (prev, { payload }) => ({
-    ...prev,
-    count: prev.count + payload,
-  }),
+  expect(resource.get()).toEqual(expected);
 });
 
-type ResourceCollectionMap = {
+test('Dispatch Punblic Action', () => {
+  const instance = createMovexInstance({
+    url: 'n/a',
+    apiKey: 'n/a',
+  });
 
-}
+  const resource = instance.registerResource('counter', counterReducer);
 
-test('works', () => {
-  const instance = createMovexInstance(
+  resource.dispatch({ type: 'increment' });
+
+  const expected = computeCheckedState({
+    count: 1,
+  });
+
+  expect(resource.get()).toEqual(expected);
+});
+
+test('Dispatch Private Action', () => {
+  const instance = createMovexInstance({
+    url: 'n/a',
+    apiKey: 'n/a',
+  });
+
+  const resource = instance.registerResource('counter', gameReducer);
+
+  resource.dispatchPrivate(
     {
-      url: 'n/a',
-      apiKey: 'n/a',
-    },
-    [
-      {
-        type: 'counter',
-        defaultState: {
-          count: 1,
-        },
-        actionsMap: reducer,
-        // actionsMap: {
-        //   increment: (state, action: Action<'increment', { n: number }>) => {
-        //     return state;
-        //   },
-        // },
+      type: 'submitMoves',
+      payload: {
+        color: 'white',
+        moves: ['w:e2-e4', 'w:d2-d4'],
       },
-    ]
+      isPrivate: true,
+    },
+
+    { type: 'readySubmissionState', payload: { color: 'white' } }
   );
 
-  // to be used
-  instance.resources.counter.get(); // TODO: counter is any
+  const expected = computeCheckedState({
+    ...initialGameState,
+    submission: {
+      ...initialGameState.submission,
+      status: 'partial',
+      white: {
+        canDraw: false,
+        moves: ['w:e2-e4', 'w:d2-d4'],
+      },
+    },
+  });
+
+  expect(resource.get()).toEqual(expected);
 });
+
+// TODO: Add more tests

@@ -1,13 +1,17 @@
 import { AsyncResult } from 'ts-async-results';
-import {
-  ActionOrActionTuple,
-  ActionsCollectionMapBase,
-  CheckedState,
-  MovexReducerMap,
-  MovexState,
-} from './types';
-import { getReducerApplicator, isAction } from './util';
+// import {
+//   ActionOrActionTuple,
+//   ActionsCollectionMapBase,
+//   CheckedState,
+//   MovexReducerMap,
+//   MovexState,
+// } from './types';
+// import { getReducerApplicator, isAction } from './util';
 import { AsyncStore, NextStateGetter, StringKeys } from 'movex-core-util';
+import { CheckedState, MovexState } from './core-types';
+import { ActionOrActionTuple, ActionsCollectionMapBase, isAction } from './tools/action';
+import { MovexReducerMap } from './tools/reducer';
+import { getReducerApplicator } from './tools/dispatch';
 
 
 /**
