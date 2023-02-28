@@ -57,14 +57,19 @@ describe('Master Client Orchestration', () => {
     expect(blackClientXResource.get()).toEqual(expectedMasterState);
   });
 
-  test('with private', () => {
+  test('Private with 2 clients/players', () => {
     const masterEnv = createMasterEnv({
       genesisState: initialGameState,
       reducer: gameReducer,
       clientCountOrIdsAsString: ['white', 'black'],
     });
 
-    const [whiteClient, blackClient] = masterEnv.clients;
+    // Overwrite this to add 3 clients just
+    // gameReducer.$canReconcileState = (state) => {
+    //   return true;
+    // };
+
+    const [whiteClient, blackClient, blueClient] = masterEnv.clients;
 
     const whiteClientXResource = new MovexResource(
       gameReducer,
@@ -203,6 +208,21 @@ describe('Master Client Orchestration', () => {
         },
       });
 
+      const expectedReconciliatedPublicState = computeCheckedState({
+        ...initialGameState,
+        submission: {
+          status: 'partial',
+          white: {
+            canDraw: false,
+            moves: ['w:E2-E4', 'w:D2-D4'],
+          },
+          black: {
+            canDraw: false,
+            moves: ['b:E7-E6'],
+          },
+        },
+      });
+
       // White
       const expectedPeerState = computeCheckedState({
         ...initialGameState,
@@ -238,15 +258,17 @@ describe('Master Client Orchestration', () => {
       // The public action gets set
 
       // Master gets the new public state
-      expect(masterEnv.getPublic()).toEqual(expectedPublicState);
+      expect(masterEnv.getPublic()).toEqual(expectedReconciliatedPublicState);
 
       // Peer gets the new public state
-      expect(whiteClientXResource.get()).toEqual(expectedPeerState);
+      // expect(whiteClientXResource.get()).toEqual(expectedPeerState);
+      expect(whiteClientXResource.get()).toEqual(expectedReconciliatedPublicState);
 
       // The Private Action gets set
 
       // And sender gets the new private state
-      expect(blackClientXResource.get()).toEqual(expectedSenderState);
+      // expect(blackClientXResource.get()).toEqual(expectedSenderState);
+      expect(blackClientXResource.get()).toEqual(expectedReconciliatedPublicState);
     });
   });
 });

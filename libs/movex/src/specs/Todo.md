@@ -6,7 +6,7 @@ tags: []
 
 ## Doing
 
-- Add reconciliation handler
+- Add reconciliation handler or MasterResource 
 
 ## To Do
 

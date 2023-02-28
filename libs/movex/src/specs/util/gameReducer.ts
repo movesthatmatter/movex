@@ -160,7 +160,7 @@ const gameReducer = (
 };
 
 // TODO: add this
-gameReducer.$canReconciliate = (state: GameState) => {
+gameReducer.$canReconcileState = (state: GameState) => {
   return (
     state.submission.status === 'partial' &&
     state.submission.white.canDraw === false &&
