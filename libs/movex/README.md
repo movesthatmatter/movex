@@ -1,3 +1,9 @@
+---
+noteId: "7d63b880b79911edadd4d72b1615afa0"
+tags: []
+
+---
+
 <img width="400" alt="logo_b@2x" src="https://user-images.githubusercontent.com/2099521/221382702-e655e567-0a5f-4520-b4f6-1dcfc73d2d86.png">
 
 - [Movex](#movex)
