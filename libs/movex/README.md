@@ -1,7 +1,13 @@
-<img width="540" alt="logo_c@2x" src="https://user-images.githubusercontent.com/2099521/221956423-bd0b1b46-a8ed-4b25-8a1c-14cdcb1de716.png">
+<p align="center">
+<img width="400" alt="logo_b@2x" src="https://user-images.githubusercontent.com/2099521/221382702-e655e567-0a5f-4520-b4f6-1dcfc73d2d86.png" />
+<p>
 
+Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation without the need to write Server Specific Code.
 
-- [Movex](#movex)
+**It's currently in dev, but the following sections describe the idea behind it. Drop me a message or create an issue if you have any questions, ideas or would like to get involved.**
+
+---
+
 - [Why? What makes it unique?](#why-what-makes-it-unique)
 - [How does it work?](#how-does-it-work)
   - [Resources](#resources)
@@ -25,10 +31,6 @@
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 --- 
-
-# Movex
-
-Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation w/o the need to write Server Specific Code.
 
 # Why? What makes it unique?
 
