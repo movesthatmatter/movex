@@ -128,7 +128,7 @@ export type AnyActionOrActionTupleOf<
 
 export type ActionOrActionTupleFromAction<TAction extends AnyAction> =
   | ToPublicAction<TAction>
-  | [ToPrivateAction<TAction>, ToPublicAction<TAction>];
+  | ActionTupleFrom<TAction>;
 
 export type ActionFromActionCreator<
   Creator extends ReturnType<typeof createActionCreator>
@@ -137,6 +137,11 @@ export type ActionFromActionCreator<
 export type ActionCreatorsMapBase = {
   [k in string]: ReturnType<typeof createActionCreator>;
 };
+
+export type ActionTupleFrom<TAction extends AnyAction> = [
+  ToPrivateAction<TAction>,
+  ToPublicAction<TAction>
+];
 
 /**
  * Minimal (type-only) action factory
