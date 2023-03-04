@@ -6,6 +6,10 @@ tags: []
 
 ## Doing
 
+    - What shoould the master return for the reconciliation portion?
+      - The series of FWD and Ack for each client no? no cause I don't have the clients there
+      - and the nthe outside will map them and forward them=
+
   - work on $canReconcileState part  
 
 - work on MovexMaster + masterEnv
