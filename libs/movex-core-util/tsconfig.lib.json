@@ -10,5 +10,5 @@
   "include": [
     "**/*.ts",
     "../backend/src/lib/resource-action-handler/index.spec.ts"
-  ]
+, "../movex/src/lib/store/MovexStore.ts"  ]
 }

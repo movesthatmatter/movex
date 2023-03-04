@@ -1,3 +1,5 @@
+import { nextTick } from 'process';
+
 export const objectKeys = <O extends object>(o: O) =>
   Object.keys(o) as (keyof O)[];
 
@@ -31,6 +33,8 @@ export const delay = (ms = 500) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+
+export const tillNextTick = () => new Promise(nextTick);
 
 export const range = (length: number, startAt = 0) =>
   Array.from({ length }, (_, i) => i + startAt);

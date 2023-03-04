@@ -1,4 +1,4 @@
 export * from './lib';
-export * from './lib/MovexResourceMaster';
+export * from './lib/MovexMaster';
 // export * from './lib/MovexResourceold';
-export * from './lib/types';
+// export * from './lib/types';

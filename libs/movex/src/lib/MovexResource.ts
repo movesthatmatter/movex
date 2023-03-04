@@ -98,6 +98,7 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
     const nextCheckedState =
       this.getNextCheckedStateFromAction(actionOrActionTuple);
     this.$checkedState.update(nextCheckedState);
+
     return nextCheckedState;
   }
 
