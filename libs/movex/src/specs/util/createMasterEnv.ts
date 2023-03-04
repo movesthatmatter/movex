@@ -87,8 +87,8 @@ export const createMasterEnv = <TState, TAction extends AnyAction>({
                 })
                 .map(() => {
                   const ack = nextPrivate
-                    ? nextPrivate.item.state[1]
-                    : nextPublic.item.state[1];
+                    ? nextPrivate.checksum
+                    : nextPublic.checksum
 
                   return ack;
                 });

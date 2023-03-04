@@ -5,13 +5,19 @@ import {
   ResourceIdentifier,
   MovexClient,
   MovexStoreItem,
+  MovexStatePatch,
+  objectKeys,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
+import { Checksum } from './core-types';
+import { MovexResource } from './MovexResource';
 import {
   ActionOrActionTupleFromAction,
   ActionTupleFrom,
   AnyAction,
+  CheckedAction,
   isAction,
+  ToCheckedAction,
   ToPrivateAction,
   ToPublicAction,
 } from './tools/action';
@@ -48,30 +54,47 @@ export class MovexMaster<
     rid: ResourceIdentifier<TResourceType>,
     clientId: MovexClient['id']
   ) {
-    return this.store.get(rid, clientId).map((resource) => {
-      const patches = resource.patches?.[`:client:${clientId}`];
-      if (patches) {
-        // TODO: left it here!
-        // TODO: This needs some more thinking as some use cases don't work - like what if the public state has updated
-        // since the private diffs were created – how are they applied then? B/c the resulting might not work exactly
-        // There are different types of diff and I don't now what the consequences are for each – I don't see the whole picture,
-        //  in whih case I am "overwhelmed" at thinking of a solution w/o knowing them.
-        // In case the state has changed – I could run the patch on the Public 0 => resulting Public 0.5, then a patch at Public 1 over Public 0.5
-        //  if there are different (if the checksums don't match). In which case I could do something for each scenario
-        //    I guess the Public 1 overwrites the Public 0.5 in everything except for the paths it changed (the diff)
-        // return privateDiffs.reduce(() => {}, store.public)
+    return this.store
+      .get(rid, clientId)
+      .map((item) => this.computeClientState(clientId, item));
+  }
 
-        const reconciledState = applyMovexStatePatches(
-          resource.state[0],
-          patches.map((p) => p.patch)
-        );
+  private computeClientState(
+    clientId: MovexClient['id'],
+    item: MovexStoreItem<TState>
+  ) {
+    const patches = item.patches?.[clientId];
+    if (patches) {
+      return this.reconcileState(item.state[0], patches);
+    }
 
-        // Should the checksum compute happen each time or should it be stored?
-        return computeCheckedState(reconciledState);
-      }
+    return item.state;
+  }
 
-      return resource.state;
-    });
+  private reconcileState(state: TState, patches: MovexStatePatch<TState>[]) {
+    // TODO: left it here!
+    // TODO: This needs some more thinking as some use cases don't work - like what if the public state has updated
+    // since the private diffs were created – how are they applied then? B/c the resulting might not work exactly
+    // There are different types of diff and I don't now what the consequences are for each – I don't see the whole picture,
+    //  in whih case I am "overwhelmed" at thinking of a solution w/o knowing them.
+    // In case the state has changed – I could run the patch on the Public 0 => resulting Public 0.5, then a patch at Public 1 over Public 0.5
+    //  if there are different (if the checksums don't match). In which case I could do something for each scenario
+    //    I guess the Public 1 overwrites the Public 0.5 in everything except for the paths it changed (the diff)
+    // return privateDiffs.reduce(() => {}, store.public)
+
+    const reconciledState = applyMovexStatePatches(
+      state,
+      patches.map((p) => p.patch)
+    );
+
+    // Should the checksum compute happen each time or should it be stored?
+    return computeCheckedState(reconciledState);
+  }
+
+  private getItem<TResourceType extends GenericResourceType>(
+    rid: ResourceIdentifier<TResourceType>
+  ) {
+    return this.store.get(rid);
   }
 
   getPublic<TResourceType extends GenericResourceType>(
@@ -109,6 +132,7 @@ export class MovexMaster<
   //     ],
   //   unknown
   // >;
+
   applyAction<TResourceType extends GenericResourceType>(
     rid: ResourceIdentifier<TResourceType>,
     clientId: MovexClient['id'],
@@ -116,24 +140,21 @@ export class MovexMaster<
   ) {
     return this.get(rid, clientId).flatMap<
       {
-        nextPublic: {
-          item: MovexStoreItem<TState>;
-          action: ToPublicAction<TAction>;
-        };
-        nextPrivate?: {
-          item: MovexStoreItem<TState>;
-          action: ToPrivateAction<TAction>;
-        };
+        nextPublic: ToCheckedAction<TAction>;
+        nextPrivate?: ToCheckedAction<TAction>;
+        reconciledFwdActions?: Record<MovexClient['id'], TAction[]>;
       },
       unknown
     >(([prevState]) => {
+      // const [prevState] = this.computeClientState(clientId, prevItem);
+
       if (isAction(actionOrActionTuple)) {
         const publicAction = actionOrActionTuple;
         return this.store
           .update(rid, this.reducer(prevState, publicAction))
           .map((nextPublicState) => ({
             nextPublic: {
-              item: nextPublicState,
+              checksum: nextPublicState.state[1],
               action: publicAction,
             },
           }));
@@ -146,31 +167,79 @@ export class MovexMaster<
         this.reducer(prevState, privateAction)
       );
 
-      const nextPublicState = this.reducer(prevState, publicAction);
+      // const nextPublicState = ;
 
-      return this.store
-        .addPrivatePatch(rid, `:client:${clientId}`, {
-          action: privateAction,
-          patch: privatePatch,
-        })
-        .flatMap((privateState) =>
-          AsyncResult.all(
-            new AsyncOk(privateState),
-
-            // Note The Public Action needs to get applied after the private one!
-            this.store.update(rid, nextPublicState)
-          )
-        )
-        .map(([nextPrivateState, nextPublicState]) => ({
-          nextPublic: {
-            item: nextPublicState,
-            action: publicAction,
-          },
-          nextPrivate: {
-            item: nextPrivateState,
+      return (
+        this.store
+          .addPrivatePatch(rid, clientId, {
             action: privateAction,
-          },
-        }));
+            patch: privatePatch,
+          })
+          // .map((item) => )
+          .flatMap((itemWithLatestPatch) =>
+            AsyncResult.all(
+              new AsyncOk(itemWithLatestPatch),
+
+              this.get(rid, clientId),
+
+              // Note The Public Action needs to get applied after the private one!
+              this.store
+                .update(rid, this.reducer(prevState, publicAction))
+                .map((s) => s.state)
+            )
+          )
+          // Reconciliation Step
+          .map(([nextItem, nextPrivateState, nextPublicState]) => {
+            // console.log('next private', nextPrivateState);
+
+            if (this.reducer.$canReconcileState?.(nextPublicState[0])) {
+              const prevPatchesByClientId = nextItem.patches || {};
+
+              // TODO: This should also apply the patches here on the master store
+              // This is the Most Important part - being ablet o apply the patches/actions
+              // in the order and tu return a reliable next state, which satisfies BOTH these requirements:
+              //  - to compute the expected state
+              //  - the state to then be rereated EXACTLY by the client if given from the ordered actions
+              //  In Theory, even on the master, storing just the actions and the root state should be enough to
+              //  recreate the next states, always the same, so maybe there's no need to store the patchs, but just the checked actions?
+              // Maybe I should look at how git does the diffs and take a note from their page,
+              //  but before doing that – I need to see if the tests are actually working, and then which ones are actually failing?
+
+              const reconciledFwdActions = objectKeys(
+                prevPatchesByClientId
+              ).reduce((accum, nextClientId) => {
+                return {
+                  ...accum,
+                  [nextClientId]: prevPatchesByClientId[nextClientId].map(
+                    (p) => p.action as TAction
+                  ),
+                };
+              }, {} as Record<MovexClient['id'], TAction[]>);
+
+              return [
+                nextPrivateState,
+                nextPublicState,
+                reconciledFwdActions,
+              ] as const;
+            }
+
+            return [nextPrivateState, nextPublicState, undefined] as const;
+          })
+          .map(
+            ([nextPrivateItem, nextPublicItem, reconciledFwdActions]) =>
+              ({
+                nextPublic: {
+                  checksum: nextPublicItem[1],
+                  action: publicAction,
+                },
+                nextPrivate: {
+                  checksum: nextPrivateItem[1],
+                  action: privateAction,
+                },
+                reconciledFwdActions,
+              } as const)
+          )
+      );
     });
   }
 
