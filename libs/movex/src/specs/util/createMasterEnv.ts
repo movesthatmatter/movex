@@ -1,10 +1,5 @@
 import { Pubsy } from 'ts-pubsy';
-import {
-  AnyResourceIdentifier,
-  MovexStore,
-  range,
-  toResourceIdentifierStr,
-} from 'movex-core-util';
+import { AnyResourceIdentifier, MovexStore, range } from 'movex-core-util';
 import { CheckedState } from '../../lib/core-types';
 import {
   ActionOrActionTupleFromAction,
@@ -13,6 +8,7 @@ import {
 } from '../../lib/tools/action';
 import { MovexReducer } from '../../lib/tools/reducer';
 import { MovexMaster } from '../../lib/MovexMaster';
+import { AsyncResult } from 'ts-async-results';
 
 export const createMasterEnv = <TState, TAction extends AnyAction>({
   store,
@@ -36,73 +32,6 @@ export const createMasterEnv = <TState, TAction extends AnyAction>({
   }>();
 
   type ClientId = string;
-
-  // const store: {
-  //   public: CheckedState<TState>;
-  //   fragmentsByClient: {
-  //     // TODO: This should contain the private action as well as the private state so it can then be forwaarded
-  //     // to the rest of the clients!
-  //     [k in ClientId]: JsonPatch<TState>[]; // The same user might have multiple fragments in order
-  //   };
-  // } = {
-  //   public: computeCheckedState(genesisState),
-  //   fragmentsByClient: {},
-  // };
-
-  // This gets the resource for each client
-  //  including the private fragments, which could result in different from each client or from pulic
-  // const get = (clientId: string) => {
-  //   const privateFragments = store.fragmentsByClient[clientId];
-  //   if (privateFragments) {
-  //     // TODO: left it here!
-  //     // TODO: This needs some more thinking as some use cases don't work - like what if the public state has updated
-  //     // since the private diffs were created – how are they applied then? B/c the resulting might not work exactly
-  //     // There are different types of diff and I don't now what the consequences are for each – I don't see the whole picture,
-  //     //  in whih case I am "overwhelmed" at thinking of a solution w/o knowing them.
-  //     // In case the state has changed – I could run the patch on the Public 0 => resulting Public 0.5, then a patch at Public 1 over Public 0.5
-  //     //  if there are different (if the checksums don't match). In which case I could do something for each scenario
-  //     //    I guess the Public 1 overwrites the Public 0.5 in everything except for the paths it changed (the diff)
-  //     // return privateDiffs.reduce(() => {}, store.public)
-
-  //     // Should the checksum compute happen each time or should it be stored?
-  //     const reconciledState = reconciliatePrivateFragments(
-  //       store.public[0],
-  //       privateFragments
-  //     );
-
-  //     return computeCheckedState(reconciledState);
-  //   }
-
-  //   return store.public;
-  // };
-
-  // const reconciliatePublicState = () => {
-  //   const allClientsPrivateFragments = objectKeys(
-  //     store.fragmentsByClient
-  //   ).reduce((accum, next) => {
-  //     // console.group('private fragments for', next);
-  //     // console.log(store.fragmentsByClient[next]);
-  //     // console.groupEnd();
-
-  //     // Here we need to take in account the order probably the saved order
-  //     return [...accum, ...store.fragmentsByClient[next]];
-  //   }, [] as JsonPatch<TState>[]);
-
-  //   if (allClientsPrivateFragments) {
-  //     const reconciledState = reconciliatePrivateFragments(
-  //       store.public[0],
-  //       allClientsPrivateFragments
-  //     );
-
-  //     // Save the new state!
-  //     store.public = computeCheckedState(reconciledState);
-
-  //     // Reset the fragments
-  //     store.fragmentsByClient = {};
-  //   }
-
-  //   return store.public;
-  // };
 
   const clientIds = Array.isArray(clientCountOrIds)
     ? clientCountOrIds
@@ -133,30 +62,51 @@ export const createMasterEnv = <TState, TAction extends AnyAction>({
           // All
           return master
             .applyAction(rid, clientId, actionOrActionTuple)
-            .mapErr((e) => {
-              console.log('in master nev emit action apply action e', e);
-            })
-            .map(({ nextPublic, nextPrivate }) => {
-              // Forward the Public Action to all the clients except me
-              clientIds
+            .flatMap(({ nextPublic, nextPrivate }) => {
+              const peerStateResults = clientIds
                 .filter((cid) => cid !== clientId)
-                .forEach((peerClientId) => {
-                  stateUpdatePubsy.publish(
-                    `onDeprecatedNetworkExpensiveStateUpdateTo:${peerClientId}`,
-                    nextPublic.item.state
-                  );
+                .map((peerClientId) =>
+                  master
+                    .get(rid, peerClientId)
+                    .map((state) => ({ clientId: peerClientId, state }))
+                );
 
-                  actionPubsy.publish(`onFwdActionTo:${peerClientId}`, {
-                    action: nextPublic.action,
-                    checksum: nextPublic.item.state[1],
+              return AsyncResult.all(...peerStateResults)
+                .map((peerState) => {
+                  peerState.forEach((peer) => {
+                    stateUpdatePubsy.publish(
+                      `onDeprecatedNetworkExpensiveStateUpdateTo:${peer.clientId}`,
+                      peer.state
+                    );
+
+                    actionPubsy.publish(`onFwdActionTo:${peer.clientId}`, {
+                      action: nextPublic.action,
+                      checksum: peer.state[1],
+                    });
                   });
+                })
+                .map(() => {
+                  const ack = nextPrivate
+                    ? nextPrivate.item.state[1]
+                    : nextPublic.item.state[1];
+
+                  return ack;
                 });
 
-              const ack = nextPrivate
-                ? nextPrivate.item.state[1]
-                : nextPublic.item.state[1];
+              // Forward the Public Action to all the clients except me
+              // clientIds
+              //   .filter((cid) => cid !== clientId)
+              //   .forEach((peerClientId) => {
+              //     stateUpdatePubsy.publish(
+              //       `onDeprecatedNetworkExpensiveStateUpdateTo:${peerClientId}`,
+              //       nextPublic.item.state
+              //     );
 
-              return ack;
+              //     actionPubsy.publish(`onFwdActionTo:${peerClientId}`, {
+              //       action: nextPublic.action,
+              //       checksum: nextPublic.item.state[1],
+              //     });
+              //   });
             });
 
           // This is exactly what would happen on the backend so it could be re-used
