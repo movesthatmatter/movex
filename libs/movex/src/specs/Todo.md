@@ -6,9 +6,11 @@ tags: []
 
 ## Doing
 
-- Add reconciliation handler or MovexMaster 
+  - work on $canReconcileState part  
 
 - work on MovexMaster + masterEnv
+
+- Done/ Add reconciliation handler or MovexMaster 
 
 ## To Do
 

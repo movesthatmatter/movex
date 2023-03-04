@@ -1,12 +1,12 @@
-import { delay, invoke, tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
+import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
 import { MovexResource } from '../lib/MovexResource';
 import { computeCheckedState } from '../lib/util';
 import gameReducer, { initialGameState } from './util/gameReducer';
 import { createMasterEnv } from './util/createMasterEnv';
 import { LocalMovexStore } from '../lib/store';
-import { GetReducerState } from '../lib/tools/reducer';
-import { nextTick } from 'process';
-// require('console-group').install();
+import { GetReducerAction, GetReducerState } from '../lib/tools/reducer';
+import { ToCheckedAction } from '../lib/tools/action';
+require('console-group').install();
 
 const rid = toResourceIdentifierStr({
   resourceType: 'game',
@@ -80,18 +80,13 @@ describe('Master Client Orchestration', () => {
     expect(blackClientXResource.get()).toEqual(expectedMasterPublicState);
   });
 
-  xtest('Private with 2 clients/players', async () => {
+  test('Private with white and black players. Only White Submitting', async () => {
     const masterEnv = createMasterEnv({
       store: localStore,
       reducer: gameReducer,
       clientCountOrIdsAsString: ['white', 'black'],
       rid,
     });
-
-    // Overwrite this to add 3 clients just
-    // gameReducer.$canReconcileState = (state) => {
-    //   return true;
-    // };
 
     const [whiteClient, blackClient] = masterEnv.clients;
 
@@ -106,201 +101,300 @@ describe('Master Client Orchestration', () => {
       initialPublicState
     );
 
+    let whiteActionFwd:
+      | ToCheckedAction<GetReducerAction<typeof gameReducer>>
+      | undefined = undefined;
+    let blackActionFwd:
+      | ToCheckedAction<GetReducerAction<typeof gameReducer>>
+      | undefined = undefined;
+
     // Bind the client udpates
     whiteClient.onFwdAction((fwd) => {
-      // console.log('[fwding action]', 'white', fwd);
-      const result = whiteClientXResource.reconciliateAction(fwd);
-
-      expect(result.ok).toBe(true);
-      // TODO: if error the reconcilation needs to happen
+      whiteActionFwd = fwd;
     });
 
     blackClient.onFwdAction((fwd) => {
-      const result = blackClientXResource.reconciliateAction(fwd);
-
-      expect(result.ok).toBe(true);
-      // TODO: if error the reconcilation needs to happen
+      blackActionFwd = fwd;
     });
 
+    // This could be part of the env (not just master env but client-master env)
+    //  because in reality this is part of the MovexClient
+    // // Bind Action emitter to Master
+    whiteClientXResource.onDispatched((event) => {
+      whiteClient.emitAction(event.action);
+    });
+
+    blackClientXResource.onDispatched((event) => {
+      blackClient.emitAction(event.action);
+    });
+
+    // White's Turn
+
+    whiteClientXResource.dispatchPrivate(
+      {
+        type: 'submitMoves',
+        payload: {
+          color: 'white',
+          moves: ['w:E2-E4', 'w:D2-D4'],
+        },
+        isPrivate: true,
+      },
+      {
+        type: 'readySubmissionState',
+        payload: {
+          color: 'white',
+        },
+      }
+    );
+
+    await tillNextTick();
+
+    const expectedPublicState = computeCheckedState({
+      ...initialGameState,
+      submission: {
+        ...initialGameState.submission,
+        status: 'partial',
+        white: {
+          canDraw: false,
+          moves: [],
+        },
+      },
+    });
+
+    // In this case is the same as the public b/c no private changes has been made
+    // Black
+    let expectedPeerState = expectedPublicState;
+
+    // This is the sender private
+    // White
+    const expectedSenderState = computeCheckedState({
+      ...initialGameState,
+      submission: {
+        ...initialGameState.submission,
+        status: 'partial',
+        white: {
+          canDraw: false,
+          moves: ['w:E2-E4', 'w:D2-D4'],
+        },
+      },
+    });
+
+    // Peer State Reconciliation and Action Fwd
+
+    expect(whiteActionFwd).toEqual(undefined);
+
+    expect(blackActionFwd).toEqual({
+      action: {
+        type: 'readySubmissionState',
+        payload: {
+          color: 'white',
+        },
+      },
+      checksum: expectedPeerState[1],
+    });
+
+    blackClientXResource.reconciliateAction(blackActionFwd!);
+
+    // The public action gets set
+
+    const actualPublic = await masterEnv.getPublic().resolveUnwrap();
+
+    // Master gets the new public state
+    expect(actualPublic).toEqual(expectedPublicState);
+
+    // Peer gets the new public state
+    expect(blackClientXResource.get()).toEqual(expectedPeerState);
+
+    // The Private Action gets set
+
+    // And sender gets the new private state
+    expect(whiteClientXResource.get()).toEqual(expectedSenderState);
+  });
+
+  test('Private with white and black. Both Submitting, White first (w/o reconciliation)', async () => {
+    const gameReducerWithoutRecociliation = gameReducer;
+
+    // Overwrite this to always return false in this test case
+    gameReducerWithoutRecociliation.$canReconcileState = () => {
+      return false;
+    };
+
+    const masterEnv = createMasterEnv({
+      store: localStore,
+      reducer: gameReducer,
+      clientCountOrIdsAsString: ['white', 'black'],
+      rid,
+    });
+
+    const [whiteClient, blackClient] = masterEnv.clients;
+
+    const initialPublicState = await masterEnv.getPublic().resolveUnwrap();
+
+    const whiteClientXResource = new MovexResource(
+      gameReducer,
+      initialPublicState
+    );
+    const blackClientXResource = new MovexResource(
+      gameReducer,
+      initialPublicState
+    );
+
+    let whiteActionFwd:
+      | ToCheckedAction<GetReducerAction<typeof gameReducer>>
+      | undefined = undefined;
+    let blackActionFwd:
+      | ToCheckedAction<GetReducerAction<typeof gameReducer>>
+      | undefined = undefined;
+
+    // Bind the client udpates
+    whiteClient.onFwdAction((fwd) => {
+      whiteActionFwd = fwd;
+    });
+
+    blackClient.onFwdAction((fwd) => {
+      blackActionFwd = fwd;
+    });
+
+    // This could be part of the env (not just master env but client-master env)
+    //  because in reality this is part of the MovexClient
     // Bind Action emitter to Master
     whiteClientXResource.onDispatched((event) => {
       whiteClient.emitAction(event.action);
     });
 
     blackClientXResource.onDispatched((event) => {
-      // console.log('[emit action] black', event.action)
       blackClient.emitAction(event.action);
     });
 
     // White's Turn
-    invoke(() => {
-      whiteClientXResource.dispatchPrivate(
-        {
-          type: 'submitMoves',
-          payload: {
-            color: 'white',
-            moves: ['w:E2-E4', 'w:D2-D4'],
-          },
-          isPrivate: true,
+    whiteClientXResource.dispatchPrivate(
+      {
+        type: 'submitMoves',
+        payload: {
+          color: 'white',
+          moves: ['w:E2-E4', 'w:D2-D4'],
         },
-        {
-          type: 'readySubmissionState',
-          payload: {
-            color: 'white',
-          },
-        }
-      );
-
-      const expectedPublicState = computeCheckedState({
-        ...initialGameState,
-        submission: {
-          ...initialGameState.submission,
-          status: 'partial',
-          white: {
-            canDraw: false,
-            moves: [],
-          },
+        isPrivate: true,
+      },
+      {
+        type: 'readySubmissionState',
+        payload: {
+          color: 'white',
         },
-      });
+      }
+    );
 
-      // In this case is the same as the public b/c no private changes has been made
-      // Black
-      const expectedPeerState = expectedPublicState;
+    await tillNextTick();
 
-      // This is the sender private
-      // White
-      const expectedSenderState = computeCheckedState({
-        ...initialGameState,
-        submission: {
-          ...initialGameState.submission,
-          status: 'partial',
-          white: {
-            canDraw: false,
-            moves: ['w:E2-E4', 'w:D2-D4'],
-          },
-        },
-      });
+    blackClientXResource.reconciliateAction(blackActionFwd!);
 
-      // The public action gets set
-
-      // Master gets the new public state
-      expect(masterEnv.getPublic()).toEqual(expectedPublicState);
-
-      // Peer gets the new public state
-      expect(blackClientXResource.get()).toEqual(expectedPeerState);
-
-      // The Private Action gets set
-
-      // And sender gets the new private state
-      expect(whiteClientXResource.get()).toEqual(expectedSenderState);
-    });
+    // Reset the Peer ActionFwd
+    blackActionFwd = undefined;
 
     // Black's Turn
 
-    invoke(() => {
-      blackClientXResource.dispatchPrivate(
-        {
-          type: 'submitMoves',
-          payload: {
-            // How not to send the color here. is it even worth it?
-            // On argument is that the other player cna manipulat ethings, but if that's the case the whole game engine can be threatened
-            // Not worrking ab it for now
-            // Can get some token for {me} or smtg like that
-            color: 'black',
-            moves: ['b:E7-E6'],
-          },
-          isPrivate: true,
+    blackClientXResource.dispatchPrivate(
+      {
+        type: 'submitMoves',
+        payload: {
+          // How not to send the color here. is it even worth it?
+          // On argument is that the other player cna manipulat ethings, but if that's the case the whole game engine can be threatened
+          // Not worrking ab it for now
+          // Can get some token for {me} or smtg like that
+          color: 'black',
+          moves: ['b:E7-E6'],
         },
-        {
-          type: 'readySubmissionState',
-          payload: {
-            color: 'black',
-          },
-        }
-      );
-
-      const expectedPublicState = computeCheckedState({
-        ...initialGameState,
-        submission: {
-          status: 'partial',
-          white: {
-            canDraw: false,
-            moves: [],
-          },
-          black: {
-            canDraw: false,
-            moves: [],
-          },
+        isPrivate: true,
+      },
+      {
+        type: 'readySubmissionState',
+        payload: {
+          color: 'black',
         },
-      });
+      }
+    );
 
-      const expectedReconciliatedPublicState = computeCheckedState({
-        ...initialGameState,
-        submission: {
-          status: 'partial',
-          white: {
-            canDraw: false,
-            moves: ['w:E2-E4', 'w:D2-D4'],
-          },
-          black: {
-            canDraw: false,
-            moves: ['b:E7-E6'],
-          },
+    await tillNextTick();
+
+    const expectedPublicState = computeCheckedState({
+      ...initialGameState,
+      submission: {
+        status: 'partial',
+        white: {
+          canDraw: false,
+          moves: [],
         },
-      });
-
-      // White
-      const expectedPeerState = computeCheckedState({
-        ...initialGameState,
-        submission: {
-          status: 'partial',
-          white: {
-            canDraw: false,
-            moves: ['w:E2-E4', 'w:D2-D4'],
-          },
-          black: {
-            canDraw: false,
-            moves: [],
-          },
+        black: {
+          canDraw: false,
+          moves: [],
         },
-      });
-
-      // Black
-      const expectedSenderState = computeCheckedState({
-        ...initialGameState,
-        submission: {
-          status: 'partial',
-          white: {
-            canDraw: false,
-            moves: [],
-          },
-          black: {
-            canDraw: false,
-            moves: ['b:E7-E6'],
-          },
-        },
-      });
-
-      // The public action gets set
-
-      // Master gets the new public state
-      expect(masterEnv.getPublic()).toEqual(expectedReconciliatedPublicState);
-
-      // Peer gets the new public state
-      // expect(whiteClientXResource.get()).toEqual(expectedPeerState);
-      expect(whiteClientXResource.get()).toEqual(
-        expectedReconciliatedPublicState
-      );
-
-      // The Private Action gets set
-
-      // And sender gets the new private state
-      // expect(blackClientXResource.get()).toEqual(expectedSenderState);
-      expect(blackClientXResource.get()).toEqual(
-        expectedReconciliatedPublicState
-      );
+      },
     });
+
+    // White
+    const expectedPeerState = computeCheckedState({
+      ...initialGameState,
+      submission: {
+        status: 'partial',
+        white: {
+          canDraw: false,
+          moves: ['w:E2-E4', 'w:D2-D4'],
+        },
+        black: {
+          canDraw: false,
+          moves: [],
+        },
+      },
+    });
+
+    // Black
+    const expectedSenderState = computeCheckedState({
+      ...initialGameState,
+      submission: {
+        status: 'partial',
+        white: {
+          canDraw: false,
+          moves: [],
+        },
+        black: {
+          canDraw: false,
+          moves: ['b:E7-E6'],
+        },
+      },
+    });
+
+    // Peer State Reconciliation and Action Fwd
+
+    expect(blackActionFwd).toEqual(undefined);
+
+    expect(whiteActionFwd).toEqual({
+      action: {
+        type: 'readySubmissionState',
+        payload: {
+          color: 'black',
+        },
+      },
+      checksum: expectedPeerState[1],
+    });
+
+    whiteClientXResource.reconciliateAction(whiteActionFwd!);
+
+    // The public action gets set
+    const actualPublic = await masterEnv.getPublic().resolveUnwrap();
+
+    // Master gets the new public state
+    expect(actualPublic).toEqual(expectedPublicState);
+
+    // Peer gets the new public state
+    expect(whiteClientXResource.get()).toEqual(expectedPeerState);
+
+    // The Private Action gets set
+
+    // And sender gets the new private state
+    expect(blackClientXResource.get()).toEqual(expectedSenderState);
   });
+
+  // add test with reconciliation like the above
 });
 
 // Test with many more peers

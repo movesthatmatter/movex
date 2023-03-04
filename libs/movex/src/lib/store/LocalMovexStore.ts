@@ -1,3 +1,4 @@
+import { deepClone } from 'fast-json-patch';
 import {
   GenericResourceType,
   MovexStatePatch,
@@ -36,7 +37,7 @@ export class LocalMovexStore<
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
-    const item = this.local[this.ridToStr(rid)];
+    const item = { ...this.local[this.ridToStr(rid)] };
 
     if (item) {
       return new AsyncOk(item);
@@ -48,12 +49,17 @@ export class LocalMovexStore<
   create(rid: ResourceIdentifier<TResourceType>, nextState: TState) {
     const id = this.ridToStr(rid);
 
-    this.local[id] = {
+    const next = {
       id,
       state: computeCheckedState(nextState),
     };
 
-    return new AsyncOk(this.local[id]);
+    this.local = {
+      ...this.local,
+      [id]: next,
+    };
+
+    return new AsyncOk({ ...next });
   }
 
   update(
@@ -66,9 +72,12 @@ export class LocalMovexStore<
         ...(typeof getNext === 'function' ? getNext(prev.state[0]) : getNext),
       });
 
-      this.local[prev.id] = {
-        ...prev,
-        state: nextCheckedState,
+      this.local = {
+        ...this.local,
+        [prev.id]: {
+          ...prev,
+          state: nextCheckedState,
+        },
       };
 
       return this.local[prev.id];
@@ -81,11 +90,14 @@ export class LocalMovexStore<
     patch: MovexStatePatch<TState>
   ) {
     return this.get(rid).map((prev) => {
-      this.local[prev.id] = {
-        ...prev,
-        patches: {
-          ...prev.patches,
-          [patchGroupKey]: [...(prev.patches?.[patchGroupKey] || []), patch],
+      this.local = {
+        ...this.local,
+        [prev.id]: {
+          ...prev,
+          patches: {
+            ...prev.patches,
+            [patchGroupKey]: [...(prev.patches?.[patchGroupKey] || []), patch],
+          },
         },
       };
 

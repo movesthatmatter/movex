@@ -6,7 +6,7 @@ import {
   MovexClient,
   MovexStoreItem,
 } from 'movex-core-util';
-import { AsyncResult } from 'ts-async-results';
+import { AsyncOk, AsyncResult } from 'ts-async-results';
 import {
   ActionOrActionTupleFromAction,
   ActionTupleFrom,
@@ -48,37 +48,30 @@ export class MovexMaster<
     rid: ResourceIdentifier<TResourceType>,
     clientId: MovexClient['id']
   ) {
-    return this.store
-      .get(rid)
-      .mapErr((e) => {
-        console.log('master get e', rid, e, 'see below');
-        console.log(this.store);
-        return e;
-      })
-      .map((resource) => {
-        const patches = resource.patches?.[clientId];
-        if (patches) {
-          // TODO: left it here!
-          // TODO: This needs some more thinking as some use cases don't work - like what if the public state has updated
-          // since the private diffs were created – how are they applied then? B/c the resulting might not work exactly
-          // There are different types of diff and I don't now what the consequences are for each – I don't see the whole picture,
-          //  in whih case I am "overwhelmed" at thinking of a solution w/o knowing them.
-          // In case the state has changed – I could run the patch on the Public 0 => resulting Public 0.5, then a patch at Public 1 over Public 0.5
-          //  if there are different (if the checksums don't match). In which case I could do something for each scenario
-          //    I guess the Public 1 overwrites the Public 0.5 in everything except for the paths it changed (the diff)
-          // return privateDiffs.reduce(() => {}, store.public)
+    return this.store.get(rid, clientId).map((resource) => {
+      const patches = resource.patches?.[`:client:${clientId}`];
+      if (patches) {
+        // TODO: left it here!
+        // TODO: This needs some more thinking as some use cases don't work - like what if the public state has updated
+        // since the private diffs were created – how are they applied then? B/c the resulting might not work exactly
+        // There are different types of diff and I don't now what the consequences are for each – I don't see the whole picture,
+        //  in whih case I am "overwhelmed" at thinking of a solution w/o knowing them.
+        // In case the state has changed – I could run the patch on the Public 0 => resulting Public 0.5, then a patch at Public 1 over Public 0.5
+        //  if there are different (if the checksums don't match). In which case I could do something for each scenario
+        //    I guess the Public 1 overwrites the Public 0.5 in everything except for the paths it changed (the diff)
+        // return privateDiffs.reduce(() => {}, store.public)
 
-          const reconciledState = applyMovexStatePatches(
-            resource.state[0],
-            patches.map((p) => p.patch)
-          );
+        const reconciledState = applyMovexStatePatches(
+          resource.state[0],
+          patches.map((p) => p.patch)
+        );
 
-          // Should the checksum compute happen each time or should it be stored?
-          return computeCheckedState(reconciledState);
-        }
+        // Should the checksum compute happen each time or should it be stored?
+        return computeCheckedState(reconciledState);
+      }
 
-        return resource.state;
-      });
+      return resource.state;
+    });
   }
 
   getPublic<TResourceType extends GenericResourceType>(
@@ -121,11 +114,7 @@ export class MovexMaster<
     clientId: MovexClient['id'],
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
-    return this.get(rid, clientId)
-    .mapErr((e) => {
-      console.log('in movex master apply action e', e);
-    })
-    .flatMap<
+    return this.get(rid, clientId).flatMap<
       {
         nextPublic: {
           item: MovexStoreItem<TState>;
@@ -159,22 +148,29 @@ export class MovexMaster<
 
       const nextPublicState = this.reducer(prevState, publicAction);
 
-      return AsyncResult.all(
-        this.store.addPrivatePatch(rid, `client:${clientId}`, {
+      return this.store
+        .addPrivatePatch(rid, `:client:${clientId}`, {
           action: privateAction,
           patch: privatePatch,
-        }),
-        this.store.update(rid, nextPublicState)
-      ).map(([nextPrivateState, nextPublicState]) => ({
-        nextPublic: {
-          item: nextPublicState,
-          action: publicAction,
-        },
-        nextPrivate: {
-          item: nextPrivateState,
-          action: privateAction,
-        },
-      }));
+        })
+        .flatMap((privateState) =>
+          AsyncResult.all(
+            new AsyncOk(privateState),
+
+            // Note The Public Action needs to get applied after the private one!
+            this.store.update(rid, nextPublicState)
+          )
+        )
+        .map(([nextPrivateState, nextPublicState]) => ({
+          nextPublic: {
+            item: nextPublicState,
+            action: publicAction,
+          },
+          nextPrivate: {
+            item: nextPrivateState,
+            action: privateAction,
+          },
+        }));
     });
   }
 
