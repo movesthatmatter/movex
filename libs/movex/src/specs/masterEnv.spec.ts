@@ -1,3 +1,6 @@
+import { toResourceIdentifierStr } from 'movex-core-util';
+import { LocalMovexStore } from '../lib/store';
+import { GetReducerState } from '../lib/tools/reducer';
 import { computeCheckedState } from '../lib/util';
 import counterReducer, {
   CounterState,
@@ -5,22 +8,41 @@ import counterReducer, {
 } from './util/counterReducer';
 import { createMasterEnv } from './util/createMasterEnv';
 
+const rid = toResourceIdentifierStr({
+  resourceType: 'counter',
+  resourceId: 'test',
+});
+
+const localStore = new LocalMovexStore<
+  GetReducerState<typeof counterReducer>
+>();
+
+beforeEach(async () => {
+  await localStore.clearAll().resolveUnwrap();
+
+  await localStore.create(rid, initialCounterState).resolveUnwrap();
+});
+
 test('gets an ack checksum after action emited', async () => {
   const masterEnv = createMasterEnv({
-    genesisState: initialCounterState,
+    store: localStore,
     reducer: counterReducer,
     clientCountOrIdsAsString: ['a', 'b', 'c'],
+    rid,
   });
 
-  const [a, b, c] = masterEnv.clients;
+  const [a] = masterEnv.clients;
 
-  const initialCheckedState = masterEnv.getPublic();
+  const initialCheckedState = await masterEnv.getPublic().resolveUnwrap();
+
   expect(initialCheckedState).toEqual(computeCheckedState(initialCounterState));
 
-  const actualChecksum = await a.emitAction({
-    type: 'change',
-    payload: 2,
-  });
+  const actualChecksum = await a
+    .emitAction({
+      type: 'change',
+      payload: 2,
+    })
+    .resolveUnwrap();
 
   expect(actualChecksum).toBeDefined();
   expect(actualChecksum).not.toEqual(initialCheckedState[1]);
@@ -28,9 +50,10 @@ test('gets an ack checksum after action emited', async () => {
 
 test('the peers get the action forwarded', async () => {
   const masterEnv = createMasterEnv({
-    genesisState: initialCounterState,
+    store: localStore,
     reducer: counterReducer,
     clientCountOrIdsAsString: ['a', 'b', 'c'],
+    rid,
   });
 
   const [a, b, c] = masterEnv.clients;
@@ -43,10 +66,12 @@ test('the peers get the action forwarded', async () => {
   b.onFwdAction(bSpy);
   c.onFwdAction(cSpy);
 
-  const actualChecksum = await a.emitAction({
-    type: 'change',
-    payload: 2,
-  });
+  const actualChecksum = await a
+    .emitAction({
+      type: 'change',
+      payload: 2,
+    })
+    .resolveUnwrap();
 
   expect(bSpy).toHaveBeenCalledWith({
     action: {
@@ -69,9 +94,10 @@ test('the peers get the action forwarded', async () => {
 
 test('the peers get the state updated', async () => {
   const masterEnv = createMasterEnv({
-    genesisState: initialCounterState,
+    store: localStore,
     reducer: counterReducer,
     clientCountOrIdsAsString: ['a', 'b', 'c'],
+    rid,
   });
 
   const [a, b, c] = masterEnv.clients;
@@ -84,10 +110,12 @@ test('the peers get the state updated', async () => {
   b.subscribeToNetworkExpensiveMasterUpdates(bSpy);
   c.subscribeToNetworkExpensiveMasterUpdates(cSpy);
 
-  const actualChecksum = await a.emitAction({
-    type: 'change',
-    payload: 2,
-  });
+  const actualChecksum = await a
+    .emitAction({
+      type: 'change',
+      payload: 2,
+    })
+    .resolveUnwrap();
 
   const expectedState: CounterState = {
     ...initialCounterState,

@@ -6,7 +6,9 @@ tags: []
 
 ## Doing
 
-- Add reconciliation handler or MasterResource 
+- Add reconciliation handler or MovexMaster 
+
+- work on MovexMaster + masterEnv
 
 ## To Do
 
