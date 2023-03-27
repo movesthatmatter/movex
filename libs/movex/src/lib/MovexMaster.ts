@@ -151,7 +151,7 @@ export class MovexMaster<
       if (isAction(actionOrActionTuple)) {
         const publicAction = actionOrActionTuple;
         return this.store
-          .update(rid, this.reducer(prevState, publicAction))
+          .updateState(rid, this.reducer(prevState, publicAction))
           .map((nextPublicState) => ({
             nextPublic: {
               checksum: nextPublicState.state[1],
@@ -171,6 +171,7 @@ export class MovexMaster<
 
       return (
         this.store
+          // Apply the Private Action
           .addPrivatePatch(rid, clientId, {
             action: privateAction,
             patch: privatePatch,
@@ -182,16 +183,16 @@ export class MovexMaster<
 
               this.get(rid, clientId),
 
-              // Note The Public Action needs to get applied after the private one!
+              // Apply the Public Action
+              // (*Note The Public Action needs to get applied after the private one!)
+              // Why? TODO: Add reason
               this.store
-                .update(rid, this.reducer(prevState, publicAction))
+                .updateState(rid, this.reducer(prevState, publicAction))
                 .map((s) => s.state)
             )
           )
           // Reconciliation Step
-          .map(([nextItem, nextPrivateState, nextPublicState]) => {
-            // console.log('next private', nextPrivateState);
-
+          .flatMap(([nextItem, nextPrivateState, nextPublicState]) => {
             if (this.reducer.$canReconcileState?.(nextPublicState[0])) {
               const prevPatchesByClientId = nextItem.patches || {};
 
@@ -216,27 +217,48 @@ export class MovexMaster<
                 };
               }, {} as Record<MovexClient['id'], TAction[]>);
 
-              return [
-                nextPrivateState,
-                nextPublicState,
-                reconciledFwdActions,
-              ] as const;
+              const allPatches = Object.values(prevPatchesByClientId).reduce(
+                (prev, next) => [...prev, ...next],
+                [] as MovexStatePatch<TState>[]
+              );
+
+              return this.store
+                .update(rid, {
+                  state: this.reconcileState(nextPublicState[0], allPatches),
+                  // Clear the patches from the Item
+                  patches: undefined,
+                })
+                .map(
+                  (nextReconciledPublicState) =>
+                    [
+                      nextReconciledPublicState.state,
+                      nextReconciledPublicState.state,
+                      reconciledFwdActions,
+                    ] as const
+                );
             }
 
-            return [nextPrivateState, nextPublicState, undefined] as const;
+            return new AsyncOk([
+              nextPrivateState,
+              nextPublicState,
+              {},
+            ] as const);
           })
           .map(
-            ([nextPrivateItem, nextPublicItem, reconciledFwdActions]) =>
+            ([nextPrivateState, nextPublicState, reconciledFwdActions]) =>
               ({
                 nextPublic: {
-                  checksum: nextPublicItem[1],
+                  checksum: nextPublicState[1],
                   action: publicAction,
                 },
                 nextPrivate: {
-                  checksum: nextPrivateItem[1],
+                  checksum: nextPrivateState[1],
                   action: privateAction,
                 },
-                reconciledFwdActions,
+                reconciledFwdActions:
+                  Object.keys(reconciledFwdActions).length > 0
+                    ? reconciledFwdActions
+                    : undefined,
               } as const)
           )
       );
@@ -251,10 +273,10 @@ export class MovexMaster<
   // }
 
   update<TResourceType extends GenericResourceType>(
-    id: ResourceIdentifier<TResourceType>,
+    rid: ResourceIdentifier<TResourceType>,
     nextStateGetter: NextStateGetter<TState>
   ) {
-    return this.store.update(id, nextStateGetter);
+    return this.store.updateState(rid, nextStateGetter);
   }
 
   // updateUncheckedState<TResourceType extends GenericResourceType>(

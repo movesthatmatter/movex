@@ -62,7 +62,7 @@ export const createMasterEnv = <TState, TAction extends AnyAction>({
           // All
           return master
             .applyAction(rid, clientId, actionOrActionTuple)
-            .flatMap(({ nextPublic, nextPrivate }) => {
+            .flatMap(({ nextPublic, nextPrivate, reconciledFwdActions }) => {
               const peerStateResults = clientIds
                 .filter((cid) => cid !== clientId)
                 .map((peerClientId) =>

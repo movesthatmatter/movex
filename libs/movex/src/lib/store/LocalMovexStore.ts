@@ -62,7 +62,7 @@ export class LocalMovexStore<
     return new AsyncOk({ ...next });
   }
 
-  update(
+  updateState(
     rid: ResourceIdentifier<TResourceType>,
     getNext: ((prev: TState) => TState) | Partial<TState>
   ) {
@@ -77,6 +77,30 @@ export class LocalMovexStore<
         [prev.id]: {
           ...prev,
           state: nextCheckedState,
+        },
+      };
+
+      return this.local[prev.id];
+    });
+  }
+
+  update(
+    rid: ResourceIdentifier<TResourceType>,
+    getNext:
+      | ((prev: MovexStoreItem<TState>) => MovexStoreItem<TState>)
+      | Partial<MovexStoreItem<TState>>
+  ) {
+    return this.get(rid).map((prev) => {
+      const nextItem = typeof getNext === 'function' ? getNext(prev) : getNext;
+
+      this.local = {
+        ...this.local,
+        [prev.id]: {
+          ...prev,
+          ...nextItem,
+
+          // This cannot be changed!
+          id: prev.id,
         },
       };
 

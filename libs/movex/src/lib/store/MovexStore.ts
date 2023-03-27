@@ -35,6 +35,12 @@ export interface MovexStore<
   ) => AsyncResult<MovexStoreItem<T>, unknown>;
   update: (
     rid: ResourceIdentifier<TResourceType>,
+    getNext:
+      | ((prev: MovexStoreItem<T>) => MovexStoreItem<T>)
+      | Partial<MovexStoreItem<T>>
+  ) => AsyncResult<MovexStoreItem<T>, unknown>;
+  updateState: (
+    rid: ResourceIdentifier<TResourceType>,
     getNext: ((prev: T) => T) | Partial<T>
   ) => AsyncResult<MovexStoreItem<T>, unknown>;
   addPrivatePatch: (

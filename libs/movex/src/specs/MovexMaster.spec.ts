@@ -62,7 +62,7 @@ test('applies public action', async () => {
   });
 });
 
-test('applies private action', async () => {
+test('applies only one private action w/o getting to reconciliation', async () => {
   const master = new MovexMaster(
     counterReducer,
     new LocalMovexStore({
@@ -86,11 +86,12 @@ test('applies private action', async () => {
     .applyAction(rid, senderClientId, [privateAction, publicAction])
     .resolveUnwrap();
 
-  const actualPublic = await master.getPublic(rid).resolveUnwrap();
-  const actualBySenderClient = await master
+  const actualPublicState = await master.getPublic(rid).resolveUnwrap();
+  const actualSenderState = await master
     .get(rid, senderClientId)
     .resolveUnwrap();
-  const actualByOtherClient = await master
+
+  const actualReceiverState = await master
     .get(rid, 'otherClient')
     .resolveUnwrap();
 
@@ -99,15 +100,15 @@ test('applies private action', async () => {
     count: 1,
   });
 
-  expect(actualPublic).toEqual(expectedPublic);
+  expect(actualPublicState).toEqual(expectedPublic);
 
   const expectedSenderState = computeCheckedState({
     ...initialCounterState,
     count: 44,
   });
 
-  expect(actualByOtherClient).toEqual(expectedPublic);
-  expect(actualBySenderClient).toEqual(expectedSenderState);
+  expect(actualSenderState).toEqual(expectedSenderState);
+  expect(actualReceiverState).toEqual(expectedPublic);
 
   expect(actual).toEqual({
     nextPublic: {
@@ -122,7 +123,7 @@ test('applies private action', async () => {
   });
 });
 
-test('applies private action WITH Reconciliation', async () => {
+test('applies private action UNTIL Reconciliation', async () => {
   const master = new MovexMaster(
     gameReducer,
     new LocalMovexStore({
@@ -150,21 +151,23 @@ test('applies private action WITH Reconciliation', async () => {
   };
 
   // White Private Action
-  const actualBeforeReconciliation = await master
+  const actualActionResultBeforeReconciliation = await master
     .applyAction(rid, whitePlayer, [privateWhiteAction, publicWhiteAction])
     .resolveUnwrap();
 
-  const actualPublicBeforeReconciliation = await master
+  const actualPublicStateBeforeReconciliation = await master
     .getPublic(rid)
     .resolveUnwrap();
-  const actualBySenderClientBeforeReconciliation = await master
+
+  const actualSenderStateBeforeReconciliation = await master
     .get(rid, whitePlayer)
     .resolveUnwrap();
-  const actualByOtherClientBeforeReconciliation = await master
+
+  const actualReceiverStateBeforeReconciliation = await master
     .get(rid, blackPlayer)
     .resolveUnwrap();
 
-  const expectedPublicBeforeReconciliation = computeCheckedState({
+  const expectedPublicStateBeforeReconciliation = computeCheckedState({
     ...initialGameState,
     submission: {
       ...initialGameState.submission,
@@ -176,7 +179,7 @@ test('applies private action WITH Reconciliation', async () => {
     },
   });
 
-  const expectedWhiteBeforeReconciliation = computeCheckedState({
+  const expectedSenderStateBeforeReconciliation = computeCheckedState({
     ...initialGameState,
     submission: {
       ...initialGameState.submission,
@@ -188,24 +191,24 @@ test('applies private action WITH Reconciliation', async () => {
     },
   });
 
-  expect(actualPublicBeforeReconciliation).toEqual(
-    expectedPublicBeforeReconciliation
+  expect(actualPublicStateBeforeReconciliation).toEqual(
+    expectedPublicStateBeforeReconciliation
   );
-  expect(actualByOtherClientBeforeReconciliation).toEqual(
-    expectedPublicBeforeReconciliation
+  expect(actualReceiverStateBeforeReconciliation).toEqual(
+    expectedPublicStateBeforeReconciliation
   );
-  expect(actualBySenderClientBeforeReconciliation).toEqual(
-    expectedWhiteBeforeReconciliation
+  expect(actualSenderStateBeforeReconciliation).toEqual(
+    expectedSenderStateBeforeReconciliation
   );
 
-  expect(actualBeforeReconciliation).toEqual({
+  expect(actualActionResultBeforeReconciliation).toEqual({
     nextPublic: {
       action: publicWhiteAction,
-      checksum: actualPublicBeforeReconciliation[1],
+      checksum: actualPublicStateBeforeReconciliation[1],
     },
     nextPrivate: {
       action: privateWhiteAction,
-      checksum: actualBySenderClientBeforeReconciliation[1],
+      checksum: actualSenderStateBeforeReconciliation[1],
     },
     reconciledFwdActions: undefined,
   });
@@ -227,21 +230,24 @@ test('applies private action WITH Reconciliation', async () => {
     },
   };
 
-  const actuakAfterReconciliation = await master
-    .applyAction(rid, whitePlayer, [privateBlackAction, publicBlackAction])
+  // Black Private Action (also the Reconciliatory Action)
+  const actualActionResultAfterReconciliation = await master
+    .applyAction(rid, blackPlayer, [privateBlackAction, publicBlackAction])
     .resolveUnwrap();
 
-  const actualPublicAfterReconciliation = await master
+  const actualPublicStateAfterReconciliation = await master
     .getPublic(rid)
     .resolveUnwrap();
-  const actualBySenderClientAfterReconciliation = await master
-    .get(rid, whitePlayer)
-    .resolveUnwrap();
-  const actualByOtherClientAfterReconciliation = await master
+
+  const actualSenderStateAfterReconciliation = await master
     .get(rid, blackPlayer)
     .resolveUnwrap();
 
-  const expectedPublicAfterReconciliation = computeCheckedState({
+  const actualReceiverStateAfterReconciliation = await master
+    .get(rid, whitePlayer)
+    .resolveUnwrap();
+
+  const expectedPublicStateAfterReconciliation = computeCheckedState({
     ...initialGameState,
     submission: {
       ...initialGameState.submission,
@@ -257,52 +263,31 @@ test('applies private action WITH Reconciliation', async () => {
     },
   });
 
-  const expectedWhiteAfterReconciliation = computeCheckedState({
-    ...initialGameState,
-    submission: {
-      ...initialGameState.submission,
-      status: 'partial',
-      white: {
-        canDraw: false,
-        moves: ['w:E2-E4'],
-      },
-    },
-  });
-
-  const expectedBlackAfterReconciliation = computeCheckedState({
-    ...initialGameState,
-    submission: {
-      ...initialGameState.submission,
-      status: 'partial',
-      white: {
-        canDraw: false,
-        moves: ['w:E2-E4'],
-      },
-    },
-  });
-
-  expect(actualPublicAfterReconciliation).toEqual(
-    expectedPublicAfterReconciliation
+  expect(actualPublicStateAfterReconciliation).toEqual(
+    expectedPublicStateAfterReconciliation
   );
 
-  // expect(actualByOtherClientBeforeReconciliation).toEqual(expectedPublic);
+  expect(actualReceiverStateAfterReconciliation).toEqual(
+    expectedPublicStateAfterReconciliation
+  );
+  expect(actualSenderStateAfterReconciliation).toEqual(
+    expectedPublicStateAfterReconciliation
+  );
 
-  // expect(actualBySenderClientBeforeReconciliation).toEqual(expectedWhite);
-
-  // expect(actuakAfterReconciliation).toEqual({
-  //   nextPublic: {
-  //     action: publicBlackAction,
-  //     checksum: '2',
-  //   },
-  //   nextPrivate: {
-  //     action: privateBlackAction,
-  //     checksum: 2,
-  //   },
-  //   reconciledFwdActions: {
-  //     [whitePlayer]: [privateBlackAction],
-  //     [blackPlayer]: [privateWhiteAction],
-  //   }
-  // })
+  expect(actualActionResultAfterReconciliation).toEqual({
+    nextPublic: {
+      action: publicBlackAction,
+      checksum: expectedPublicStateAfterReconciliation[1],
+    },
+    nextPrivate: {
+      action: privateBlackAction,
+      checksum: expectedPublicStateAfterReconciliation[1],
+    },
+    reconciledFwdActions: {
+      [whitePlayer]: [privateWhiteAction],
+      [blackPlayer]: [privateBlackAction],
+    },
+  });
 });
 
-// reducer.$canReconcileState(store.public[0]);
+// TODO: Add for multiple clients

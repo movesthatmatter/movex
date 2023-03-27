@@ -395,7 +395,7 @@ describe('Master Client Orchestration', () => {
   });
 
 
-  test.skip('Private with white and black. Both Submitting, White first WITH Reconciliation', async () => {
+  test('Private with white and black. Both Submitting, White first WITH Reconciliation', async () => {
     const masterEnv = createMasterEnv({
       store: localStore,
       reducer: gameReducer,
