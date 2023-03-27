@@ -18,7 +18,7 @@ test('Initial State', () => {
   expect(resource.get()).toEqual(expected);
 });
 
-test('Dispatch Punblic Action', () => {
+test('Dispatch Public Action', () => {
   const instance = createMovexInstance({
     url: 'n/a',
     apiKey: 'n/a',

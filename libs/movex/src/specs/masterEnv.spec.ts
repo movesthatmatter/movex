@@ -1,4 +1,4 @@
-import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
+import { toResourceIdentifierStr } from 'movex-core-util';
 import { LocalMovexStore } from '../lib/store';
 import { GetReducerState } from '../lib/tools/reducer';
 import { computeCheckedState } from '../lib/util';
