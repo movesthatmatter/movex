@@ -20,7 +20,9 @@ Movex is a Multiplayer (Game) State Synchronization Library using Deterministic 
     - [Revelatory Action (Check)](#revelatory-action-check)
   - [How Does the Private Action/Secret State actually works?](#how-does-the-private-actionsecret-state-actually-works)
   - [Remote State Mismatch Resynchronization (WIP)](#remote-state-mismatch-resynchronization-wip)
-  - [Private State Deltas Reconciliation Strategy (WIP)](#private-state-deltas-reconciliation-strategy-wip)
+        - [1. Use The Checksums to its advantage (Optimal)](#1-use-the-checksums-to-its-advantage-optimal)
+        - [2. Ask for the whole State Again (Sub Optimal but rare)](#2-ask-for-the-whole-state-again-sub-optimal-but-rare)
+  - [Private State Deltas Reconciliation Strategy (WIP \& not Used at the moment)](#private-state-deltas-reconciliation-strategy-wip--not-used-at-the-moment)
         - [Primitives](#primitives)
         - [Complex Data types (Arrays \& Objects)](#complex-data-types-arrays--objects)
           - [Array](#array)
@@ -298,14 +300,14 @@ The server will call the reducer with the private action, but knowing behind the
 
 Sometimes there might be mismatches in the client state and the server state. This could be due to network errors, bugs in the code or who knows what. Dealing with Shared State is hard :), but don't fret, Movex has some solutions:
 
-First of all it can take advantage of the state checksums. Each Forwarded/Acknowledge Action contains the prev and next state checksum, so the clients will be able to compare that with the locally computed next checksum and proceed accordingly given the outcome.
+##### 1. Use The Checksums to its advantage (Optimal)
+
+ First of all it can take advantage of the state checksums. Each Forwarded/Acknowledge Action contains the prev and next state checksum, so the clients will be able to compare that with the locally computed next checksum and proceed accordingly given the outcome.
 
 
-If they match all is good! 🥳
+**If they match all is good 🥳, if not we take advantage of the following:**
 
-**If they don't match we take advanytage of the following:**
-
-The client will always store the last server reconciled checksum with its state (just in case it's needed to recompile). This will be derived from the ack/fwd received from the server, containing the next state checksum. If the client computes the same checksum than that becomes the last reconciled. If not, the strategy needs to happen.
+The client will always store the last server reconciled checksum with its state (just in case it's needed to recompile). This will be derived from the ack/fwd received from the server, containing the next state checksum. If the client computes the same checksum than that becomes the last reconciled. If not, the below _Strategy_ needs to happen.
 
 The server also stores a map of each checksum and the action that derived it in the order in which it was received. *(TODO: This could become big pretty early on, so there might be some optimization done.)*
 
@@ -313,13 +315,15 @@ When the server acks/forwards an action, and the checksum from the local state d
 
 When the client receives the reconciliatory actions (since it's reconciled state and checksum) it applies them right away and computes the next state (without intermediary renders I would say, since they might have already show some of them) and simply render the end result.
 
+##### 2. Ask for the whole State Again (Sub Optimal but rare)
+
 If the above doesn't work, for whatever reason, again dealing with Shared State is hard, we have the ultimate sling shot:
 
-- The Client Sends for help to the Server and the Server will respond with the latest version of the reconciled state. This should set thngs straight for another while, but in theory this shouldn't really happen too often. Hopefully not at all! 😇 
+The Client Sends for help to the Server and the Server will respond with the latest version of the reconciled state. This should set things straight for another while, but in theory this shouldn't really happen too often. Hopefully not at all! 😇 
   
-> Note: This is still a WIP and we'll have to come up with proper tests and validation for this as well as probably more optimizations and heuristics)*
+> Note: This is still a WIP and we'll have to come up with proper tests and validation for this as well as probably more optimizations and heuristics
 
-## Private State Deltas Reconciliation Strategy (WIP)
+## Private State Deltas Reconciliation Strategy (WIP & not Used at the moment)
 
 This describes the strategy used to apply to deltas (resulted from a movex action).
 
