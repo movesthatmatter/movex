@@ -1,7 +1,7 @@
-import { toResourceIdentifierStr } from 'movex-core-util';
-import { MovexMaster } from '../lib/MovexMaster';
 import counterReducer, { initialCounterState } from './util/counterReducer';
 import gameReducer, { initialGameState } from './util/gameReducer';
+import { toResourceIdentifierStr } from 'movex-core-util';
+import { MovexMasterResource } from '../lib/master/MovexMasterResource';
 import { LocalMovexStore } from '../lib/store';
 import { computeCheckedState } from '../lib/util';
 import { GetReducerAction } from '../lib/tools/reducer';
@@ -9,15 +9,17 @@ import { GetReducerAction } from '../lib/tools/reducer';
 const rid = toResourceIdentifierStr({ resourceType: 'c', resourceId: '1' });
 
 test('gets initial state', async () => {
-  const master = new MovexMaster(
+  const master = new MovexMasterResource(
     counterReducer,
     new LocalMovexStore({
       [rid]: initialCounterState,
     })
   );
 
-  const actualPublic = await master.getPublic(rid).resolveUnwrap();
-  const actualByClient = await master.get(rid, 'testClient').resolveUnwrap();
+  const actualPublic = await master.getPublicState(rid).resolveUnwrap();
+  const actualByClient = await master
+    .getState(rid, 'testClient')
+    .resolveUnwrap();
 
   const expectedPublic = computeCheckedState(initialCounterState);
 
@@ -26,7 +28,7 @@ test('gets initial state', async () => {
 });
 
 test('applies public action', async () => {
-  const master = new MovexMaster(
+  const master = new MovexMasterResource(
     counterReducer,
     new LocalMovexStore({
       [rid]: initialCounterState,
@@ -43,8 +45,8 @@ test('applies public action', async () => {
     .applyAction(rid, clientAId, action)
     .resolveUnwrap();
 
-  const actualPublic = await master.getPublic(rid).resolveUnwrap();
-  const actualByClient = await master.get(rid, clientAId).resolveUnwrap();
+  const actualPublic = await master.getPublicState(rid).resolveUnwrap();
+  const actualByClient = await master.getState(rid, clientAId).resolveUnwrap();
 
   const expectedPublic = computeCheckedState({
     ...initialCounterState,
@@ -63,7 +65,7 @@ test('applies public action', async () => {
 });
 
 test('applies only one private action w/o getting to reconciliation', async () => {
-  const master = new MovexMaster(
+  const master = new MovexMasterResource(
     counterReducer,
     new LocalMovexStore({
       [rid]: initialCounterState,
@@ -86,13 +88,13 @@ test('applies only one private action w/o getting to reconciliation', async () =
     .applyAction(rid, senderClientId, [privateAction, publicAction])
     .resolveUnwrap();
 
-  const actualPublicState = await master.getPublic(rid).resolveUnwrap();
+  const actualPublicState = await master.getPublicState(rid).resolveUnwrap();
   const actualSenderState = await master
-    .get(rid, senderClientId)
+    .getState(rid, senderClientId)
     .resolveUnwrap();
 
   const actualReceiverState = await master
-    .get(rid, 'otherClient')
+    .getState(rid, 'otherClient')
     .resolveUnwrap();
 
   const expectedPublic = computeCheckedState({
@@ -119,12 +121,12 @@ test('applies only one private action w/o getting to reconciliation', async () =
       action: privateAction,
       checksum: expectedSenderState[1],
     },
-    reconciledFwdActions: undefined,
+    reconciledFwdActionsByClientId: undefined,
   });
 });
 
 test('applies private action UNTIL Reconciliation', async () => {
-  const master = new MovexMaster(
+  const master = new MovexMasterResource(
     gameReducer,
     new LocalMovexStore({
       [rid]: initialGameState,
@@ -156,15 +158,15 @@ test('applies private action UNTIL Reconciliation', async () => {
     .resolveUnwrap();
 
   const actualPublicStateBeforeReconciliation = await master
-    .getPublic(rid)
+    .getPublicState(rid)
     .resolveUnwrap();
 
   const actualSenderStateBeforeReconciliation = await master
-    .get(rid, whitePlayer)
+    .getState(rid, whitePlayer)
     .resolveUnwrap();
 
   const actualReceiverStateBeforeReconciliation = await master
-    .get(rid, blackPlayer)
+    .getState(rid, blackPlayer)
     .resolveUnwrap();
 
   const expectedPublicStateBeforeReconciliation = computeCheckedState({
@@ -210,7 +212,7 @@ test('applies private action UNTIL Reconciliation', async () => {
       action: privateWhiteAction,
       checksum: actualSenderStateBeforeReconciliation[1],
     },
-    reconciledFwdActions: undefined,
+    reconciledFwdActionsByClientId: undefined,
   });
 
   // Black Private Action (This is also the Reconciliatory Action)
@@ -236,15 +238,15 @@ test('applies private action UNTIL Reconciliation', async () => {
     .resolveUnwrap();
 
   const actualPublicStateAfterReconciliation = await master
-    .getPublic(rid)
+    .getPublicState(rid)
     .resolveUnwrap();
 
   const actualSenderStateAfterReconciliation = await master
-    .get(rid, blackPlayer)
+    .getState(rid, blackPlayer)
     .resolveUnwrap();
 
   const actualReceiverStateAfterReconciliation = await master
-    .get(rid, whitePlayer)
+    .getState(rid, whitePlayer)
     .resolveUnwrap();
 
   const expectedPublicStateAfterReconciliation = computeCheckedState({
@@ -283,9 +285,15 @@ test('applies private action UNTIL Reconciliation', async () => {
       action: privateBlackAction,
       checksum: expectedPublicStateAfterReconciliation[1],
     },
-    reconciledFwdActions: {
-      [whitePlayer]: [privateWhiteAction],
-      [blackPlayer]: [privateBlackAction],
+    reconciledFwdActionsByClientId: {
+      [whitePlayer]: {
+        actions: [privateWhiteAction],
+        finalChecksum: expectedPublicStateAfterReconciliation[1],
+      },
+      [blackPlayer]: {
+        actions: [privateBlackAction],
+        finalChecksum: expectedPublicStateAfterReconciliation[1],
+      },
     },
   });
 });

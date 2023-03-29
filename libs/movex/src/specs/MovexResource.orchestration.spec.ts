@@ -1,5 +1,5 @@
 import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
-import { MovexResource } from '../lib/MovexResource';
+import { MovexResource } from '../lib/MovexClientResource';
 import { computeCheckedState } from '../lib/util';
 import gameReducer, { initialGameState } from './util/gameReducer';
 import { createMasterEnv } from './util/createMasterEnv';
@@ -21,8 +21,8 @@ beforeEach(async () => {
   await localStore.create(rid, initialGameState).resolveUnwrap();
 });
 
-describe('Master Client Orchestration', () => {
-  test('Public Actions with 2 clients', async () => {
+describe('Public Actions', () => {
+  test('With 2 Clients', async () => {
     const masterEnv = createMasterEnv({
       store: localStore,
       reducer: gameReducer,
@@ -79,8 +79,10 @@ describe('Master Client Orchestration', () => {
     // And even the peer client got the next state! Yey!
     expect(blackClientXResource.get()).toEqual(expectedMasterPublicState);
   });
+});
 
-  test('Private with white and black players. Only White Submitting', async () => {
+describe('Private Actoins', () => {
+  test('Two Plyers – only one submits', async () => {
     const masterEnv = createMasterEnv({
       store: localStore,
       reducer: gameReducer,
@@ -211,7 +213,7 @@ describe('Master Client Orchestration', () => {
     expect(whiteClientXResource.get()).toEqual(expectedSenderState);
   });
 
-  test('Private with white and black. Both Submitting, White first (w/o reconciliation)', async () => {
+  test('Two Clients (white, black). Both Submitting (White first). WITHOUT Reconciliation', async () => {
     const gameReducerWithoutRecociliation = gameReducer;
 
     // Overwrite this to always return false in this test case
@@ -394,8 +396,7 @@ describe('Master Client Orchestration', () => {
     expect(blackClientXResource.get()).toEqual(expectedSenderState);
   });
 
-
-  test('Private with white and black. Both Submitting, White first WITH Reconciliation', async () => {
+  test('Two Clients. Both Submitting (White first) WITH Reconciliation', async () => {
     const masterEnv = createMasterEnv({
       store: localStore,
       reducer: gameReducer,
@@ -431,6 +432,10 @@ describe('Master Client Orchestration', () => {
     blackClient.onFwdAction((fwd) => {
       blackActionFwd = fwd;
     });
+
+    whiteClient.onReconciliatoryFwdActions((event) => {
+      
+    })
 
     // This could be part of the env (not just master env but client-master env)
     //  because in reality this is part of the MovexClient
@@ -525,20 +530,20 @@ describe('Master Client Orchestration', () => {
     });
 
     // Black
-    const expectedSenderState = computeCheckedState({
-      ...initialGameState,
-      submission: {
-        status: 'partial',
-        white: {
-          canDraw: false,
-          moves: [],
-        },
-        black: {
-          canDraw: false,
-          moves: ['b:E7-E6'],
-        },
-      },
-    });
+    // const expectedSenderState = computeCheckedState({
+    //   ...initialGameState,
+    //   submission: {
+    //     status: 'partial',
+    //     white: {
+    //       canDraw: false,
+    //       moves: [],
+    //     },
+    //     black: {
+    //       canDraw: false,
+    //       moves: ['b:E7-E6'],
+    //     },
+    //   },
+    // });
 
     // Peer State Reconciliation and Action Fwd
 
@@ -563,13 +568,15 @@ describe('Master Client Orchestration', () => {
     expect(actualPublic).toEqual(expectedPublicState);
 
     // Peer gets the new public state
-    expect(whiteClientXResource.get()).toEqual(expectedPeerState);
+    // expect(whiteClientXResource.get()).toEqual(expectedPeerState);
+    expect(whiteClientXResource.get()).toEqual(expectedPublicState);
 
     // The Private Action gets set
 
     // And sender gets the new private state
-    expect(blackClientXResource.get()).toEqual(expectedSenderState);
+    // expect(blackClientXResource.get()).toEqual(expectedSenderState);
+    expect(blackClientXResource.get()).toEqual(expectedPublicState);
   });
-});
 
-// Test with many more peers
+  // Test with many more peers
+});

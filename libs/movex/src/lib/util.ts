@@ -3,12 +3,12 @@ import * as jsonpatch from 'fast-json-patch';
 import {
   isObject,
   JsonPatch,
-  JsonPatchOp,
+  // JsonPatchOp,
   NotUndefined,
 } from 'movex-core-util';
-import { ActionsCollectionMapBase } from './tools/action';
+// import { ActionsCollectionMapBase } from './tools/action';
 import { CheckedState, MovexState } from './core-types';
-import { MovexReducerMap } from './tools/reducer';
+// import { MovexReducerMap } from './tools/reducer';
 
 export const hashObject = (val: NotUndefined) => hash.MD5(val);
 

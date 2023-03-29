@@ -20,25 +20,21 @@ import { CheckedState } from './core-types';
 import { createDispatcher, DispatchedEvent } from './tools/dispatch';
 import { MovexReducer } from './tools/reducer';
 
-// TODO Feb 25th
-// Today I'm changing the way the reducer works from now, it's simply a redux redcuer of shape (state, action) and both the state and action are defined
-//  at creation time
-// and the actions are created by the users, movex.createAction maybe, or can even do a deox if needed but not worrying ab that!
-// This is easier to reason about, easier to work with and to get adopted as it's redux or useReducer
-
-// This has the old way of dealing with map actions
-// But that was pretty hard to type and not in line with useReducer and Redux
-// If something like that is needed I can just use deox, which makes more sense since it's just simpler to reason about as well as in line with the whole redusx reducer
-
-// TODO: Now extracat all the given actions into the dispatch
-export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
-  implements IObservable<CheckedState<TState>>
+/**
+ * This is the MovexResource running on the Client
+ */
+export class MovexClientResource<
+  TState = any,
+  TAction extends AnyAction = AnyAction
+> implements IObservable<CheckedState<TState>>
 {
   private $checkedState: Observable<CheckedState<TState>>;
 
   private pubsy = new Pubsy<{
     onDispatched: DispatchedEvent<CheckedState<TState>, TAction>;
   }>();
+
+  // client: MovexResourceClient;
 
   private dispatcher: (
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
@@ -54,23 +50,38 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
       reducer(undefined as TState, { type: '_init' } as TAction)
     )
   ) {
-    // TODO: Not sure this will alawys work correctly as we need to get the initial state somehow
     this.$checkedState = new Observable(initialCheckedState);
 
-    // this.$state = this.$checkedState.map((s) => s[0]);
+    // // When the master io returns the async state, update it!
+    // masterConnection.getResourceState().map((state) => {
+    //   this.$checkedState.update(state);
+    // });
 
-    const { dispatch, unsubscribe } = createDispatcher<TState, TAction>(
-      this.$checkedState,
-      this.reducer,
-      {
-        onDispatched: (p) => {
-          this.pubsy.publish('onDispatched', p);
-        },
-      }
-    );
+    // TODO: Add Use case for how to deal with creation. When the get doesn't return anything?!
+    // something like: if it returns record doesnt exist, use create instead of get? or io.getOrCreate()?
+
+    const { dispatch, unsubscribe: unsubscribeDispatch } = createDispatcher<
+      TState,
+      TAction
+    >(this.$checkedState, this.reducer, {
+      onDispatched: (p) => {
+        // On Each Dispatch, emit the action to master
+        // masterResourceIO.emitAction(p.action);
+
+        this.pubsy.publish('onDispatched', p);
+      },
+    });
 
     this.dispatcher = dispatch;
-    this.unsubscribers.push(unsubscribe);
+    this.unsubscribers.push(unsubscribeDispatch);
+
+    // const offFwdAction = masterResourceIO.onFwdAction<TAction>((fwd) => {
+    //   // Whatever needs to happen here more!
+
+    //   this.reconciliateAction(fwd);
+    // });
+
+    // this.unsubscribers.push(offFwdAction);
   }
 
   /**
@@ -173,6 +184,10 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
         getNextStateFrom(this.getUncheckedState(), nextStateGetter)
       )
     );
+  }
+
+  create() {
+    // TODO: Create a resource of type on demand. This is needed to satisfy the API in the DOCS (see Readme)
   }
 
   // This to be called when destroying not used anymore in order to clean the update subscriptions

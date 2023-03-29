@@ -26,6 +26,7 @@ export class LocalMovexStore<
           [nextRid]: {
             id: nextRid,
             state: computeCheckedState(initialResources[nextRid]),
+            subscribers: {},
           },
         };
       }, {} as Record<string, MovexStoreItem<TState>>);
@@ -52,6 +53,7 @@ export class LocalMovexStore<
     const next = {
       id,
       state: computeCheckedState(nextState),
+      subscribers: {},
     };
 
     this.local = {

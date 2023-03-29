@@ -2,6 +2,7 @@ import { AsyncResult } from 'ts-async-results';
 import {
   GenericResourceType,
   JsonPatch,
+  MovexClient,
   ResourceIdentifier,
 } from 'movex-core-util';
 import { AnyAction } from '../tools/action';
@@ -19,6 +20,12 @@ export type MovexStoreItem<T> = {
   patches?: {
     [patchGroupKey in string]: MovexStatePatch<T>[];
   };
+  subscribers: Record<
+    MovexClient['id'],
+    {
+      subscribedAt: number;
+    }
+  >;
 };
 
 export interface MovexStore<

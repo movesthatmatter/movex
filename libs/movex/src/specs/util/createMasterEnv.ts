@@ -1,13 +1,14 @@
 import { Pubsy } from 'ts-pubsy';
 import { AnyResourceIdentifier, MovexStore, range } from 'movex-core-util';
-import { CheckedState } from '../../lib/core-types';
+import { CheckedState, Checksum } from '../../lib/core-types';
 import {
   ActionOrActionTupleFromAction,
   AnyAction,
+  CheckedReconciliatoryActions,
   ToCheckedAction,
 } from '../../lib/tools/action';
 import { MovexReducer } from '../../lib/tools/reducer';
-import { MovexMaster } from '../../lib/MovexMaster';
+import { MovexMasterResource } from '../../lib/master/MovexMasterResource';
 import { AsyncResult } from 'ts-async-results';
 
 export const createMasterEnv = <TState, TAction extends AnyAction>({
@@ -27,8 +28,12 @@ export const createMasterEnv = <TState, TAction extends AnyAction>({
     [key in `onDeprecatedNetworkExpensiveStateUpdateTo:${string}`]: CheckedState<TState>;
   }>();
 
-  const actionPubsy = new Pubsy<{
+  const fwdActionPubsy = new Pubsy<{
     [key in `onFwdActionTo:${string}`]: ToCheckedAction<TAction>;
+  }>();
+
+  const reconciliatryActionsPubsy = new Pubsy<{
+    [key in `onReconciliatoryFwdActionsTo:${string}`]: CheckedReconciliatoryActions<TAction>;
   }>();
 
   type ClientId = string;
@@ -37,7 +42,7 @@ export const createMasterEnv = <TState, TAction extends AnyAction>({
     ? clientCountOrIds
     : range(clientCountOrIds).map((_, i) => `::client::${i}`);
 
-  const master = new MovexMaster(reducer, store);
+  const master = new MovexMasterResource(reducer, store);
 
   return {
     rid,
@@ -54,7 +59,15 @@ export const createMasterEnv = <TState, TAction extends AnyAction>({
             fn
           ),
         onFwdAction: (fn: (p: ToCheckedAction<TAction>) => void) => {
-          return actionPubsy.subscribe(`onFwdActionTo:${clientId}`, fn);
+          return fwdActionPubsy.subscribe(`onFwdActionTo:${clientId}`, fn);
+        },
+        onReconciliatoryFwdActions: (
+          fn: (p: CheckedReconciliatoryActions<TAction>) => void
+        ) => {
+          return reconciliatryActionsPubsy.subscribe(
+            `onReconciliatoryFwdActionsTo:${clientId}`,
+            fn
+          );
         },
         emitAction: (
           actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
@@ -62,52 +75,66 @@ export const createMasterEnv = <TState, TAction extends AnyAction>({
           // All
           return master
             .applyAction(rid, clientId, actionOrActionTuple)
-            .flatMap(({ nextPublic, nextPrivate, reconciledFwdActions }) => {
-              const peerStateResults = clientIds
-                .filter((cid) => cid !== clientId)
-                .map((peerClientId) =>
-                  master
-                    .get(rid, peerClientId)
-                    .map((state) => ({ clientId: peerClientId, state }))
-                );
+            .flatMap(
+              ({
+                nextPublic,
+                nextPrivate,
+                reconciliatoryActionsByClientId,
+              }) => {
+                const peerStateResults = clientIds
+                  .filter((cid) => cid !== clientId)
+                  .map((peerClientId) =>
+                    master
+                      .get(rid, peerClientId)
+                      .map((state) => ({ clientId: peerClientId, state }))
+                  );
 
-              return AsyncResult.all(...peerStateResults)
-                .map((peerState) => {
-                  peerState.forEach((peer) => {
-                    stateUpdatePubsy.publish(
-                      `onDeprecatedNetworkExpensiveStateUpdateTo:${peer.clientId}`,
-                      peer.state
-                    );
+                return AsyncResult.all(...peerStateResults)
+                  .map((peerState) => {
+                    peerState.forEach((peer) => {
+                      stateUpdatePubsy.publish(
+                        `onDeprecatedNetworkExpensiveStateUpdateTo:${peer.clientId}`,
+                        peer.state
+                      );
 
-                    actionPubsy.publish(`onFwdActionTo:${peer.clientId}`, {
-                      action: nextPublic.action,
-                      checksum: peer.state[1],
+                      if (reconciliatoryActionsByClientId) {
+                        reconciliatryActionsPubsy.publish(
+                          `onReconciliatoryFwdActionsTo:${peer.clientId}`,
+                          reconciliatoryActionsByClientId[peer.clientId]
+                        );
+                      } else {
+                        // I think this should be here
+                        fwdActionPubsy.publish(`onFwdActionTo:${peer.clientId}`, {
+                          action: nextPublic.action,
+                          checksum: peer.state[1],
+                        });
+                      }
                     });
+                  })
+                  .map(() => {
+                    const ack = nextPrivate
+                      ? nextPrivate.checksum
+                      : nextPublic.checksum;
+
+                    return ack;
                   });
-                })
-                .map(() => {
-                  const ack = nextPrivate
-                    ? nextPrivate.checksum
-                    : nextPublic.checksum
 
-                  return ack;
-                });
+                // Forward the Public Action to all the clients except me
+                // clientIds
+                //   .filter((cid) => cid !== clientId)
+                //   .forEach((peerClientId) => {
+                //     stateUpdatePubsy.publish(
+                //       `onDeprecatedNetworkExpensiveStateUpdateTo:${peerClientId}`,
+                //       nextPublic.item.state
+                //     );
 
-              // Forward the Public Action to all the clients except me
-              // clientIds
-              //   .filter((cid) => cid !== clientId)
-              //   .forEach((peerClientId) => {
-              //     stateUpdatePubsy.publish(
-              //       `onDeprecatedNetworkExpensiveStateUpdateTo:${peerClientId}`,
-              //       nextPublic.item.state
-              //     );
-
-              //     actionPubsy.publish(`onFwdActionTo:${peerClientId}`, {
-              //       action: nextPublic.action,
-              //       checksum: nextPublic.item.state[1],
-              //     });
-              //   });
-            });
+                //     actionPubsy.publish(`onFwdActionTo:${peerClientId}`, {
+                //       action: nextPublic.action,
+                //       checksum: nextPublic.item.state[1],
+                //     });
+                //   });
+              }
+            );
 
           // This is exactly what would happen on the backend so it could be re-used
 

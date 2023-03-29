@@ -1,5 +1,5 @@
 import { Ok } from 'ts-results';
-import { MovexResource } from '../lib/MovexResource';
+import { MovexResource } from '../lib/MovexClientResource';
 import { computeCheckedState } from '../lib/util';
 import counterReducer, { initialCounterState } from './util/counterReducer';
 
