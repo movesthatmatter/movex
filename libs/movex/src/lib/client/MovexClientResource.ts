@@ -203,6 +203,20 @@ export class MovexClientResource<
     return res;
   }
 
+  /**
+   * If set to false it doesn't wait for the master state to be synced
+   * Good for tests at least. If not for anythign else, need to rethink it.
+   *
+   * @param flag
+   */
+  setMasterSyncing(flag: boolean) {
+    if (flag === true) {
+      this.isSynchedPromiseDelegate = new PromiseDelegate();
+    } else {
+      this.isSynchedPromiseDelegate.resolve();
+    }
+  }
+
   update(nextStateGetter: NextStateGetter<CheckedState<TState>>) {
     this.$checkedState.update(getNextStateFrom(this.get(), nextStateGetter));
 
