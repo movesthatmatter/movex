@@ -97,7 +97,7 @@ export class MockConnectionEmitter<
 
           // I feel like this should be in another master place, but the state comes from there already actually, no?
           const masterToClientResource: GetIOPayloadOKTypeFrom<ResponseType> = {
-            id: masterResource.id,
+            rid: masterResource.rid,
             state: masterResource.state,
           };
 

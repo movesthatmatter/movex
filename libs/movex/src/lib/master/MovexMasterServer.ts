@@ -119,11 +119,7 @@ export class MovexMasterServer {
         .map((r) =>
           acknowledge(
             new Ok({
-              id: r.id,
-              rid: toResourceIdentifierStr({
-                resourceId: r.id,
-                resourceType,
-              }),
+              rid: r.rid,
               state: r.state,
             })
           )

@@ -23,10 +23,8 @@ export type IOEvents<
     // clientId: MovexClient['id']; // Needed?
   }) => IOPayloadResult<
     {
-      id: MovexStoreItem<TState>['id'];
-      state: MovexStoreItem<TState>['state'];
-      // This is just so it works with rid as well
-      // rid: ResourceIdentifier<TResourceType>; // Canot haave this at this level as the MasterConnection doesn't know ab the store and the store only takes an id as string
+      rid: MovexStoreItem<TState, TResourceType>['rid'];
+      state: MovexStoreItem<TState, TResourceType>['state'];
     },
     unknown // Type this
   >;
@@ -34,7 +32,7 @@ export type IOEvents<
   getResourceState: (p: {
     rid: ResourceIdentifier<TResourceType>;
   }) => IOPayloadResult<
-    MovexStoreItem<TState>['state'],
+    MovexStoreItem<TState, TResourceType>['state'],
     unknown // Type this
   >;
 

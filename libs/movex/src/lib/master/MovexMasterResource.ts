@@ -54,7 +54,7 @@ export class MovexMasterResource<
     resourceType: TResourceType,
     state: TState
   ) {
-    return this.store.create(
+    return (this.store as MovexStore<TState, TResourceType>).create(
       toResourceIdentifierStr({
         resourceType,
         resourceId: getUuid(), // should this be defined here? Probably but it could also be given from outside

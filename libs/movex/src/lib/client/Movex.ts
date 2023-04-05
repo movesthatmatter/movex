@@ -55,12 +55,7 @@ export class Movex {
 
     return {
       create: (state: S) => {
-        return masterResourceConnection
-          .create(resourceType, state)
-          .map((r) => ({
-            ...r,
-            rid: toResourceIdentifierStr({ resourceId: r.id, resourceType }),
-          }));
+        return masterResourceConnection.create(resourceType, state);
       },
       /**
        * This returns the actual MovexClientResource. The name "use" doesn't seem to be perfect yet

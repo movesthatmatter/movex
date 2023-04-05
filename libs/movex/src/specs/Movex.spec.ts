@@ -2,7 +2,7 @@ import counterReducer from './util/counterReducer';
 import gameReducer, { initialGameState } from './util/gameReducer';
 import { MockConnectionEmitter } from './util/MockConnectionEmitter';
 import { Movex } from '../lib/client/Movex';
-import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
+import { tillNextTick } from 'movex-core-util';
 import { LocalMovexStore } from '../lib/master-store';
 import { GetReducerState, MovexReducer } from '../lib/tools/reducer';
 import { MovexMasterResource } from '../lib/master/MovexMasterResource';
@@ -34,11 +34,7 @@ test('Create', async () => {
     .resolveUnwrap();
 
   expect(actual).toEqual({
-    id: actual.id, // The id isn't too important here
-    rid: toResourceIdentifierStr({
-      resourceId: actual.id,
-      resourceType: 'counter',
-    }), // The id isn't too important here
+    rid: actual.rid, // The id isn't too important here
     state: computeCheckedState({ count: 2 }),
   });
 });
@@ -50,7 +46,6 @@ test('Use', async () => {
   const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
 
   const actual = counterResource.use(rid);
-
   const actualDefaultState = actual.get();
 
   expect(actualDefaultState).toEqual(computeCheckedState({ count: 0 }));
