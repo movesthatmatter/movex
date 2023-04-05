@@ -5,10 +5,10 @@ import {
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
-import { MasterClientConnection } from '../io/MasterClientConnection';
 import { AnyAction } from '../tools/action';
 import { MovexMasterResource } from './MovexMasterResource';
-import { MasterClientIOEvents } from '../io/MasterClientIOEvents';
+import { IOEvents } from '../io-connection/io-events';
+import { ConnectionToClient } from './ConnectionToClient';
 
 /**
  * This lives on the server most likely, and it's where the
@@ -16,7 +16,7 @@ import { MasterClientIOEvents } from '../io/MasterClientIOEvents';
  *
  * This is also very generic with an API to just work when run
  */
-export class MovexMaster {
+export class MovexMasterServer {
   // needs a store (redis, api, etc)
   // needs a way to send messages to the clients
   //  so a connection. when an incoming message comes, process it and send further
@@ -29,11 +29,11 @@ export class MovexMaster {
   // This needs to respond back to the client
   // it receives emitActions and responds with Ack, fwd or reconcilitary
   addClientConnection(
-    clientConnection: MasterClientConnection<any, AnyAction, string>
+    clientConnection: ConnectionToClient<any, AnyAction, string>
   ) {
     const onEmitActionHandler = (
-      payload: Parameters<MasterClientIOEvents['emitAction']>[0],
-      acknowledge: (p: ReturnType<MasterClientIOEvents['emitAction']>) => void
+      payload: Parameters<IOEvents['emitAction']>[0],
+      acknowledge: (p: ReturnType<IOEvents['emitAction']>) => void
     ) => {
       const { action, rid } = payload;
 
@@ -84,10 +84,8 @@ export class MovexMaster {
     };
 
     const onGetResourceStateHandler = (
-      payload: Parameters<MasterClientIOEvents['getResourceState']>[0],
-      acknowledge: (
-        p: ReturnType<MasterClientIOEvents['getResourceState']>
-      ) => void
+      payload: Parameters<IOEvents['getResourceState']>[0],
+      acknowledge: (p: ReturnType<IOEvents['getResourceState']>) => void
     ) => {
       const { rid } = payload;
 
@@ -105,10 +103,8 @@ export class MovexMaster {
     };
 
     const onCreateResourceHandler = (
-      payload: Parameters<MasterClientIOEvents['createResource']>[0],
-      acknowledge: (
-        p: ReturnType<MasterClientIOEvents['createResource']>
-      ) => void
+      payload: Parameters<IOEvents['createResource']>[0],
+      acknowledge: (p: ReturnType<IOEvents['createResource']>) => void
     ) => {
       const { resourceState, resourceType } = payload;
 

@@ -1,2 +1,2 @@
-export * from './MovexMaster';
+export * from './MovexMasterServer';
 export * from './MovexMasterResource';

@@ -1,4 +1,8 @@
-import { IOPayloadResult, ResourceIdentifier } from 'movex-core-util';
+import {
+  IOPayloadResult,
+  MovexClient,
+  ResourceIdentifier,
+} from 'movex-core-util';
 import { Checksum } from '../core-types';
 import { MovexStoreItem } from '../master-store';
 import {
@@ -8,7 +12,7 @@ import {
   ToCheckedAction,
 } from '../tools/action';
 
-export type MasterClientIOEvents<
+export type IOEvents<
   TState extends any = any,
   A extends AnyAction = AnyAction,
   TResourceType extends string = string
@@ -22,7 +26,7 @@ export type MasterClientIOEvents<
       id: MovexStoreItem<TState>['id'];
       state: MovexStoreItem<TState>['state'];
       // This is just so it works with rid as well
-      rid: ResourceIdentifier<TResourceType>;
+      // rid: ResourceIdentifier<TResourceType>; // Canot haave this at this level as the MasterConnection doesn't know ab the store and the store only takes an id as string
     },
     unknown // Type this
   >;

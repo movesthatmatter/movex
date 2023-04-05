@@ -3,6 +3,7 @@ import {
   ResourceIdentifier,
   toResourceIdentifierStr,
   objectKeys,
+  toResourceIdentifierObj,
 } from 'movex-core-util';
 import { AsyncErr, AsyncOk } from 'ts-async-results';
 import { computeCheckedState } from '../util';
@@ -30,12 +31,12 @@ export class LocalMovexStore<
     }
   }
 
-  private ridToStr(rid: ResourceIdentifier<TResourceType>) {
-    return toResourceIdentifierStr(rid) as string;
+  private ridToId(rid: ResourceIdentifier<TResourceType>) {
+    return toResourceIdentifierObj(rid).resourceId as string; // TODO: Does this need to be rid?
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
-    const item = { ...this.local[this.ridToStr(rid)] };
+    const item = { ...this.local[this.ridToId(rid)] };
 
     if (item) {
       return new AsyncOk(item);
@@ -45,7 +46,7 @@ export class LocalMovexStore<
   }
 
   create(rid: ResourceIdentifier<TResourceType>, nextState: TState) {
-    const id = this.ridToStr(rid);
+    const id = this.ridToId(rid);
 
     const next = {
       id,

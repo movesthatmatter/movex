@@ -1,1 +1,1 @@
-export * from './Movex';
+export * from './client/Movex';

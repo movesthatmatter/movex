@@ -7,7 +7,7 @@ import {
   NextStateGetter,
   Observable,
 } from 'movex-core-util';
-import { computeCheckedState } from './util';
+import { computeCheckedState } from '../util';
 import {
   ActionOrActionTupleFromAction,
   AnyAction,
@@ -15,10 +15,11 @@ import {
   ToCheckedAction,
   ToPrivateAction,
   ToPublicAction,
-} from './tools/action';
-import { CheckedState, UnsubscribeFn } from './core-types';
-import { createDispatcher, DispatchedEvent } from './tools/dispatch';
-import { MovexReducer } from './tools/reducer';
+} from '../tools/action';
+import { CheckedState, UnsubscribeFn } from '../core-types';
+import { createDispatcher, DispatchedEvent } from '../tools/dispatch';
+import { MovexReducer } from '../tools/reducer';
+import { PromiseDelegate } from 'promise-delegate';
 
 /**
  * This is the MovexResource running on the Client
@@ -28,6 +29,14 @@ export class MovexClientResource<
   TAction extends AnyAction = AnyAction
 > implements IObservable<CheckedState<TState>>
 {
+  /**
+   * This flag simply states if the resource is synched with the remote.
+   * It starts as false and it waits for at least one "sync" or "update" call.
+   *
+   * For now it never goes from true to false but that could be a valid use case in the future.
+   */
+  private isSynchedPromiseDelegate = new PromiseDelegate();
+
   private $checkedState: Observable<CheckedState<TState>>;
 
   private pubsy = new Pubsy<{
@@ -72,7 +81,11 @@ export class MovexClientResource<
       },
     });
 
-    this.dispatcher = dispatch;
+    this.dispatcher = (...args: Parameters<typeof dispatch>) => {
+      this.isSynchedPromiseDelegate.promise.then(() => {
+        dispatch(...args);
+      });
+    };
     this.unsubscribers.push(unsubscribeDispatch);
 
     // const offFwdAction = masterResourceIO.onFwdAction<TAction>((fwd) => {
@@ -99,19 +112,22 @@ export class MovexClientResource<
   }
 
   /**
-   * The diffence between this and the dispatch is that this happens in sync and returns the next state,
+   * The difference between this and the dispatch is that this happens in sync and returns the next state,
    * while dispatch() MIGHT not happen in sync and doesn't return
    *
    * @param actionOrActionTuple
    * @returns
    */
-  applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
-    const nextCheckedState =
-      this.getNextCheckedStateFromAction(actionOrActionTuple);
-    this.$checkedState.update(nextCheckedState);
+  // I took this out on April 5th b/c it doesn't make sense to return the current state (easily) now that the dispatch
+  //  always wait until the remote state comes first. Using isSynchedPromiseDelegate. If this is needed, the best would be
+  //  to make it async!
+  // applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
+  //   const nextCheckedState =
+  //     this.getNextCheckedStateFromAction(actionOrActionTuple);
+  //   this.$checkedState.update(nextCheckedState);
 
-    return nextCheckedState;
-  }
+  //   return nextCheckedState;
+  // }
 
   /**
    * Same as applyAction() except it fails on mismatching checksums
@@ -170,6 +186,21 @@ export class MovexClientResource<
 
   getUncheckedState() {
     return this.$checkedState.get()[0];
+  }
+
+  /**
+   * This needs to be called each time master has emits an updated state.
+   * The dispatch won't work without it being called at least once.
+   *
+   * @param nextStateGetter
+   * @returns
+   */
+  sync(nextStateGetter: NextStateGetter<CheckedState<TState>>) {
+    const res = this.update(nextStateGetter);
+
+    this.isSynchedPromiseDelegate.resolve();
+
+    return res;
   }
 
   update(nextStateGetter: NextStateGetter<CheckedState<TState>>) {

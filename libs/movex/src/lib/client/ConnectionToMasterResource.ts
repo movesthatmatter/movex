@@ -5,9 +5,10 @@ import {
   ToCheckedAction,
 } from '../tools/action';
 import {
+  GetIOPayloadErrTypeFrom,
+  GetIOPayloadOKTypeFrom,
   invoke,
-  IOPayloadResultErrType,
-  IOPayloadResultOkType,
+  MovexClient,
   ResourceIdentifier,
   ResourceIdentifierStr,
   toResourceIdentifierObj,
@@ -15,15 +16,15 @@ import {
 } from 'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 import { UnsubscribeFn } from '../core-types';
-import { MasterClientConnection } from './MasterClientConnection';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
-import { MasterClientIOEvents } from './MasterClientIOEvents';
+import { IOEvents } from '../io-connection/io-events';
+import { ConnectionToMaster } from './ConnectionToMaster';
 
 /**
  * This handles the connection with Master per ResourceType
  */
-export class MasterResourceConnection<
+export class ConnectionToMasterResource<
   TState extends any,
   TAction extends AnyAction,
   TResourceType extends string
@@ -40,11 +41,7 @@ export class MasterResourceConnection<
 
   constructor(
     resourceType: TResourceType,
-    private masterConnection: MasterClientConnection<
-      TState,
-      TAction,
-      TResourceType
-    >
+    private masterConnection: ConnectionToMaster<TState, TAction, TResourceType>
   ) {
     const onFwdActionHandler = (
       p: {
@@ -93,12 +90,12 @@ export class MasterResourceConnection<
 
   create(resourceType: TResourceType, resourceState: TState) {
     type CreateEvent = ReturnType<
-      MasterClientIOEvents<TState, TAction, TResourceType>['createResource']
+      IOEvents<TState, TAction, TResourceType>['createResource']
     >;
 
     return AsyncResult.toAsyncResult<
-      IOPayloadResultOkType<CreateEvent>,
-      IOPayloadResultErrType<CreateEvent>
+      GetIOPayloadOKTypeFrom<CreateEvent>,
+      GetIOPayloadErrTypeFrom<CreateEvent>
     >(
       this.masterConnection.emitter
         .emitAndAcknowledge('createResource', {
@@ -112,12 +109,12 @@ export class MasterResourceConnection<
 
   get(rid: ResourceIdentifier<TResourceType>) {
     type GetEvent = ReturnType<
-      MasterClientIOEvents<TState, TAction, TResourceType>['getResourceState']
+      IOEvents<TState, TAction, TResourceType>['getResourceState']
     >;
 
     return AsyncResult.toAsyncResult<
-      IOPayloadResultOkType<GetEvent>,
-      IOPayloadResultErrType<GetEvent>
+      GetIOPayloadOKTypeFrom<GetEvent>,
+      GetIOPayloadErrTypeFrom<GetEvent>
     >(
       this.masterConnection.emitter
         .emitAndAcknowledge('getResourceState', { rid })
@@ -130,12 +127,12 @@ export class MasterResourceConnection<
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
     type EmitActionEvent = ReturnType<
-      MasterClientIOEvents<TState, TAction, TResourceType>['emitAction']
+      IOEvents<TState, TAction, TResourceType>['emitAction']
     >;
 
     return AsyncResult.toAsyncResult<
-      IOPayloadResultOkType<EmitActionEvent>,
-      IOPayloadResultErrType<EmitActionEvent>
+      GetIOPayloadOKTypeFrom<EmitActionEvent>,
+      GetIOPayloadErrTypeFrom<EmitActionEvent>
     >(
       this.masterConnection.emitter
         .emitAndAcknowledge('emitAction', {

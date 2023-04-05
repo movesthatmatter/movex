@@ -4,13 +4,13 @@ import {
   invoke,
   ResourceIdentifierStr,
 } from 'movex-core-util';
-import { AnyAction } from './tools/action';
-import { MovexReducer } from './tools/reducer';
+import { AnyAction } from '../tools/action';
+import { MovexReducer } from '../tools/reducer';
 import { MovexClientResource } from './MovexClientResource';
-import { MasterResourceConnection } from './io/MasterResourceConnection';
-// import { MovexIOMasterConnection } from './io/movexIO-master-connection';
-import { UnsubscribeFn } from './core-types';
-import { MasterClientConnection } from './io/MasterClientConnection';
+import { ConnectionToMasterResource } from './ConnectionToMasterResource';
+import { UnsubscribeFn } from '../core-types';
+import { IOConnection } from '../io-connection/io-connection';
+import { ConnectionToMaster } from './ConnectionToMaster';
 
 export type MovexConfig = {
   url: string;
@@ -24,7 +24,7 @@ export class Movex {
   // private logger: typeof console;
 
   constructor(
-    private masterConnection: MasterClientConnection<any, AnyAction, string>
+    private connectionToMaster: IOConnection<any, AnyAction, string>
   ) {
     // private masterResourcesByType: ReducersMap // private config: MovexConfig, // private socketInstance: Socket,
     // this.logger = config.logger || console;
@@ -34,14 +34,14 @@ export class Movex {
     resourceType: TResourceType,
     reducer: MovexReducer<S, A>
   ) {
-    const masterResourceConnection = new MasterResourceConnection<
+    const masterResourceConnection = new ConnectionToMasterResource<
       S,
       A,
       TResourceType
     >(
       resourceType,
       // This is recasted to get it specific to the Resourceype
-      this.masterConnection as unknown as MasterClientConnection<
+      this.connectionToMaster as unknown as ConnectionToMaster<
         S,
         A,
         TResourceType
@@ -55,16 +55,25 @@ export class Movex {
 
     return {
       create: (state: S) => {
-        return masterResourceConnection.create(resourceType, state);
+        return masterResourceConnection
+          .create(resourceType, state)
+          .map((r) => ({
+            ...r,
+            rid: toResourceIdentifierStr({ resourceId: r.id, resourceType }),
+          }));
       },
+      /**
+       * This returns the actual MovexClientResource. The name "use" doesn't seem to be perfect yet
+       *  but not sure what to use yet. "observe", "listenTo", "attach", "follow" ?:)
+       *
+       * @param rid
+       * @returns
+       */
       use: (rid: ResourceIdentifier<typeof resourceType>) => {
         const clientResource = new MovexClientResource(reducer);
 
         masterResourceConnection.get(rid).map((s) => {
-          console.log('masterResourceConnection.get(rid)', s);
-          
-          // TODO: What is s here???
-          // clientResource.update(s);
+          clientResource.sync(s);
         });
 
         unsubscribersByRid[toResourceIdentifierStr(rid)] = [

@@ -340,7 +340,9 @@ export type IOPayloadResultErr<E> = {
   val: E;
 };
 
-export type IOPayloadResult<T, E> = IOPayloadResultOk<T> | IOPayloadResultErr<E>;
+export type IOPayloadResult<T, E> =
+  | IOPayloadResultOk<T>
+  | IOPayloadResultErr<E>;
 
 export type IOPayloadResultOkType<T extends IOPayloadResult<any, any>> =
   T extends IOPayloadResult<infer U, any> ? U : never;
@@ -348,15 +350,15 @@ export type IOPayloadResultOkType<T extends IOPayloadResult<any, any>> =
 export type IOPayloadResultErrType<T extends IOPayloadResult<any, any>> =
   T extends IOPayloadResult<any, infer U> ? U : never;
 
-// export type GetIOPayloadOKFrom<R extends IOPayloadResult<any, any>> = Extract<
-//   R,
-//   { ok: true; err: false }
-// >;
+export type GetIOPayloadOKTypeFrom<R extends IOPayloadResult<any, any>> = Extract<
+  R,
+  { ok: true }
+>['val'];
 
-// export type GetIOPayloadErrFrom<R extends IOPayloadResult<any, any>> = Extract<
-//   R,
-//   { ok: false; err: true }
-// >;
+export type GetIOPayloadErrTypeFrom<R extends IOPayloadResult<any, any>> = Extract<
+  R,
+  { ok: false }
+>['val'];
 
 // const xErr: IOPayloadResultErr<'asda'> = {
 //   ok: false,
@@ -365,4 +367,3 @@ export type IOPayloadResultErrType<T extends IOPayloadResult<any, any>> =
 // };
 
 // const x = {} as IOPayloadResultErrType<typeof xErr>;
-

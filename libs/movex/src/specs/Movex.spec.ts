@@ -1,70 +1,29 @@
 import counterReducer from './util/counterReducer';
-import { MockMasterClientEmitter } from './util/MockMasterClientEmitter';
 import gameReducer, { initialGameState } from './util/gameReducer';
-import { Movex } from '../lib/Movex';
-
-import {
-  toResourceIdentifierObj,
-  toResourceIdentifierStr,
-} from 'movex-core-util';
+import { MockConnectionEmitter } from './util/MockConnectionEmitter';
+import { Movex } from '../lib/client/Movex';
+import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
 import { LocalMovexStore } from '../lib/master-store';
-import { GetReducerState } from '../lib/tools/reducer';
+import { GetReducerState, MovexReducer } from '../lib/tools/reducer';
 import { MovexMasterResource } from '../lib/master/MovexMasterResource';
-import { MasterClientConnection } from '../lib/io/MasterClientConnection';
 import { computeCheckedState } from '../lib/util';
+import { ConnectionToMaster } from '../lib/client/ConnectionToMaster';
+import { AnyAction } from '../lib/tools/action';
 
-let mockUUIDCount = 0;
-const get_MOCKED_UUID = (count: number) => `MOCK-UUID-${count}`;
-jest.mock('uuid', () => ({ v4: () => get_MOCKED_UUID(++mockUUIDCount) }));
+const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
+  reducer: MovexReducer<TState, TAction>,
+  clientId = 'test-client'
+) => {
+  const localStore = new LocalMovexStore<GetReducerState<typeof reducer>>();
+  const masterResource = new MovexMasterResource(reducer, localStore);
 
-const counterRid = toResourceIdentifierObj({
-  resourceId: '1',
-  resourceType: 'counter',
-});
+  const mockEmitter = new MockConnectionEmitter(masterResource, clientId);
 
-const gameRid = toResourceIdentifierObj({
-  resourceId: '1',
-  resourceType: 'game',
-});
+  return new Movex(new ConnectionToMaster(clientId, mockEmitter));
+};
 
-test('Initial State', () => {});
-
-test('Create State', async () => {
-  const localStore = new LocalMovexStore<
-    GetReducerState<typeof counterReducer>
-  >();
-  const masterResource = new MovexMasterResource(counterReducer, localStore);
-  const mockEmitter = new MockMasterClientEmitter(masterResource);
-
-  // Client
-  // mock.emit(
-  //   'getResourceState',
-  //   {
-  //     rid: '' as ResourceIdentifier<string>,
-  //   },
-  //   (res) => {
-  //     if (res.ok) {
-  //       // res.val[0].count
-  //     }
-  //     // res[0];
-  //   }
-  // );
-
-  // // server
-
-  // mock.on('getResourceState', async (msg, ack) => {
-  //   // get resource async
-  //   // new AsyncOk({} as MovexStoreItem<Get>).map((s) => {
-  //   //   ack(new Ok(s.state));
-  //   //   // ack(new Ok(s.state));
-  //   // });
-  // });
-
-  // TODO Next: Came up with the concept of EventEmitter (local, mock, socket) which is the only piece that needs to be mocked for testing
-
-  const movex = new Movex(
-    new MasterClientConnection('test-client-1', mockEmitter)
-  );
+test('Create', async () => {
+  const movex = getMovex(counterReducer);
 
   const counterResource = movex.register('counter', counterReducer);
 
@@ -75,74 +34,94 @@ test('Create State', async () => {
     .resolveUnwrap();
 
   expect(actual).toEqual({
-    id: get_MOCKED_UUID(1),
-    state: computeCheckedState({ count: 2 }),
+    id: actual.id, // The id isn't too important here
     rid: toResourceIdentifierStr({
-      resourceId: get_MOCKED_UUID(1),
+      resourceId: actual.id,
       resourceType: 'counter',
-    }),
+    }), // The id isn't too important here
+    state: computeCheckedState({ count: 2 }),
   });
-
-  // const r = counterResource.use(rid);
-
-  // const expected = computeCheckedState({
-  //   count: 0,
-  // });
-
-  // expect(resource.get()).toEqual(expected);
 });
 
-// test('Dispatch Public Action', () => {
-//   const movex = createMovexInstance({
-//     url: 'n/a',
-//     apiKey: 'n/a',
-//   });
+test('Use', async () => {
+  const movex = getMovex(counterReducer);
+  const counterResource = movex.register('counter', counterReducer);
 
-//   const resource = movex.registerResourceReducer(counterRid, counterReducer);
+  const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
 
-//   resource.dispatch({ type: 'increment' });
+  const actual = counterResource.use(rid);
 
-//   const expected = computeCheckedState({
-//     count: 1,
-//   });
+  const actualDefaultState = actual.get();
 
-//   expect(resource.get()).toEqual(expected);
-// });
+  expect(actualDefaultState).toEqual(computeCheckedState({ count: 0 }));
 
-// test('Dispatch Private Action', () => {
-//   const movex = createMovexInstance({
-//     url: 'n/a',
-//     apiKey: 'n/a',
-//   });
+  await tillNextTick();
 
-//   const resource = movex.registerResourceReducer(gameRid, gameReducer);
+  const expected = computeCheckedState({ count: 2 });
 
-//   resource.dispatchPrivate(
-//     {
-//       type: 'submitMoves',
-//       payload: {
-//         color: 'white',
-//         moves: ['w:e2-e4', 'w:d2-d4'],
-//       },
-//       isPrivate: true,
-//     },
+  expect(actual.get()).toEqual(expected);
+});
 
-//     { type: 'readySubmissionState', payload: { color: 'white' } }
-//   );
+test('Dispatch Public Action', async () => {
+  const movex = getMovex(counterReducer);
+  const counterResource = movex.register('counter', counterReducer);
 
-//   const expected = computeCheckedState({
-//     ...initialGameState,
-//     submission: {
-//       ...initialGameState.submission,
-//       status: 'partial',
-//       white: {
-//         canDraw: false,
-//         moves: ['w:e2-e4', 'w:d2-d4'],
-//       },
-//     },
-//   });
+  const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
 
-//   expect(resource.get()).toEqual(expected);
-// });
+  const r = counterResource.use(rid);
+
+  r.dispatch({ type: 'increment' });
+
+  await tillNextTick();
+
+  const actual = r.get();
+  const expected = computeCheckedState({
+    count: 3,
+  });
+
+  expect(actual).toEqual(expected);
+});
+
+test('Dispatch Private Action', async () => {
+  const movex = getMovex(counterReducer);
+  const counterResource = movex.register('counter', gameReducer);
+
+  const { rid } = await counterResource
+    .create(initialGameState)
+    .resolveUnwrap();
+
+  const r = counterResource.use(rid);
+
+  r.dispatchPrivate(
+    {
+      type: 'submitMoves',
+      payload: {
+        color: 'white',
+        moves: ['w:e2-e4', 'w:d2-d4'],
+      },
+      isPrivate: true,
+    },
+
+    { type: 'readySubmissionState', payload: { color: 'white' } }
+  );
+
+  await tillNextTick();
+
+  const actual = r.get();
+
+  const expected = computeCheckedState({
+    ...initialGameState,
+    submission: {
+      ...initialGameState.submission,
+      status: 'partial',
+      white: {
+        canDraw: false,
+        moves: ['w:e2-e4', 'w:d2-d4'],
+      },
+    },
+  });
+
+  expect(actual).toEqual(expected);
+});
 
 // // TODO: Add more tests
