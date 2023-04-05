@@ -89,6 +89,7 @@ export type AnyCheckedAction = {
   checksum: Checksum;
 };
 
+// TODO: Should this be a Tuple??
 export type ToCheckedAction<TAction extends AnyAction> = {
   action: TAction;
   checksum: Checksum;

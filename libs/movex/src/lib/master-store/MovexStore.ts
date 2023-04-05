@@ -32,14 +32,14 @@ export interface MovexStore<
   T,
   TResourceType extends GenericResourceType = GenericResourceType
 > {
-  get: (
-    rid: ResourceIdentifier<TResourceType>,
-    fragmentGroupKey?: string
-  ) => AsyncResult<MovexStoreItem<T>, string>;
   create: (
     rid: ResourceIdentifier<TResourceType>,
     data: T
   ) => AsyncResult<MovexStoreItem<T>, unknown>;
+  get: (
+    rid: ResourceIdentifier<TResourceType>,
+    fragmentGroupKey?: string
+  ) => AsyncResult<MovexStoreItem<T>, string>;
   update: (
     rid: ResourceIdentifier<TResourceType>,
     getNext:

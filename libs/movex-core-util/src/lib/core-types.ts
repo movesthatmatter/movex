@@ -327,3 +327,42 @@ export type CreateMatchReq<TGame extends UnknownRecord> = {
   game: TGame;
   players?: MovexClient['id'][];
 };
+
+export type IOPayloadResultOk<T> = {
+  ok: true;
+  err: false;
+  val: T;
+};
+
+export type IOPayloadResultErr<E> = {
+  ok: false;
+  err: true;
+  val: E;
+};
+
+export type IOPayloadResult<T, E> = IOPayloadResultOk<T> | IOPayloadResultErr<E>;
+
+export type IOPayloadResultOkType<T extends IOPayloadResult<any, any>> =
+  T extends IOPayloadResult<infer U, any> ? U : never;
+
+export type IOPayloadResultErrType<T extends IOPayloadResult<any, any>> =
+  T extends IOPayloadResult<any, infer U> ? U : never;
+
+// export type GetIOPayloadOKFrom<R extends IOPayloadResult<any, any>> = Extract<
+//   R,
+//   { ok: true; err: false }
+// >;
+
+// export type GetIOPayloadErrFrom<R extends IOPayloadResult<any, any>> = Extract<
+//   R,
+//   { ok: false; err: true }
+// >;
+
+// const xErr: IOPayloadResultErr<'asda'> = {
+//   ok: false,
+//   err: true,
+//   val: 'asda',
+// };
+
+// const x = {} as IOPayloadResultErrType<typeof xErr>;
+

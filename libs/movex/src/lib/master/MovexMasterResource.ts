@@ -1,15 +1,14 @@
 import {
-  MovexStore,
   NextStateGetter,
   GenericResourceType,
   ResourceIdentifier,
   MovexClient,
-  MovexStoreItem,
-  MovexStatePatch,
   objectKeys,
+  toResourceIdentifierStr,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { CheckedState } from '../core-types';
+import { MovexStatePatch, MovexStore, MovexStoreItem } from '../master-store';
 import {
   ActionOrActionTupleFromAction,
   AnyAction,
@@ -22,6 +21,7 @@ import {
   applyMovexStatePatches,
   computeCheckedState,
   getMovexStatePatch,
+  getUuid,
 } from '../util';
 
 /**
@@ -48,6 +48,19 @@ export class MovexMasterResource<
     }
 
     return item.state;
+  }
+
+  create<TResourceType extends GenericResourceType>(
+    resourceType: TResourceType,
+    state: TState
+  ) {
+    return this.store.create(
+      toResourceIdentifierStr({
+        resourceType,
+        resourceId: getUuid(), // should this be defined here? Probably but it could also be given from outside
+      }),
+      state
+    );
   }
 
   private reconcileState(state: TState, patches: MovexStatePatch<TState>[]) {

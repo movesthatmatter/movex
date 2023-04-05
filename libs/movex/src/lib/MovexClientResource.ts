@@ -16,7 +16,7 @@ import {
   ToPrivateAction,
   ToPublicAction,
 } from './tools/action';
-import { CheckedState } from './core-types';
+import { CheckedState, UnsubscribeFn } from './core-types';
 import { createDispatcher, DispatchedEvent } from './tools/dispatch';
 import { MovexReducer } from './tools/reducer';
 
@@ -40,7 +40,7 @@ export class MovexClientResource<
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) => void;
 
-  private unsubscribers: (() => any)[] = [];
+  private unsubscribers: UnsubscribeFn[] = [];
 
   constructor(
     private reducer: MovexReducer<TState, TAction>,
@@ -184,10 +184,6 @@ export class MovexClientResource<
         getNextStateFrom(this.getUncheckedState(), nextStateGetter)
       )
     );
-  }
-
-  create() {
-    // TODO: Create a resource of type on demand. This is needed to satisfy the API in the DOCS (see Readme)
   }
 
   // This to be called when destroying not used anymore in order to clean the update subscriptions

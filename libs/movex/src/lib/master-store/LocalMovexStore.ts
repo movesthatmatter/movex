@@ -1,15 +1,12 @@
-import { deepClone } from 'fast-json-patch';
 import {
   GenericResourceType,
-  MovexStatePatch,
   ResourceIdentifier,
-  MovexStore,
-  MovexStoreItem,
   toResourceIdentifierStr,
   objectKeys,
 } from 'movex-core-util';
 import { AsyncErr, AsyncOk } from 'ts-async-results';
 import { computeCheckedState } from '../util';
+import { MovexStatePatch, MovexStore, MovexStoreItem } from './MovexStore';
 
 export class LocalMovexStore<
   TState,
@@ -61,7 +58,7 @@ export class LocalMovexStore<
       [id]: next,
     };
 
-    return new AsyncOk({ ...next });
+    return new AsyncOk(next);
   }
 
   updateState(
