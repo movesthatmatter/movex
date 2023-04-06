@@ -1,10 +1,10 @@
 import counterReducer, { initialCounterState } from './util/counterReducer';
 import { toResourceIdentifierStr } from 'movex-core-util';
 import { MovexMasterResource } from '../lib/master/MovexMasterResource';
-import { LocalMovexStore } from '../lib/master-store';
 import { computeCheckedState } from '../lib/util';
 import { GetReducerAction } from '../lib/tools/reducer';
 import gameReducer, { initialGameState } from './util/gameReducer';
+import { LocalMovexStore } from '../lib/movex-store';
 
 const rid = toResourceIdentifierStr({ resourceType: 'c', resourceId: '1' });
 

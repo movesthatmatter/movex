@@ -4,7 +4,7 @@ import {
   ResourceIdentifier,
 } from 'movex-core-util';
 import { Checksum } from '../core-types';
-import { MovexStoreItem } from '../master-store';
+import { MovexStoreItem } from '../movex-store';
 import {
   ActionOrActionTupleFromAction,
   AnyAction,

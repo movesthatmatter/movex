@@ -18,6 +18,6 @@
     "**/*.spec.js",
     "**/*.test.jsx",
     "**/*.spec.jsx",
-    "**/*.d.ts",
+    "**/*.d.ts", "src/specs/masterEnv.to0spec.ts", "src/specs/MovexResource.orchestration.to-spec.ts", "src/specs/MovexMasterResource.to-spec.ts", "src/specs/MovexClientResource.to-spec.ts", "src/specs/MovexReconciliator.oldspec.ts",
   ]
 }

@@ -8,7 +8,7 @@ import {
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { CheckedState } from '../core-types';
-import { MovexStatePatch, MovexStore, MovexStoreItem } from '../master-store';
+import { MovexStatePatch, MovexStore, MovexStoreItem } from '../movex-store';
 import {
   ActionOrActionTupleFromAction,
   AnyAction,

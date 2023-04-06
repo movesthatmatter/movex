@@ -7,7 +7,7 @@ import {
 import { Pubsy } from 'ts-pubsy';
 import { IOEvents } from '../../lib/io-connection/io-events';
 import { MovexMasterResource } from '../../lib/master';
-import { LocalMovexStore, MovexStoreItem } from '../../lib/master-store';
+import { LocalMovexStore, MovexStoreItem } from '../../lib/movex-store';
 import { AnyAction } from '../../lib/tools/action';
 import { GetReducerState } from '../../lib/tools/reducer';
 import counterReducer from './counterReducer';

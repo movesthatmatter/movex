@@ -3,12 +3,12 @@ import gameReducer, { initialGameState } from './util/gameReducer';
 import { MockConnectionEmitter } from './util/MockConnectionEmitter';
 import { Movex } from '../lib/client/Movex';
 import { tillNextTick } from 'movex-core-util';
-import { LocalMovexStore } from '../lib/master-store';
 import { GetReducerState, MovexReducer } from '../lib/tools/reducer';
 import { MovexMasterResource } from '../lib/master/MovexMasterResource';
 import { computeCheckedState } from '../lib/util';
 import { ConnectionToMaster } from '../lib/client/ConnectionToMaster';
 import { AnyAction } from '../lib/tools/action';
+import { LocalMovexStore } from '../lib/movex-store';
 
 const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
   reducer: MovexReducer<TState, TAction>,
