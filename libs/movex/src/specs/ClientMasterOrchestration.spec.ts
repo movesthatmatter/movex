@@ -1,85 +1,307 @@
-// import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
-// import { MovexClientResource } from '../lib/MovexClientResource';
-// import { computeCheckedState } from '../lib/util';
-// import gameReducer, { initialGameState } from './util/gameReducer';
-// import { createMasterEnv } from './util/createMasterEnv';
-// import { LocalMovexStore } from '../lib/master-store';
-// import { GetReducerAction, GetReducerState } from '../lib/tools/reducer';
-// import { ToCheckedAction } from '../lib/tools/action';
-// require('console-group').install();
+import {
+  delay,
+  invoke,
+  noop,
+  tillNextTick,
+  toResourceIdentifierStr,
+} from 'movex-core-util';
+import { computeCheckedState } from '../lib/util';
+import gameReducer, { initialGameState } from './util/gameReducer';
+import {
+  GetReducerAction,
+  GetReducerState,
+  MovexReducer,
+} from '../lib/tools/reducer';
+import { AnyAction, ToCheckedAction } from '../lib/tools/action';
+import { LocalMovexStore } from '../lib/movex-store';
 
-// const rid = toResourceIdentifierStr({
-//   resourceType: 'game',
-//   resourceId: 'test',
-// });
+import {
+  ConnectionToClient,
+  MovexMasterServer,
+  MovexMasterResource,
+} from '../lib/master';
+import { MockConnectionEmitter } from './util/MockConnectionEmitter';
+import { Movex } from '../lib/client/Movex';
+import { ConnectionToMaster } from '../lib/client/ConnectionToMaster';
+import { UnsubscribeFn } from '../lib/core-types';
+require('console-group').install();
 
-// const localStore = new LocalMovexStore<GetReducerState<typeof gameReducer>>();
+const rid = toResourceIdentifierStr({
+  resourceType: 'game',
+  resourceId: 'test',
+});
 
-// beforeEach(async () => {
-//   await localStore.clearAll().resolveUnwrap();
+let unsubscribe: UnsubscribeFn = noop;
 
-//   await localStore.create(rid, initialGameState).resolveUnwrap();
-// });
+beforeEach(async () => {
+  await unsubscribe();
 
-// describe('Public Actions', () => {
-//   test('With 2 Clients', async () => {
-//     const masterEnv = createMasterEnv({
-//       store: localStore,
-//       reducer: gameReducer,
-//       clientCountOrIdsAsString: ['white', 'black'],
-//       rid,
-//     });
+  // await localStore.clearAll().resolveUnwrap();
 
-//     const [whiteClient, blackClient] = masterEnv.clients;
+  // await localStore.create(rid, initialGameState).resolveUnwrap();
+});
 
-//     const initialPublicState = await masterEnv.getPublic().resolveUnwrap();
+// const getMovexWithEmitter = <
+//   TState extends any,
+//   TAction extends AnyAction = AnyAction
+// >(
+//   emitter: MockConnectionEmitter,
+//   clientId = 'test-client'
+// ) => new Movex(new ConnectionToMaster(clientId, emitter));
 
-//     const whiteClientXResource = new MovexClientResource(
-//       gameReducer,
-//       initialPublicState
-//     );
+// const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
+//   reducer: MovexReducer<TState, TAction>,
+//   clientId = 'test-client'
+// ) => {
+//   const localStore = new LocalMovexStore<GetReducerState<typeof reducer>>();
+//   const masterResource = new MovexMasterResource(reducer, localStore);
+//   const mockEmitter = new MockConnectionEmitter(masterResource, clientId);
 
-//     const blackClientXResource = new MovexClientResource(
-//       gameReducer,
-//       initialPublicState
-//     );
+//   return new Movex(new ConnectionToMaster(clientId, mockEmitter));
+// };
 
-//     blackClient.onFwdAction((fwd) => {
-//       const result = blackClientXResource.reconciliateAction(fwd);
+const orchestrate = async <
+  S,
+  A extends AnyAction,
+  TResourceType extends string
+>({
+  clientIds,
+  reducer,
+  resourceType,
+  initialState,
+}: {
+  clientIds: string[];
+  reducer: MovexReducer<S, A>;
+  resourceType: TResourceType;
+  initialState: S;
+}) => {
+  // const clientId = 'test-client-a';
 
-//       expect(result.ok).toBe(true);
-//     });
+  // master setup
+  const masterStore = new LocalMovexStore<S>();
 
-//     whiteClientXResource.onDispatched((event) => {
-//       whiteClient.emitAction(event.action);
-//     });
+  await masterStore.create(rid, initialState).resolveUnwrap();
 
-//     blackClientXResource.onDispatched((event) => {
-//       blackClient.emitAction(event.action);
-//     });
+  const masterResource = new MovexMasterResource(reducer, masterStore);
+  const masterServer = new MovexMasterServer({
+    [resourceType]: masterResource,
+  });
 
-//     whiteClientXResource.dispatch({
-//       type: 'change',
-//       payload: 5,
-//     });
+  return clientIds.map((clientId) => {
+    // // Would this be the only one for both client and master or seperate?
+    const mockEmitter = new MockConnectionEmitter<S, A, TResourceType>(
+      masterResource,
+      clientId
+    );
 
-//     await tillNextTick();
+    const connectionToClient = new ConnectionToClient<S, A, TResourceType>(
+      clientId,
+      mockEmitter
+    );
 
-//     const expectedMasterPublicState = computeCheckedState({
-//       ...initialGameState,
-//       count: 5,
-//     });
+    const removeClientConnectionFromMaster =
+      masterServer.addClientConnection(connectionToClient);
 
-//     const actualPublicState = await masterEnv.getPublic().resolveUnwrap();
+    // TODO: This could be done better, but since the unsibscriber is async need to work iwth an sync iterator
+    //  for now this should do
+    const oldUnsubscribe = unsubscribe;
+    unsubscribe = async () => {
+      await oldUnsubscribe();
 
-//     expect(actualPublicState).toEqual(expectedMasterPublicState);
+      removeClientConnectionFromMaster();
 
-//     expect(whiteClientXResource.get()).toEqual(expectedMasterPublicState);
+      await masterStore.clearAll().resolveUnwrap();
+    };
 
-//     // And even the peer client got the next state! Yey!
-//     expect(blackClientXResource.get()).toEqual(expectedMasterPublicState);
-//   });
-// });
+    // client
+    const connectionToMaster = new ConnectionToMaster<S, A, TResourceType>(
+      clientId,
+      mockEmitter
+    );
+
+    const movex = new Movex(connectionToMaster);
+
+    return movex.register(resourceType, reducer);
+  });
+};
+
+describe('Public Actions', () => {
+  test('Dispatch with 1 client only', async () => {
+    // simply connect the client to master and make the proper calls
+    //  the most important one is the event emitter from client to master and master to client
+    // those will be mocks
+    // const clientId = 'test-client-a';
+    // const gameResourceType = 'game';
+    // type GameResourceType = typeof gameResourceType;
+
+    // // master setup
+    // const masterGameResource = new MovexMasterResource(gameReducer, localStore);
+
+    // const masterServer = new MovexMasterServer({
+    //   game: masterGameResource,
+    // }); // here add the master resources
+
+    // // // Would this be the only one for both client and master or seperate?
+    // const mockEmitter = new MockConnectionEmitter<
+    //   GetReducerState<typeof gameReducer>,
+    //   GetReducerAction<typeof gameReducer>,
+    //   GameResourceType
+    // >(masterGameResource, clientId);
+
+    // const connectionToClientA = new ConnectionToClient<
+    //   GetReducerState<typeof gameReducer>,
+    //   GetReducerAction<typeof gameReducer>,
+    //   GameResourceType
+    // >(clientId, mockEmitter);
+
+    // const removeClientConnectionFromMaster =
+    //   masterServer.addClientConnection(connectionToClientA);
+
+    // // client
+    // const connectionToMaster = new ConnectionToMaster<
+    //   GetReducerState<typeof gameReducer>,
+    //   GetReducerAction<typeof gameReducer>,
+    //   GameResourceType
+    // >(clientId, mockEmitter);
+
+    // const movex = new Movex(connectionToMaster);
+
+    // const gameClientResource = movex.register(gameResourceType, gameReducer);
+
+    const [gameClientResource] = await orchestrate({
+      clientIds: ['test-client'],
+      reducer: gameReducer,
+      resourceType: 'game',
+      initialState: initialGameState,
+    });
+
+    const rr = await gameClientResource
+      .create(initialGameState)
+      .resolveUnwrap();
+
+    expect(rr).toEqual({
+      rid: rr.rid, // The id isn't too important here
+      state: computeCheckedState(initialGameState),
+    });
+
+    const r = gameClientResource.use(rid);
+
+    r.dispatch({
+      type: 'submitMoves',
+      payload: {
+        moves: ['w:E2-E4'],
+        color: 'white',
+      },
+    });
+
+    await tillNextTick();
+
+    const actual = r.get();
+    const expected = computeCheckedState({
+      ...initialGameState,
+      // count: 1,
+      submission: {
+        ...initialGameState.submission,
+        status: 'partial',
+        white: {
+          moves: ['w:E2-E4'],
+          canDraw: false,
+        },
+      },
+    });
+
+    expect(actual).toEqual(expected);
+  });
+
+  test.only('With 2 Clients', async () => {
+    const [whiteClient, blackClient] = await orchestrate({
+      clientIds: ['white-client', 'black-client'],
+      reducer: gameReducer,
+      resourceType: 'game',
+      initialState: initialGameState,
+    });
+
+    const { rid } = await whiteClient.create(initialGameState).resolveUnwrap();
+
+    const whiteMovex = whiteClient.use(rid);
+    const blackMovex = blackClient.use(rid);
+
+    whiteMovex.dispatch({
+      type: 'change',
+      payload: 5,
+    });
+
+    await tillNextTick();
+
+    const expected = computeCheckedState({
+      ...initialGameState,
+      count: 5,
+    });
+
+    expect(whiteMovex.get()).toEqual(expected);
+
+    // The black would only be the same as white if the master works
+    expect(blackMovex.get()).toEqual(expected);
+  });
+
+  // test('With 2 Clients', async () => {
+  //   const masterEnv = createMasterEnv({
+  //     store: localStore,
+  //     reducer: gameReducer,
+  //     clientCountOrIdsAsString: ['white', 'black'],
+  //     rid,
+  //   });
+
+  //   const [whiteClient, blackClient] = masterEnv.clients;
+
+  //   const initialPublicState = await masterEnv.getPublic().resolveUnwrap();
+
+  //   const whiteClientXResource = new MovexClientResource(
+  //     gameReducer,
+  //     initialPublicState
+  //   );
+
+  //   const blackClientXResource = new MovexClientResource(
+  //     gameReducer,
+  //     initialPublicState
+  //   );
+
+  //   blackClient.onFwdAction((fwd) => {
+  //     const result = blackClientXResource.reconciliateAction(fwd);
+
+  //     expect(result.ok).toBe(true);
+  //   });
+
+  //   whiteClientXResource.onDispatched((event) => {
+  //     whiteClient.emitAction(event.action);
+  //   });
+
+  //   blackClientXResource.onDispatched((event) => {
+  //     blackClient.emitAction(event.action);
+  //   });
+
+  //   whiteClientXResource.dispatch({
+  //     type: 'change',
+  //     payload: 5,
+  //   });
+
+  //   await tillNextTick();
+
+  //   const expectedMasterPublicState = computeCheckedState({
+  //     ...initialGameState,
+  //     count: 5,
+  //   });
+
+  //   const actualPublicState = await masterEnv.getPublic().resolveUnwrap();
+
+  //   expect(actualPublicState).toEqual(expectedMasterPublicState);
+
+  //   expect(whiteClientXResource.get()).toEqual(expectedMasterPublicState);
+
+  //   // And even the peer client got the next state! Yey!
+  //   expect(blackClientXResource.get()).toEqual(expectedMasterPublicState);
+  // });
+});
 
 // describe('Private Actoins', () => {
 //   test('Two Plyers – only one submits', async () => {
@@ -434,7 +656,7 @@
 //     });
 
 //     whiteClient.onReconciliatoryFwdActions((event) => {
-      
+
 //     })
 
 //     // This could be part of the env (not just master env but client-master env)

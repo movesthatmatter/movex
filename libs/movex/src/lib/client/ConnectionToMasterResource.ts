@@ -48,6 +48,8 @@ export class ConnectionToMasterResource<
         rid: ResourceIdentifier<TResourceType>;
       } & ToCheckedAction<TAction>
     ) => {
+      console.log('Connection to Master', this.masterConnection.clientId, 'on fwd action handler', p);
+
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
         return;
       }

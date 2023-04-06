@@ -96,7 +96,6 @@ test('Dispatch Private Action', async () => {
       },
       isPrivate: true,
     },
-
     { type: 'readySubmissionState', payload: { color: 'white' } }
   );
 

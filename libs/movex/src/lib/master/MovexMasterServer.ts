@@ -1,8 +1,4 @@
-import {
-  objectKeys,
-  toResourceIdentifierObj,
-  toResourceIdentifierStr,
-} from 'movex-core-util';
+import { objectKeys, toResourceIdentifierObj } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { AnyAction } from '../tools/action';
@@ -28,14 +24,20 @@ export class MovexMasterServer {
 
   // This needs to respond back to the client
   // it receives emitActions and responds with Ack, fwd or reconcilitary
-  addClientConnection(
-    clientConnection: ConnectionToClient<any, AnyAction, string>
+  addClientConnection<S, A extends AnyAction, TResourceType extends string>(
+    clientConnection: ConnectionToClient<S, A, TResourceType>
   ) {
+    console.log('Movex Master', 'add clent connection for:', clientConnection.clientId);
+
     const onEmitActionHandler = (
-      payload: Parameters<IOEvents['emitAction']>[0],
-      acknowledge: (p: ReturnType<IOEvents['emitAction']>) => void
+      payload: Parameters<IOEvents<S, A, TResourceType>['emitAction']>[0],
+      acknowledge: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['emitAction']>
+      ) => void
     ) => {
       const { action, rid } = payload;
+
+      console.log('Movex Master', clientConnection.clientId, 'on Emit Action Handler', payload);
 
       const masterResource =
         this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
@@ -84,8 +86,10 @@ export class MovexMasterServer {
     };
 
     const onGetResourceStateHandler = (
-      payload: Parameters<IOEvents['getResourceState']>[0],
-      acknowledge: (p: ReturnType<IOEvents['getResourceState']>) => void
+      payload: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
+      acknowledge: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['getResourceState']>
+      ) => void
     ) => {
       const { rid } = payload;
 
@@ -103,8 +107,10 @@ export class MovexMasterServer {
     };
 
     const onCreateResourceHandler = (
-      payload: Parameters<IOEvents['createResource']>[0],
-      acknowledge: (p: ReturnType<IOEvents['createResource']>) => void
+      payload: Parameters<IOEvents<S, A, TResourceType>['createResource']>[0],
+      acknowledge: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['createResource']>
+      ) => void
     ) => {
       const { resourceState, resourceType } = payload;
 

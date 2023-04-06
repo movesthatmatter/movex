@@ -166,6 +166,8 @@ export class MovexMasterResource<
     clientId: MovexClient['id'],
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
+    console.log('Movex Master Resource', clientId, 'applyAction:', actionOrActionTuple);
+
     return this.getItem(rid).flatMap<
       {
         nextPublic: ToCheckedAction<TAction>;

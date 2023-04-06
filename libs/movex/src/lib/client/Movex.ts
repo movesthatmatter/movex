@@ -24,7 +24,7 @@ export class Movex {
   // private logger: typeof console;
 
   constructor(
-    private connectionToMaster: IOConnection<any, AnyAction, string>
+    private connectionToMaster: IOConnection<any, AnyAction, any>
   ) {
     // private masterResourcesByType: ReducersMap // private config: MovexConfig, // private socketInstance: Socket,
     // this.logger = config.logger || console;
@@ -71,11 +71,15 @@ export class Movex {
           clientResource.sync(s);
         });
 
+        console.log('use for client id', this.connectionToMaster.clientId)
+
         unsubscribersByRid[toResourceIdentifierStr(rid)] = [
           clientResource.onDispatched((p) => {
+            console.log('Movex', this.connectionToMaster.clientId, 'onDispatched', p.action);
             masterResourceConnection.emitAction(rid, p.action);
           }),
           masterResourceConnection.onFwdAction(rid, (p) => {
+            console.log('on fwd action for', 'client id', this.connectionToMaster.clientId)
             clientResource.reconciliateAction(p);
           }),
           masterResourceConnection.onReconciliatoryActions(rid, (p) => {

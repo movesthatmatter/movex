@@ -1,16 +1,8 @@
-import {
-  Emitter,
-  GetIOPayloadOKTypeFrom,
-  ResourceIdentifier,
-  toResourceIdentifierObj,
-} from 'movex-core-util';
+import { Emitter, GetIOPayloadOKTypeFrom } from 'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 import { IOEvents } from '../../lib/io-connection/io-events';
 import { MovexMasterResource } from '../../lib/master';
-import { LocalMovexStore, MovexStoreItem } from '../../lib/movex-store';
 import { AnyAction } from '../../lib/tools/action';
-import { GetReducerState } from '../../lib/tools/reducer';
-import counterReducer from './counterReducer';
 
 export class MockConnectionEmitter<
   TState extends any = any,
@@ -124,6 +116,27 @@ export class MockConnectionEmitter<
 
       this.masterResource
         .getState(req.rid, this.clientId)
+        .resolve()
+        .then((r) => {
+          const res = {
+            ok: r.ok,
+            err: r.err,
+            val: r.val,
+          } as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>;
+
+          acknowledgeCb?.(res);
+        });
+    } else if (event === 'emitAction') {
+      console.log('Mock', this.clientId, event, request);
+
+      const req = request as Parameters<
+        IOEvents<TState, TAction, TResourceType>['emitAction']
+      >[0];
+
+      this.emit(req.action)
+
+      this.masterResource
+        .applyAction(req.rid, this.clientId, req.action)
         .resolve()
         .then((r) => {
           const res = {
