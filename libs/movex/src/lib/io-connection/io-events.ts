@@ -36,7 +36,7 @@ export type IOEvents<
     unknown // Type this
   >;
 
-  emitAction: (payload: {
+  emitActionDispatch: (payload: {
     rid: ResourceIdentifier<TResourceType>;
     action: ActionOrActionTupleFromAction<A>;
   }) => IOPayloadResult<Checksum, 'MasterResourceInexistent' | string>; // Type the other errors

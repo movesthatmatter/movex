@@ -166,7 +166,7 @@ export class MovexMasterResource<
     clientId: MovexClient['id'],
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
-    console.log('Movex Master Resource', clientId, 'applyAction:', actionOrActionTuple);
+    console.log('[MovexMasterResource] cid:', clientId, 'applyAction:', actionOrActionTuple);
 
     return this.getItem(rid).flatMap<
       {

@@ -27,17 +27,31 @@ export class MovexMasterServer {
   addClientConnection<S, A extends AnyAction, TResourceType extends string>(
     clientConnection: ConnectionToClient<S, A, TResourceType>
   ) {
-    console.log('Movex Master', 'add clent connection for:', clientConnection.clientId);
+    console.log(
+      '[MovexMasterServer]',
+      '.addClientConnection(clientId:"',
+      clientConnection.clientId,
+      '")'
+    );
+
+    // Event Handlers
 
     const onEmitActionHandler = (
-      payload: Parameters<IOEvents<S, A, TResourceType>['emitAction']>[0],
+      payload: Parameters<
+        IOEvents<S, A, TResourceType>['emitActionDispatch']
+      >[0],
       acknowledge: (
-        p: ReturnType<IOEvents<S, A, TResourceType>['emitAction']>
+        p: ReturnType<IOEvents<S, A, TResourceType>['emitActionDispatch']>
       ) => void
     ) => {
       const { action, rid } = payload;
 
-      console.log('Movex Master', clientConnection.clientId, 'on Emit Action Handler', payload);
+      console.log(
+        '[MovexMasterServer]',
+        clientConnection.clientId,
+        'onEmitActionHandler',
+        payload
+      );
 
       const masterResource =
         this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
@@ -59,6 +73,8 @@ export class MovexMasterServer {
             { nextPublic, nextPrivate, reconciliatoryActionsByClientId },
             subscribers,
           ]) => {
+            console.log('[MovexMasterServer] action applied', action);
+
             // Notify the rest of the Client Subscribers of the actions
             objectKeys(subscribers).forEach((clientId) => {
               if (reconciliatoryActionsByClientId) {
@@ -67,6 +83,11 @@ export class MovexMasterServer {
                   ...reconciliatoryActionsByClientId[clientId],
                 });
               } else {
+                console.log(
+                  '[MovexMasterServer] notifying',
+                  clientConnection.clientId,
+                  'fwdAction'
+                );
                 clientConnection.emitter.emit('fwdAction', {
                   rid,
                   ...nextPublic,
@@ -112,6 +133,8 @@ export class MovexMasterServer {
         p: ReturnType<IOEvents<S, A, TResourceType>['createResource']>
       ) => void
     ) => {
+      console.log('[MovexMasterServer] onCreateResourceHandler', payload);
+
       const { resourceState, resourceType } = payload;
 
       const masterResource = this.masterResourcesByType[resourceType];
@@ -133,13 +156,24 @@ export class MovexMasterServer {
         .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
-    clientConnection.emitter.on('emitAction', onEmitActionHandler);
+    clientConnection.emitter.on('emitActionDispatch', onEmitActionHandler);
     clientConnection.emitter.on('getResourceState', onGetResourceStateHandler);
     clientConnection.emitter.on('createResource', onCreateResourceHandler);
 
+    // clientConnection.emitter.on('fwdAction', (payload) => {
+    //   console.log(
+    //     '[MovexMasterConnection]',
+    //     clientConnection.clientId,
+    //     'onFwd Action:',
+    //     payload
+    //   );
+
+    //   // TODO: Here is where the master gets called by the client
+    // });
+
     // Unsubscribe
     return () => {
-      clientConnection.emitter.off('emitAction', onEmitActionHandler);
+      clientConnection.emitter.off('emitActionDispatch', onEmitActionHandler);
       clientConnection.emitter.off(
         'getResourceState',
         onGetResourceStateHandler

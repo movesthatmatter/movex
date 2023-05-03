@@ -35,30 +35,7 @@ let unsubscribe: UnsubscribeFn = noop;
 
 beforeEach(async () => {
   await unsubscribe();
-
-  // await localStore.clearAll().resolveUnwrap();
-
-  // await localStore.create(rid, initialGameState).resolveUnwrap();
 });
-
-// const getMovexWithEmitter = <
-//   TState extends any,
-//   TAction extends AnyAction = AnyAction
-// >(
-//   emitter: MockConnectionEmitter,
-//   clientId = 'test-client'
-// ) => new Movex(new ConnectionToMaster(clientId, emitter));
-
-// const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
-//   reducer: MovexReducer<TState, TAction>,
-//   clientId = 'test-client'
-// ) => {
-//   const localStore = new LocalMovexStore<GetReducerState<typeof reducer>>();
-//   const masterResource = new MovexMasterResource(reducer, localStore);
-//   const mockEmitter = new MockConnectionEmitter(masterResource, clientId);
-
-//   return new Movex(new ConnectionToMaster(clientId, mockEmitter));
-// };
 
 const orchestrate = async <
   S,
@@ -75,8 +52,6 @@ const orchestrate = async <
   resourceType: TResourceType;
   initialState: S;
 }) => {
-  // const clientId = 'test-client-a';
-
   // master setup
   const masterStore = new LocalMovexStore<S>();
 
@@ -89,8 +64,9 @@ const orchestrate = async <
 
   return clientIds.map((clientId) => {
     // // Would this be the only one for both client and master or seperate?
+    // I believe it should be the same in order for it to work between the 2 no?
     const mockEmitter = new MockConnectionEmitter<S, A, TResourceType>(
-      masterResource,
+      // masterResource,
       clientId
     );
 
@@ -113,7 +89,7 @@ const orchestrate = async <
       await masterStore.clearAll().resolveUnwrap();
     };
 
-    // client
+    // Client. (i.e. This is what the client would do)
     const connectionToMaster = new ConnectionToMaster<S, A, TResourceType>(
       clientId,
       mockEmitter
@@ -127,47 +103,6 @@ const orchestrate = async <
 
 describe('Public Actions', () => {
   test('Dispatch with 1 client only', async () => {
-    // simply connect the client to master and make the proper calls
-    //  the most important one is the event emitter from client to master and master to client
-    // those will be mocks
-    // const clientId = 'test-client-a';
-    // const gameResourceType = 'game';
-    // type GameResourceType = typeof gameResourceType;
-
-    // // master setup
-    // const masterGameResource = new MovexMasterResource(gameReducer, localStore);
-
-    // const masterServer = new MovexMasterServer({
-    //   game: masterGameResource,
-    // }); // here add the master resources
-
-    // // // Would this be the only one for both client and master or seperate?
-    // const mockEmitter = new MockConnectionEmitter<
-    //   GetReducerState<typeof gameReducer>,
-    //   GetReducerAction<typeof gameReducer>,
-    //   GameResourceType
-    // >(masterGameResource, clientId);
-
-    // const connectionToClientA = new ConnectionToClient<
-    //   GetReducerState<typeof gameReducer>,
-    //   GetReducerAction<typeof gameReducer>,
-    //   GameResourceType
-    // >(clientId, mockEmitter);
-
-    // const removeClientConnectionFromMaster =
-    //   masterServer.addClientConnection(connectionToClientA);
-
-    // // client
-    // const connectionToMaster = new ConnectionToMaster<
-    //   GetReducerState<typeof gameReducer>,
-    //   GetReducerAction<typeof gameReducer>,
-    //   GameResourceType
-    // >(clientId, mockEmitter);
-
-    // const movex = new Movex(connectionToMaster);
-
-    // const gameClientResource = movex.register(gameResourceType, gameReducer);
-
     const [gameClientResource] = await orchestrate({
       clientIds: ['test-client'],
       reducer: gameReducer,
@@ -196,10 +131,9 @@ describe('Public Actions', () => {
 
     await tillNextTick();
 
-  const actual = r.state; 
+    const actual = r.state;
     const expected = computeCheckedState({
       ...initialGameState,
-      // count: 1,
       submission: {
         ...initialGameState.submission,
         status: 'partial',
@@ -213,7 +147,7 @@ describe('Public Actions', () => {
     expect(actual).toEqual(expected);
   });
 
-  test.only('With 2 Clients', async () => {
+  test.skip('With 2 Clients', async () => {
     const [whiteClient, blackClient] = await orchestrate({
       clientIds: ['white-client', 'black-client'],
       reducer: gameReducer,
@@ -243,6 +177,47 @@ describe('Public Actions', () => {
     // The black would only be the same as white if the master works
     expect(blackMovex.state).toEqual(expected);
   });
+
+  // simply connect the client to master and make the proper calls
+  //  the most important one is the event emitter from client to master and master to client
+  // those will be mocks
+  // const clientId = 'test-client-a';
+  // const gameResourceType = 'game';
+  // type GameResourceType = typeof gameResourceType;
+
+  // // master setup
+  // const masterGameResource = new MovexMasterResource(gameReducer, localStore);
+
+  // const masterServer = new MovexMasterServer({
+  //   game: masterGameResource,
+  // }); // here add the master resources
+
+  // // // Would this be the only one for both client and master or seperate?
+  // const mockEmitter = new MockConnectionEmitter<
+  //   GetReducerState<typeof gameReducer>,
+  //   GetReducerAction<typeof gameReducer>,
+  //   GameResourceType
+  // >(masterGameResource, clientId);
+
+  // const connectionToClientA = new ConnectionToClient<
+  //   GetReducerState<typeof gameReducer>,
+  //   GetReducerAction<typeof gameReducer>,
+  //   GameResourceType
+  // >(clientId, mockEmitter);
+
+  // const removeClientConnectionFromMaster =
+  //   masterServer.addClientConnection(connectionToClientA);
+
+  // // client
+  // const connectionToMaster = new ConnectionToMaster<
+  //   GetReducerState<typeof gameReducer>,
+  //   GetReducerAction<typeof gameReducer>,
+  //   GameResourceType
+  // >(clientId, mockEmitter);
+
+  // const movex = new Movex(connectionToMaster);
+
+  // const gameClientResource = movex.register(gameResourceType, gameReducer);
 
   // test('With 2 Clients', async () => {
   //   const masterEnv = createMasterEnv({

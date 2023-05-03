@@ -48,7 +48,12 @@ export class ConnectionToMasterResource<
         rid: ResourceIdentifier<TResourceType>;
       } & ToCheckedAction<TAction>
     ) => {
-      console.log('Connection to Master', this.masterConnection.clientId, 'on fwd action handler', p);
+      console.log(
+        'Connection to Master',
+        this.masterConnection.clientId,
+        'on fwd action handler',
+        p
+      );
 
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
         return;
@@ -105,7 +110,15 @@ export class ConnectionToMasterResource<
           resourceState,
           resourceType,
         })
-        .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
+        .then((res) =>
+          res.ok
+            ? new Ok({
+                // This sanitizes the data only allowing specific fields to get to the client
+                rid: res.val.rid,
+                state: res.val.state,
+              })
+            : new Err(res.val)
+        )
     );
   }
 
@@ -129,7 +142,7 @@ export class ConnectionToMasterResource<
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
     type EmitActionEvent = ReturnType<
-      IOEvents<TState, TAction, TResourceType>['emitAction']
+      IOEvents<TState, TAction, TResourceType>['emitActionDispatch']
     >;
 
     return AsyncResult.toAsyncResult<
@@ -137,7 +150,7 @@ export class ConnectionToMasterResource<
       GetIOPayloadErrTypeFrom<EmitActionEvent>
     >(
       this.masterConnection.emitter
-        .emitAndAcknowledge('emitAction', {
+        .emitAndAcknowledge('emitActionDispatch', {
           rid,
           action: actionOrActionTuple,
         })
