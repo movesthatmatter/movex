@@ -41,7 +41,11 @@ export class ConnectionToMasterResource<
 
   constructor(
     resourceType: TResourceType,
-    private masterConnection: ConnectionToMaster<TState, TAction, TResourceType>
+    private connectionToMaster: ConnectionToMaster<
+      TState,
+      TAction,
+      TResourceType
+    >
   ) {
     const onFwdActionHandler = (
       p: {
@@ -50,7 +54,7 @@ export class ConnectionToMasterResource<
     ) => {
       console.log(
         'Connection to Master',
-        this.masterConnection.clientId,
+        this.connectionToMaster.clientId,
         'on fwd action handler',
         p
       );
@@ -77,18 +81,18 @@ export class ConnectionToMasterResource<
       );
     };
 
-    masterConnection.emitter.on(
+    connectionToMaster.emitter.on(
       'reconciliateActions',
       onReconciliateActionsHandler
     );
 
-    masterConnection.emitter.on('fwdAction', onFwdActionHandler);
+    connectionToMaster.emitter.on('fwdAction', onFwdActionHandler);
 
     // Unsubscribe from the events too
     this.unsubscribers = [
-      () => masterConnection.emitter.off('fwdAction', onFwdActionHandler),
+      () => connectionToMaster.emitter.off('fwdAction', onFwdActionHandler),
       () =>
-        masterConnection.emitter.off(
+        connectionToMaster.emitter.off(
           'reconciliateActions',
           onReconciliateActionsHandler
         ),
@@ -104,9 +108,9 @@ export class ConnectionToMasterResource<
       GetIOPayloadOKTypeFrom<CreateEvent>,
       GetIOPayloadErrTypeFrom<CreateEvent>
     >(
-      this.masterConnection.emitter
+      this.connectionToMaster.emitter
         .emitAndAcknowledge('createResource', {
-          // clientId: this.masterConnection.clientId,
+          // clientId: this.connectionToMaster.clientId,
           resourceState,
           resourceType,
         })
@@ -122,6 +126,23 @@ export class ConnectionToMasterResource<
     );
   }
 
+  addResourceSubscriber(rid: ResourceIdentifier<TResourceType>) {
+    type AddSubscriberEvent = ReturnType<
+      IOEvents<TState, TAction, TResourceType>['addResourceSubscriber']
+    >;
+
+    return AsyncResult.toAsyncResult<
+      GetIOPayloadOKTypeFrom<AddSubscriberEvent>,
+      GetIOPayloadErrTypeFrom<AddSubscriberEvent>
+    >(
+      this.connectionToMaster.emitter
+        .emitAndAcknowledge('addResourceSubscriber', {
+          rid,
+        })
+        .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
+    );
+  }
+
   get(rid: ResourceIdentifier<TResourceType>) {
     type GetEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['getResourceState']
@@ -131,7 +152,7 @@ export class ConnectionToMasterResource<
       GetIOPayloadOKTypeFrom<GetEvent>,
       GetIOPayloadErrTypeFrom<GetEvent>
     >(
-      this.masterConnection.emitter
+      this.connectionToMaster.emitter
         .emitAndAcknowledge('getResourceState', { rid })
         .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );
@@ -149,7 +170,7 @@ export class ConnectionToMasterResource<
       GetIOPayloadOKTypeFrom<EmitActionEvent>,
       GetIOPayloadErrTypeFrom<EmitActionEvent>
     >(
-      this.masterConnection.emitter
+      this.connectionToMaster.emitter
         .emitAndAcknowledge('emitActionDispatch', {
           rid,
           action: actionOrActionTuple,

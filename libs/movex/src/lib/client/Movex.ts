@@ -23,9 +23,7 @@ export type MovexConfig = {
 export class Movex {
   // private logger: typeof console;
 
-  constructor(
-    private connectionToMaster: IOConnection<any, AnyAction, any>
-  ) {
+  constructor(private connectionToMaster: IOConnection<any, AnyAction, any>) {
     // private masterResourcesByType: ReducersMap // private config: MovexConfig, // private socketInstance: Socket,
     // this.logger = config.logger || console;
   }
@@ -68,20 +66,31 @@ export class Movex {
       bind: (rid: ResourceIdentifier<typeof resourceType>) => {
         const clientResource = new MovexClientResource(reducer);
 
-        masterResourceConnection.get(rid).map((s) => {
-          // console.log('[Movex] masterResourceConnection.get', rid, s);
-          clientResource.sync(s);
+        // TODO: Needs a way to add a resource subscriber
+        masterResourceConnection.addResourceSubscriber(rid).map(() => {
+          // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
+          masterResourceConnection.get(rid).map((s) => {
+            // console.log('[Movex] masterResourceConnection.get', rid, s);
+            clientResource.sync(s);
+          });
         });
 
         // console.log('[Movex] .bind() for client id', this.connectionToMaster.clientId)
 
         unsubscribersByRid[toResourceIdentifierStr(rid)] = [
           clientResource.onDispatched((p) => {
-            console.log(`[Movex].onDispatched("${this.connectionToMaster.clientId}")`, p.action);
+            console.log(
+              `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
+              p.action
+            );
             masterResourceConnection.emitAction(rid, p.action);
           }),
           masterResourceConnection.onFwdAction(rid, (p) => {
-            console.log('[Movex].onFwdAction for', 'client id', this.connectionToMaster.clientId)
+            console.log(
+              '[Movex].onFwdAction for',
+              'client id',
+              this.connectionToMaster.clientId
+            );
             clientResource.reconciliateAction(p);
           }),
           masterResourceConnection.onReconciliatoryActions(rid, (p) => {

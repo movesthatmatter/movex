@@ -24,7 +24,7 @@ import { MockConnectionEmitter } from './util/MockConnectionEmitter';
 import { Movex } from '../lib/client/Movex';
 import { ConnectionToMaster } from '../lib/client/ConnectionToMaster';
 import { UnsubscribeFn } from '../lib/core-types';
-import { mockMovex } from './test-utils';
+import { mockMovex, orchestrateMovex } from './test-utils';
 require('console-group').install();
 
 const rid = toResourceIdentifierStr({
@@ -79,7 +79,10 @@ const orchestrate = async <
     const removeClientConnectionFromMaster =
       masterServer.addClientConnection(connectionToClient);
 
-    const mockedMovex = mockMovex(clientId, masterResource);
+      connectionToClient.emitter
+
+  
+    const mockedMovex = orchestrateMovex(connectionToClient);
 
     // TODO: This could be done better, but since the unsibscriber is async need to work iwth an sync iterator
     //  for now this should do

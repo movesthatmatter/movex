@@ -166,7 +166,12 @@ export class MovexMasterResource<
     clientId: MovexClient['id'],
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
-    console.log('[MovexMasterResource] cid:', clientId, 'applyAction:', actionOrActionTuple);
+    console.log(
+      '[MovexMasterResource] cid:',
+      clientId,
+      'applyAction:',
+      actionOrActionTuple
+    );
 
     return this.getItem(rid).flatMap<
       {
@@ -304,6 +309,37 @@ export class MovexMasterResource<
     nextStateGetter: NextStateGetter<TState>
   ) {
     return this.store.updateState(rid, nextStateGetter);
+  }
+
+  addResourceSubscriber<TResourceType extends GenericResourceType>(
+    rid: ResourceIdentifier<TResourceType>,
+    subcriberId: MovexClient['id']
+  ) {
+    // TODO Optimization: The store could have the append/remove implemented so it doesn't do a round trip looking for prev
+    return this.store.update(rid, (prev) => ({
+      ...prev,
+      subscribers: {
+        ...prev.subscribers,
+        [subcriberId]: {
+          subscribedAt: new Date().getTime(),
+        },
+      },
+    }));
+  }
+
+  removeResourceSubscriber<TResourceType extends GenericResourceType>(
+    rid: ResourceIdentifier<TResourceType>,
+    subcriberId: MovexClient['id']
+  ) {
+    // TODO Optimization: The store could have the append/remove implemented so it doesn't do a round trip looking for prev
+    return this.store.update(rid, (prev) => {
+      const { [subcriberId]: removed, ...rest } = prev.subscribers;
+
+      return {
+        ...prev,
+        subscribers: rest,
+      };
+    });
   }
 
   // updateUncheckedState<TResourceType extends GenericResourceType>(

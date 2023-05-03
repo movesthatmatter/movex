@@ -29,6 +29,21 @@ export type IOEvents<
     unknown // Type this
   >;
 
+  // This doesn't subscribe a client to the resource' updates
+  // But adds the client to the Resource list of subscribers
+  addResourceSubscriber: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+  }) => IOPayloadResult<
+    void,
+    unknown // Type this
+  >;
+  removeResourceSubscriber: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+  }) => IOPayloadResult<
+    void,
+    unknown // Type this
+  >;
+
   getResourceState: (p: {
     rid: ResourceIdentifier<TResourceType>;
   }) => IOPayloadResult<

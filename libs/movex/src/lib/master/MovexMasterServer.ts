@@ -74,6 +74,7 @@ export class MovexMasterServer {
             subscribers,
           ]) => {
             console.log('[MovexMasterServer] action applied', action);
+            console.log('[MovexMasterServer] rest subs', subscribers);
 
             // Notify the rest of the Client Subscribers of the actions
             objectKeys(subscribers).forEach((clientId) => {
@@ -156,9 +157,69 @@ export class MovexMasterServer {
         .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
+    const onAddResourceSubscriber = (
+      payload: Parameters<
+        IOEvents<S, A, TResourceType>['addResourceSubscriber']
+      >[0],
+      acknowledge: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['addResourceSubscriber']>
+      ) => void
+    ) => {
+      // const { rid } = payload;
+
+      const { resourceId, resourceType } = toResourceIdentifierObj(payload.rid);
+
+      const masterResource = this.masterResourcesByType[resourceType];
+
+      if (!masterResource) {
+        return acknowledge(new Err('MasterResourceInexistent'));
+      }
+
+      masterResource
+        .addResourceSubscriber(payload.rid, clientConnection.clientId)
+        .map((r) => {
+          acknowledge(Ok.EMPTY);
+        })
+        .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+    };
+
+    const onRemoveResourceSubscriber = (
+      payload: Parameters<
+        IOEvents<S, A, TResourceType>['removeResourceSubscriber']
+      >[0],
+      acknowledge: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['removeResourceSubscriber']>
+      ) => void
+    ) => {
+      // const { rid } = payload;
+
+      const { resourceId, resourceType } = toResourceIdentifierObj(payload.rid);
+
+      const masterResource = this.masterResourcesByType[resourceType];
+
+      if (!masterResource) {
+        return acknowledge(new Err('MasterResourceInexistent'));
+      }
+
+      masterResource
+        .removeResourceSubscriber(payload.rid, clientConnection.clientId)
+        .map((r) => {
+          acknowledge(Ok.EMPTY);
+        })
+        .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+    };
+
     clientConnection.emitter.on('emitActionDispatch', onEmitActionHandler);
     clientConnection.emitter.on('getResourceState', onGetResourceStateHandler);
     clientConnection.emitter.on('createResource', onCreateResourceHandler);
+    clientConnection.emitter.on(
+      'addResourceSubscriber',
+      onAddResourceSubscriber
+    );
+    clientConnection.emitter.on(
+      'removeResourceSubscriber',
+      onRemoveResourceSubscriber
+    );
 
     // clientConnection.emitter.on('fwdAction', (payload) => {
     //   console.log(
@@ -179,6 +240,14 @@ export class MovexMasterServer {
         onGetResourceStateHandler
       );
       clientConnection.emitter.off('createResource', onCreateResourceHandler);
+      clientConnection.emitter.off(
+        'addResourceSubscriber',
+        onAddResourceSubscriber
+      );
+      clientConnection.emitter.off(
+        'removeResourceSubscriber',
+        onRemoveResourceSubscriber
+      );
     };
   }
 }
