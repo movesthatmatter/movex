@@ -64,7 +64,7 @@ export class Movex {
        * @param rid
        * @returns
        */
-      use: (rid: ResourceIdentifier<typeof resourceType>) => {
+      bind: (rid: ResourceIdentifier<typeof resourceType>) => {
         const clientResource = new MovexClientResource(reducer);
 
         masterResourceConnection.get(rid).map((s) => {

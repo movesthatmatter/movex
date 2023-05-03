@@ -45,7 +45,7 @@ test('Use', async () => {
 
   const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
 
-  const actual = counterResource.use(rid);
+  const actual = counterResource.bind(rid);
   const actualDefaultState = actual.get();
 
   expect(actualDefaultState).toEqual(computeCheckedState({ count: 0 }));
@@ -63,7 +63,7 @@ test('Dispatch Public Action', async () => {
 
   const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
 
-  const r = counterResource.use(rid);
+  const r = counterResource.bind(rid);
 
   r.dispatch({ type: 'increment' });
 
@@ -85,7 +85,8 @@ test('Dispatch Private Action', async () => {
     .create(initialGameState)
     .resolveUnwrap();
 
-  const r = counterResource.use(rid);
+  const r = counterResource.bind(rid);
+
 
   r.dispatchPrivate(
     {

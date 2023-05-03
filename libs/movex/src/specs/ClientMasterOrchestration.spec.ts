@@ -184,7 +184,7 @@ describe('Public Actions', () => {
       state: computeCheckedState(initialGameState),
     });
 
-    const r = gameClientResource.use(rid);
+    const r = gameClientResource.bind(rid);
 
     r.dispatch({
       type: 'submitMoves',
@@ -196,7 +196,7 @@ describe('Public Actions', () => {
 
     await tillNextTick();
 
-    const actual = r.get();
+  const actual = r.state; 
     const expected = computeCheckedState({
       ...initialGameState,
       // count: 1,
@@ -223,8 +223,8 @@ describe('Public Actions', () => {
 
     const { rid } = await whiteClient.create(initialGameState).resolveUnwrap();
 
-    const whiteMovex = whiteClient.use(rid);
-    const blackMovex = blackClient.use(rid);
+    const whiteMovex = whiteClient.bind(rid);
+    const blackMovex = blackClient.bind(rid);
 
     whiteMovex.dispatch({
       type: 'change',
@@ -238,10 +238,10 @@ describe('Public Actions', () => {
       count: 5,
     });
 
-    expect(whiteMovex.get()).toEqual(expected);
+    expect(whiteMovex.state).toEqual(expected);
 
     // The black would only be the same as white if the master works
-    expect(blackMovex.get()).toEqual(expected);
+    expect(blackMovex.state).toEqual(expected);
   });
 
   // test('With 2 Clients', async () => {

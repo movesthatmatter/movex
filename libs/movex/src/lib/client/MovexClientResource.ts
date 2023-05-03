@@ -188,6 +188,16 @@ export class MovexClientResource<
     return this.$checkedState.get()[0];
   }
 
+  // This is the actual checked state. TODO: Not sure about the names yet
+  get state() {
+    return this.get();
+  }
+
+  // This is the actual unchecked state. TODO: Not sure about the names yet
+  get unckeckedState() {
+    return this.getUncheckedState();
+  }
+
   /**
    * This needs to be called each time master has emits an updated state.
    * The dispatch won't work without it being called at least once.

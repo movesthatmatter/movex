@@ -11,11 +11,11 @@ April 6th
 I managed to start the Orchestration process, and where I left off is the Mock Emitter connecting the master with the clients. Need some hooking there but otherwise 
 I'm there. It works with one client. Now is time for multiple.
 
-After this, the orchestration should be much simpler, and the testing of the fwd and creconciliation actions much more straightforward as well.
+After this, the orchestration should be much simpler, and the testing of the fwd and xreconciliation actions much more straightforward as well.
 
 TODO After this works:
-- test peer state gets updated correctly
-- test the reconciliatory actions after the private state gets revealed
+- Test peer state gets updated correctly
+- Test the reconciliatory actions after the private state gets revealed
 - Implement the Emitter for Socket.IO
 
 --

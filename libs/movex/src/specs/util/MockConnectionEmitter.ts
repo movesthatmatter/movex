@@ -133,7 +133,7 @@ export class MockConnectionEmitter<
         IOEvents<TState, TAction, TResourceType>['emitAction']
       >[0];
 
-      this.emit(req.action)
+      // this.emit(req.action)
 
       this.masterResource
         .applyAction(req.rid, this.clientId, req.action)
