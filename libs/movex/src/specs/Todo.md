@@ -6,6 +6,11 @@ tags: []
 
 ## Doing
 
+May 3rd
+
+Managed to mock Movex and MockEmitter in a way it was origianlly intended – to be jsut a transport layer not to touch business logic. And now I am at the point 
+where I can bing in the MasterServer to take the load off the mocker (so the logic leaves inside the real codebase not a test).
+
 April 6th
 
 I managed to start the Orchestration process, and where I left off is the Mock Emitter connecting the master with the clients. Need some hooking there but otherwise 

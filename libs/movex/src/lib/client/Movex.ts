@@ -55,7 +55,7 @@ export class Movex {
 
     return {
       create: (state: S) => {
-        console.log('[Movex] create', state);
+        // console.log('[Movex] create', state);
         return masterResourceConnection.create(resourceType, state);
       },
       /**
@@ -69,11 +69,11 @@ export class Movex {
         const clientResource = new MovexClientResource(reducer);
 
         masterResourceConnection.get(rid).map((s) => {
-          console.log('[Movex] masterResourceConnection.get', rid, s);
+          // console.log('[Movex] masterResourceConnection.get', rid, s);
           clientResource.sync(s);
         });
 
-        console.log('[Movex] .bind() for client id', this.connectionToMaster.clientId)
+        // console.log('[Movex] .bind() for client id', this.connectionToMaster.clientId)
 
         unsubscribersByRid[toResourceIdentifierStr(rid)] = [
           clientResource.onDispatched((p) => {
@@ -81,7 +81,7 @@ export class Movex {
             masterResourceConnection.emitAction(rid, p.action);
           }),
           masterResourceConnection.onFwdAction(rid, (p) => {
-            console.log('[Movex] .onFwdAction for', 'client id', this.connectionToMaster.clientId)
+            console.log('[Movex].onFwdAction for', 'client id', this.connectionToMaster.clientId)
             clientResource.reconciliateAction(p);
           }),
           masterResourceConnection.onReconciliatoryActions(rid, (p) => {

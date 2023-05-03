@@ -1,16 +1,9 @@
-import { Emitter, GetIOPayloadOKTypeFrom } from 'movex-core-util';
+import { Emitter } from 'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 import { IOEvents } from '../../lib/io-connection/io-events';
-import { MovexMasterResource, MovexMasterServer } from '../../lib/master';
 import { AnyAction } from '../../lib/tools/action';
 import { getUuid } from '../../lib/util';
 import { UnsubscribeFn } from '../../lib/core-types';
-
-// const X = () => {
-//   const pubsy = Pubsy<''>;
-// }
-
-interface Mocker {}
 
 export class MockConnectionEmitter<
   TState extends any = any,
@@ -48,12 +41,12 @@ export class MockConnectionEmitter<
     ) => void
   ) {
     this.mainPubsy.subscribe(event, (req) => {
-      console.log(`[Mock] on('${event}')`, 'called');
+      // console.log(`[Mock] on('${event}')`, 'called');
 
       // TODO: Add ability to to unsubscribe
 
       listener(req.content, (res) => {
-        console.log('[Mock] on ack listner', req);
+        // console.log('[Mock] on ack listner', req);
         if (req.ackId) {
           this.ackPubsy.publish(req.ackId, res as any);
         }
@@ -103,7 +96,6 @@ export class MockConnectionEmitter<
       ack: (r: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>) => void
     ) => void
   ) {
-    
     return this;
   }
 
@@ -114,7 +106,7 @@ export class MockConnectionEmitter<
       response: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
     ) => void
   ) {
-    console.log(`[Mock].emit("${event}")`, this.clientId, request);
+    // console.log(`[Mock].emit("${event}")`, this.clientId, request);
     if (acknowledgeCb) {
       const payload = {
         content: request as any,

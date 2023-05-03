@@ -1,21 +1,18 @@
 import counterReducer from './util/counterReducer';
 import gameReducer, { initialGameState } from './util/gameReducer';
-import { MockConnectionEmitter } from './util/MockConnectionEmitter';
-import { Movex } from '../lib/client/Movex';
 import { invoke, noop, tillNextTick } from 'movex-core-util';
 import { GetReducerState, MovexReducer } from '../lib/tools/reducer';
 import { MovexMasterResource } from '../lib/master/MovexMasterResource';
 import { computeCheckedState } from '../lib/util';
-import { ConnectionToMaster } from '../lib/client/ConnectionToMaster';
 import { AnyAction } from '../lib/tools/action';
 import { LocalMovexStore } from '../lib/movex-store';
-import { IOEvents } from '../lib/io-connection/io-events';
 import { UnsubscribeFn } from '../lib/core-types';
+import { mockMovex } from './test-utils';
 
-let unsubscribers: UnsubscribeFn[] = [];
+let destroyMovexMock: UnsubscribeFn = noop;
 
-beforeEach(async () => {
-  unsubscribers.forEach(invoke);
+beforeEach(() => {
+  destroyMovexMock();
 });
 
 const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
@@ -25,47 +22,11 @@ const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
   const localStore = new LocalMovexStore<GetReducerState<typeof reducer>>();
   const masterResource = new MovexMasterResource(reducer, localStore);
 
-  const mockEmitter = new MockConnectionEmitter(clientId);
+  const { movex, destroy } = mockMovex(clientId, masterResource);
 
-  // TODO: Add ubsuscriber for the listeners
+  destroyMovexMock = destroy;
 
-  unsubscribers = [
-    mockEmitter.subscribe('createResource', (r, ack) => {
-      console.log('[Movex.spec] on createResource listener', r);
-
-      masterResource
-        .create(r.resourceType, r.resourceState)
-        .resolve()
-        .then((r) => {
-          const res = {
-            ok: r.ok,
-            err: r.err,
-            val: r.val,
-          } as ReturnType<IOEvents<TState, TAction, string>['createResource']>;
-
-          ack(res);
-        });
-    }),
-
-    mockEmitter.subscribe('getResourceState', (r, ack) => {
-      masterResource
-        .getState(r.rid, clientId)
-        .resolve()
-        .then((r) => {
-          const res = {
-            ok: r.ok,
-            err: r.err,
-            val: r.val,
-          } as ReturnType<
-            IOEvents<TState, TAction, string>['getResourceState']
-          >;
-
-          ack(res);
-        });
-    }),
-  ];
-
-  return new Movex(new ConnectionToMaster(clientId, mockEmitter));
+  return movex;
 };
 
 describe('All', () => {

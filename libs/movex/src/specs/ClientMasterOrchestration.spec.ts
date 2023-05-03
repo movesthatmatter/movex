@@ -24,6 +24,7 @@ import { MockConnectionEmitter } from './util/MockConnectionEmitter';
 import { Movex } from '../lib/client/Movex';
 import { ConnectionToMaster } from '../lib/client/ConnectionToMaster';
 import { UnsubscribeFn } from '../lib/core-types';
+import { mockMovex } from './test-utils';
 require('console-group').install();
 
 const rid = toResourceIdentifierStr({
@@ -78,6 +79,8 @@ const orchestrate = async <
     const removeClientConnectionFromMaster =
       masterServer.addClientConnection(connectionToClient);
 
+    const mockedMovex = mockMovex(clientId, masterResource);
+
     // TODO: This could be done better, but since the unsibscriber is async need to work iwth an sync iterator
     //  for now this should do
     const oldUnsubscribe = unsubscribe;
@@ -87,17 +90,23 @@ const orchestrate = async <
       removeClientConnectionFromMaster();
 
       await masterStore.clearAll().resolveUnwrap();
+
+      mockedMovex.destroy();
     };
 
     // Client. (i.e. This is what the client would do)
-    const connectionToMaster = new ConnectionToMaster<S, A, TResourceType>(
-      clientId,
-      mockEmitter
-    );
+    // const connectionToMaster = new ConnectionToMaster<S, A, TResourceType>(
+    //   clientId,
+    //   mockEmitter
+    // );
 
-    const movex = new Movex(connectionToMaster);
+    
 
-    return movex.register(resourceType, reducer);
+    return mockedMovex.movex.register(resourceType, reducer);
+
+    // const movex = new Movex(connectionToMaster);
+
+    // return movex.register(resourceType, reducer);
   });
 };
 
@@ -147,7 +156,7 @@ describe('Public Actions', () => {
     expect(actual).toEqual(expected);
   });
 
-  test.skip('With 2 Clients', async () => {
+  test.only('With 2 Clients', async () => {
     const [whiteClient, blackClient] = await orchestrate({
       clientIds: ['white-client', 'black-client'],
       reducer: gameReducer,
@@ -176,7 +185,7 @@ describe('Public Actions', () => {
 
     // The black would only be the same as white if the master works
     expect(blackMovex.state).toEqual(expected);
-  });
+  }, 100);
 
   // simply connect the client to master and make the proper calls
   //  the most important one is the event emitter from client to master and master to client

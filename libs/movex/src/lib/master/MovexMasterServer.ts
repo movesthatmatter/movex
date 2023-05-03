@@ -46,12 +46,12 @@ export class MovexMasterServer {
     ) => {
       const { action, rid } = payload;
 
-      console.log(
-        '[MovexMasterServer]',
-        clientConnection.clientId,
-        'onEmitActionHandler',
-        payload
-      );
+      // console.log(
+      //   '[MovexMasterServer]',
+      //   clientConnection.clientId,
+      //   'onEmitActionHandler',
+      //   payload
+      // );
 
       const masterResource =
         this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
@@ -133,7 +133,7 @@ export class MovexMasterServer {
         p: ReturnType<IOEvents<S, A, TResourceType>['createResource']>
       ) => void
     ) => {
-      console.log('[MovexMasterServer] onCreateResourceHandler', payload);
+      // console.log('[MovexMasterServer] onCreateResourceHandler', payload);
 
       const { resourceState, resourceType } = payload;
 
