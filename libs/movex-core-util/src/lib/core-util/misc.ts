@@ -1,3 +1,4 @@
+import '../../declerations';
 import { nextTick } from 'process';
 
 export const objectKeys = <O extends object>(o: O) =>
