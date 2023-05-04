@@ -1,4 +1,8 @@
-import { objectKeys, toResourceIdentifierObj } from 'movex-core-util';
+import {
+  MovexClient,
+  objectKeys,
+  toResourceIdentifierObj,
+} from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { AnyAction } from '../tools/action';
@@ -17,6 +21,13 @@ export class MovexMasterServer {
   // needs a way to send messages to the clients
   //  so a connection. when an incoming message comes, process it and send further
   //  but of course without knowing it's socket or local, just async so it can be tested
+
+  // TODO: This works only per one instance/machine
+  // If there are multiple server instances running then we need to use redis/socket-io distribution etc..
+  private clientConnectionsByClientId: Record<
+    MovexClient['id'],
+    ConnectionToClient<any, AnyAction, any>
+  > = {};
 
   constructor(
     private masterResourcesByType: Record<string, MovexMasterResource<any, any>>
@@ -73,23 +84,36 @@ export class MovexMasterServer {
             { nextPublic, nextPrivate, reconciliatoryActionsByClientId },
             subscribers,
           ]) => {
-            console.log('[MovexMasterServer] action applied', action);
-            console.log('[MovexMasterServer] rest subs', subscribers);
+            // console.log('[MovexMasterServer] action applied', action);
+            // console.log('[MovexMasterServer] rest subs', subscribers);
 
             // Notify the rest of the Client Subscribers of the actions
-            objectKeys(subscribers).forEach((clientId) => {
+            objectKeys(subscribers).forEach((peerId) => {
+              // Here it should be the other client emitter who gets called
+
+              const peerConnection = this.clientConnectionsByClientId[peerId];
+
+              // Noting to do if the connection doesn't exist
+              if (!peerConnection) {
+                return;
+              }
+
               if (reconciliatoryActionsByClientId) {
-                clientConnection.emitter.emit('reconciliateActions', {
+                peerConnection.emitter.emit('reconciliateActions', {
                   rid,
-                  ...reconciliatoryActionsByClientId[clientId],
+                  ...reconciliatoryActionsByClientId[peerId],
                 });
               } else {
-                console.log(
-                  '[MovexMasterServer] notifying',
-                  clientConnection.clientId,
-                  'fwdAction'
-                );
-                clientConnection.emitter.emit('fwdAction', {
+                // console.log(
+                //   '[MovexMasterServer] notifying',
+                //   peerId,
+                //   'fwdAction',
+                //   nextPublic
+                // );
+
+                // console.log('--- here peer emitter', peerConnection.emitter);
+
+                peerConnection.emitter.emit('fwdAction', {
                   rid,
                   ...nextPublic,
                 });
@@ -146,6 +170,12 @@ export class MovexMasterServer {
 
       masterResource
         .create(resourceType, resourceState)
+        // .map((r) => {
+        //   console.log('[MovexMasterServer] created', r);
+        //   console.log('[MovexMasterServer] created ackCB', acknowledge.toString());
+
+        //   return r;
+        // })
         .map((r) =>
           acknowledge(
             new Ok({
@@ -231,6 +261,11 @@ export class MovexMasterServer {
 
     //   // TODO: Here is where the master gets called by the client
     // });
+
+    this.clientConnectionsByClientId = {
+      ...this.clientConnectionsByClientId,
+      [clientConnection.clientId]: clientConnection,
+    };
 
     // Unsubscribe
     return () => {

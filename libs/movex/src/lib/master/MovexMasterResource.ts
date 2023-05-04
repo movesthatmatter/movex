@@ -54,6 +54,8 @@ export class MovexMasterResource<
     resourceType: TResourceType,
     state: TState
   ) {
+    // console.log('[MovexMasterResource].create', resourceType);
+
     return (this.store as MovexStore<TState, TResourceType>).create(
       toResourceIdentifierStr({
         resourceType,
@@ -166,12 +168,12 @@ export class MovexMasterResource<
     clientId: MovexClient['id'],
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
-    console.log(
-      '[MovexMasterResource] cid:',
-      clientId,
-      'applyAction:',
-      actionOrActionTuple
-    );
+    // console.log(
+    //   '[MovexMasterResource] cid:',
+    //   clientId,
+    //   'applyAction:',
+    //   actionOrActionTuple
+    // );
 
     return this.getItem(rid).flatMap<
       {

@@ -53,12 +53,13 @@ export class Movex {
 
     return {
       create: (state: S) => {
-        // console.log('[Movex] create', state);
+        // console.log('[Movex]', this.connectionToMaster.clientId, 'create', state);
         return masterResourceConnection.create(resourceType, state);
       },
       /**
        * This returns the actual MovexClientResource. The name "use" doesn't seem to be perfect yet
        *  but not sure what to use yet. "observe", "listenTo", "attach", "follow" ?:)
+       * I think "bind" works pretty well! :D
        *
        * @param rid
        * @returns
@@ -66,7 +67,7 @@ export class Movex {
       bind: (rid: ResourceIdentifier<typeof resourceType>) => {
         const clientResource = new MovexClientResource(reducer);
 
-        // TODO: Needs a way to add a resource subscriber
+        // Done/TODO: Needs a way to add a resource subscriber
         masterResourceConnection.addResourceSubscriber(rid).map(() => {
           // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
           masterResourceConnection.get(rid).map((s) => {
@@ -79,18 +80,18 @@ export class Movex {
 
         unsubscribersByRid[toResourceIdentifierStr(rid)] = [
           clientResource.onDispatched((p) => {
-            console.log(
-              `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
-              p.action
-            );
+            // console.log(
+            //   `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
+            //   p.action
+            // );
             masterResourceConnection.emitAction(rid, p.action);
           }),
           masterResourceConnection.onFwdAction(rid, (p) => {
-            console.log(
-              '[Movex].onFwdAction for',
-              'client id',
-              this.connectionToMaster.clientId
-            );
+            // console.log(
+            //   '[Movex].onFwdAction for',
+            //   'client id',
+            //   this.connectionToMaster.clientId
+            // );
             clientResource.reconciliateAction(p);
           }),
           masterResourceConnection.onReconciliatoryActions(rid, (p) => {

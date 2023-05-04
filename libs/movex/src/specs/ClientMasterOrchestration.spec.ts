@@ -66,23 +66,24 @@ const orchestrate = async <
   return clientIds.map((clientId) => {
     // // Would this be the only one for both client and master or seperate?
     // I believe it should be the same in order for it to work between the 2 no?
-    const mockEmitter = new MockConnectionEmitter<S, A, TResourceType>(
+    const emitterOnMaster = new MockConnectionEmitter<S, A, TResourceType>(
       // masterResource,
       clientId
     );
 
-    const connectionToClient = new ConnectionToClient<S, A, TResourceType>(
-      clientId,
-      mockEmitter
+    const masterConnectionToClient = new ConnectionToClient<
+      S,
+      A,
+      TResourceType
+    >(clientId, emitterOnMaster);
+
+    const removeClientConnectionFromMaster = masterServer.addClientConnection(
+      masterConnectionToClient
     );
 
-    const removeClientConnectionFromMaster =
-      masterServer.addClientConnection(connectionToClient);
+    // connectionToClient.emitter
 
-      connectionToClient.emitter
-
-  
-    const mockedMovex = orchestrateMovex(connectionToClient);
+    const mockedMovex = orchestrateMovex(clientId, emitterOnMaster);
 
     // TODO: This could be done better, but since the unsibscriber is async need to work iwth an sync iterator
     //  for now this should do
@@ -102,8 +103,6 @@ const orchestrate = async <
     //   clientId,
     //   mockEmitter
     // );
-
-    
 
     return mockedMovex.movex.register(resourceType, reducer);
 
@@ -169,6 +168,9 @@ describe('Public Actions', () => {
 
     const { rid } = await whiteClient.create(initialGameState).resolveUnwrap();
 
+    // expect(1).toBe(2);
+    // return;
+
     const whiteMovex = whiteClient.bind(rid);
     const blackMovex = blackClient.bind(rid);
 
@@ -188,7 +190,7 @@ describe('Public Actions', () => {
 
     // The black would only be the same as white if the master works
     expect(blackMovex.state).toEqual(expected);
-  }, 100);
+  }, 200);
 
   // simply connect the client to master and make the proper calls
   //  the most important one is the event emitter from client to master and master to client

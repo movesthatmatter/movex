@@ -52,12 +52,12 @@ export class ConnectionToMasterResource<
         rid: ResourceIdentifier<TResourceType>;
       } & ToCheckedAction<TAction>
     ) => {
-      console.log(
-        'Connection to Master',
-        this.connectionToMaster.clientId,
-        'on fwd action handler',
-        p
-      );
+      // console.log(
+      //   '[ConnectionToMasterResource]',
+      //   this.connectionToMaster.clientId,
+      //   'on fwd action handler',
+      //   p
+      // );
 
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
         return;
@@ -88,6 +88,11 @@ export class ConnectionToMasterResource<
 
     connectionToMaster.emitter.on('fwdAction', onFwdActionHandler);
 
+    // console.log(
+    //   '[ConnectionToMasterResource]', this.connectionToMaster.clientId,'subscribed to Emitter',
+    //   connectionToMaster.emitter
+    // );
+
     // Unsubscribe from the events too
     this.unsubscribers = [
       () => connectionToMaster.emitter.off('fwdAction', onFwdActionHandler),
@@ -103,6 +108,7 @@ export class ConnectionToMasterResource<
     type CreateEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['createResource']
     >;
+    // console.group('[ConnectionToMasterResource].create', this.connectionToMaster.clientId, resourceType, resourceState);
 
     return AsyncResult.toAsyncResult<
       GetIOPayloadOKTypeFrom<CreateEvent>,
@@ -118,12 +124,19 @@ export class ConnectionToMasterResource<
           res.ok
             ? new Ok({
                 // This sanitizes the data only allowing specific fields to get to the client
+                // TODO: This actually should come sanitized from the server, since this is on the client
+                // Probably best to where the ack is called
                 rid: res.val.rid,
                 state: res.val.state,
               })
             : new Err(res.val)
         )
-    );
+    )
+    // .map((s) => {
+    //   console.groupEnd();
+    //   console.log('[ConnectionToMasterResource].created', s);
+    //   return s;
+    // });
   }
 
   addResourceSubscriber(rid: ResourceIdentifier<TResourceType>) {

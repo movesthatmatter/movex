@@ -14,7 +14,12 @@ export class MockConnectionEmitter<
   private mainPubsy = new Pubsy<{
     [E in keyof IOEvents<TState, TAction, TResourceType>]: {
       content: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0];
-      ackId?: string;
+      // ackId?: string;
+      ackCb?: (
+        response: ReturnType<
+          IOEvents<TState, TAction, TResourceType>[keyof IOEvents]
+        >
+      ) => void;
     };
   }>();
 
@@ -24,6 +29,35 @@ export class MockConnectionEmitter<
     // >;
     [ackId in string]: undefined;
   }>();
+
+  private onEmittedPubsy = new Pubsy<{
+    onEmitted: {
+      event: keyof IOEvents;
+      payload: Parameters<
+        IOEvents<TState, TAction, TResourceType>[keyof IOEvents]
+      >[0];
+      // ackId?: string;
+
+      ackCb?: (
+        response: ReturnType<
+          IOEvents<TState, TAction, TResourceType>[keyof IOEvents]
+        >
+      ) => void;
+
+      // TODO: Is this needed here?
+      // ackId?: string;
+      // ackCb?: (
+      //   response: ReturnType<
+      //     IOEvents<TState, TAction, TResourceType>[keyof IOEvents]
+      //   >
+      // ) => void;
+    };
+  }>();
+  // private localEventsPubsy = new Pubsy<{
+  //   [-${E in keyof IOEvents}`]: {
+
+  //   }
+  // }>
 
   constructor(
     // private masterResource: MovexMasterResource<TState, TAction>,
@@ -41,31 +75,22 @@ export class MockConnectionEmitter<
     ) => void
   ) {
     this.mainPubsy.subscribe(event, (req) => {
-      // console.log(`[Mock] on('${event}')`, 'called');
-
-      // TODO: Add ability to to unsubscribe
-
+      // console.log('[MockEmitter] subscribe called for:', event, req);
+      // TODO: Add ability to unsubscribe
       listener(req.content, (res) => {
-        // console.log('[Mock] on ack listner', req);
-        if (req.ackId) {
-          this.ackPubsy.publish(req.ackId, res as any);
+        if (req.ackCb) {
+          // console.log(
+          //   '[MockEmitter] subscribe ack gets called',
+          //   event,
+          //   req,
+          //   res
+          // );
+          // console.log('[MockEmitter] ack Pubsy', this.ackPubsy);
+          req.ackCb(res);
+          // this.ackPubsy.publish(req.ackId, res as any);
         }
-        // What to do with the ack??
-        // console.log('[Mock] in listener ack', res);
       });
     });
-
-    // if (event === 'createResource') {
-
-    //   // this.mainPubsy.subscribe('createResource', (req) => {
-    //   //   listener(req, (res) => {
-    //   //     this.masterResource.create(req.resourceType, req.resourceState);
-
-    //   //     // this.ackPubsy.publish('')
-    //   //     // this.emit('createResource')
-    //   //   });
-    //   // });
-    // }
 
     return this;
   }
@@ -99,6 +124,55 @@ export class MockConnectionEmitter<
     return this;
   }
 
+  // This is a function existent only on the Mocker
+  _onEmitted<E extends keyof IOEvents>(
+    fn: (
+      p: {
+        event: E;
+        payload: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0];
+        // ackId?: string;
+      },
+      ackCb?: (
+        response: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
+      ) => void
+    ) => void
+  ) {
+    return this.onEmittedPubsy.subscribe('onEmitted', (r) => {
+      fn(
+        {
+          event: r.event as E,
+          payload: r.payload as Parameters<
+            IOEvents<TState, TAction, TResourceType>[E]
+          >[0],
+          // ackId: r.ackId,
+        },
+        r.ackCb
+      );
+    });
+  }
+
+  _publish<E extends keyof IOEvents>(
+    event: E,
+    payload: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0],
+
+    // TODO: Is this needed here?
+    // ackId?: string
+    ackCb?: (
+      response: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
+    ) => void
+  ) {
+    this.mainPubsy.publish(event, {
+      content: payload as any,
+      ...(ackCb && {
+        ackCb: (res) => {
+          ackCb(res as any);
+        },
+      }),
+      // ackId,
+      // what ab the ack?
+    });
+  }
+
   emit<E extends keyof IOEvents<TState, TAction, TResourceType>>(
     event: E,
     request: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0],
@@ -106,25 +180,53 @@ export class MockConnectionEmitter<
       response: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
     ) => void
   ) {
-    // console.log(`[Mock].emit("${event}")`, this.clientId, request);
+    // console.log(
+    //   `[MockConnectionEmitter].emit("${event}")`,
+    //   this.clientId,
+    //   request
+    // );
+
     if (acknowledgeCb) {
-      const payload = {
-        content: request as any,
-        ackId: getUuid(),
-      } as const;
+      // const payload: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0] = {
+      //   : request as any,
+      //   // ackId: getUuid(),
+      // } as const;
+
+      const ackId = getUuid();
 
       // TODO: Need a way for this to call the unsubscriber
-      this.ackPubsy.subscribe(payload.ackId, (ackMsg) => {
+      this.ackPubsy.subscribe(ackId, (ackMsg) => {
         acknowledgeCb(
           ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
         );
       });
 
-      this.mainPubsy.publish(event, payload);
-    } else {
-      this.mainPubsy.publish(event, {
-        content: request as any,
+      // console.log('Ack Pubsy registered', this.ackPubsy);
+
+      // console.trace('[MockConnectionEmitter].emit', this.clientId, event, request);
+
+      // This cannot publish to itself as well?
+      // console.log('yes with ack cb', ackId);
+
+      // this.mainPubsy.publish(event, payload);
+      this.onEmittedPubsy.publish('onEmitted', {
+        event,
+        payload: request,
+        ackCb: acknowledgeCb as any,
+        // ackCb: (r) => acknowledgeCb(r as any),
       });
+    } else {
+      // setTimeout(() => {
+      // console.log('[MockConnectionEmitter].publishing', event, request);
+
+      this.onEmittedPubsy.publish('onEmitted', {
+        event,
+        payload: request,
+      });
+      // this.mainPubsy.publish(event, {
+      //   content: request as any,
+      // });
+      // }, 1000)
     }
 
     // if (event === 'createResource') {
