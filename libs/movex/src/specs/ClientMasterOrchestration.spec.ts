@@ -1,18 +1,8 @@
-import {
-  delay,
-  invoke,
-  noop,
-  tillNextTick,
-  toResourceIdentifierStr,
-} from 'movex-core-util';
+import { noop, tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
 import { computeCheckedState } from '../lib/util';
 import gameReducer, { initialGameState } from './util/gameReducer';
-import {
-  GetReducerAction,
-  GetReducerState,
-  MovexReducer,
-} from '../lib/tools/reducer';
-import { AnyAction, ToCheckedAction } from '../lib/tools/action';
+import { MovexReducer } from '../lib/tools/reducer';
+import { AnyAction } from '../lib/tools/action';
 import { LocalMovexStore } from '../lib/movex-store';
 
 import {
@@ -21,10 +11,8 @@ import {
   MovexMasterResource,
 } from '../lib/master';
 import { MockConnectionEmitter } from './util/MockConnectionEmitter';
-import { Movex } from '../lib/client/Movex';
-import { ConnectionToMaster } from '../lib/client/ConnectionToMaster';
 import { UnsubscribeFn } from '../lib/core-types';
-import { mockMovex, orchestrateMovex } from './test-utils';
+import { orchestrateMovex } from './test-utils';
 require('console-group').install();
 
 const rid = toResourceIdentifierStr({
@@ -81,8 +69,6 @@ const orchestrate = async <
       masterConnectionToClient
     );
 
-    // connectionToClient.emitter
-
     const mockedMovex = orchestrateMovex(clientId, emitterOnMaster);
 
     // TODO: This could be done better, but since the unsibscriber is async need to work iwth an sync iterator
@@ -98,17 +84,7 @@ const orchestrate = async <
       mockedMovex.destroy();
     };
 
-    // Client. (i.e. This is what the client would do)
-    // const connectionToMaster = new ConnectionToMaster<S, A, TResourceType>(
-    //   clientId,
-    //   mockEmitter
-    // );
-
     return mockedMovex.movex.register(resourceType, reducer);
-
-    // const movex = new Movex(connectionToMaster);
-
-    // return movex.register(resourceType, reducer);
   });
 };
 
@@ -167,9 +143,6 @@ describe('Public Actions', () => {
     });
 
     const { rid } = await whiteClient.create(initialGameState).resolveUnwrap();
-
-    // expect(1).toBe(2);
-    // return;
 
     const whiteMovex = whiteClient.bind(rid);
     const blackMovex = blackClient.bind(rid);
