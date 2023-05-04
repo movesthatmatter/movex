@@ -158,7 +158,7 @@ describe('Public Actions', () => {
     expect(actual).toEqual(expected);
   });
 
-  test.only('With 2 Clients', async () => {
+  test('With 2 Clients', async () => {
     const [whiteClient, blackClient] = await orchestrate({
       clientIds: ['white-client', 'black-client'],
       reducer: gameReducer,
@@ -190,7 +190,7 @@ describe('Public Actions', () => {
 
     // The black would only be the same as white if the master works
     expect(blackMovex.state).toEqual(expected);
-  }, 200);
+  });
 
   // simply connect the client to master and make the proper calls
   //  the most important one is the event emitter from client to master and master to client

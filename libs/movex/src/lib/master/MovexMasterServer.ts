@@ -104,14 +104,14 @@ export class MovexMasterServer {
                   ...reconciliatoryActionsByClientId[peerId],
                 });
               } else {
-                // console.log(
-                //   '[MovexMasterServer] notifying',
-                //   peerId,
-                //   'fwdAction',
-                //   nextPublic
-                // );
+                console.log(
+                  '[MovexMasterServer] notifying',
+                  peerId,
+                  'fwdAction',
+                  nextPublic
+                );
 
-                // console.log('--- here peer emitter', peerConnection.emitter);
+                console.log('--- here peer emitter', peerConnection.emitter);
 
                 peerConnection.emitter.emit('fwdAction', {
                   rid,

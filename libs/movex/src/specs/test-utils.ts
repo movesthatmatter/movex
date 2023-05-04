@@ -154,10 +154,10 @@ export const orchestrateMovex = <
   // const emitterOnMaster = masterConnectionToClient.emitter;
 
   const unsubscribers = [
-    emitterOnClient._onEmitted(async (r, ackCb) => {
+    emitterOnClient._onEmitted((r, ackCb) => {
       
       // This attempted an emit to master, and now we are going to mock that by binding it to master manually
-      // console.log('[orchestrate] emitterOnClient._onEmitted', r);
+      console.log('[orchestrate]', clientId, `emitterOnClient._onEmitted: "${r.event}"`, r.payload);
 
       // console.group('[orchestrate] Emitting to Master now');
 
@@ -167,8 +167,14 @@ export const orchestrateMovex = <
       // r.ackCb()
       // const ack = await emitterOnMaster.emitAndAcknowledge(r.event, r.payload);
       // console.log('[orchestrate] received from master', ack);
-      console.groupEnd();
+      // console.groupEnd();
     }),
+    emitterOnMaster._onEmitted((r, ackCb) => {
+      console.log('[orchestrate]', clientId, `emitterOnMaster._onEmitted: "${r.event}"`, r.payload);
+
+      // Calling the client with the given event from the client in order to process it
+      emitterOnClient._publish(r.event, r.payload, ackCb);
+    })
     // emitterOnClient.subscribe('createResource', (req, ack) => {
     //   console.log('[orchestrate] emitterOnClient.onCreateResource', req);
     //   // This should probably just hook the client emitter with the master emitter? and vice versa

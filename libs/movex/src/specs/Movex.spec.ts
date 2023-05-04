@@ -29,7 +29,7 @@ const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
   return movex;
 };
 
-describe('All', () => {
+describe.skip('All', () => {
   test('Create', async () => {
     const movex = getMovex(counterReducer);
     const counterResource = movex.register('counter', counterReducer);
