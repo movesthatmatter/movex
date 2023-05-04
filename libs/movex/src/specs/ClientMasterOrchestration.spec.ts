@@ -1,18 +1,7 @@
-import { noop, tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
+import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
 import { computeCheckedState } from '../lib/util';
 import gameReducer, { initialGameState } from './util/gameReducer';
-import { MovexReducer } from '../lib/tools/reducer';
-import { AnyAction } from '../lib/tools/action';
-import { LocalMovexStore } from '../lib/movex-store';
-
-import {
-  ConnectionToClient,
-  MovexMasterServer,
-  MovexMasterResource,
-} from '../lib/master';
-import { MockConnectionEmitter } from './util/MockConnectionEmitter';
-import { UnsubscribeFn } from '../lib/core-types';
-import { orchestrateMovex } from './test-utils';
+import { movexClientMasterOrchestrator } from './util/orchestrator';
 require('console-group').install();
 
 const rid = toResourceIdentifierStr({
@@ -20,77 +9,15 @@ const rid = toResourceIdentifierStr({
   resourceId: 'test',
 });
 
-let unsubscribe: UnsubscribeFn = noop;
+const orchestrator = movexClientMasterOrchestrator(rid);
 
 beforeEach(async () => {
-  await unsubscribe();
+  await orchestrator.unsubscribe();
 });
-
-const orchestrate = async <
-  S,
-  A extends AnyAction,
-  TResourceType extends string
->({
-  clientIds,
-  reducer,
-  resourceType,
-  initialState,
-}: {
-  clientIds: string[];
-  reducer: MovexReducer<S, A>;
-  resourceType: TResourceType;
-  initialState: S;
-}) => {
-  // master setup
-  const masterStore = new LocalMovexStore<S>();
-
-  await masterStore.create(rid, initialState).resolveUnwrap();
-
-  const masterResource = new MovexMasterResource(reducer, masterStore);
-  const masterServer = new MovexMasterServer({
-    [resourceType]: masterResource,
-  });
-
-  return clientIds.map((clientId) => {
-    // // Would this be the only one for both client and master or seperate?
-    // I believe it should be the same in order for it to work between the 2 no?
-    const emitterOnMaster = new MockConnectionEmitter<S, A, TResourceType>(
-      // masterResource,
-      clientId
-    );
-
-    const masterConnectionToClient = new ConnectionToClient<
-      S,
-      A,
-      TResourceType
-    >(clientId, emitterOnMaster);
-
-    const removeClientConnectionFromMaster = masterServer.addClientConnection(
-      masterConnectionToClient
-    );
-
-    const mockedMovex = orchestrateMovex(clientId, emitterOnMaster);
-
-    // TODO: This could be done better, but since the unsibscriber is async need to work iwth an sync iterator
-    //  for now this should do
-    const oldUnsubscribe = unsubscribe;
-    unsubscribe = async () => {
-      await oldUnsubscribe();
-
-      removeClientConnectionFromMaster();
-
-      await masterStore.clearAll().resolveUnwrap();
-
-      mockedMovex.destroy();
-    };
-
-    return mockedMovex.movex.register(resourceType, reducer);
-  });
-};
 
 describe('Public Actions', () => {
   test('Dispatch with 1 client only', async () => {
-    const [gameClientResource] = await orchestrate({
+    const [gameClientResource] = await orchestrator.orchestrate({
       clientIds: ['test-client'],
       reducer: gameReducer,
       resourceType: 'game',
@@ -135,7 +62,7 @@ describe('Public Actions', () => {
   });
 
   test('With 2 Clients', async () => {
-    const [whiteClient, blackClient] = await orchestrate({
+    const [whiteClient, blackClient] = await orchestrator.orchestrate({
       clientIds: ['white-client', 'black-client'],
       reducer: gameReducer,
       resourceType: 'game',

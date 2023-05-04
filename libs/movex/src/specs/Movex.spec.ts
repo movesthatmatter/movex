@@ -1,38 +1,55 @@
-import counterReducer from './util/counterReducer';
+import counterReducer, { initialCounterState } from './util/counterReducer';
 import gameReducer, { initialGameState } from './util/gameReducer';
-import { invoke, noop, tillNextTick } from 'movex-core-util';
+import {
+  invoke,
+  noop,
+  tillNextTick,
+  toResourceIdentifierStr,
+} from 'movex-core-util';
 import { GetReducerState, MovexReducer } from '../lib/tools/reducer';
 import { MovexMasterResource } from '../lib/master/MovexMasterResource';
 import { computeCheckedState } from '../lib/util';
 import { AnyAction } from '../lib/tools/action';
 import { LocalMovexStore } from '../lib/movex-store';
 import { UnsubscribeFn } from '../lib/core-types';
-import { mockMovex } from './test-utils';
+import { movexClientMasterOrchestrator } from './util/orchestrator';
 
 let destroyMovexMock: UnsubscribeFn = noop;
 
-beforeEach(() => {
-  destroyMovexMock();
+const rid = toResourceIdentifierStr({
+  resourceType: 'counter',
+  resourceId: 'test',
 });
 
-const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
-  reducer: MovexReducer<TState, TAction>,
-  clientId = 'test-client'
-) => {
-  const localStore = new LocalMovexStore<GetReducerState<typeof reducer>>();
-  const masterResource = new MovexMasterResource(reducer, localStore);
+const orchestrator = movexClientMasterOrchestrator(rid);
 
-  const { movex, destroy } = mockMovex(clientId, masterResource);
+beforeEach(async () => {
+  // destroyMovexMock();
+  await orchestrator.unsubscribe();
+});
 
-  destroyMovexMock = destroy;
+// const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
+//   reducer: MovexReducer<TState, TAction>,
+//   clientId = 'test-client'
+// ) => {
+//   const localStore = new LocalMovexStore<GetReducerState<typeof reducer>>();
+//   const masterResource = new MovexMasterResource(reducer, localStore);
 
-  return movex;
-};
+//   const { movex, destroy } = mockMovex(clientId, masterResource);
 
-describe.skip('All', () => {
+//   destroyMovexMock = destroy;
+
+//   return movex;
+// };
+
+describe('All', () => {
   test('Create', async () => {
-    const movex = getMovex(counterReducer);
-    const counterResource = movex.register('counter', counterReducer);
+    const [counterResource] = await orchestrator.orchestrate({
+      clientIds: ['test'],
+      reducer: counterReducer,
+      resourceType: 'counter',
+      initialState: initialCounterState,
+    });
 
     const actual = await counterResource
       .create({
@@ -44,11 +61,15 @@ describe.skip('All', () => {
       rid: actual.rid, // The id isn't too important here
       state: computeCheckedState({ count: 2 }),
     });
-  });
+  }, 200);
 
   test('Bind', async () => {
-    const movex = getMovex(counterReducer);
-    const counterResource = movex.register('counter', counterReducer);
+    const [counterResource] = await orchestrator.orchestrate({
+      clientIds: ['test'],
+      reducer: counterReducer,
+      resourceType: 'counter',
+      initialState: initialCounterState,
+    });
 
     const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
 
@@ -65,8 +86,12 @@ describe.skip('All', () => {
   });
 
   test('Dispatch Public Action', async () => {
-    const movex = getMovex(counterReducer);
-    const counterResource = movex.register('counter', counterReducer);
+    const [counterResource] = await orchestrator.orchestrate({
+      clientIds: ['test'],
+      reducer: counterReducer,
+      resourceType: 'counter',
+      initialState: initialCounterState,
+    });
 
     const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
 
@@ -85,14 +110,16 @@ describe.skip('All', () => {
   });
 
   test('Dispatch Private Action', async () => {
-    const movex = getMovex(counterReducer);
-    const counterResource = movex.register('counter', gameReducer);
+    const [gameResource] = await orchestrator.orchestrate({
+      clientIds: ['test'],
+      reducer: gameReducer,
+      resourceType: 'game',
+      initialState: initialGameState,
+    });
 
-    const { rid } = await counterResource
-      .create(initialGameState)
-      .resolveUnwrap();
+    const { rid } = await gameResource.create(initialGameState).resolveUnwrap();
 
-    const r = counterResource.bind(rid);
+    const r = gameResource.bind(rid);
 
     r.dispatchPrivate(
       {
