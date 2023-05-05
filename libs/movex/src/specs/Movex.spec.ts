@@ -49,7 +49,7 @@ describe('All', () => {
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
-      initialState: initialCounterState,
+      // initialState: initialCounterState,
     });
 
     const actual = await counterResource
@@ -69,7 +69,7 @@ describe('All', () => {
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
-      initialState: initialCounterState,
+      // initialState: initialCounterState,
     });
 
     const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
@@ -91,7 +91,7 @@ describe('All', () => {
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
-      initialState: initialCounterState,
+      // initialState: initialCounterState,
     });
 
     const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
@@ -115,7 +115,7 @@ describe('All', () => {
       clientIds: ['test-user'],
       reducer: gameReducer,
       resourceType: 'game',
-      initialState: initialGameState,
+      // initialState: initialGameState,
     });
 
     const { rid } = await gameResource.create(initialGameState).resolveUnwrap();

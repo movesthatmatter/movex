@@ -146,7 +146,7 @@ export const movexClientMasterOrchestrator = <TResourceType extends string>(
 ) => {
   let unsubscribe = () => {};
 
-  const orchestrate = async <
+  const orchestrate = <
     S,
     A extends AnyAction,
     TResourceType extends string
@@ -154,17 +154,17 @@ export const movexClientMasterOrchestrator = <TResourceType extends string>(
     clientIds,
     reducer,
     resourceType,
-    initialState,
+    // initialState,
   }: {
     clientIds: string[];
     reducer: MovexReducer<S, A>;
     resourceType: TResourceType;
-    initialState: S;
+    // initialState: S;
   }) => {
     // master setup
     const masterStore = new LocalMovexStore<S>();
 
-    await masterStore.create(rid, initialState).resolveUnwrap();
+    // await masterStore.create(rid, initialState).resolveUnwrap();
 
     const masterResource = new MovexMasterResource(reducer, masterStore);
     const masterServer = new MovexMasterServer({
