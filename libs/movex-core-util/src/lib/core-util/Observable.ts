@@ -38,7 +38,6 @@ export class Observable<T> {
 
     // TODO: Should it only call onUpdate when there actually is an update??
     //  Or should I leave that to the implementation
-
     this.pubsy.publish('onUpdate', this._state);
 
     return this;

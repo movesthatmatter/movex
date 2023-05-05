@@ -13,6 +13,7 @@ import { AnyAction } from '../lib/tools/action';
 import { LocalMovexStore } from '../lib/movex-store';
 import { UnsubscribeFn } from '../lib/core-types';
 import { movexClientMasterOrchestrator } from './util/orchestrator';
+require('console-group').install();
 
 let destroyMovexMock: UnsubscribeFn = noop;
 
@@ -111,7 +112,7 @@ describe('All', () => {
 
   test('Dispatch Private Action', async () => {
     const [gameResource] = await orchestrator.orchestrate({
-      clientIds: ['test'],
+      clientIds: ['test-user'],
       reducer: gameReducer,
       resourceType: 'game',
       initialState: initialGameState,
@@ -135,7 +136,7 @@ describe('All', () => {
 
     await tillNextTick();
 
-    const actual = r.get();
+    const actual = r.state;
 
     const expected = computeCheckedState({
       ...initialGameState,

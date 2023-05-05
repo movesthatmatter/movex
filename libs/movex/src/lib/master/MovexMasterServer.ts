@@ -71,6 +71,10 @@ export class MovexMasterServer {
           ]) => {
             // Notify the rest of the Client Subscribers of the actions
             objectKeys(subscribers).forEach((peerId) => {
+              // Exclude myself
+              if (peerId === clientConnection.clientId) {
+                return;
+              }
               // Here it should be the other client emitter who gets called
 
               const peerConnection = this.clientConnectionsByClientId[peerId];
@@ -101,7 +105,7 @@ export class MovexMasterServer {
             return acknowledge(new Ok(nextChecksum));
           }
         )
-        .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr(() => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onGetResourceStateHandler = (

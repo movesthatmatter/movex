@@ -8,7 +8,6 @@ import {
   GetIOPayloadErrTypeFrom,
   GetIOPayloadOKTypeFrom,
   invoke,
-  MovexClient,
   ResourceIdentifier,
   ResourceIdentifierStr,
   toResourceIdentifierObj,
@@ -52,13 +51,6 @@ export class ConnectionToMasterResource<
         rid: ResourceIdentifier<TResourceType>;
       } & ToCheckedAction<TAction>
     ) => {
-      // console.log(
-      //   '[ConnectionToMasterResource]',
-      //   this.connectionToMaster.clientId,
-      //   'on fwd action handler',
-      //   p
-      // );
-
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
         return;
       }
@@ -87,11 +79,6 @@ export class ConnectionToMasterResource<
     );
 
     connectionToMaster.emitter.on('fwdAction', onFwdActionHandler);
-
-    // console.log(
-    //   '[ConnectionToMasterResource]', this.connectionToMaster.clientId,'subscribed to Emitter',
-    //   connectionToMaster.emitter
-    // );
 
     // Unsubscribe from the events too
     this.unsubscribers = [
@@ -131,12 +118,7 @@ export class ConnectionToMasterResource<
               })
             : new Err(res.val)
         )
-    )
-    // .map((s) => {
-    //   console.groupEnd();
-    //   console.log('[ConnectionToMasterResource].created', s);
-    //   return s;
-    // });
+    );
   }
 
   addResourceSubscriber(rid: ResourceIdentifier<TResourceType>) {

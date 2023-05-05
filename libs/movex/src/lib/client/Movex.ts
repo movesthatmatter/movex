@@ -32,7 +32,7 @@ export class Movex {
     resourceType: TResourceType,
     reducer: MovexReducer<S, A>
   ) {
-    const masterResourceConnection = new ConnectionToMasterResource<
+    const connectionToMasterResource = new ConnectionToMasterResource<
       S,
       A,
       TResourceType
@@ -53,8 +53,7 @@ export class Movex {
 
     return {
       create: (state: S) => {
-        // console.log('[Movex]', this.connectionToMaster.clientId, 'create', state);
-        return masterResourceConnection.create(resourceType, state);
+        return connectionToMasterResource.create(resourceType, state);
       },
       /**
        * This returns the actual MovexClientResource. The name "use" doesn't seem to be perfect yet
@@ -68,33 +67,45 @@ export class Movex {
         const clientResource = new MovexClientResource(reducer);
 
         // Done/TODO: Needs a way to add a resource subscriber
-        masterResourceConnection.addResourceSubscriber(rid).map(() => {
+        connectionToMasterResource.addResourceSubscriber(rid).map(() => {
           // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
-          masterResourceConnection.get(rid).map((s) => {
-            // console.log('[Movex] masterResourceConnection.get', rid, s);
+          connectionToMasterResource.get(rid).map((s) => {
             clientResource.sync(s);
           });
         });
 
-        // console.log('[Movex] .bind() for client id', this.connectionToMaster.clientId)
-
         unsubscribersByRid[toResourceIdentifierStr(rid)] = [
-          clientResource.onDispatched((p) => {
-            // console.log(
-            //   `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
-            //   p.action
-            // );
-            masterResourceConnection.emitAction(rid, p.action);
+          clientResource.onDispatched(({ action, next: nextCheckedState }) => {
+            const [, nextChecksum] = nextCheckedState;
+
+            connectionToMasterResource
+              .emitAction(rid, action)
+              .map(async (masterChecksum) => {
+                if (masterChecksum === nextChecksum) {
+                  return;
+                }
+
+                // TODO: Here I need to check that the checksums are the same
+                // If not the action needs to revert, or toask the connection to give me the next state
+
+                console.log(
+                  `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
+                  action,
+                  'checksums DID NOT match',
+                  masterChecksum
+                );
+
+                // Should get the next master state
+                // const actual = await connectionToMasterResource
+                //   .get(rid)
+                //   .resolveUnwrap();
+              });
           }),
-          masterResourceConnection.onFwdAction(rid, (p) => {
-            // console.log(
-            //   '[Movex].onFwdAction for',
-            //   'client id',
-            //   this.connectionToMaster.clientId
-            // );
+          connectionToMasterResource.onFwdAction(rid, (p) => {
+            // TODO:Is this correct??
             clientResource.reconciliateAction(p);
           }),
-          masterResourceConnection.onReconciliatoryActions(rid, (p) => {
+          connectionToMasterResource.onReconciliatoryActions(rid, (p) => {
             // p.actions.map(())
             // TODO: What should the reconciliatry actions do? Apply them all together and check at the end right?
             // If the end result don't match the checkusm this is the place where it can reask the master for the new state!
@@ -104,7 +115,7 @@ export class Movex {
           () => clientResource.destroy(),
 
           // Add the master Resource Destroy as well
-          () => masterResourceConnection.destroy(),
+          () => connectionToMasterResource.destroy(),
         ];
 
         return clientResource;

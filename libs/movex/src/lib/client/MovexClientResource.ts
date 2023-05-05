@@ -74,10 +74,10 @@ export class MovexClientResource<
       TAction
     >(this.$checkedState, this.reducer, {
       onDispatched: (p) => {
-        // On Each Dispatch, emit the action to master
-        // masterResourceIO.emitAction(p.action);
-
         this.pubsy.publish('onDispatched', p);
+      },
+      onStateUpdated: (s) => {
+        // console.log('[MovexClient] Dispatcher.onStaetUpdated', s);
       },
     });
 
