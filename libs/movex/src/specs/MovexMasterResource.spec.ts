@@ -285,13 +285,13 @@ test('applies private action UNTIL Reconciliation', async () => {
       action: privateBlackAction,
       checksum: expectedPublicStateAfterReconciliation[1],
     },
-    reconciledFwdActionsByClientId: {
+    checkedReconciliatoryActionsByClientId: {
       [whitePlayer]: {
-        actions: [privateWhiteAction],
+        actions: [privateBlackAction],
         finalChecksum: expectedPublicStateAfterReconciliation[1],
       },
       [blackPlayer]: {
-        actions: [privateBlackAction],
+        actions: [privateWhiteAction],
         finalChecksum: expectedPublicStateAfterReconciliation[1],
       },
     },

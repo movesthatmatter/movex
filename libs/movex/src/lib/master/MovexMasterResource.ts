@@ -5,6 +5,7 @@ import {
   MovexClient,
   objectKeys,
   toResourceIdentifierStr,
+  keyInObject,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { CheckedState } from '../core-types';
@@ -168,18 +169,18 @@ export class MovexMasterResource<
     clientId: MovexClient['id'],
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
-    // console.log(
-    //   '[MovexMasterResource] cid:',
-    //   clientId,
-    //   'applyAction:',
-    //   actionOrActionTuple
-    // );
+    console.log(
+      '[MovexMasterResource] cid:',
+      clientId,
+      'applyAction:',
+      actionOrActionTuple
+    );
 
     return this.getItem(rid).flatMap<
       {
         nextPublic: ToCheckedAction<TAction>;
         nextPrivate?: ToCheckedAction<TAction>;
-        reconciliatoryActionsByClientId?: Record<
+        checkedReconciliatoryActionsByClientId?: Record<
           MovexClient['id'],
           CheckedReconciliatoryActions<TAction>
         >;
@@ -201,6 +202,8 @@ export class MovexMasterResource<
       }
 
       const [privateAction, publicAction] = actionOrActionTuple;
+
+      console.log('[MovxMasterResource] has private', privateAction);
 
       const privatePatch = getMovexStatePatch(
         prevState,
@@ -231,7 +234,11 @@ export class MovexMasterResource<
           )
           // Reconciliation Step
           .flatMap(([nextItem, nextPrivateState, nextPublicState]) => {
+            // console.log('[MovexMasterResource] going to call reconcileState', this.reducer.$canReconcileState)
+
             if (this.reducer.$canReconcileState?.(nextPublicState[0])) {
+              // console.log('$canReconcile yes', nextPublicState)
+
               const prevPatchesByClientId = nextItem.patches || {};
 
               const allPatches = Object.values(prevPatchesByClientId).reduce(
@@ -246,19 +253,40 @@ export class MovexMasterResource<
                   patches: undefined,
                 })
                 .map((nextReconciledPublicState) => {
+                  console.group('[MovexMasterResource] nextReconciledPublicState', nextReconciledPublicState.state[1]);
+                  if (keyInObject(nextReconciledPublicState.state[0] || {}, 'submission')) {
+                    console.log((nextReconciledPublicState.state[0] as any).submission)
+                  }
+
                   const checkedReconciliatoryActionsByClientId = objectKeys(
                     prevPatchesByClientId
                   ).reduce((accum, nextClientId) => {
+                    const { [nextClientId]: _, ...peersPrevPatchesByClientId } = prevPatchesByClientId;
+
+                    const allPeersPatchesAsList = objectKeys(peersPrevPatchesByClientId).reduce((prev, nextPeerId) => {
+                      return [
+                        ...prev,
+                        ...peersPrevPatchesByClientId[nextPeerId].map((p) => p.action as TAction),
+                      ];
+                    }, [] as TAction[]);
+
+                    // allPeersPatchesAsList
+
                     return {
                       ...accum,
                       [nextClientId]: {
-                        actions: prevPatchesByClientId[nextClientId].map(
-                          (p) => p.action as TAction
-                        ),
+                        // actions: prevPatchesByClientId[nextClientId].map(
+                        //   (p) => p.action as TAction
+                        // ),
+                        actions: allPeersPatchesAsList,
                         finalChecksum: nextReconciledPublicState.state[1],
                       },
                     };
                   }, {} as Record<MovexClient['id'], CheckedReconciliatoryActions<TAction>>);
+
+                  console.log('checkedReconciliatoryActionsByClientId', checkedReconciliatoryActionsByClientId);
+
+                  console.groupEnd()
 
                   return [
                     nextReconciledPublicState.state,
@@ -289,7 +317,7 @@ export class MovexMasterResource<
                   checksum: nextPrivateState[1],
                   action: privateAction,
                 },
-                reconciledFwdActionsByClientId:
+                checkedReconciliatoryActionsByClientId:
                   Object.keys(reconciledFwdActionsByClientId).length > 0
                     ? reconciledFwdActionsByClientId
                     : undefined,

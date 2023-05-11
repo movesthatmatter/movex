@@ -99,7 +99,8 @@ export class Movex {
                   `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
                   action,
                   'checksums DID NOT match',
-                  masterChecksum
+                  masterChecksum,
+                  nextChecksum
                 );
 
                 // Should get the next master state
@@ -124,6 +125,13 @@ export class Movex {
               rid,
               p
             );
+
+            p.actions.forEach((action) => {
+              console.log('action:', this.connectionToMaster.clientId, action)
+              clientResource.applyAction(action as any)
+              // clientResource.reconciliateAction
+            })
+
             // p.actions.map(())
             // TODO: What should the reconciliatry actions do? Apply them all together and check at the end right?
             // If the end result don't match the checkusm this is the place where it can reask the master for the new state!

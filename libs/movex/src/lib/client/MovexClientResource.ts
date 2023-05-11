@@ -121,13 +121,13 @@ export class MovexClientResource<
   // I took this out on April 5th b/c it doesn't make sense to return the current state (easily) now that the dispatch
   //  always wait until the remote state comes first. Using isSynchedPromiseDelegate. If this is needed, the best would be
   //  to make it async!
-  // applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
-  //   const nextCheckedState =
-  //     this.getNextCheckedStateFromAction(actionOrActionTuple);
-  //   this.$checkedState.update(nextCheckedState);
+  applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
+    const nextCheckedState =
+      this.getNextCheckedStateFromAction(actionOrActionTuple);
+    this.$checkedState.update(nextCheckedState);
 
-  //   return nextCheckedState;
-  // }
+    return nextCheckedState;
+  }
 
   /**
    * Same as applyAction() except it fails on mismatching checksums
