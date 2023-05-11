@@ -16,6 +16,7 @@ import {
   isAction,
   ToCheckedAction,
   CheckedReconciliatoryActions,
+  CheckedAction,
 } from '../tools/action';
 import { MovexReducer } from '../tools/reducer';
 import {
@@ -127,14 +128,21 @@ export class MovexMasterResource<
   getStateBySubscriberId<TResourceType extends GenericResourceType>(
     rid: ResourceIdentifier<TResourceType>
   ) {
-    return this.getItem(rid).map((item) => {
-      return objectKeys(item.subscribers).reduce((prev, nextClientId) => {
-        return {
-          ...prev,
-          [nextClientId]: this.computeClientState(nextClientId, item),
-        };
-      }, {} as Record<MovexClient['id'], CheckedState<TState>>);
-    });
+    return this.getItem(rid).map((item) =>
+      this.computeStateForItemSubscribers(item)
+    );
+  }
+
+  private computeStateForItemSubscribers<
+    TResourceType extends GenericResourceType
+  >(item: MovexStoreItem<TState, TResourceType>) {
+    return objectKeys(item.subscribers).reduce(
+      (prev, nextClientId) => ({
+        ...prev,
+        [nextClientId]: this.computeClientState(nextClientId, item),
+      }),
+      {} as Record<MovexClient['id'], CheckedState<TState>>
+    );
   }
 
   // This action gets applied both on the public and the private state
@@ -169,21 +177,26 @@ export class MovexMasterResource<
     clientId: MovexClient['id'],
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) {
-    console.log(
-      '[MovexMasterResource] cid:',
-      clientId,
-      'applyAction:',
-      actionOrActionTuple
-    );
+    type ForwardablePeerActions = {
+      type: 'forwardable';
+      byClientId: Record<MovexClient['id'], ToCheckedAction<TAction>>;
+    };
+
+    type ReconcilablePeerActions = {
+      type: 'reconcilable';
+      byClientId: Record<
+        MovexClient['id'],
+        CheckedReconciliatoryActions<TAction>
+      >;
+    };
+
+    type PeerActions = ForwardablePeerActions | ReconcilablePeerActions;
 
     return this.getItem(rid).flatMap<
       {
         nextPublic: ToCheckedAction<TAction>;
         nextPrivate?: ToCheckedAction<TAction>;
-        checkedReconciliatoryActionsByClientId?: Record<
-          MovexClient['id'],
-          CheckedReconciliatoryActions<TAction>
-        >;
+        peerActions: PeerActions;
       },
       unknown
     >((prevItem) => {
@@ -191,6 +204,7 @@ export class MovexMasterResource<
 
       if (isAction(actionOrActionTuple)) {
         const publicAction = actionOrActionTuple;
+
         return this.store
           .updateState(rid, this.reducer(prevState, publicAction))
           .map((nextPublicState) => ({
@@ -198,12 +212,30 @@ export class MovexMasterResource<
               checksum: nextPublicState.state[1],
               action: publicAction,
             },
+            peerActions: {
+              type: 'forwardable',
+              byClientId: objectKeys(prevItem.subscribers).reduce(
+                (prev, nextClientId) => {
+                  // Exclude the sender
+                  if (nextClientId === clientId) {
+                    return prev;
+                  }
+
+                  return {
+                    ...prev,
+                    [nextClientId]: {
+                      checksum: nextPublicState.state[1],
+                      action: publicAction,
+                    },
+                  };
+                },
+                {} as ForwardablePeerActions['byClientId']
+              ),
+            },
           }));
       }
 
       const [privateAction, publicAction] = actionOrActionTuple;
-
-      console.log('[MovxMasterResource] has private', privateAction);
 
       const privatePatch = getMovexStatePatch(
         prevState,
@@ -217,7 +249,6 @@ export class MovexMasterResource<
             action: privateAction,
             patch: privatePatch,
           })
-          // .map((item) => )
           .flatMap((itemWithLatestPatch) =>
             AsyncResult.all(
               new AsyncOk(itemWithLatestPatch),
@@ -232,83 +263,102 @@ export class MovexMasterResource<
                 .map((s) => s.state)
             )
           )
+          .flatMap(([nextItem, nextPrivateState, nextPublicState]) =>
+            AsyncResult.all(
+              new AsyncOk(nextItem),
+              new AsyncOk(nextPrivateState),
+              new AsyncOk(nextPublicState),
+
+              // Need to get this after the public state updates
+              this.getStateBySubscriberId(rid)
+            )
+          )
           // Reconciliation Step
-          .flatMap(([nextItem, nextPrivateState, nextPublicState]) => {
-            // console.log('[MovexMasterResource] going to call reconcileState', this.reducer.$canReconcileState)
+          .flatMap(
+            ([
+              nextItem,
+              nextPrivateState,
+              nextPublicState,
+              stateBySubscribersId,
+            ]) => {
+              if (this.reducer.$canReconcileState?.(nextPublicState[0])) {
+                const prevPatchesByClientId = nextItem.patches || {};
 
-            if (this.reducer.$canReconcileState?.(nextPublicState[0])) {
-              // console.log('$canReconcile yes', nextPublicState)
+                const allPatches = Object.values(prevPatchesByClientId).reduce(
+                  (prev, next) => [...prev, ...next],
+                  [] as MovexStatePatch<TState>[]
+                );
 
-              const prevPatchesByClientId = nextItem.patches || {};
+                return this.store
+                  .update(rid, {
+                    state: this.reconcileState(nextPublicState[0], allPatches),
+                    // Clear the patches from the Item
+                    patches: undefined,
+                  })
+                  .map((nextReconciledPublicState) => {
+                    const checkedReconciliatoryActionsByClientId = objectKeys(
+                      prevPatchesByClientId
+                    ).reduce((accum, nextClientId) => {
+                      const {
+                        [nextClientId]: _,
+                        ...peersPrevPatchesByClientId
+                      } = prevPatchesByClientId;
 
-              const allPatches = Object.values(prevPatchesByClientId).reduce(
-                (prev, next) => [...prev, ...next],
-                [] as MovexStatePatch<TState>[]
-              );
+                      const allPeersPatchesAsList = objectKeys(
+                        peersPrevPatchesByClientId
+                      ).reduce((prev, nextPeerId) => {
+                        return [
+                          ...prev,
+                          ...peersPrevPatchesByClientId[nextPeerId].map(
+                            (p) => p.action as TAction
+                          ),
+                        ];
+                      }, [] as TAction[]);
 
-              return this.store
-                .update(rid, {
-                  state: this.reconcileState(nextPublicState[0], allPatches),
-                  // Clear the patches from the Item
-                  patches: undefined,
-                })
-                .map((nextReconciledPublicState) => {
-                  console.group('[MovexMasterResource] nextReconciledPublicState', nextReconciledPublicState.state[1]);
-                  if (keyInObject(nextReconciledPublicState.state[0] || {}, 'submission')) {
-                    console.log((nextReconciledPublicState.state[0] as any).submission)
-                  }
-
-                  const checkedReconciliatoryActionsByClientId = objectKeys(
-                    prevPatchesByClientId
-                  ).reduce((accum, nextClientId) => {
-                    const { [nextClientId]: _, ...peersPrevPatchesByClientId } = prevPatchesByClientId;
-
-                    const allPeersPatchesAsList = objectKeys(peersPrevPatchesByClientId).reduce((prev, nextPeerId) => {
-                      return [
-                        ...prev,
-                        ...peersPrevPatchesByClientId[nextPeerId].map((p) => p.action as TAction),
-                      ];
-                    }, [] as TAction[]);
-
-                    // allPeersPatchesAsList
+                      return {
+                        ...accum,
+                        [nextClientId]: {
+                          actions: allPeersPatchesAsList,
+                          finalChecksum: nextReconciledPublicState.state[1],
+                        },
+                      };
+                    }, {} as Record<MovexClient['id'], CheckedReconciliatoryActions<TAction>>);
 
                     return {
-                      ...accum,
-                      [nextClientId]: {
-                        // actions: prevPatchesByClientId[nextClientId].map(
-                        //   (p) => p.action as TAction
-                        // ),
-                        actions: allPeersPatchesAsList,
-                        finalChecksum: nextReconciledPublicState.state[1],
+                      nextPublic: {
+                        checksum: nextReconciledPublicState.state[1],
+                        action: publicAction,
                       },
-                    };
-                  }, {} as Record<MovexClient['id'], CheckedReconciliatoryActions<TAction>>);
+                      nextPrivate: {
+                        checksum: nextReconciledPublicState.state[1],
+                        action: privateAction,
+                      },
+                      peerActions: {
+                        type: 'reconcilable',
+                        byClientId: checkedReconciliatoryActionsByClientId,
+                      } as ReconcilablePeerActions,
+                    } as any;
+                  });
+              }
 
-                  console.log('checkedReconciliatoryActionsByClientId', checkedReconciliatoryActionsByClientId);
+              const nexForwardableActionsByClientId = objectKeys(
+                stateBySubscribersId
+              ).reduce((prev, nextClientId) => {
+                // Exclude the sender
+                if (nextClientId === clientId) {
+                  return prev;
+                }
 
-                  console.groupEnd()
+                return {
+                  ...prev,
+                  [nextClientId]: {
+                    action: publicAction,
+                    checksum: stateBySubscribersId[nextClientId][1],
+                  },
+                };
+              }, {} as ForwardablePeerActions['byClientId']);
 
-                  return [
-                    nextReconciledPublicState.state,
-                    nextReconciledPublicState.state,
-                    checkedReconciliatoryActionsByClientId,
-                  ] as const;
-                });
-            }
-
-            return new AsyncOk([
-              nextPrivateState,
-              nextPublicState,
-              {},
-            ] as const);
-          })
-          .map(
-            ([
-              nextPrivateState,
-              nextPublicState,
-              reconciledFwdActionsByClientId,
-            ]) =>
-              ({
+              return new AsyncOk({
                 nextPublic: {
                   checksum: nextPublicState[1],
                   action: publicAction,
@@ -317,11 +367,12 @@ export class MovexMasterResource<
                   checksum: nextPrivateState[1],
                   action: privateAction,
                 },
-                checkedReconciliatoryActionsByClientId:
-                  Object.keys(reconciledFwdActionsByClientId).length > 0
-                    ? reconciledFwdActionsByClientId
-                    : undefined,
-              } as const)
+                peerActions: {
+                  type: 'forwardable',
+                  byClientId: nexForwardableActionsByClientId,
+                },
+              } as const);
+            }
           )
       );
     });

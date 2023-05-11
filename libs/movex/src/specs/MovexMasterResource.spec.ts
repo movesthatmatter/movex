@@ -61,6 +61,10 @@ test('applies public action', async () => {
       action,
       checksum: actualPublic[1],
     },
+    peerActions: {
+      type: 'forwardable',
+      byClientId: {},
+    }
   });
 });
 
@@ -121,7 +125,10 @@ test('applies only one private action w/o getting to reconciliation', async () =
       action: privateAction,
       checksum: expectedSenderState[1],
     },
-    reconciledFwdActionsByClientId: undefined,
+    peerActions: {
+      type: 'forwardable',
+      byClientId: {},
+    },
   });
 });
 
@@ -212,7 +219,10 @@ test('applies private action UNTIL Reconciliation', async () => {
       action: privateWhiteAction,
       checksum: actualSenderStateBeforeReconciliation[1],
     },
-    reconciledFwdActionsByClientId: undefined,
+    peerActions: {
+      type: 'forwardable',
+      byClientId: {},
+    },
   });
 
   // Black Private Action (This is also the Reconciliatory Action)
@@ -285,14 +295,17 @@ test('applies private action UNTIL Reconciliation', async () => {
       action: privateBlackAction,
       checksum: expectedPublicStateAfterReconciliation[1],
     },
-    checkedReconciliatoryActionsByClientId: {
-      [whitePlayer]: {
-        actions: [privateBlackAction],
-        finalChecksum: expectedPublicStateAfterReconciliation[1],
-      },
-      [blackPlayer]: {
-        actions: [privateWhiteAction],
-        finalChecksum: expectedPublicStateAfterReconciliation[1],
+    peerActions: {
+      type: 'reconcilable',
+      byClientId: {
+        [whitePlayer]: {
+          actions: [privateBlackAction],
+          finalChecksum: expectedPublicStateAfterReconciliation[1],
+        },
+        [blackPlayer]: {
+          actions: [privateWhiteAction],
+          finalChecksum: expectedPublicStateAfterReconciliation[1],
+        },
       },
     },
   });

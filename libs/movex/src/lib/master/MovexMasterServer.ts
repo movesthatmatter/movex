@@ -3,7 +3,6 @@ import {
   objectKeys,
   toResourceIdentifierObj,
 } from 'movex-core-util';
-import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { AnyAction } from '../tools/action';
 import { MovexMasterResource } from './MovexMasterResource';
@@ -58,57 +57,27 @@ export class MovexMasterServer {
 
       masterResource
         .applyAction(rid, clientConnection.clientId, action)
-        .flatMap((applied) =>
-          AsyncResult.all(
-            new AsyncOk(applied),
-            masterResource.getSubscribers(rid),
-            masterResource.getStateBySubscriberId(rid)
-          )
-        )
-        .map(
-          ([
-            { nextPublic, nextPrivate, checkedReconciliatoryActionsByClientId },
-            subscribers,
-            privateStatesByByClientId, // TODO: This should become privateActionsByClientId
-          ]) => {
-            objectKeys(privateStatesByByClientId).forEach((subscriberId) => {
-              if (checkedReconciliatoryActionsByClientId) {
-                // console.log(
-                //   '[MovexMasterServer]',
-                //   clientConnection.clientId,
-                //   'has reconciliateActions for',
-                //   subscriberId,
-                //   JSON.stringify(
-                //     checkedReconciliatoryActionsByClientId,
-                //     null,
-                //     2
-                //   )
-                // );
-
-                const peerId = subscriberId;
-
-                if (!privateStatesByByClientId[peerId]) {
-                  return;
-                }
-
+        .map(({ nextPublic, nextPrivate, peerActions }) => {
+          if (peerActions.type === 'reconcilable') {
+            objectKeys(peerActions.byClientId).forEach((peerId) => {
+              if (peerActions.byClientId[peerId]) {
                 const peerConnection = this.clientConnectionsByClientId[peerId];
 
                 peerConnection.emitter.emit('reconciliateActions', {
                   rid,
-                  ...checkedReconciliatoryActionsByClientId[peerId],
+                  ...peerActions.byClientId[peerId],
                 });
 
                 return;
               }
-
-              // Exclude myself
-              if (subscriberId === clientConnection.clientId) {
-                return;
-              }
-
-              const peerId = subscriberId;
-
-              if (!privateStatesByByClientId[peerId]) {
+            });
+          } else {
+            objectKeys(peerActions.byClientId).forEach((peerId) => {
+              if (!peerActions.byClientId[peerId]) {
+                console.error(
+                  '[MovexMasterServer] Inexistant Peer Connection for peerId:',
+                  peerId
+                );
                 return;
               }
 
@@ -119,28 +88,20 @@ export class MovexMasterServer {
                 return;
               }
 
-              // console.log(
-              //   '[MovexMasterServer]',
-              //   clientConnection.clientId,
-              //   '  has fwdAction',
-              //   peerId,
-              //   nextPublic
-              // );
               peerConnection.emitter.emit('fwdAction', {
                 rid,
-                action: nextPublic.action,
-                checksum: privateStatesByByClientId[peerId][1],
+                ...peerActions.byClientId[peerId],
               });
             });
-
-            // Send the Acknowledgement
-            const nextChecksum = nextPrivate
-              ? nextPrivate.checksum
-              : nextPublic.checksum;
-
-            return acknowledge(new Ok(nextChecksum));
           }
-        )
+
+          // Send the Acknowledgement
+          const nextChecksum = nextPrivate
+            ? nextPrivate.checksum
+            : nextPublic.checksum;
+
+          return acknowledge(new Ok(nextChecksum));
+        })
         .mapErr(() => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 

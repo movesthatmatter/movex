@@ -4,8 +4,12 @@ import {
   invoke,
   ResourceIdentifierStr,
 } from 'movex-core-util';
-import { AnyAction } from '../tools/action';
-import { MovexReducer } from '../tools/reducer';
+import {
+  ActionOrActionTupleFromAction,
+  AnyAction,
+  ToPublicAction,
+} from '../tools/action';
+import { GetReducerAction, MovexReducer } from '../tools/reducer';
 import { MovexClientResource } from './MovexClientResource';
 import { ConnectionToMasterResource } from './ConnectionToMasterResource';
 import { UnsubscribeFn } from '../core-types';
@@ -78,13 +82,6 @@ export class Movex {
           clientResource.onDispatched(({ action, next: nextCheckedState }) => {
             const [, nextChecksum] = nextCheckedState;
 
-            // console.log(
-            //   `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
-            //   action,
-            //   'next:',
-            //   nextChecksum
-            // );
-
             connectionToMasterResource
               .emitAction(rid, action)
               .map(async (masterChecksum) => {
@@ -110,27 +107,17 @@ export class Movex {
               });
           }),
           connectionToMasterResource.onFwdAction(rid, (p) => {
-            // console.log(
-            //   '[Movex] onFwdAction to',
-            //   this.connectionToMaster.clientId,
-            //   rid,
-            //   p
-            // );
             clientResource.reconciliateAction(p);
           }),
           connectionToMasterResource.onReconciliatoryActions(rid, (p) => {
-            console.log(
-              '[Movex] onReconciliatoryActions',
-              this.connectionToMaster.clientId,
-              rid,
-              p
-            );
-
             p.actions.forEach((action) => {
-              console.log('action:', this.connectionToMaster.clientId, action)
-              clientResource.applyAction(action as any)
+              clientResource.applyAction(
+                action as ActionOrActionTupleFromAction<
+                  GetReducerAction<typeof reducer>
+                >
+              );
               // clientResource.reconciliateAction
-            })
+            });
 
             // p.actions.map(())
             // TODO: What should the reconciliatry actions do? Apply them all together and check at the end right?
