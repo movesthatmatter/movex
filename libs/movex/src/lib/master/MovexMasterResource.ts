@@ -123,7 +123,7 @@ export class MovexMasterResource<
       .map((item) => this.computeClientState(clientId, item));
   }
 
-  getStateByClientId<TResourceType extends GenericResourceType>(
+  getStateBySubscriberId<TResourceType extends GenericResourceType>(
     rid: ResourceIdentifier<TResourceType>
   ) {
     return this.getItem(rid).map((item) => {
@@ -318,15 +318,17 @@ export class MovexMasterResource<
     subcriberId: MovexClient['id']
   ) {
     // TODO Optimization: The store could have the append/remove implemented so it doesn't do a round trip looking for prev
-    return this.store.update(rid, (prev) => ({
-      ...prev,
-      subscribers: {
-        ...prev.subscribers,
-        [subcriberId]: {
-          subscribedAt: new Date().getTime(),
+    return this.store.update(rid, (prev) => {
+      return {
+        ...prev,
+        subscribers: {
+          ...prev.subscribers,
+          [subcriberId]: {
+            subscribedAt: new Date().getTime(),
+          },
         },
-      },
-    }));
+      };
+    });
   }
 
   removeResourceSubscriber<TResourceType extends GenericResourceType>(

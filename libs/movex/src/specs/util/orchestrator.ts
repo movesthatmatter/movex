@@ -141,10 +141,8 @@ import { MockConnectionEmitter } from './MockConnectionEmitter';
 //   };
 // };
 
-export const movexClientMasterOrchestrator = <TResourceType extends string>(
-  rid: ResourceIdentifier<TResourceType>
-) => {
-  let unsubscribe = () => {};
+export const movexClientMasterOrchestrator = <TResourceType extends string>() => {
+  let unsubscribe = async () => {};
 
   const orchestrate = <
     S,
@@ -172,7 +170,7 @@ export const movexClientMasterOrchestrator = <TResourceType extends string>(
     });
 
     return clientIds.map((clientId) => {
-      // // Would this be the only one for both client and master or seperate?
+      // Would this be the only one for both client and master or seperate?
       // I believe it should be the same in order for it to work between the 2 no?
       const emitterOnMaster = new MockConnectionEmitter<S, A, TResourceType>(
         // masterResource,
@@ -233,10 +231,12 @@ const orchestrateMovex = <
 
   const unsubscribers = [
     emitterOnClient._onEmitted((r, ackCb) => {
+      // console.log('[orch]', clientId ,'onEmitted to master', r.event)
       // Calling the master with the given event from the client in order to process it
       emitterOnMaster._publish(r.event, r.payload, ackCb);
     }),
     emitterOnMaster._onEmitted((r, ackCb) => {
+      // console.log('[orch]', clientId ,'onReceived from master', r.event, r.payload)
       // Calling the client with the given event from the client in order to process it
       emitterOnClient._publish(r.event, r.payload, ackCb);
     }),

@@ -78,6 +78,13 @@ export class Movex {
           clientResource.onDispatched(({ action, next: nextCheckedState }) => {
             const [, nextChecksum] = nextCheckedState;
 
+            // console.log(
+            //   `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
+            //   action,
+            //   'next:',
+            //   nextChecksum
+            // );
+
             connectionToMasterResource
               .emitAction(rid, action)
               .map(async (masterChecksum) => {
@@ -102,10 +109,21 @@ export class Movex {
               });
           }),
           connectionToMasterResource.onFwdAction(rid, (p) => {
-            // TODO:Is this correct??
+            // console.log(
+            //   '[Movex] onFwdAction to',
+            //   this.connectionToMaster.clientId,
+            //   rid,
+            //   p
+            // );
             clientResource.reconciliateAction(p);
           }),
           connectionToMasterResource.onReconciliatoryActions(rid, (p) => {
+            console.log(
+              '[Movex] onReconciliatoryActions',
+              this.connectionToMaster.clientId,
+              rid,
+              p
+            );
             // p.actions.map(())
             // TODO: What should the reconciliatry actions do? Apply them all together and check at the end right?
             // If the end result don't match the checkusm this is the place where it can reask the master for the new state!

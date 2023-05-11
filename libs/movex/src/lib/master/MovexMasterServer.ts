@@ -61,21 +61,27 @@ export class MovexMasterServer {
         .flatMap((applied) =>
           AsyncResult.all(
             new AsyncOk(applied),
-            masterResource.getSubscribers(rid)
+            masterResource.getSubscribers(rid),
+            masterResource.getStateBySubscriberId(rid)
           )
         )
         .map(
           ([
             { nextPublic, nextPrivate, reconciliatoryActionsByClientId },
             subscribers,
+            privateStatesByByClientId, // TODO: This should become privateActionsByClientId
           ]) => {
-            // Notify the rest of the Client Subscribers of the actions
-            objectKeys(subscribers).forEach((peerId) => {
+            objectKeys(privateStatesByByClientId).forEach((subscriberId) => {
               // Exclude myself
-              if (peerId === clientConnection.clientId) {
+              if (subscriberId === clientConnection.clientId) {
                 return;
               }
-              // Here it should be the other client emitter who gets called
+
+              const peerId = subscriberId;
+
+              if (!privateStatesByByClientId[peerId]) {
+                return;
+              }
 
               const peerConnection = this.clientConnectionsByClientId[peerId];
 
@@ -92,10 +98,44 @@ export class MovexMasterServer {
               } else {
                 peerConnection.emitter.emit('fwdAction', {
                   rid,
-                  ...nextPublic,
+                  action: nextPublic.action,
+                  checksum: privateStatesByByClientId[peerId][1],
                 });
               }
             });
+
+            // Notify the rest of the Client Subscribers of the actions
+            // objectKeys(subscribers).forEach((peerId) => {
+            //   // Exclude myself
+            //   if (peerId === clientConnection.clientId) {
+            //     return;
+            //   }
+            //   // Here it should be the other client emitter who gets called
+
+            //   const peerConnection = this.clientConnectionsByClientId[peerId];
+
+            //   // Noting to do if the connection doesn't exist
+            //   if (!peerConnection) {
+            //     return;
+            //   }
+
+            //   console.log(
+            //     '[MovexMasterServer] onEmitAction > applyAction reconciliatoryActionsByClientId:',
+            //     reconciliatoryActionsByClientId
+            //   );
+
+            //   if (reconciliatoryActionsByClientId) {
+            //     peerConnection.emitter.emit('reconciliateActions', {
+            //       rid,
+            //       ...reconciliatoryActionsByClientId[peerId],
+            //     });
+            //   } else {
+            //     peerConnection.emitter.emit('fwdAction', {
+            //       rid,
+            //       ...nextPublic,
+            //     });
+            //   }
+            // });
 
             // Send the Acknowledgement
             const nextChecksum = nextPrivate
