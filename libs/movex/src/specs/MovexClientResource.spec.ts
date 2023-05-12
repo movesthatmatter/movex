@@ -7,7 +7,7 @@ import { tillNextTick } from 'movex-core-util';
 
 describe('Observable', () => {
   test('Dispatch Local Actions', async () => {
-    const xResource = new MovexClientResource(counterReducer);
+    const xResource = new MovexClientResource('test-client', counterReducer);
     xResource.setMasterSyncing(false);
 
     xResource.dispatch({
@@ -64,7 +64,7 @@ describe('Observable', () => {
 
   describe('External Updates', () => {
     test('updates the unchecked state', async () => {
-      const xResource = new MovexClientResource(counterReducer);
+      const xResource = new MovexClientResource('test-client', counterReducer);
       xResource.setMasterSyncing(false);
 
       xResource.dispatch({
@@ -92,7 +92,10 @@ describe('Observable', () => {
 
     describe('Reconciliate Action', () => {
       test('Updates when matching', () => {
-        const xResource = new MovexClientResource(counterReducer);
+        const xResource = new MovexClientResource(
+          'test-client',
+          counterReducer
+        );
 
         const updateSpy = jest.fn();
         xResource.onUpdated(updateSpy);
@@ -121,7 +124,10 @@ describe('Observable', () => {
       });
 
       test('Fails when NOT matching and does not update', () => {
-        const xResource = new MovexClientResource(counterReducer);
+        const xResource = new MovexClientResource(
+          'test-client',
+          counterReducer
+        );
 
         const updateSpy = jest.fn();
         xResource.onUpdated(updateSpy);

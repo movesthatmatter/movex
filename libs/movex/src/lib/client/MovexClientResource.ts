@@ -4,6 +4,7 @@ import {
   getNextStateFrom,
   invoke,
   IObservable,
+  MovexClient,
   NextStateGetter,
   Observable,
 } from 'movex-core-util';
@@ -52,6 +53,7 @@ export class MovexClientResource<
   private unsubscribers: UnsubscribeFn[] = [];
 
   constructor(
+    private clientId: MovexClient['id'],
     private reducer: MovexReducer<TState, TAction>,
 
     // Passing undefined here in order to get the default state
@@ -124,6 +126,7 @@ export class MovexClientResource<
   applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
     const nextCheckedState =
       this.getNextCheckedStateFromAction(actionOrActionTuple);
+
     this.$checkedState.update(nextCheckedState);
 
     return nextCheckedState;

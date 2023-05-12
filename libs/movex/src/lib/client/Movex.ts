@@ -68,7 +68,10 @@ export class Movex {
        * @returns
        */
       bind: (rid: ResourceIdentifier<typeof resourceType>) => {
-        const clientResource = new MovexClientResource(reducer);
+        const clientResource = new MovexClientResource(
+          this.connectionToMaster.clientId,
+          reducer
+        );
 
         // Done/TODO: Needs a way to add a resource subscriber
         connectionToMasterResource.addResourceSubscriber(rid).map(() => {
@@ -92,7 +95,10 @@ export class Movex {
                 // TODO: Here I need to check that the checksums are the same
                 // If not the action needs to revert, or toask the connection to give me the next state
 
-                console.log(
+                // But when the action is reconciliatory (meaning the last one before reconiliang the state this happens, b/c it waits for the reconciliatory actions)
+                // In that case this could return that I guess, or just leave it for now
+
+                console.error(
                   `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
                   action,
                   'checksums DID NOT match',

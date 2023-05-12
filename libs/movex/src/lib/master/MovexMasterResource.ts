@@ -354,6 +354,7 @@ export class MovexMasterResource<
                   [nextClientId]: {
                     action: publicAction,
                     checksum: stateBySubscribersId[nextClientId][1],
+                    _state: stateBySubscribersId[nextClientId][0],
                   },
                 };
               }, {} as ForwardablePeerActions['byClientId']);
