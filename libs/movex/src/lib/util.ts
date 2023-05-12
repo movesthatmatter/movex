@@ -1,14 +1,10 @@
-import hash from 'object-hash';
 import * as jsonpatch from 'fast-json-patch';
-import {
-  isObject,
-  JsonPatch,
-  JsonPatchOp,
-  NotUndefined,
-} from 'movex-core-util';
-import { ActionsCollectionMapBase } from './tools/action';
+import * as uuid from 'uuid';
+import hash from 'object-hash';
+import { isObject, JsonPatch, NotUndefined } from 'movex-core-util';
+// import { ActionsCollectionMapBase } from './tools/action';
 import { CheckedState, MovexState } from './core-types';
-import { MovexReducerMap } from './tools/reducer';
+// import { MovexReducerMap } from './tools/reducer';
 
 export const hashObject = (val: NotUndefined) => hash.MD5(val);
 
@@ -106,3 +102,5 @@ export const getMovexStatePatch = <A, B extends A>(
 };
 
 export const applyMovexStatePatches = reconciliatePrivateFragments;
+
+export const getUuid = () => uuid.v4();

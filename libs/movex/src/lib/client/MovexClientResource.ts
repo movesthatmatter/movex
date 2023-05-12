@@ -4,10 +4,11 @@ import {
   getNextStateFrom,
   invoke,
   IObservable,
+  MovexClient,
   NextStateGetter,
   Observable,
 } from 'movex-core-util';
-import { computeCheckedState } from './util';
+import { computeCheckedState } from '../util';
 import {
   ActionOrActionTupleFromAction,
   AnyAction,
@@ -15,38 +16,44 @@ import {
   ToCheckedAction,
   ToPrivateAction,
   ToPublicAction,
-} from './tools/action';
-import { CheckedState } from './core-types';
-import { createDispatcher, DispatchedEvent } from './tools/dispatch';
-import { MovexReducer } from './tools/reducer';
+} from '../tools/action';
+import { CheckedState, UnsubscribeFn } from '../core-types';
+import { createDispatcher, DispatchedEvent } from '../tools/dispatch';
+import { MovexReducer } from '../tools/reducer';
+import { PromiseDelegate } from 'promise-delegate';
 
-// TODO Feb 25th
-// Today I'm changing the way the reducer works from now, it's simply a redux redcuer of shape (state, action) and both the state and action are defined
-//  at creation time
-// and the actions are created by the users, movex.createAction maybe, or can even do a deox if needed but not worrying ab that!
-// This is easier to reason about, easier to work with and to get adopted as it's redux or useReducer
-
-// This has the old way of dealing with map actions
-// But that was pretty hard to type and not in line with useReducer and Redux
-// If something like that is needed I can just use deox, which makes more sense since it's just simpler to reason about as well as in line with the whole redusx reducer
-
-// TODO: Now extracat all the given actions into the dispatch
-export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
-  implements IObservable<CheckedState<TState>>
+/**
+ * This is the MovexResource running on the Client
+ */
+export class MovexClientResource<
+  TState = any,
+  TAction extends AnyAction = AnyAction
+> implements IObservable<CheckedState<TState>>
 {
+  /**
+   * This flag simply states if the resource is synched with the remote.
+   * It starts as false and it waits for at least one "sync" or "update" call.
+   *
+   * For now it never goes from true to false but that could be a valid use case in the future.
+   */
+  private isSynchedPromiseDelegate = new PromiseDelegate();
+
   private $checkedState: Observable<CheckedState<TState>>;
 
   private pubsy = new Pubsy<{
     onDispatched: DispatchedEvent<CheckedState<TState>, TAction>;
   }>();
 
+  // client: MovexResourceClient;
+
   private dispatcher: (
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) => void;
 
-  private unsubscribers: (() => any)[] = [];
+  private unsubscribers: UnsubscribeFn[] = [];
 
   constructor(
+    private clientId: MovexClient['id'],
     private reducer: MovexReducer<TState, TAction>,
 
     // Passing undefined here in order to get the default state
@@ -54,23 +61,42 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
       reducer(undefined as TState, { type: '_init' } as TAction)
     )
   ) {
-    // TODO: Not sure this will alawys work correctly as we need to get the initial state somehow
     this.$checkedState = new Observable(initialCheckedState);
 
-    // this.$state = this.$checkedState.map((s) => s[0]);
+    // // When the master io returns the async state, update it!
+    // masterConnection.getResourceState().map((state) => {
+    //   this.$checkedState.update(state);
+    // });
 
-    const { dispatch, unsubscribe } = createDispatcher<TState, TAction>(
-      this.$checkedState,
-      this.reducer,
-      {
-        onDispatched: (p) => {
-          this.pubsy.publish('onDispatched', p);
-        },
-      }
-    );
+    // TODO: Add Use case for how to deal with creation. When the get doesn't return anything?!
+    // something like: if it returns record doesnt exist, use create instead of get? or io.getOrCreate()?
 
-    this.dispatcher = dispatch;
-    this.unsubscribers.push(unsubscribe);
+    const { dispatch, unsubscribe: unsubscribeDispatch } = createDispatcher<
+      TState,
+      TAction
+    >(this.$checkedState, this.reducer, {
+      onDispatched: (p) => {
+        this.pubsy.publish('onDispatched', p);
+      },
+      onStateUpdated: (s) => {
+        // console.log('[MovexClient] Dispatcher.onStaetUpdated', s);
+      },
+    });
+
+    this.dispatcher = (...args: Parameters<typeof dispatch>) => {
+      this.isSynchedPromiseDelegate.promise.then(() => {
+        dispatch(...args);
+      });
+    };
+    this.unsubscribers.push(unsubscribeDispatch);
+
+    // const offFwdAction = masterResourceIO.onFwdAction<TAction>((fwd) => {
+    //   // Whatever needs to happen here more!
+
+    //   this.reconciliateAction(fwd);
+    // });
+
+    // this.unsubscribers.push(offFwdAction);
   }
 
   /**
@@ -88,15 +114,19 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
   }
 
   /**
-   * The diffence between this and the dispatch is that this happens in sync and returns the next state,
+   * The difference between this and the dispatch is that this happens in sync and returns the next state,
    * while dispatch() MIGHT not happen in sync and doesn't return
    *
    * @param actionOrActionTuple
    * @returns
    */
+  // I took this out on April 5th b/c it doesn't make sense to return the current state (easily) now that the dispatch
+  //  always wait until the remote state comes first. Using isSynchedPromiseDelegate. If this is needed, the best would be
+  //  to make it async!
   applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
     const nextCheckedState =
       this.getNextCheckedStateFromAction(actionOrActionTuple);
+
     this.$checkedState.update(nextCheckedState);
 
     return nextCheckedState;
@@ -159,6 +189,45 @@ export class MovexResource<TState = any, TAction extends AnyAction = AnyAction>
 
   getUncheckedState() {
     return this.$checkedState.get()[0];
+  }
+
+  // This is the actual checked state. TODO: Not sure about the names yet
+  get state() {
+    return this.get();
+  }
+
+  // This is the actual unchecked state. TODO: Not sure about the names yet
+  get unckeckedState() {
+    return this.getUncheckedState();
+  }
+
+  /**
+   * This needs to be called each time master has emits an updated state.
+   * The dispatch won't work without it being called at least once.
+   *
+   * @param nextStateGetter
+   * @returns
+   */
+  sync(nextStateGetter: NextStateGetter<CheckedState<TState>>) {
+    const res = this.update(nextStateGetter);
+
+    this.isSynchedPromiseDelegate.resolve();
+
+    return res;
+  }
+
+  /**
+   * If set to false it doesn't wait for the master state to be synced
+   * Good for tests at least. If not for anythign else, need to rethink it.
+   *
+   * @param flag
+   */
+  setMasterSyncing(flag: boolean) {
+    if (flag === true) {
+      this.isSynchedPromiseDelegate = new PromiseDelegate();
+    } else {
+      this.isSynchedPromiseDelegate.resolve();
+    }
   }
 
   update(nextStateGetter: NextStateGetter<CheckedState<TState>>) {

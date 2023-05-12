@@ -35,8 +35,12 @@ export const createDispatcher = <
     // Even if the state didn't update!
     // This is in order to have more control at the client's end. where they can easily check the checksum's or even instance
     //  if there was any update
-    onDispatched?: (event: DispatchedEvent<CheckedState<TState>, TAction>) => void;
-    onStateUpdated?: (event: DispatchedEvent<CheckedState<TState>, TAction>) => void;
+    onDispatched?: (
+      event: DispatchedEvent<CheckedState<TState>, TAction>
+    ) => void;
+    onStateUpdated?: (
+      event: DispatchedEvent<CheckedState<TState>, TAction>
+    ) => void;
   }
 ) => {
   const { onDispatched = noop, onStateUpdated = noop } = onEvents || {};

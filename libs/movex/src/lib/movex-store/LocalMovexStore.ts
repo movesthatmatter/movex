@@ -1,43 +1,40 @@
-import { deepClone } from 'fast-json-patch';
 import {
   GenericResourceType,
-  MovexStatePatch,
   ResourceIdentifier,
-  MovexStore,
-  MovexStoreItem,
   toResourceIdentifierStr,
   objectKeys,
+  ResourceIdentifierStr,
 } from 'movex-core-util';
 import { AsyncErr, AsyncOk } from 'ts-async-results';
 import { computeCheckedState } from '../util';
+import { MovexStatePatch, MovexStore, MovexStoreItem } from './MovexStore';
 
 export class LocalMovexStore<
   TState,
   TResourceType extends GenericResourceType = GenericResourceType
 > implements MovexStore<TState, TResourceType>
 {
-  private local: Record<string, MovexStoreItem<TState>> = {};
+  private local: Record<string, MovexStoreItem<TState, TResourceType>> = {};
 
-  constructor(initialResources?: Record<string, TState>) {
+  constructor(
+    initialResources?: Record<ResourceIdentifierStr<TResourceType>, TState>
+  ) {
     if (initialResources) {
       this.local = objectKeys(initialResources).reduce((accum, nextRid) => {
         return {
           ...accum,
           [nextRid]: {
-            id: nextRid,
+            rid: nextRid,
             state: computeCheckedState(initialResources[nextRid]),
+            subscribers: {},
           },
         };
-      }, {} as Record<string, MovexStoreItem<TState>>);
+      }, {} as Record<string, MovexStoreItem<TState, TResourceType>>);
     }
   }
 
-  private ridToStr(rid: ResourceIdentifier<TResourceType>) {
-    return toResourceIdentifierStr(rid) as string;
-  }
-
   get(rid: ResourceIdentifier<TResourceType>) {
-    const item = { ...this.local[this.ridToStr(rid)] };
+    const item = this.local[toResourceIdentifierStr(rid)];
 
     if (item) {
       return new AsyncOk(item);
@@ -47,19 +44,20 @@ export class LocalMovexStore<
   }
 
   create(rid: ResourceIdentifier<TResourceType>, nextState: TState) {
-    const id = this.ridToStr(rid);
+    const ridStr = toResourceIdentifierStr(rid);
 
     const next = {
-      id,
+      rid: ridStr,
       state: computeCheckedState(nextState),
+      subscribers: {},
     };
 
     this.local = {
       ...this.local,
-      [id]: next,
+      [ridStr]: next,
     };
 
-    return new AsyncOk({ ...next });
+    return new AsyncOk(next);
   }
 
   updateState(
@@ -74,37 +72,39 @@ export class LocalMovexStore<
 
       this.local = {
         ...this.local,
-        [prev.id]: {
+        [prev.rid]: {
           ...prev,
           state: nextCheckedState,
         },
       };
 
-      return this.local[prev.id];
+      return this.local[prev.rid];
     });
   }
 
   update(
     rid: ResourceIdentifier<TResourceType>,
     getNext:
-      | ((prev: MovexStoreItem<TState>) => MovexStoreItem<TState>)
-      | Partial<MovexStoreItem<TState>>
+      | ((
+          prev: MovexStoreItem<TState, TResourceType>
+        ) => MovexStoreItem<TState, TResourceType>)
+      | Partial<MovexStoreItem<TState, TResourceType>>
   ) {
     return this.get(rid).map((prev) => {
       const nextItem = typeof getNext === 'function' ? getNext(prev) : getNext;
 
       this.local = {
         ...this.local,
-        [prev.id]: {
+        [prev.rid]: {
           ...prev,
           ...nextItem,
 
           // This cannot be changed!
-          id: prev.id,
+          rid: prev.rid,
         },
       };
 
-      return this.local[prev.id];
+      return this.local[prev.rid];
     });
   }
 
@@ -116,7 +116,7 @@ export class LocalMovexStore<
     return this.get(rid).map((prev) => {
       this.local = {
         ...this.local,
-        [prev.id]: {
+        [prev.rid]: {
           ...prev,
           patches: {
             ...prev.patches,
@@ -125,7 +125,7 @@ export class LocalMovexStore<
         },
       };
 
-      return this.local[prev.id];
+      return this.local[prev.rid];
     });
   }
 

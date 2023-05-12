@@ -17,6 +17,7 @@ export type BaseAction<
   ? { type: TType }
   : { type: TType; payload: TPayload };
 
+// @deprecate in favor of AnyAction
 export type PrivateAction<
   TType extends string,
   TPayload = undefined
@@ -77,6 +78,7 @@ export type CheckedAction<
   checksum: Checksum;
 };
 
+// @deprecate in favor of AnyAction
 export type GenericCheckedAction = {
   action: GenericActionOrActionTuple;
   checksum: Checksum;
@@ -87,6 +89,7 @@ export type AnyCheckedAction = {
   checksum: Checksum;
 };
 
+// TODO: Should this be a Tuple??
 export type ToCheckedAction<TAction extends AnyAction> = {
   action: TAction;
   checksum: Checksum;
@@ -97,6 +100,11 @@ export type ToPrivateAction<A extends AnyAction> = A & {
 };
 export type ToPublicAction<A extends AnyAction> = A & {
   isPrivate?: false;
+};
+
+export type CheckedReconciliatoryActions<A extends AnyAction> = {
+  actions: A[];
+  finalChecksum: Checksum;
 };
 
 export type AnyActionTuple = [AnyPrivateAction, AnyPublicAction];
