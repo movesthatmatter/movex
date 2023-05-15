@@ -98,18 +98,27 @@ export class Movex {
                 // But when the action is reconciliatory (meaning the last one before reconiliang the state this happens, b/c it waits for the reconciliatory actions)
                 // In that case this could return that I guess, or just leave it for now
 
-                console.error(
-                  `[Movex].onDispatched("${this.connectionToMaster.clientId}")`,
-                  action,
-                  'checksums DID NOT match',
-                  masterChecksum,
-                  nextChecksum
+                console.group(
+                  `[Movex] Dispatch Ack Error: "Checksums MISMATCH"\n`,
+                  `client: '${this.connectionToMaster.clientId}',\n`,
+                  'action:',
+                  action
                 );
 
                 // Should get the next master state
-                // const actual = await connectionToMasterResource
-                //   .get(rid)
-                //   .resolveUnwrap();
+                const masterState = await connectionToMasterResource
+                  .get(rid)
+                  .resolveUnwrap();
+
+                console.log(
+                  'Master State:',
+                  JSON.stringify(masterState, null, 2)
+                );
+                console.log(
+                  'Local State:',
+                  JSON.stringify(nextCheckedState, null, 2)
+                );
+                console.groupEnd();
               });
           }),
           connectionToMasterResource.onFwdAction(rid, (p) => {
