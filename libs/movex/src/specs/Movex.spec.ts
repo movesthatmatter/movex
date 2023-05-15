@@ -1,39 +1,15 @@
-import counterReducer from './util/counterReducer';
-import gameReducer, { initialGameState } from './util/gameReducer';
-import { noop, tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
+import counterReducer from './resources/counterReducer';
+import gameReducer, { initialGameState } from './resources/gameReducer';
+import { tillNextTick } from 'movex-core-util';
 import { computeCheckedState } from '../lib/util';
-import { AnyAction } from '../lib/tools/action';
-import { UnsubscribeFn } from '../lib/core-types';
 import { movexClientMasterOrchestrator } from './util/orchestrator';
 require('console-group').install();
-
-let destroyMovexMock: UnsubscribeFn = noop;
-
-const rid = toResourceIdentifierStr({
-  resourceType: 'counter',
-  resourceId: 'test',
-});
 
 const orchestrator = movexClientMasterOrchestrator();
 
 beforeEach(async () => {
-  // destroyMovexMock();
   await orchestrator.unsubscribe();
 });
-
-// const getMovex = <TState extends any, TAction extends AnyAction = AnyAction>(
-//   reducer: MovexReducer<TState, TAction>,
-//   clientId = 'test-client'
-// ) => {
-//   const localStore = new LocalMovexStore<GetReducerState<typeof reducer>>();
-//   const masterResource = new MovexMasterResource(reducer, localStore);
-
-//   const { movex, destroy } = mockMovex(clientId, masterResource);
-
-//   destroyMovexMock = destroy;
-
-//   return movex;
-// };
 
 describe('All', () => {
   test('Create', async () => {
@@ -41,7 +17,6 @@ describe('All', () => {
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
-      // initialState: initialCounterState,
     });
 
     const actual = await counterResource
@@ -61,7 +36,6 @@ describe('All', () => {
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
-      // initialState: initialCounterState,
     });
 
     const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
@@ -83,7 +57,6 @@ describe('All', () => {
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
-      // initialState: initialCounterState,
     });
 
     const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
@@ -107,7 +80,6 @@ describe('All', () => {
       clientIds: ['test-user'],
       reducer: gameReducer,
       resourceType: 'game',
-      // initialState: initialGameState,
     });
 
     const { rid } = await gameResource.create(initialGameState).resolveUnwrap();
@@ -146,4 +118,4 @@ describe('All', () => {
   });
 });
 
-// // TODO: Add more tests
+// TODO: Add more tests

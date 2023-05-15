@@ -1,10 +1,10 @@
 import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
-import { computeCheckedState } from '../lib/util';
-import gameReducer, { initialGameState } from './util/gameReducer';
+import { computeCheckedState } from '../../lib/util';
+import gameReducer, { initialGameState } from '../resources/gameReducer';
 import gameReducerWithDerivedState, {
   initialRawGameStateWithDerivedState,
-} from './util/gameReducerWithDerivedState';
-import { movexClientMasterOrchestrator } from './util/orchestrator';
+} from '../resources/gameReducerWithDerivedState';
+import { movexClientMasterOrchestrator } from '../util/orchestrator';
 require('console-group').install();
 
 const rid = toResourceIdentifierStr({

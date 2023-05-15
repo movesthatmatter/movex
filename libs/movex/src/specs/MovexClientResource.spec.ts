@@ -1,7 +1,7 @@
 import { Ok } from 'ts-results';
 
 import { computeCheckedState } from '../lib/util';
-import counterReducer, { initialCounterState } from './util/counterReducer';
+import counterReducer, { initialCounterState } from './resources/counterReducer';
 import { MovexClientResource } from '../lib/client/MovexClientResource';
 import { tillNextTick } from 'movex-core-util';
 

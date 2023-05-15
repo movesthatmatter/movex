@@ -1,6 +1,6 @@
 import { isObject, keyInObject } from 'movex-core-util';
 import { Action } from '../../lib/tools/action';
-import { Move } from '../types';
+import { Move } from '../util/types';
 
 export type SubmissionDrawnItem = {
   canDraw: false;

@@ -1,6 +1,6 @@
 import { Action } from '../../lib/tools/action';
 import counterReducer, { CounterActions } from './counterReducer';
-import { Move, Submission } from '../types';
+import { Move, Submission } from '../util/types';
 
 export type GameState = {
   count: number;
