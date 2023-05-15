@@ -1,42 +1,26 @@
-import hash from 'object-hash';
 import * as jsonpatch from 'fast-json-patch';
-import {
-  invoke,
-  isObject,
-  keyInObject,
-  noop,
-  NotUndefined,
-  Observable,
-  StringKeys,
-} from 'movex-core-util';
-import {
-  Action,
-  ActionCreatorsMapBase,
-  ActionOrActionTuple,
-  ActionsCollectionMapBase,
-  GenericAction,
-  GenericPrivateAction,
-  GenericPublicAction,
-} from './tools/action';
+import * as uuid from 'uuid';
+import hash from 'object-hash';
+import { isObject, JsonPatch, NotUndefined } from 'movex-core-util';
+// import { ActionsCollectionMapBase } from './tools/action';
 import { CheckedState, MovexState } from './core-types';
-import { MovexReducerFromActionsMap, MovexReducerMap } from './tools/reducer';
+// import { MovexReducerMap } from './tools/reducer';
 
 export const hashObject = (val: NotUndefined) => hash.MD5(val);
 
-
 // TODO: Deprecate this as its not usefule anymore I believe
-export const createMovexReducerMap = <
-  ActionsCollectionMap extends ActionsCollectionMapBase,
-  TState extends MovexState
->(
-  initialState: TState
-) => {
-  // Do we need to do smtg with the initialState?
+// export const createMovexReducerMap = <
+//   ActionsCollectionMap extends ActionsCollectionMapBase,
+//   TState extends MovexState
+// >(
+//   initialState: TState
+// ) => {
+//   // Do we need to do smtg with the initialState?
 
-  return <TReducerMap extends MovexReducerMap<TState, ActionsCollectionMap>>(
-    reducerMap: TReducerMap
-  ) => reducerMap;
-};
+//   return <TReducerMap extends MovexReducerMap<TState, ActionsCollectionMap>>(
+//     reducerMap: TReducerMap
+//   ) => reducerMap;
+// };
 
 export const computeCheckedState = <T>(state: T): CheckedState<T> => [
   state,
@@ -72,37 +56,29 @@ export const getJSONPatchDiff = <
   b: B
 ) => jsonpatch.compare(a, b);
 
-type JsonPatch = jsonpatch.Operation[];
-
-export type PrivateFragment = JsonPatch;
-
+// @rename to applyMovexPatches
 export const reconciliatePrivateFragments = <TState extends MovexState>(
   state: TState,
-  fragmentsInOrder: PrivateFragment[]
+  patchesInOrder: JsonPatch<TState>[]
 ): TState => {
-  const allFragmentsInOrder = fragmentsInOrder.reduce(
+  const allPatchesInOrder = patchesInOrder.reduce(
     // Here there could be some logic on finding the same path in the diff,
     //  and apply some optimization or heuristic for the reconciliation
     (accum, next) => [...accum, ...next],
     []
   );
 
-  return allFragmentsInOrder.reduce(
+  return allPatchesInOrder.reduce(
     jsonpatch.applyReducer,
     // This is expensive but otherwise the state gets mutated. Need to look into maybe another way?
     jsonpatch.deepClone(state)
   );
 };
 
-// export const getStateDiff = <A extends MovexState, B extends MovexState>(
-//   a: A,
-//   b: B
-// ) => getJSONPatchDiff(a, b);
-
-export const getStateDiff = <A, B extends A>(
+export const getMovexStatePatch = <A, B extends A>(
   a: A,
   b: B
-): jsonpatch.Operation[] => {
+): JsonPatch<A> => {
   if ((isObject(a) && isObject(b)) || (Array.isArray(a) && Array.isArray(b))) {
     return getJSONPatchDiff(a, b);
   }
@@ -124,3 +100,7 @@ export const getStateDiff = <A, B extends A>(
   // TODO: Empty array if the same??
   return [];
 };
+
+export const applyMovexStatePatches = reconciliatePrivateFragments;
+
+export const getUuid = () => uuid.v4();

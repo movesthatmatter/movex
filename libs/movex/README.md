@@ -20,13 +20,17 @@ Movex is a Multiplayer (Game) State Synchronization Library using Deterministic 
     - [Revelatory Action (Check)](#revelatory-action-check)
   - [How Does the Private Action/Secret State actually works?](#how-does-the-private-actionsecret-state-actually-works)
   - [Remote State Mismatch Resynchronization (WIP)](#remote-state-mismatch-resynchronization-wip)
-  - [Private State Deltas Reconciliation Strategy (WIP)](#private-state-deltas-reconciliation-strategy-wip)
+        - [1. Use The Checksums to its advantage (Optimal)](#1-use-the-checksums-to-its-advantage-optimal)
+        - [2. Ask for the whole State Again (Sub Optimal but rare)](#2-ask-for-the-whole-state-again-sub-optimal-but-rare)
+  - [Private State Deltas Reconciliation Strategy (WIP \& not Used at the moment)](#private-state-deltas-reconciliation-strategy-wip--not-used-at-the-moment)
         - [Primitives](#primitives)
         - [Complex Data types (Arrays \& Objects)](#complex-data-types-arrays--objects)
           - [Array](#array)
 - [Usage on the Client](#usage-on-the-client)
       - [Vanilla TS](#vanilla-ts)
       - [With React](#with-react)
+  - [Constraints](#constraints)
+        - [1. The Reducer Needs to stay Pure.](#1-the-reducer-needs-to-stay-pure)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
@@ -298,14 +302,14 @@ The server will call the reducer with the private action, but knowing behind the
 
 Sometimes there might be mismatches in the client state and the server state. This could be due to network errors, bugs in the code or who knows what. Dealing with Shared State is hard :), but don't fret, Movex has some solutions:
 
-First of all it can take advantage of the state checksums. Each Forwarded/Acknowledge Action contains the prev and next state checksum, so the clients will be able to compare that with the locally computed next checksum and proceed accordingly given the outcome.
+##### 1. Use The Checksums to its advantage (Optimal)
+
+ First of all it can take advantage of the state checksums. Each Forwarded/Acknowledge Action contains the prev and next state checksum, so the clients will be able to compare that with the locally computed next checksum and proceed accordingly given the outcome.
 
 
-If they match all is good! 🥳
+**If they match all is good 🥳, if not we take advantage of the following:**
 
-**If they don't match we take advanytage of the following:**
-
-The client will always store the last server reconciled checksum with its state (just in case it's needed to recompile). This will be derived from the ack/fwd received from the server, containing the next state checksum. If the client computes the same checksum than that becomes the last reconciled. If not, the strategy needs to happen.
+The client will always store the last server reconciled checksum with its state (just in case it's needed to recompile). This will be derived from the ack/fwd received from the server, containing the next state checksum. If the client computes the same checksum than that becomes the last reconciled. If not, the below _Strategy_ needs to happen.
 
 The server also stores a map of each checksum and the action that derived it in the order in which it was received. *(TODO: This could become big pretty early on, so there might be some optimization done.)*
 
@@ -313,13 +317,15 @@ When the server acks/forwards an action, and the checksum from the local state d
 
 When the client receives the reconciliatory actions (since it's reconciled state and checksum) it applies them right away and computes the next state (without intermediary renders I would say, since they might have already show some of them) and simply render the end result.
 
+##### 2. Ask for the whole State Again (Sub Optimal but rare)
+
 If the above doesn't work, for whatever reason, again dealing with Shared State is hard, we have the ultimate sling shot:
 
-- The Client Sends for help to the Server and the Server will respond with the latest version of the reconciled state. This should set thngs straight for another while, but in theory this shouldn't really happen too often. Hopefully not at all! 😇 
+The Client Sends for help to the Server and the Server will respond with the latest version of the reconciled state. This should set things straight for another while, but in theory this shouldn't really happen too often. Hopefully not at all! 😇 
   
-> Note: This is still a WIP and we'll have to come up with proper tests and validation for this as well as probably more optimizations and heuristics)*
+> Note: This is still a WIP and we'll have to come up with proper tests and validation for this as well as probably more optimizations and heuristics
 
-## Private State Deltas Reconciliation Strategy (WIP)
+## Private State Deltas Reconciliation Strategy (WIP & not Used at the moment)
 
 This describes the strategy used to apply to deltas (resulted from a movex action).
 
@@ -504,3 +510,80 @@ const CounterComponent({rid: Movex.ResourceIdentifier<'counter'>}) {
 }f
 ```
 
+## Constraints
+
+##### 1. The Reducer Needs to stay Pure.
+This is actually a constraint of general functoinal programming that says: "A function returns the same output everytime it receives a given input X."
+
+This means that the reducer cannot make use of global contextt utilities such as randomness or time, since they break purity, but instead should rely on given input to calculate the next state.
+
+Note: One thing that can be a feature is to use Placeholders at action level, such as GetMovexTime, or GetMovexUUID, or GetMovexID, etc..., which can be replaceable
+on the server and they don't count towards the checksum, or... These can work by adding a temporary *value* locally (since this only needs to be part of the state until the ack comes back to the sender and it only needs to happen for the sender), which can then be picked up at server level and replaced with the real one, which will also happen on the client at ack time. The peers will always get the FWD/Reconciliation action with the Replaced Real Value and the Checksum based on it!
+
+This is in accord wth authority being on the server, not on the client, which thus means the client shouldn't really be the one deciding what the next id of a resource should be or what the timestamp really is (since that can be easily hacked), but the server. 
+
+Example of a scenario:
+
+```ts
+movex.dispatch({
+  type: 'sendMessage',
+  payload: {
+    msg: "Hey",
+    timestamp: Movex.timestamp(), // ___@mvx:timestamp___ or something like this
+    id: Movex.id(), // ___@mvx:id___ or Movex.uuid(), etc...
+  }
+})
+```
+
+Locally this is saved with some randomly randomly or current local time, etc... values, thus not having to deal with asking the server for them pre-emptively, and thus waiting for the trip back from the server.
+
+```ts
+// local state looks like this:
+
+const chatState = {
+  messages: [
+    {
+      msg: 'Hey',
+      timestamp: 131312313123, // the time now which will get replaced with the time from the server
+      id: 'some-id', // gets replaced
+    }
+  ]
+} 
+
+```
+
+And the "ack" looks something like this
+
+```ts
+
+movex.onDispatched(({ action, next: nextLocalCheckedState }) => {
+  movex.onEmitted((ack) => {
+    if (ack.placeholders) {
+      const nextLocalStateWithRealValues = Movex.replacePlaceholders(nextLocalCheckstate, ack.placeholders);
+
+      if (ack.masterChecksum !== nextLocalStateWithRealValues[1]) {
+        // If they aren't the same we have an issue, but normally they should be the same
+
+        return;
+      }
+    } 
+    
+    // Regular logic
+    else if (ack.masterChecksum !== nextChecksum) {
+      // If they aren't the same we have an issue, but normally they should be the same
+
+      return;
+    }
+  })
+})
+
+
+```
+
+But there is still an issue where the id, could be used write a way, let's say to redirect to another page or smtg like that. In which case
+when the ack comes back it it's going to be too late b/c the user already is at the wrong place in the UI.
+
+One solution for this could be a special type of dispatch, that waits for the ack to come back before affecting the local state: a delayed dispatch.
+This is a limitation of both the learning curve, and the performance of the library/game/application, as well as it breaks a bit from the "write on the client only", although the latter still is relevant as the client doesn't need to know anything ab the msater nor the developer, just to wait for a bit (the magic happens in movex), so it might not be that bad.
+
+Besides it's pretty exceptional – only when creating an id, and that id is to be used right away, otherwise the placeolder could work. In the worst case even a client generated id/time/etc is ok – just not ideal.

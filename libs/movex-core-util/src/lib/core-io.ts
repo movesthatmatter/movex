@@ -50,7 +50,7 @@ export function toReqRes<
 
 // TODO: Rename to StoreResource and don't export
 // TOOD: Move only in SessionStore maybe
-export const sessionClient = <TInfo extends z.ZodTypeAny>(info?: TInfo) =>
+export const movexClient = <TInfo extends z.ZodTypeAny>(info?: TInfo) =>
   z.object({
     id: zId(),
     subscriptions: z.record(
@@ -70,7 +70,7 @@ export const sessionClient = <TInfo extends z.ZodTypeAny>(info?: TInfo) =>
 
 export const resourceSubscribers = () =>
   z.record(
-    sessionClient().shape.id,
+    movexClient().shape.id,
     z.object({
       subscribedAt: z.number(), // This could be an ISO DateTime? not sure needed
     })

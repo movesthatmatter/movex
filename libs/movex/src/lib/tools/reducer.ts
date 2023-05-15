@@ -37,3 +37,14 @@ export type MovexReducer<S = any, A extends AnyAction = AnyAction> = ((
   state: S,
   action: A
 ) => S) & { $canReconcileState?: (s: S) => boolean };
+
+export type GetReducerState<
+  TReducer extends (...args: any[]) => S,
+  S = any
+> = ReturnType<TReducer>;
+
+export type GetReducerAction<
+  TReducer extends (state: S, action: any) => S,
+  S = any
+> = Parameters<TReducer>[1];
+

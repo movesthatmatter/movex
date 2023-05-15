@@ -149,7 +149,7 @@ export type ResourceShape<
   id: string;
   item: { id: string } & TData;
   subscribers: Record<
-    SessionClient['id'],
+    MovexClient['id'],
     {
       subscribedAt: number;
     }
@@ -200,7 +200,7 @@ export type GenericResourceOfType<TResourceType extends string> = Resource<
 
 export type GenericResourceType = GenericResource['type'];
 
-export type SessionClient<Info extends UnknownRecord = {}> = {
+export type MovexClient<Info extends UnknownRecord = {}> = {
   id: string;
   info?: Info; // User Info or whatever
   subscriptions: Record<
@@ -221,7 +221,7 @@ export type SessionClient<Info extends UnknownRecord = {}> = {
 
 // export type Topic<TUniqueName extends string> = {
 //   id: TUniqueName;
-//   subscribers: Record<SessionClient['id'], null>; // Here it could use the full Peer?
+//   subscribers: Record<MovexClient['id'], null>; // Here it could use the full Peer?
 // };
 
 // type CollectionMapBaseItem = RRStore.CollectionMapBase[any];
@@ -232,7 +232,7 @@ export type SessionClient<Info extends UnknownRecord = {}> = {
 //   id: string;
 //   data: TData;
 //   subscribers: Record<
-//     SessionClient['id'],
+//     MovexClient['id'],
 //     {
 //       subscribedAt: number;
 //     }
@@ -256,12 +256,14 @@ export type ResourceIdentifier<TResourceType extends string> =
   | ResourceIdentifierObj<TResourceType>
   | ResourceIdentifierStr<TResourceType>;
 
+export type AnyResourceIdentifier = ResourceIdentifier<string>;
+
 export type StringKeys<TRecord extends UnknownRecord> = Extract<
   keyof TRecord,
   string
 >;
 
-export type PlayerIdentifier = SessionClient['id'];
+export type PlayerIdentifier = MovexClient['id'];
 
 export type EmptyString = ``;
 
@@ -308,7 +310,7 @@ export type NativeResourceCollectionMap<
 export type SessionStoreCollectionMap<
   ResourcesCollectionMap extends CollectionMapBase
 > = {
-  $clients: SessionClient;
+  $clients: MovexClient;
   // $topics: Topic<string>;
 } & NativeResourceCollectionMap &
   ResourcesCollectionMap;
@@ -323,5 +325,45 @@ export type CreateMatchReq<TGame extends UnknownRecord> = {
   matcher: SessionMatch['matcher'];
   playersTotal: SessionMatch['playersTotal'];
   game: TGame;
-  players?: SessionClient['id'][];
+  players?: MovexClient['id'][];
 };
+
+export type IOPayloadResultOk<T> = {
+  ok: true;
+  err: false;
+  val: T;
+};
+
+export type IOPayloadResultErr<E> = {
+  ok: false;
+  err: true;
+  val: E;
+};
+
+export type IOPayloadResult<T, E> =
+  | IOPayloadResultOk<T>
+  | IOPayloadResultErr<E>;
+
+export type IOPayloadResultOkType<T extends IOPayloadResult<any, any>> =
+  T extends IOPayloadResult<infer U, any> ? U : never;
+
+export type IOPayloadResultErrType<T extends IOPayloadResult<any, any>> =
+  T extends IOPayloadResult<any, infer U> ? U : never;
+
+export type GetIOPayloadOKTypeFrom<R extends IOPayloadResult<any, any>> = Extract<
+  R,
+  { ok: true }
+>['val'];
+
+export type GetIOPayloadErrTypeFrom<R extends IOPayloadResult<any, any>> = Extract<
+  R,
+  { ok: false }
+>['val'];
+
+// const xErr: IOPayloadResultErr<'asda'> = {
+//   ok: false,
+//   err: true,
+//   val: 'asda',
+// };
+
+// const x = {} as IOPayloadResultErrType<typeof xErr>;
