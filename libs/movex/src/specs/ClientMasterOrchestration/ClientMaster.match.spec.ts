@@ -74,7 +74,6 @@ describe('Public Actions', () => {
     const { rid } = await whiteClient.create(initialGameState).resolveUnwrap();
 
     const whiteMovex = whiteClient.bind(rid);
-
     const blackMovex = blackClient.bind(rid);
 
     whiteMovex.dispatch({
@@ -107,18 +106,7 @@ describe('Private Actions', () => {
     const { rid } = await whiteClient.create(initialGameState).resolveUnwrap();
 
     const whiteMovex = whiteClient.bind(rid);
-
-    // Need to wait for the subscriber to be added
-    // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-    // so then even in the tests wouldn't be a issue, but for now this is the easiest
-    await tillNextTick();
-
     const blackMovex = blackClient.bind(rid);
-
-    // Need to wait for the subscriber to be added
-    // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-    // so then even in the tests wouldn't be a issue, but for now this is the easiest
-    await tillNextTick();
 
     // White's Turn
     whiteMovex.dispatchPrivate(
@@ -201,18 +189,7 @@ describe('Private Actions', () => {
     const { rid } = await whiteClient.create(initialGameState).resolveUnwrap();
 
     const whiteMovex = whiteClient.bind(rid);
-
-    // Need to wait for the subscriber to be added
-    // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-    // so then even in the tests wouldn't be a issue, but for now this is the easiest
-    await tillNextTick();
-
     const blackMovex = blackClient.bind(rid);
-
-    // Need to wait for the subscriber to be added
-    // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-    // so then even in the tests wouldn't be a issue, but for now this is the easiest
-    await tillNextTick();
 
     // White's Turn
     whiteMovex.dispatchPrivate(
@@ -327,18 +304,7 @@ describe('Private Actions', () => {
       .resolveUnwrap();
 
     const whiteMovex = whiteClient.bind(rid);
-
-    // Need to wait for the subscriber to be added
-    // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-    // so then even in the tests wouldn't be a issue, but for now this is the easiest
-    await tillNextTick();
-
     const blackMovex = blackClient.bind(rid);
-
-    // Need to wait for the subscriber to be added
-    // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-    // so then even in the tests wouldn't be a issue, but for now this is the easiest
-    await tillNextTick();
 
     // White's Turn
     whiteMovex.dispatchPrivate(

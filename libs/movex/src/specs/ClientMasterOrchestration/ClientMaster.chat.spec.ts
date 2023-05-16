@@ -221,22 +221,8 @@ test('Multiple Participants Write Multiple Messages', async () => {
     .resolveUnwrap();
 
   const blueMovex = blueClientResource.bind(rid);
-  // Need to wait for the subscriber to be added
-  // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-  // so then even in the tests wouldn't be a issue, but for now this is the easiest
-  await tillNextTick();
-
   const yellowMovex = orangeClientResource.bind(rid);
-  // Need to wait for the subscriber to be added
-  // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-  // so then even in the tests wouldn't be a issue, but for now this is the easiest
-  await tillNextTick();
-
   const orangeMovex = yellowClientResource.bind(rid);
-  // Need to wait for the subscriber to be added
-  // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-  // so then even in the tests wouldn't be a issue, but for now this is the easiest
-  await tillNextTick();
 
   blueMovex.dispatch({
     type: 'addParticipant',
