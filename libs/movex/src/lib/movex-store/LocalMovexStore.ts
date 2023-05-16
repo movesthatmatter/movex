@@ -4,10 +4,12 @@ import {
   toResourceIdentifierStr,
   objectKeys,
   ResourceIdentifierStr,
+  getRandomInt,
 } from 'movex-core-util';
-import { AsyncErr, AsyncOk } from 'ts-async-results';
+import { AsyncErr, AsyncOk, AsyncResultWrapper } from 'ts-async-results';
 import { computeCheckedState } from '../util';
 import { MovexStatePatch, MovexStore, MovexStoreItem } from './MovexStore';
+import { PromiseDelegate } from 'promise-delegate';
 
 export class LocalMovexStore<
   TState,
@@ -15,6 +17,8 @@ export class LocalMovexStore<
 > implements MovexStore<TState, TResourceType>
 {
   private local: Record<string, MovexStoreItem<TState, TResourceType>> = {};
+
+  private locks: Record<string, PromiseDelegate> = {};
 
   constructor(
     initialResources?: Record<ResourceIdentifierStr<TResourceType>, TState>
@@ -33,7 +37,57 @@ export class LocalMovexStore<
     }
   }
 
+  private async createLock(name: string) {
+    const prevLock = this.locks[name];
+
+    // If there is a previous lock, wait for it
+    if (prevLock) {
+      await prevLock.promise.then(() => {
+        // Clean itself up
+        const { name: removed, ...rest } = this.locks;
+
+        // Remove the current delegate from locks
+        this.locks = rest;
+      });
+    }
+
+    const nextLock = new PromiseDelegate();
+
+    this.locks[name] = nextLock;
+
+    // Return the Unlocker Fn
+    return () => nextLock.resolve();
+  }
+
+  private async waitForLock(name: string) {
+    const prevLock = this.locks[name];
+
+    if (prevLock) {
+      await prevLock.promise;
+    }
+
+    return undefined;
+  }
+
   get(rid: ResourceIdentifier<TResourceType>) {
+    return new AsyncResultWrapper(async () => {
+      await this.waitForLock(toResourceIdentifierStr(rid));
+
+      return this.getWithoutLock(rid);
+    });
+  }
+
+  /**
+   * This is a very special function which is only used internally (only inside Update)
+   * b/c the update and get both depend on locks, and they could deadlock each other.
+   *
+   * Whenever an external client needs to retrieve an item, it should simply wait for the lock,
+   * which always gets the most fresh state. This is especially impoortant with concurrent updates.
+   *
+   * @param rid
+   * @returns
+   */
+  private getWithoutLock(rid: ResourceIdentifier<TResourceType>) {
     const item = this.local[toResourceIdentifierStr(rid)];
 
     if (item) {
@@ -64,22 +118,13 @@ export class LocalMovexStore<
     rid: ResourceIdentifier<TResourceType>,
     getNext: ((prev: TState) => TState) | Partial<TState>
   ) {
-    return this.get(rid).map((prev) => {
-      const nextCheckedState = computeCheckedState({
+    return this.update(rid, (prev) => ({
+      ...prev,
+      state: computeCheckedState({
         ...prev.state[0],
         ...(typeof getNext === 'function' ? getNext(prev.state[0]) : getNext),
-      });
-
-      this.local = {
-        ...this.local,
-        [prev.rid]: {
-          ...prev,
-          state: nextCheckedState,
-        },
-      };
-
-      return this.local[prev.rid];
-    });
+      }),
+    }));
   }
 
   update(
@@ -90,43 +135,54 @@ export class LocalMovexStore<
         ) => MovexStoreItem<TState, TResourceType>)
       | Partial<MovexStoreItem<TState, TResourceType>>
   ) {
-    return this.get(rid).map((prev) => {
-      const nextItem = typeof getNext === 'function' ? getNext(prev) : getNext;
+    return new AsyncResultWrapper(async () => {
+      const unlock = await this.createLock(toResourceIdentifierStr(rid));
 
-      this.local = {
-        ...this.local,
-        [prev.rid]: {
-          ...prev,
-          ...nextItem,
+      return (
+        this.getWithoutLock(rid)
+          .map((prev) => {
+            const nextItem =
+              typeof getNext === 'function' ? getNext(prev) : getNext;
 
-          // This cannot be changed!
-          rid: prev.rid,
-        },
-      };
+            this.local = {
+              ...this.local,
+              [prev.rid]: {
+                ...prev,
+                ...nextItem,
 
-      return this.local[prev.rid];
+                // This cannot be changed!
+                rid: prev.rid,
+              },
+            };
+
+            return this.local[prev.rid];
+          })
+          // Unlock it
+          .map((r) => {
+            unlock();
+            return r;
+          })
+          .mapErr((e) => {
+            unlock();
+            return e;
+          })
+      );
     });
   }
 
+  // TODO: This should use the update
   addPrivatePatch(
     rid: ResourceIdentifier<TResourceType>,
     patchGroupKey: string,
     patch: MovexStatePatch<TState>
   ) {
-    return this.get(rid).map((prev) => {
-      this.local = {
-        ...this.local,
-        [prev.rid]: {
-          ...prev,
-          patches: {
-            ...prev.patches,
-            [patchGroupKey]: [...(prev.patches?.[patchGroupKey] || []), patch],
-          },
-        },
-      };
-
-      return this.local[prev.rid];
-    });
+    return this.update(rid, (prev) => ({
+      ...prev,
+      patches: {
+        ...prev.patches,
+        [patchGroupKey]: [...(prev.patches?.[patchGroupKey] || []), patch],
+      },
+    }));
   }
 
   remove(key: string) {

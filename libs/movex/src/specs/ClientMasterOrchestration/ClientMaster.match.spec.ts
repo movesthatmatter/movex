@@ -1,4 +1,4 @@
-import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
+import { delay, tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
 import { computeCheckedState } from '../../lib/util';
 import gameReducer, { initialGameState } from '../resources/gameReducer';
 import gameReducerWithDerivedState, {
@@ -75,11 +75,7 @@ describe('Public Actions', () => {
 
     const whiteMovex = whiteClient.bind(rid);
 
-    await tillNextTick();
-
     const blackMovex = blackClient.bind(rid);
-
-    await tillNextTick();
 
     whiteMovex.dispatch({
       type: 'change',

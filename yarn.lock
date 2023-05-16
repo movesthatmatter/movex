@@ -8216,6 +8216,13 @@ treeverse@^3.0.0:
   resolved "https://registry.yarnpkg.com/treeverse/-/treeverse-3.0.0.tgz#dd82de9eb602115c6ebd77a574aae67003cb48c8"
   integrity sha512-gcANaAnd2QDZFmHFEOF4k7uc1J/6a6z3DJMd/QwEyxLoKGiptJRwid582r7QIsFlFMIZ3SnxfS52S4hm2DHkuQ==
 
+ts-async-results@0.7.9:
+  version "0.7.9"
+  resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.7.9.tgz#8c6c4c6b5b17700bd0c32ee43f75d4f35f12ccd4"
+  integrity sha512-UQ0HnByS7ADscHcDtM0J2mYaIOU+Zt8GR1h7FKqSIfyQl9dCMwW94ZjKuXppJYV8ptR+XygqowbdT3aFJUbWvw==
+  dependencies:
+    ts-results "^3.0.0"
+
 ts-async-results@v0.7:
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/ts-async-results/-/ts-async-results-0.7.0.tgz#b8e0aa250d95901726dfb5a573fff8ca71edbf4f"
