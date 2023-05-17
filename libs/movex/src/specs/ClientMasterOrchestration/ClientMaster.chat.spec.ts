@@ -1,8 +1,7 @@
-import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
+import { tillNextTick } from 'movex-core-util';
 import { computeCheckedState } from '../../lib/util';
 import chatReducer, { initialChatState } from '../resources/chatReducer';
 import { movexClientMasterOrchestrator } from '../util/orchestrator';
-require('console-group').install();
 
 const orchestrator = movexClientMasterOrchestrator();
 
