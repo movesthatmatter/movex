@@ -4,11 +4,16 @@
     "module": "commonjs",
     "outDir": "../../dist/out-tsc",
     "declaration": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "exclude": ["jest.config.ts", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": [
+    "jest.config.ts",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
   "include": [
     "**/*.ts",
-    "../backend/src/lib/resource-action-handler/index.spec.ts"
-, "../movex/src/lib/store/MovexStore.ts"  ]
+  ]
 }
