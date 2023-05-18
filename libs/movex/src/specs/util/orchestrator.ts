@@ -98,7 +98,7 @@ const orchestrateMovex = <
   ];
 
   return {
-    movex: new Movex(new ConnectionToMaster(clientId, emitterOnClient)),
+    movex: new Movex(new ConnectionToMaster(clientId, emitterOnClient as any)),
     emitter: emitterOnClient,
     destroy: () => {
       unsubscribers.forEach(invoke);

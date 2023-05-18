@@ -33,20 +33,6 @@ export interface Emitter<TEventMap extends EventMap> {
     event: E,
     request: Parameters<TEventMap[E]>[0]
   ): Promise<ReturnType<TEventMap[E]>>;
-  // eventMap: TEventMap;
 }
 
 export interface EmitterEventMap extends EventMap {}
-
-// type Events = {
-//   y: (p: { n: number; o: string }) => number;
-//   x: (p: string) => string;
-// };
-
-// declare const emitter: Emitter<Events>;
-
-// emitter.emit('y', { n: 3, o: 's' });
-
-// emitter.on('y', (e) => {
-//   if (e.)
-// })

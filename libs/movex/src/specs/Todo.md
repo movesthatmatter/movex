@@ -6,6 +6,32 @@ tags: []
 
 ## Doing
 
+Wite the SocketIO into MovexIO so it can be used. The archietcture looks like this:
+
+Ideal Version:
+An application (such as a game) uses Movexon the client (React for eg) to deal with it multiplayer state
+
+The application code gets pushed from github to Matter.io or matter cloud, where the movex-backend runs on the server making the connection to movex(-client)
+
+Manual Version:
+
+The code gets pushed manually to matter.io, or run manually by importing matterio-backend and connecting it to movex-server
+
+So next Steps:
+
+On Matterio I load movex. I instantiate MovexMaster with a SocketIO Emitter. I also need to instantiate MovexClient with a SocketIO Emitter, so that means the SocketIO lives here no?
+
+## To Do
+
+## Backlog
+
+## Done
+
+- Done/ Add reconciliation handler or MovexMaster 
+
+- Make the types work between resources and create movex instance on client.
+  - Maybe redefine the Resource Reducer Input, The Resource Handler
+
 May 3rd
 
 Managed to mock Movex and MockEmitter in a way it was origianlly intended – to be jsut a transport layer not to touch business logic. And now I am at the point 
@@ -59,14 +85,3 @@ Next To Do
       - and the nthe outside will map them and forward them=
 
 - Done/ work on $canReconcileState part
-
-## To Do
-
-## Backlog
-
-## Done
-
-- Done/ Add reconciliation handler or MovexMaster 
-
-- Make the types work between resources and create movex instance on client.
-  - Maybe redefine the Resource Reducer Input, The Resource Handler
