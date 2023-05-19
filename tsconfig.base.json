@@ -13,10 +13,7 @@
     "strictNullChecks": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": [
-      "es2017",
-      "dom"
-    ],
+    "lib": ["es2017", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -26,19 +23,10 @@
     "noPropertyAccessFromIndexSignature": true,
     "baseUrl": ".",
     "paths": {
-      "movex-core-util": [
-        "libs/movex-core-util/src/index.ts"
-      ],
-      "movex": [
-        "libs/movex/src/index.ts"
-      ],
-      "movex-server": [
-        "libs/movex-server/src/index.ts"
-      ]
+      "movex": ["libs/movex/src/index.ts"],
+      "movex-core-util": ["libs/movex-core-util/src/index.ts"],
+      "movex-server": ["libs/movex-server/src/index.ts"]
     }
   },
-  "exclude": [
-    "node_modules",
-    "tmp"
-  ]
+  "exclude": ["node_modules", "tmp"]
 }
