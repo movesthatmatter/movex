@@ -42,7 +42,7 @@ export class MovexMasterServer {
       payload: Parameters<
         IOEvents<S, A, TResourceType>['emitActionDispatch']
       >[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['emitActionDispatch']>
       ) => void
     ) => {
@@ -52,7 +52,7 @@ export class MovexMasterServer {
         this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
@@ -100,14 +100,14 @@ export class MovexMasterServer {
             ? nextPrivate.checksum
             : nextPublic.checksum;
 
-          return acknowledge(new Ok(nextChecksum));
+          return acknowledge?.(new Ok(nextChecksum));
         })
-        .mapErr(() => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onGetResourceStateHandler = (
       payload: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['getResourceState']>
       ) => void
     ) => {
@@ -117,18 +117,18 @@ export class MovexMasterServer {
         this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
         .getState(rid, clientConnection.clientId)
-        .map((checkedState) => acknowledge(new Ok(checkedState)))
-        .mapErr((e) => acknowledge(new Err(e)));
+        .map((checkedState) => acknowledge?.(new Ok(checkedState)))
+        .mapErr((e) => acknowledge?.(new Err(e)));
     };
 
     const onCreateResourceHandler = (
       payload: Parameters<IOEvents<S, A, TResourceType>['createResource']>[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['createResource']>
       ) => void
     ) => {
@@ -137,27 +137,27 @@ export class MovexMasterServer {
       const masterResource = this.masterResourcesByType[resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
         .create(resourceType, resourceState)
         .map((r) =>
-          acknowledge(
+          acknowledge?.(
             new Ok({
               rid: r.rid,
               state: r.state,
             })
           )
         )
-        .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onAddResourceSubscriber = (
       payload: Parameters<
         IOEvents<S, A, TResourceType>['addResourceSubscriber']
       >[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['addResourceSubscriber']>
       ) => void
     ) => {
@@ -166,22 +166,22 @@ export class MovexMasterServer {
       const masterResource = this.masterResourcesByType[resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
         .addResourceSubscriber(payload.rid, clientConnection.clientId)
         .map((r) => {
-          acknowledge(Ok.EMPTY);
+          acknowledge?.(Ok.EMPTY);
         })
-        .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onRemoveResourceSubscriber = (
       payload: Parameters<
         IOEvents<S, A, TResourceType>['removeResourceSubscriber']
       >[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['removeResourceSubscriber']>
       ) => void
     ) => {
@@ -190,15 +190,15 @@ export class MovexMasterServer {
       const masterResource = this.masterResourcesByType[resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
         .removeResourceSubscriber(payload.rid, clientConnection.clientId)
         .map(() => {
-          acknowledge(Ok.EMPTY);
+          acknowledge?.(Ok.EMPTY);
         })
-        .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     clientConnection.emitter.on('emitActionDispatch', onEmitActionHandler);

@@ -5,7 +5,6 @@ import {
   MovexClient,
   objectKeys,
   toResourceIdentifierStr,
-  keyInObject,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { CheckedState } from '../core-types';
@@ -16,7 +15,6 @@ import {
   isAction,
   ToCheckedAction,
   CheckedReconciliatoryActions,
-  CheckedAction,
 } from '../tools/action';
 import { MovexReducer } from '../tools/reducer';
 import {

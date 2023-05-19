@@ -11,6 +11,6 @@
     "**/*.test.ts"
   ],
   "include": [
-    "**/*.ts",
+    "**/*.ts", "../movex/src/lib/client/ClientSocketEmitter.ts",
   ]
 }

@@ -21,6 +21,8 @@ So next Steps:
 
 On Matterio I load movex. I instantiate MovexMaster with a SocketIO Emitter. I also need to instantiate MovexClient with a SocketIO Emitter, so that means the SocketIO lives here no?
 
+Add an app sample to e2e the movex-backend (socket-io server Emitter) with the movex-client (socket-io client Emitter) with the whole pipeline working (locally)
+
 ## To Do
 
 ## Backlog

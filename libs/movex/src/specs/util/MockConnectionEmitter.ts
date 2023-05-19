@@ -1,4 +1,4 @@
-import { Emitter } from 'movex-core-util';
+import { EventEmitter } from 'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 import { IOEvents } from '../../lib/io-connection/io-events';
 import { AnyAction } from '../../lib/tools/action';
@@ -9,7 +9,7 @@ export class MockConnectionEmitter<
   TState extends any = any,
   TAction extends AnyAction = AnyAction,
   TResourceType extends string = string
-> implements Emitter<IOEvents<TState, TAction, TResourceType>>
+> implements EventEmitter<IOEvents<TState, TAction, TResourceType>>
 {
   private mainPubsy = new Pubsy<{
     [E in keyof IOEvents<TState, TAction, TResourceType>]: {
