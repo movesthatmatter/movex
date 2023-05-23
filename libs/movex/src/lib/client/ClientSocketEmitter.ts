@@ -33,7 +33,7 @@ export class ClientSocketEmitter<
     };
   }>();
 
-  private socketInstance: Socket;
+  public io: Socket;
 
   private socketConnectionDelegate = new PromiseDelegate<Socket>(true);
 
@@ -53,7 +53,7 @@ export class ClientSocketEmitter<
     this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
 
-    this.socketInstance = io(this.config.url, {
+    const socketConfig = {
       reconnectionDelay: 1000,
       reconnection: true,
       transports: ['websocket'],
@@ -64,8 +64,12 @@ export class ClientSocketEmitter<
         ...(config.clientId ? { clientId: config.clientId } : {}),
         apiKey: this.config.apiKey, // This could change
       },
-      autoConnect: false,
-    });
+      // autoConnect: false,
+    };
+
+    this.io = config.url ? io(this.config.url, socketConfig) : io(socketConfig);
+
+    // this.socketInstance = io(socketConfig);
 
     let unsubscribeOnSocketDisconnnect: Function[] = [];
 
@@ -77,17 +81,23 @@ export class ClientSocketEmitter<
 
     // TODO: This was moved out of the on"connect" since the docs say not to register on msg events there
     //  but outside
-    this.handleClientConnection(this.socketInstance);
+    this.handleClientConnection(this.io);
 
-    this.socketInstance.on('connection', () => {
+    // this.socketInstance.on('connection', (r) => {
+    //   console.log('[ClientSocketEmitter] connected', r);
+    // });
 
+    this.io.on('connect', () => {
+      // console.log('[ClientSocketEmitter] connected 2');
+
+      this.pubsy.publish('socketConnect', {
+        clientId: 'given from here ',
+      });
     });
 
-    this.socketInstance.on('event', () => {
+    // this.socketInstance.on('event', () => {});
 
-    })
-
-    this.socketInstance.on('disconnect', () => {
+    this.io.on('disconnect', () => {
       this.pubsy.publish('socketDisconnect', undefined);
 
       // TODO: add delegate
@@ -106,7 +116,7 @@ export class ClientSocketEmitter<
       this.logger.info('[ClientSdk] Connected Succesfully', payload);
 
       // Resolve the socket promise now!
-      this.socketConnectionDelegate.resolve(this.socketInstance);
+      this.socketConnectionDelegate.resolve(this.io);
 
       this.pubsy.publish('socketConnect', payload);
     };
@@ -158,7 +168,7 @@ export class ClientSocketEmitter<
       };
 
       // socket.on(event, (p) => {
-        
+
       // });
 
       // socket.on(event, updateResourceHandler);

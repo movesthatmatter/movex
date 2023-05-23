@@ -56,7 +56,7 @@ test('Adds Single Participant', async () => {
 test('Single Participant Writes a Message', async () => {
   const participantId = 'blue-client';
 
-  const [chatClientResource] = await orchestrator.orchestrate({
+  const [chatClientResource] = orchestrator.orchestrate({
     clientIds: [participantId],
     reducer: chatReducer,
     resourceType: 'chat',

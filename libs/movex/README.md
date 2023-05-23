@@ -507,8 +507,7 @@ const CounterComponent({rid: Movex.ResourceIdentifier<'counter'>}) {
       </button>
     </div>
   )
-}f
-```
+z```
 
 ## Constraints
 

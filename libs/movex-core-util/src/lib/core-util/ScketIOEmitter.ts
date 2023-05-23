@@ -3,23 +3,24 @@ import {
   UnsubscribeFn,
   WsResponseResultPayload,
 } from 'movex-core-util';
-import { AnyAction } from '../tools/action';
-import { IOEvents } from '../io-connection/io-events';
 import { Err, Ok } from 'ts-results';
-import { Socket } from 'socket.io';
+import { Socket as ServerSocket } from 'socket.io';
+import { Socket as ClientSocket } from 'socket.io-client';
+import { EventMap } from 'typed-emitter';
+import { Pubsy } from 'ts-pubsy';
 
-/**
- * This gets created for each client connection
- */
-export class ServerSocketEmitter<
-  TState extends any = any,
-  TAction extends AnyAction = AnyAction,
-  TResourceType extends string = string
-> implements EventEmitter<IOEvents<TState, TAction, TResourceType>>
+export type SocketIO = ServerSocket | ClientSocket;
+
+export class SocketIOEmitter<TEventMap extends EventMap>
+  implements EventEmitter<TEventMap>
 {
+  private pubsy = new Pubsy<{
+    onReceivedClientId: string;
+  }>();
+
   private logger: typeof console;
   constructor(
-    private socket: Socket,
+    private socket: SocketIO,
     private config: {
       logger?: typeof console;
       waitForResponseMs?: number;
@@ -28,40 +29,50 @@ export class ServerSocketEmitter<
     this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
 
-    console.log('[ServerSocketEmitter] constructing');
+    this.logger.debug('[SocketEmitter] constructing');
+
+    this.socket.onAny((ev, clientId) => {
+      if (ev === '$setClientId' && typeof clientId === 'string') {
+        this.pubsy.publish('onReceivedClientId', clientId);
+      }
+    });
   }
 
-  on<E extends keyof IOEvents<TState, TAction, TResourceType>>(
+  onReceivedClientId(fn: (clientId: string) => void) {
+    return this.pubsy.subscribe('onReceivedClientId', fn);
+  }
+
+  on<E extends keyof TEventMap>(
     event: E,
     listener: (
-      p: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0],
-      ack?: (r: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>) => void
+      p: Parameters<TEventMap[E]>[0],
+      ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
-    console.log('[ServerSocketemitter] on', event);
+    this.logger.debug('[SocketEmitter] on', event);
 
     this.socket.on(event as string, listener);
 
     return this;
   }
 
-  off<E extends keyof IOEvents<TState, TAction, TResourceType>>(
+  off<E extends keyof TEventMap>(
     event: E,
     listener: (
-      p: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0],
-      ack: (r: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>) => void
+      p: Parameters<TEventMap[E]>[0],
+      ack: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
-    this.socket.off(event, listener);
+    this.socket.off(event as string, listener);
 
     return this;
   }
 
-  subscribe<E extends keyof IOEvents<TState, TAction, TResourceType>>(
+  subscribe<E extends keyof TEventMap>(
     event: E,
     listener: (
-      p: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0],
-      ack?: (r: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>) => void
+      p: Parameters<TEventMap[E]>[0],
+      ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): UnsubscribeFn {
     this.on(event, listener);
@@ -71,17 +82,15 @@ export class ServerSocketEmitter<
     };
   }
 
-  emit<E extends keyof IOEvents<TState, TAction, TResourceType>>(
+  emit<E extends keyof TEventMap>(
     event: E,
-    request: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0],
-    acknowledgeCb?: (
-      response: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
-    ) => void
+    request: Parameters<TEventMap[E]>[0],
+    acknowledgeCb?: (response: ReturnType<TEventMap[E]>) => void
   ): boolean {
-    const reqId = `${event}(${String(Math.random()).slice(-3)})`;
+    const reqId = `${event as string}(${String(Math.random()).slice(-3)})`;
 
     this.socket.emit(
-      event,
+      event as string,
       request,
       acknowledgeCb &&
         withTimeout(
@@ -93,11 +102,7 @@ export class ServerSocketEmitter<
                 'Response Ok:',
                 res
               );
-              acknowledgeCb(
-                new Ok(res.val) as ReturnType<
-                  IOEvents<TState, TAction, TResourceType>[E]
-                >
-              );
+              acknowledgeCb(new Ok(res.val) as ReturnType<TEventMap[E]>);
             } else {
               this.logger.warn(
                 '[ServerSocketEmitter]',
@@ -105,11 +110,7 @@ export class ServerSocketEmitter<
                 'Response Err:',
                 res
               );
-              acknowledgeCb(
-                new Err(res.val) as ReturnType<
-                  IOEvents<TState, TAction, TResourceType>[E]
-                >
-              );
+              acknowledgeCb(new Err(res.val) as ReturnType<TEventMap[E]>);
             }
           },
           () => {
@@ -129,18 +130,16 @@ export class ServerSocketEmitter<
     return false;
   }
 
-  emitAndAcknowledge<E extends keyof IOEvents<TState, TAction, TResourceType>>(
+  emitAndAcknowledge<E extends keyof TEventMap>(
     event: E,
-    request: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0]
-  ): Promise<ReturnType<IOEvents<TState, TAction, TResourceType>[E]>> {
+    request: Parameters<TEventMap[E]>[0]
+  ): Promise<ReturnType<TEventMap[E]>> {
     return new Promise(async (resolve, reject) => {
-      const reqId = `${event}(${String(Math.random()).slice(-3)})`;
-      // const connection = await this.socketConnection;
-
+      const reqId = `${event as string}(${String(Math.random()).slice(-3)})`;
       this.logger.info('[ServerSocketEmitter]', reqId, 'Emit:', event, request);
 
       this.socket.emit(
-        event,
+        event as string,
         request,
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {

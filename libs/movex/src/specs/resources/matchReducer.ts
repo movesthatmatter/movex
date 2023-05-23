@@ -41,7 +41,7 @@ export type CompletedMatchState<TGame extends UnknownRecord = UnknownRecord> =
     //  which will somehow get connected in the backend. Hmm, but the other thing that could happen is that the game state simply becomes part of the match reducer. 
     // This is not the best only b/c the Match could be part of Matterio, but otherwise it coudl work. So Match is the comprising type of the match data plus the game. 
     // And the game literally is just the game state. So in this way no knowledge of a Game Id needs to be generated but only the game state itself in some places. Game pretty 
-    // much becomes part of the Match (for now at least). And the Match in this case is the combinatin of the ChallengeState with a Game
+    // much becomes part of the Match (for now at least). And the Match in this case is the combinatin of the ChallengeState with a Game 
   };
 
 export type MatchState<TGame extends UnknownRecord = UnknownRecord> =

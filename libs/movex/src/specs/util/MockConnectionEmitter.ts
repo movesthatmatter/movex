@@ -132,13 +132,13 @@ export class MockConnectionEmitter<
     this.mainPubsy.publish(event, {
       content: payload as any,
       ...(ackCb && {
-        ackCb: (res) => {
-          ackCb(res as any);
+        ackCb: (res: any) => {
+          ackCb(res);
         },
       }),
       // ackId,
       // what ab the ack?
-    });
+    } as any);
   }
 
   emit<E extends keyof IOEvents<TState, TAction, TResourceType>>(

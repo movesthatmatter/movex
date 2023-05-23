@@ -4,11 +4,7 @@ import {
   invoke,
   ResourceIdentifierStr,
 } from 'movex-core-util';
-import {
-  ActionOrActionTupleFromAction,
-  AnyAction,
-  ToPublicAction,
-} from '../tools/action';
+import { ActionOrActionTupleFromAction, AnyAction } from '../tools/action';
 import { GetReducerAction, MovexReducer } from '../tools/reducer';
 import { MovexClientResource } from './MovexClientResource';
 import { ConnectionToMasterResource } from './ConnectionToMasterResource';

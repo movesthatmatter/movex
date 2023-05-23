@@ -29,7 +29,10 @@ export class MovexMasterServer {
   > = {};
 
   constructor(
-    private masterResourcesByType: Record<string, MovexMasterResource<any, any>>
+    private masterResourcesByType: Record<
+      string,
+      MovexMasterResource<any, any>
+    > = {}
   ) {}
 
   // This needs to respond back to the client
@@ -102,7 +105,7 @@ export class MovexMasterServer {
 
           return acknowledge?.(new Ok(nextChecksum));
         })
-        .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onGetResourceStateHandler = (
@@ -201,6 +204,18 @@ export class MovexMasterServer {
         .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
+    const onPingHandler = (
+      _: undefined,
+      acknowledge?: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['ping']>
+      ) => void
+    ) => {
+      clientConnection.emitter.emit('pong', undefined);
+
+      acknowledge?.(new Ok(undefined));
+    };
+
+    clientConnection.emitter.on('ping', onPingHandler);
     clientConnection.emitter.on('emitActionDispatch', onEmitActionHandler);
     clientConnection.emitter.on('getResourceState', onGetResourceStateHandler);
     clientConnection.emitter.on('createResource', onCreateResourceHandler);
@@ -218,8 +233,16 @@ export class MovexMasterServer {
       [clientConnection.clientId]: clientConnection,
     };
 
+    console.log(
+      '[MovexMasterServer] Added Connection Succesfully',
+      this.clientConnectionsByClientId,
+      Object.keys(this.clientConnectionsByClientId).length,
+      'connections'
+    );
+
     // Unsubscribe
     return () => {
+      clientConnection.emitter.off('ping', onPingHandler);
       clientConnection.emitter.off('emitActionDispatch', onEmitActionHandler);
       clientConnection.emitter.off(
         'getResourceState',
@@ -235,6 +258,20 @@ export class MovexMasterServer {
         onRemoveResourceSubscriber
       );
     };
+  }
+
+  removeConnection(clienId: MovexClient['id']) {
+    const { [clienId]: removed, ...restOfConnections } =
+      this.clientConnectionsByClientId;
+
+    this.clientConnectionsByClientId = restOfConnections;
+
+    console.log(
+      '[MovexMasterServer] Removed Connection Succesfully',
+      this.clientConnectionsByClientId,
+      Object.keys(this.clientConnectionsByClientId).length,
+      'connections'
+    );
   }
 }
 
