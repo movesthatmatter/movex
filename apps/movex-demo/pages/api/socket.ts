@@ -2,6 +2,9 @@ import { Server as SocketServer } from 'socket.io';
 import { Master } from 'movex';
 import { SocketIOEmitter } from 'movex-core-util';
 import { IOEvents } from 'libs/movex/src/lib/io-connection/io-events';
+import { LocalMovexStore } from 'libs/movex/src/lib/movex-store';
+import { MovexMasterResource } from 'libs/movex/src/lib/master';
+import chatReducer from '../chat/chat.movex';
 // import { Socket } from 'socket.io-client';
 
 const getClientId = (clientId: string) =>
@@ -18,9 +21,23 @@ const SocketHandler = (req, res) => {
     console.log('Movex is initializing');
     const socketIO = new SocketServer(res.socket.server);
 
+
+    // The Movex Init. TODO: This should live in the movex master library
+
+    // TODO: Could do some sort of scanner for files, but actuall that will live on matterio
+
+    const masterStore = new LocalMovexStore(); // TODO: This can be redis well
+    const chatMasterResource = new MovexMasterResource(chatReducer, masterStore);
+    const resourceType = 'chat'; // This comes from the movex file name chat.movex. Hardcoded for now
+
+    const movexMaster = new Master.MovexMasterServer({
+      [resourceType]: chatMasterResource,
+    });
+
+
     // const io = new Master.ServerSocketEmitter(res.socket.server)
     // res.socket.server.io = io;
-    const movexMaster = new Master.MovexMasterServer();
+    // const movexMaster = new Master.MovexMasterServer(); 
 
     // This could be incorporated in the MovexMasterServer constructor
     //  And wrk with a generalized vesion of on("connect") and on("disconnect")
@@ -39,9 +56,9 @@ const SocketHandler = (req, res) => {
 
       movexMaster.addClientConnection(connection);
 
-      io.onAny((e, x) => {
-        console.log('[Next Socket] onAny', e, x);
-      });
+      // io.onAny((e, x) => {
+      //   console.log('[Next Socket] onAny', e, x);
+      // });
 
       io.on('disconnect', () => {
         console.log('disconnecting', clientId);

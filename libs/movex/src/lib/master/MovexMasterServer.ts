@@ -137,6 +137,8 @@ export class MovexMasterServer {
     ) => {
       const { resourceState, resourceType } = payload;
 
+      console.log('[MovexMasterServer] onCreateResourceHandler', payload, acknowledge)
+
       const masterResource = this.masterResourcesByType[resourceType];
 
       if (!masterResource) {

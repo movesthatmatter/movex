@@ -49,7 +49,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
       ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
-    this.logger.debug('[SocketEmitter] on', event);
+    this.logger.debug('[SocketEmitter] subscribed to:', event);
 
     this.socket.on(event as string, listener);
 
@@ -60,7 +60,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
     event: E,
     listener: (
       p: Parameters<TEventMap[E]>[0],
-      ack: (r: ReturnType<TEventMap[E]>) => void
+      ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
     this.socket.off(event as string, listener);
@@ -143,6 +143,13 @@ export class SocketIOEmitter<TEventMap extends EventMap>
         request,
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {
+            // console.log(
+            //   '[SoketIOEmitter] on ack for event',
+            //   event,
+            //   request,
+            //   res
+            // );
+
             if (res.ok) {
               this.logger.info(
                 '[ServerSocketEmitter]',

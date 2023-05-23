@@ -28,6 +28,10 @@ export class Movex {
     // this.logger = config.logger || console;
   }
 
+  getClientId() {
+    return this.connectionToMaster.clientId;
+  }
+
   register<S, A extends AnyAction, TResourceType extends string>(
     resourceType: TResourceType,
     reducer: MovexReducer<S, A>

@@ -16,10 +16,10 @@ const useMovexWithNext = () => {
   return movex;
 };
 
-const VotingGame: React.FC<Props> = () => {
+const ChatSystem: React.FC<Props> = () => {
   const movex = useMovexWithNext();
 
   return <>{movex ? <ChatBox movex={movex} /> : <>Initializing</>}</>;
 };
 
-export default VotingGame;
+export default ChatSystem;
