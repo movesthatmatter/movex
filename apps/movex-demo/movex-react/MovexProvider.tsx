@@ -9,6 +9,7 @@ import { BaseMovexDefinedResourcesMap, MovexConfig } from './types';
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinedResourcesMap> =
   React.PropsWithChildren<{
     movexConfig: MovexConfig<TMovexConfigResourcesMap>;
+    url: string;
   }>;
 
 export const MovexProvider: React.FC<Props<{}>> = (props) => {
@@ -23,23 +24,35 @@ export const MovexProvider: React.FC<Props<{}>> = (props) => {
     const clientId = window.localStorage.getItem('movexCliendId') || undefined;
 
     invoke(async () => {
+      const url = `http://${props.url}`;
       // TODO: This doesn't belong here. It's a next thing so should be in a next socket provider or smtg
-      await fetch('/api/socket');
+      const res = await fetch(url);
 
-      initMovex((movex) => {
-        const clientId = movex.getClientId();
+      console.log('fetch ok?', url, res.ok);
 
-        setContextState({
-          connected: true,
-          clientId, // TODO: Do I really need this?
-          movex,
-          movexConfig: props.movexConfig,
-        });
+      initMovex(
+        {
+          clientId,
+          url: props.url,
+          apiKey: '',
+        },
+        (movex) => {
+          const clientId = movex.getClientId();
 
-        window.localStorage.setItem('movexCliendId', clientId);
-      }, clientId);
+          setContextState({
+            connected: true,
+            clientId, // TODO: Do I really need this?
+            movex,
+            movexConfig: props.movexConfig,
+          });
+
+          window.localStorage.setItem('movexCliendId', clientId);
+        }
+      );
     });
-  }, []);
+
+    // TODO: Maye add destroyer?
+  }, [props.url]);
 
   return (
     <MovexContext.Provider value={contextState}>

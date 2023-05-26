@@ -6,7 +6,7 @@ import movexConfig from '../movex.config';
 
 function CustomApp({ Component, pageProps }: AppProps) {
   return (
-    <MovexProvider movexConfig={movexConfig}>
+    <MovexProvider movexConfig={movexConfig} url="localhost:3333">
       <Head>
         <title>Welcome to movex-demo!</title>
       </Head>

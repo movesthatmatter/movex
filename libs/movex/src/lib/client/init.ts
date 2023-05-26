@@ -7,20 +7,26 @@ import { IOEvents } from '../io-connection/io-events';
 // TODO: The ClientId ideally isn't given from here bu retrieved somehow else. hmm
 // Or no?
 export const initMovex = (
-  onReady: (movex: Movex) => void,
-  clientId?: string
-  // config: {
-  //   url: string;
-  //   apiKey: string;
-  // }
+  config: {
+    url: string;
+    apiKey: string;
+    clientId?: string;
+  },
+  onReady: (movex: Movex) => void
 ) => {
   // TODO: Here can check if the clientId already exists locally
   //  and send it over in the handshake for the server to determine what to do with it
   //  (i.e. if it's still valid and return it or create a new one)
-  const socket = io({
-    ...(clientId && {
+  const socket = io(`ws://${config.url}`, {
+    reconnectionDelay: 1000,
+    reconnection: true,
+    transports: ['websocket'],
+    agent: false,
+    upgrade: false,
+    rejectUnauthorized: false,
+    ...(config.clientId && {
       query: {
-        clientId,
+        clientId: config.clientId,
       },
     }),
   });
