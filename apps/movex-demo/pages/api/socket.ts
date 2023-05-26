@@ -1,10 +1,11 @@
 import { Server as SocketServer } from 'socket.io';
 import { Master } from 'movex';
-import { SocketIOEmitter } from 'movex-core-util';
+import { SocketIOEmitter, objectKeys } from 'movex-core-util';
 import { IOEvents } from 'libs/movex/src/lib/io-connection/io-events';
 import { LocalMovexStore } from 'libs/movex/src/lib/movex-store';
 import { MovexMasterResource } from 'libs/movex/src/lib/master';
-import chatReducer from '../chat/chat.movex';
+
+import movexConfig from '../../movex.config';
 // import { Socket } from 'socket.io-client';
 
 const getClientId = (clientId: string) =>
@@ -14,6 +15,14 @@ const getClientId = (clientId: string) =>
 
 const SocketHandler = (req, res) => {
   // console.log('req', req.query);
+  // const { resourceType } = res.query;
+
+  // if (!resourceType) {
+  //   console.error('The Resource Type not given in the query');
+
+  //   return;
+  // }
+
   if (res.socket.server.movex) {
     console.log('Movex is already running');
   } else {
@@ -21,23 +30,29 @@ const SocketHandler = (req, res) => {
     console.log('Movex is initializing');
     const socketIO = new SocketServer(res.socket.server);
 
-
     // The Movex Init. TODO: This should live in the movex master library
 
     // TODO: Could do some sort of scanner for files, but actuall that will live on matterio
 
     const masterStore = new LocalMovexStore(); // TODO: This can be redis well
-    const chatMasterResource = new MovexMasterResource(chatReducer, masterStore);
-    const resourceType = 'chat'; // This comes from the movex file name chat.movex. Hardcoded for now
 
-    const movexMaster = new Master.MovexMasterServer({
-      [resourceType]: chatMasterResource,
-    });
+    const mapOfResouceReducers = objectKeys(movexConfig.resources).reduce(
+      (accum, nextResoureType) => {
+        const nextReducer = movexConfig.resources[nextResoureType];
 
+        return {
+          ...accum,
+          [nextResoureType]: new MovexMasterResource(nextReducer, masterStore),
+        };
+      },
+      {} as Record<string, MovexMasterResource<any, any>>
+    );
+
+    const movexMaster = new Master.MovexMasterServer(mapOfResouceReducers);
 
     // const io = new Master.ServerSocketEmitter(res.socket.server)
     // res.socket.server.io = io;
-    // const movexMaster = new Master.MovexMasterServer(); 
+    // const movexMaster = new Master.MovexMasterServer();
 
     // This could be incorporated in the MovexMasterServer constructor
     //  And wrk with a generalized vesion of on("connect") and on("disconnect")
@@ -48,7 +63,7 @@ const SocketHandler = (req, res) => {
 
       const connection = new Master.ConnectionToClient(
         clientId,
-        new SocketIOEmitter<IOEvents>(io),
+        new SocketIOEmitter<IOEvents>(io)
         // new Master.ServerSocketEmitter(io)
       );
 

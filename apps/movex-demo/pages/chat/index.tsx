@@ -1,25 +1,32 @@
-import { useEffect, useState } from 'react';
-import { ChatBox } from './components/ChatBox';
-import { Movex, initMovex } from 'libs/movex/src/lib/client';
+import movexConfig from 'apps/movex-demo/movex.config';
+import { useMovexResource } from 'apps/movex-demo/movex-react';
+import { initialChatState } from './chat.movex';
+import { toResourceIdentifierObj } from 'movex-core-util';
 
 type Props = {};
 
-const useMovexWithNext = () => {
-  const [movex, setMovex] = useState<Movex>();
+const ChatLobby: React.FC<Props> = () => {
+  const chatResource = useMovexResource(movexConfig, 'chat');
 
-  useEffect(() => {
-    fetch('/api/socket').then(() => {
-      initMovex(setMovex);
-    });
-  }, []);
+  if (!chatResource) {
+    return null;
+  }
 
-  return movex;
+  return (
+    <div>
+      <button
+        onClick={() => {
+          chatResource.create(initialChatState).map((item) => {
+            // const id = toResourceIdentifierObj(item.rid).resourceId;
+            // console.log('created chat id', item.id);
+            window.location.href = window.location.href + `/${item.id}`;
+          });
+        }}
+      >
+        Create Chat
+      </button>
+    </div>
+  );
 };
 
-const ChatSystem: React.FC<Props> = () => {
-  const movex = useMovexWithNext();
-
-  return <>{movex ? <ChatBox movex={movex} /> : <>Initializing</>}</>;
-};
-
-export default ChatSystem;
+export default ChatLobby;

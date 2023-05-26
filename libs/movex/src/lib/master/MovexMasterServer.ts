@@ -32,7 +32,7 @@ export class MovexMasterServer {
     private masterResourcesByType: Record<
       string,
       MovexMasterResource<any, any>
-    > = {}
+    >
   ) {}
 
   // This needs to respond back to the client

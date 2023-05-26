@@ -141,6 +141,8 @@ export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
 export type UnidentifiableModel<T extends {}> = Omit<T, 'id'>;
 
+// TODO: Remove all of these if not used
+
 export type ResourceShape<
   TResourceType extends PropertyKey,
   TData extends UnknownRecord
@@ -350,15 +352,11 @@ export type IOPayloadResultOkType<T extends IOPayloadResult<any, any>> =
 export type IOPayloadResultErrType<T extends IOPayloadResult<any, any>> =
   T extends IOPayloadResult<any, infer U> ? U : never;
 
-export type GetIOPayloadOKTypeFrom<R extends IOPayloadResult<any, any>> = Extract<
-  R,
-  { ok: true }
->['val'];
+export type GetIOPayloadOKTypeFrom<R extends IOPayloadResult<any, any>> =
+  Extract<R, { ok: true }>['val'];
 
-export type GetIOPayloadErrTypeFrom<R extends IOPayloadResult<any, any>> = Extract<
-  R,
-  { ok: false }
->['val'];
+export type GetIOPayloadErrTypeFrom<R extends IOPayloadResult<any, any>> =
+  Extract<R, { ok: false }>['val'];
 
 // const xErr: IOPayloadResultErr<'asda'> = {
 //   ok: false,

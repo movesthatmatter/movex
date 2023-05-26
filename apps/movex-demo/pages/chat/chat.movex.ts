@@ -5,13 +5,13 @@ type ParticipantId = MovexClient['id'];
 type Color = 'yellow' | 'orange' | 'green' | 'blue';
 
 type ChatMsg = {
-  id: string;
-  at: number;
+  // id: string;
+  // at: number;
   content: string;
   participantId: ParticipantId;
 };
 
-type ChatState = {
+export type ChatState = {
   participants: {
     [id in ParticipantId]: {
       id: ParticipantId;
@@ -57,12 +57,12 @@ export type ChatActions =
       {
         participantId: ParticipantId;
         msg: string;
-        atTimestamp: number;
-        id: string;
+        // atTimestamp: number;
+        // id: string;
       }
     >;
 
-const chatReducer = (
+export const chatReducer = (
   state = initialChatState as ChatState,
   action: ChatActions
 ): ChatState => {
@@ -102,8 +102,8 @@ const chatReducer = (
       messages: [
         ...state.messages,
         {
-          id: action.payload.id, // This could be improved if needed. Can come from outside etc...
-          at: action.payload.atTimestamp,
+          // id: action.payload.id, // This could be improved if needed. Can come from outside etc...
+          // at: action.payload.atTimestamp,
           content: action.payload.msg,
           participantId: action.payload.participantId,
         },
@@ -114,4 +114,4 @@ const chatReducer = (
   return state;
 };
 
-export default chatReducer;
+// export default chatReducer;

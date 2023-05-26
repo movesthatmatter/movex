@@ -25,7 +25,7 @@ import { PromiseDelegate } from 'promise-delegate';
 /**
  * This is the MovexResource running on the Client
  */
-export class MovexClientResource<
+export class MovexResourceObservable<
   TState = any,
   TAction extends AnyAction = AnyAction
 > implements IObservable<CheckedState<TState>>

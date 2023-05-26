@@ -20,13 +20,11 @@ export const initMovex = (
 
   const emitter = new SocketIOEmitter<IOEvents>(socket);
 
-  socket.on('connect', () => {
-    console.log('connected', socket);
-  });
+  // socket.on('connect', () => {
+  //   console.log('connected', socket);
+  // });
 
   emitter.onReceivedClientId((clientId) => {
-    console.log('received client id', clientId);
-
     onReady(new Movex(new ConnectionToMaster(clientId, emitter)));
   });
 };
