@@ -11,10 +11,6 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinedResourcesMap> =
     movexConfig: MovexConfig<TMovexConfigResourcesMap>;
   }>;
 
-// type State = {
-//   contextState: MovexContextProps<>;
-// };
-
 export const MovexProvider: React.FC<Props<{}>> = (props) => {
   const [contextState, setContextState] = useState<
     MovexContextProps<typeof props['movexConfig']['resources']>
@@ -24,18 +20,24 @@ export const MovexProvider: React.FC<Props<{}>> = (props) => {
   });
 
   useEffect(() => {
+    const clientId = window.localStorage.getItem('movexCliendId') || undefined;
+
     invoke(async () => {
       // TODO: This doesn't belong here. It's a next thing so should be in a next socket provider or smtg
       await fetch('/api/socket');
 
       initMovex((movex) => {
+        const clientId = movex.getClientId();
+
         setContextState({
           connected: true,
-          clientId: movex.getClientId(), // TODO: Do I really need this?
+          clientId, // TODO: Do I really need this?
           movex,
           movexConfig: props.movexConfig,
         });
-      });
+
+        window.localStorage.setItem('movexCliendId', clientId);
+      }, clientId);
     });
   }, []);
 
@@ -45,15 +47,3 @@ export const MovexProvider: React.FC<Props<{}>> = (props) => {
     </MovexContext.Provider>
   );
 };
-
-// export class MovexProviderClass<
-//   TMovexConfigReducersMap extends BaseMovexDefinedReducersMap
-// > extends React.Component<Props<TMovexConfigReducersMap>, State> {
-//   override render() {
-//     return (
-//       <MovexContext.Provider value={this.state.contextState}>
-//         {this.props.children}
-//       </MovexContext.Provider>
-//     );
-//   }
-// }

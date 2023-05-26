@@ -1,12 +1,12 @@
 import { Action } from 'movex';
 import { MovexClient } from 'movex-core-util';
 
-type ParticipantId = MovexClient['id'];
-type Color = 'yellow' | 'orange' | 'green' | 'blue';
+export type ParticipantId = MovexClient['id'];
+export type Color = string;
 
 type ChatMsg = {
   // id: string;
-  // at: number;
+  at: number;
   content: string;
   participantId: ParticipantId;
 };
@@ -24,7 +24,7 @@ export type ChatState = {
         }
       | {
           active: true;
-          leftAt?: undefined;
+          leftAt?: null; // Limitation with undefined. Some jsons remove it altogether which could create mismatches. Use null
         }
     );
   };
@@ -57,7 +57,7 @@ export type ChatActions =
       {
         participantId: ParticipantId;
         msg: string;
-        // atTimestamp: number;
+        atTimestamp: number;
         // id: string;
       }
     >;
@@ -76,7 +76,7 @@ export const chatReducer = (
           joinedAt: action.payload.atTimestamp,
           color: action.payload.color,
           active: true,
-          leftAt: undefined,
+          leftAt: null,
         },
       },
     };
@@ -103,7 +103,7 @@ export const chatReducer = (
         ...state.messages,
         {
           // id: action.payload.id, // This could be improved if needed. Can come from outside etc...
-          // at: action.payload.atTimestamp,
+          at: action.payload.atTimestamp,
           content: action.payload.msg,
           participantId: action.payload.participantId,
         },

@@ -31,6 +31,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
 
     this.logger.debug('[SocketEmitter] constructing');
 
+    // This might need to be moved from here into the master connection or somewhere client specific!
     this.socket.onAny((ev, clientId) => {
       if (ev === '$setClientId' && typeof clientId === 'string') {
         this.pubsy.publish('onReceivedClientId', clientId);

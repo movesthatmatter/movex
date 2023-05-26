@@ -14,6 +14,8 @@ export const useMovex = () => {
   return useContext(MovexContext);
 };
 
+export const useMovexClientId = () => useMovex().clientId;
+
 export type MovexResourceFromConfig<
   TResourcesMap extends BaseMovexDefinedResourcesMap,
   TResourceType extends keyof TResourcesMap,
@@ -77,15 +79,36 @@ export const useMovexBoundResource = <
 
     const givenBoundResource = resource.bind(ridAsStr);
 
+    const unsubscribe = givenBoundResource.onUpdated((next) => {
+      setBoundResource(
+        (prev) =>
+          ({
+            ...prev,
+            state: next[0],
+          } as MovexBoundResourceFromConfig<
+            typeof movexConfig['resources'],
+            TResourceType
+          >)
+      );
+
+      console.log('State Updated', next[0]);
+    });
+
+    // console.log('givenBoundResource', givenBoundResource.onUpdated);
+
     // TODO: Enters a loop here!
     setBoundResource({
       dispatch: givenBoundResource.dispatch.bind(givenBoundResource),
       dispatchPrivate:
         givenBoundResource.dispatchPrivate.bind(givenBoundResource),
       destroy: givenBoundResource.destroy.bind(givenBoundResource),
-      getState: givenBoundResource.getState.bind(givenBoundResource),
-      state: givenBoundResource.state,
+      getState: givenBoundResource.getUncheckedState.bind(givenBoundResource),
+      state: givenBoundResource.getUncheckedState(),
     } as MovexBoundResourceFromConfig<typeof movexConfig['resources'], TResourceType>);
+
+    return () => {
+      unsubscribe();
+    };
   }, [resource, ridAsStr]);
 
   return boundResource;

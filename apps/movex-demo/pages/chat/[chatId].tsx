@@ -1,16 +1,12 @@
 import {
-  MovexProvider,
   useMovexBoundResource,
-  useMovexResource,
+  useMovexClientId,
 } from 'apps/movex-demo/movex-react';
 import movexConfig from 'apps/movex-demo/movex.config';
 import { useRouter } from 'next/router';
 import { ChatPage } from './components/ChatPage';
 import { useEffect, useMemo } from 'react';
-import {
-  toResourceIdentifierObj,
-  toResourceIdentifierStr,
-} from 'movex-core-util';
+import { toResourceIdentifierObj } from 'movex-core-util';
 
 type Props = {};
 
@@ -28,12 +24,15 @@ const ChatSystem: React.FC<Props> = () => {
 
   // TODO: Validate the rid is correct inside useMovexBoundResouce
   const boundResource = useMovexBoundResource(movexConfig, rid);
+  const userId = useMovexClientId();
 
-  if (!boundResource) {
+  if (!(boundResource && userId)) {
     return null;
   }
 
-  return <ChatPage boundChatResource={boundResource} />;
+  return (
+    <ChatPage boundChatResource={boundResource} userId={userId} />
+  );
 };
 
 export default ChatSystem;

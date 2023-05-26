@@ -15,7 +15,7 @@ import {
 import { ConnectionToMasterResource } from './ConnectionToMasterResource';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import { IOConnection } from '../io-connection/io-connection';
-import { MovexBoundResource } from './MovexBoundResource';
+import * as deepObject from 'deep-object-diff';
 
 export class MovexResource<
   S,
@@ -85,20 +85,22 @@ export class MovexResource<
 
     // Done/TODO: Needs a way to add a resource subscriber
     this.connectionToMasterResource.addResourceSubscriber(rid).map(() => {
+      console.log('add resoure sub', this.connectionToMaster.clientId);
       // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
       this.connectionToMasterResource.get(rid).map((s) => {
+        console.log('get', s);
         resourceObservable.sync(s);
       });
     });
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
-      resourceObservable.onDispatched(({ action, next: nextCheckedState }) => {
-        const [, nextChecksum] = nextCheckedState;
+      resourceObservable.onDispatched(({ action, next: localCheckedState }) => {
+        const [, localChecksum] = localCheckedState;
 
         this.connectionToMasterResource
           .emitAction(rid, action)
           .map(async (masterChecksum) => {
-            if (masterChecksum === nextChecksum) {
+            if (masterChecksum === localChecksum) {
               return;
             }
 
@@ -120,11 +122,21 @@ export class MovexResource<
               .get(rid)
               .resolveUnwrap();
 
-            console.log('Master State:', JSON.stringify(masterState, null, 2));
+            console.log(
+              'Master State:',
+              JSON.stringify(masterState[0], null, 2),
+              masterState[1]
+            );
             console.log(
               'Local State:',
-              JSON.stringify(nextCheckedState, null, 2)
+              JSON.stringify(localCheckedState[0], null, 2),
+              localCheckedState[1]
             );
+            console.log(
+              'Diff',
+              deepObject.detailedDiff(masterState, localCheckedState)
+            );
+
             console.groupEnd();
           });
       }),
@@ -153,7 +165,8 @@ export class MovexResource<
       () => this.connectionToMasterResource.destroy(),
     ];
 
-    return new MovexBoundResource(resourceObservable);
+    // return new MovexBoundResource(resourceObservable);
+    return resourceObservable;
   }
 
   // Call to unsubscribe

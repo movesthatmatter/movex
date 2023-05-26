@@ -47,7 +47,7 @@ describe('Public Actions', () => {
 
     await tillNextTick();
 
-    const actual = await movex.get();
+    const actual = movex.getUncheckedState();
 
     const expected = computeCheckedState({
       ...initialGameState,
