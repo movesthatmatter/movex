@@ -44,4 +44,4 @@ COPY --from=builder --chown=node:node /home/node/yarn.lock ./
 COPY --from=builder --chown=node:node /home/node/node_modules/ ./node_modules/
 COPY --from=builder --chown=node:node /home/node/dist/ ./dist/
 
-CMD ["node", "dist/apps/api/main.js"]
+CMD ["node", "dist/apps/movex-demo-api/main.js"]
