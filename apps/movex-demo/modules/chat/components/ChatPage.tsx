@@ -1,11 +1,7 @@
 import movexConfig from 'apps/movex-demo/movex.config';
-import { getRandomInt, objectKeys } from 'movex-core-util';
-import {
-  MovexBoundResourceFromConfig,
-  useMovexClientId,
-} from 'apps/movex-demo/movex-react';
+import { objectKeys } from 'movex-core-util';
+import { MovexBoundResourceFromConfig } from 'apps/movex-demo/movex-react';
 import { useEffect, useState } from 'react';
-import { Color } from '../chat.movex';
 import randomColor from 'randomcolor';
 
 type Props = {

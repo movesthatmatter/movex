@@ -1,7 +1,6 @@
 import movexConfig from 'apps/movex-demo/movex.config';
 import { useMovexResource } from 'apps/movex-demo/movex-react';
-import { initialChatState } from './chat.movex';
-import { toResourceIdentifierObj } from 'movex-core-util';
+import { initialChatState } from '../../modules/chat/chat.movex';
 
 type Props = {};
 
