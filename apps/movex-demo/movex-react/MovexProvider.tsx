@@ -9,7 +9,7 @@ import { BaseMovexDefinedResourcesMap, MovexConfig } from './types';
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinedResourcesMap> =
   React.PropsWithChildren<{
     movexConfig: MovexConfig<TMovexConfigResourcesMap>;
-    url: string;
+    socketUrl: string;
   }>;
 
 export const MovexProvider: React.FC<Props<{}>> = (props) => {
@@ -24,16 +24,16 @@ export const MovexProvider: React.FC<Props<{}>> = (props) => {
     const clientId = window.localStorage.getItem('movexCliendId') || undefined;
 
     invoke(async () => {
-      const url = `http://${props.url}`;
+      // const url = `http://${props.url}`;
       // TODO: This doesn't belong here. It's a next thing so should be in a next socket provider or smtg
-      const res = await fetch(url);
+      // const res = await fetch(url);
 
-      console.log('fetch ok?', url, res.ok);
+      // console.log('fetch ok?', url, res.ok);
 
       initMovex(
         {
           clientId,
-          url: props.url,
+          url: props.socketUrl,
           apiKey: '',
         },
         (movex) => {
@@ -52,7 +52,7 @@ export const MovexProvider: React.FC<Props<{}>> = (props) => {
     });
 
     // TODO: Maye add destroyer?
-  }, [props.url]);
+  }, [props.socketUrl]);
 
   return (
     <MovexContext.Provider value={contextState}>

@@ -3,10 +3,12 @@ import Head from 'next/head';
 import './styles.css';
 import { MovexProvider } from '../movex-react';
 import movexConfig from '../movex.config';
+import { AppConfig } from '../app.config';
+
 
 function CustomApp({ Component, pageProps }: AppProps) {
   return (
-    <MovexProvider movexConfig={movexConfig} url="localhost:3333">
+    <MovexProvider movexConfig={movexConfig} socketUrl={AppConfig.API_WSS_ENDPOINT}>
       <Head>
         <title>Welcome to movex-demo!</title>
       </Head>

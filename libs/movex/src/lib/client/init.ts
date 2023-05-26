@@ -17,7 +17,7 @@ export const initMovex = (
   // TODO: Here can check if the clientId already exists locally
   //  and send it over in the handshake for the server to determine what to do with it
   //  (i.e. if it's still valid and return it or create a new one)
-  const socket = io(`ws://${config.url}`, {
+  const socket = io(config.url, {
     reconnectionDelay: 1000,
     reconnection: true,
     transports: ['websocket'],
