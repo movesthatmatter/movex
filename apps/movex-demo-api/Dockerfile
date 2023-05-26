@@ -1,47 +1,59 @@
-# PRODUCTION DOCKERFILE
-# ---------------------
-# This Dockerfile allows to build a Docker image of the NestJS application
-# and based on a NodeJS 16 image. The multi-stage mechanism allows to build
-# the application in a "builder" stage and then create a lightweight production
-# image containing the required dependencies and the JS build files.
-# 
-# Dockerfile best practices
-# https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
-# Dockerized NodeJS best practices
-# https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md
-# https://www.bretfisher.com/node-docker-good-defaults/
-# http://goldbergyoni.com/checklist-best-practice-of-node-js-in-production/
+FROM node:18-alpine AS base
 
-FROM node:16-alpine as builder
+# Install dependencies only when needed
+FROM base AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
 
-ENV NODE_ENV build
+# Install dependencies based on the preferred package manager
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
 
-# USER node
-WORKDIR /home/node
 
-COPY package*.json ./
-COPY yarn.lock ./
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-# Install global deps
-RUN apk add g++ make py3-pip git yarn
+# Next.js collects completely anonymous telemetry data about general usage.
+# Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line in case you want to disable telemetry during the build.
+# ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN rm -rf node_modules && yarn install --frozen-lockfile
+RUN yarn build
 
-COPY --chown=node:node . .
-RUN yarn build-maha-api
+# If using npm comment out above and use below instead
+# RUN npm run build
 
-# ---
-
-FROM node:16-alpine
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
 
 ENV NODE_ENV production
+# Uncomment the following line in case you want to disable telemetry during runtime.
+# ENV NEXT_TELEMETRY_DISABLED 1
 
-# USER node
-WORKDIR /home/node
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder --chown=node:node /home/node/package*.json ./
-COPY --from=builder --chown=node:node /home/node/yarn.lock ./
-COPY --from=builder --chown=node:node /home/node/node_modules/ ./node_modules/
-COPY --from=builder --chown=node:node /home/node/dist/ ./dist/
+COPY --from=builder /app/public ./public
 
-CMD ["node", "dist/apps/movex-demo-api/main.js"]
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+
+CMD ["node", "server.js"]
