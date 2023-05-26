@@ -87,6 +87,8 @@ const SocketHandler = (req, res) => {
       socket: socketIO,
     };
   }
+
+  res.json('ok');
   res.end();
 };
 
