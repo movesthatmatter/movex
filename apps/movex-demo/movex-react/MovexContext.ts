@@ -1,9 +1,12 @@
 import { Movex } from 'movex';
 import { createContext } from 'react';
-import { BaseMovexDefinedResourcesMap, MovexConfig } from './types';
+import {
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+} from 'movex';
 
 export type MovexContextProps<
-  TResourcesMap extends BaseMovexDefinedResourcesMap
+  TResourcesMap extends BaseMovexDefinitionResourcesMap
 > =
   | {
       connected: false;
@@ -15,11 +18,11 @@ export type MovexContextProps<
       connected: true;
       clientId: string;
       movex: Movex;
-      movexConfig: MovexConfig<TResourcesMap>;
+      movexDefinition: MovexDefinition<TResourcesMap>;
     };
 
 export const MovexContext = createContext<
-  MovexContextProps<BaseMovexDefinedResourcesMap>
+  MovexContextProps<BaseMovexDefinitionResourcesMap>
 >({
   movex: undefined,
   connected: false,

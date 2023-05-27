@@ -4,17 +4,20 @@ import React, { useEffect, useState } from 'react';
 import { initMovex } from 'libs/movex/src/lib/client';
 import { MovexContextProps, MovexContext } from './MovexContext';
 import { invoke } from 'movex-core-util';
-import { BaseMovexDefinedResourcesMap, MovexConfig } from './types';
+import {
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+} from 'movex';
 
-type Props<TMovexConfigResourcesMap extends BaseMovexDefinedResourcesMap> =
+type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
-    movexConfig: MovexConfig<TMovexConfigResourcesMap>;
+    movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
     socketUrl: string;
   }>;
 
 export const MovexProvider: React.FC<Props<{}>> = (props) => {
   const [contextState, setContextState] = useState<
-    MovexContextProps<typeof props['movexConfig']['resources']>
+    MovexContextProps<typeof props['movexDefinition']['resources']>
   >({
     connected: false,
     clientId: undefined,
@@ -43,7 +46,7 @@ export const MovexProvider: React.FC<Props<{}>> = (props) => {
             connected: true,
             clientId, // TODO: Do I really need this?
             movex,
-            movexConfig: props.movexConfig,
+            movexDefinition: props.movexDefinition,
           });
 
           window.localStorage.setItem('movexCliendId', clientId);

@@ -1,6 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { MovexContext } from './MovexContext';
-import { BaseMovexDefinedResourcesMap, MovexConfig } from './types';
 import { GetReducerAction, GetReducerState } from 'movex';
 import { MovexResource } from 'libs/movex/src/lib/client/MovexResource';
 import { MovexBoundResource } from 'libs/movex/src/lib/client/MovexBoundResource';
@@ -9,6 +8,7 @@ import {
   toResourceIdentifierObj,
   toResourceIdentifierStr,
 } from 'movex-core-util';
+import { BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
 
 export const useMovex = () => {
   return useContext(MovexContext);
@@ -17,21 +17,21 @@ export const useMovex = () => {
 export const useMovexClientId = () => useMovex().clientId;
 
 export type MovexResourceFromConfig<
-  TResourcesMap extends BaseMovexDefinedResourcesMap,
+  TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends keyof TResourcesMap,
-  Reducer extends MovexConfig<TResourcesMap>['resources'][TResourceType] = MovexConfig<TResourcesMap>['resources'][TResourceType]
+  Reducer extends MovexDefinition<TResourcesMap>['resources'][TResourceType] = MovexDefinition<TResourcesMap>['resources'][TResourceType]
 > = MovexResource<GetReducerState<Reducer>, GetReducerAction<Reducer>, string>;
 
 export type MovexBoundResourceFromConfig<
-  TResourcesMap extends BaseMovexDefinedResourcesMap,
+  TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends keyof TResourcesMap,
-  Reducer extends MovexConfig<TResourcesMap>['resources'][TResourceType] = MovexConfig<TResourcesMap>['resources'][TResourceType]
+  Reducer extends MovexDefinition<TResourcesMap>['resources'][TResourceType] = MovexDefinition<TResourcesMap>['resources'][TResourceType]
 > = MovexBoundResource<GetReducerState<Reducer>, GetReducerAction<Reducer>>;
 
 export const useMovexResource = <
-  TResourcesMap extends BaseMovexDefinedResourcesMap
+  TResourcesMap extends BaseMovexDefinitionResourcesMap
 >(
-  movexConfig: MovexConfig<TResourcesMap>,
+  movexDefinition: MovexDefinition<TResourcesMap>,
   resourceType: keyof TResourcesMap
 ) => {
   const m = useMovex();
@@ -41,7 +41,7 @@ export const useMovexResource = <
 
   useEffect(() => {
     if (m.connected) {
-      const reducer = movexConfig.resources[resourceType]; // TODO: Why the any?
+      const reducer = movexDefinition.resources[resourceType]; // TODO: Why the any?
 
       setResource(m.movex.register(resourceType as string, reducer));
     }
@@ -51,10 +51,10 @@ export const useMovexResource = <
 };
 
 export const useMovexBoundResource = <
-  TResourcesMap extends BaseMovexDefinedResourcesMap,
+  TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends keyof TResourcesMap
 >(
-  movexConfig: MovexConfig<TResourcesMap>,
+  movexConfig: MovexDefinition<TResourcesMap>,
   rid: ResourceIdentifier<string> // TODO: This should take the TResourceTpe
 ) => {
   const resource = useMovexResource(

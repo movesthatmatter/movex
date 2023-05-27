@@ -1,8 +1,9 @@
 import movexConfig from 'apps/movex-demo/movex.config';
-import { objectKeys } from 'movex-core-util';
+import useEventListener from '@use-it/event-listener';
+import { keyInObject, objectKeys } from 'movex-core-util';
 import { MovexBoundResourceFromConfig } from 'apps/movex-demo/movex-react';
-import { useEffect, useState } from 'react';
-import randomColor from 'randomcolor';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getColorFromStr } from './util';
 
 type Props = {
   boundChatResource: MovexBoundResourceFromConfig<
@@ -18,13 +19,31 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
   const { state, dispatch } = boundChatResource;
   const [msg, setMsg] = useState<string>();
 
+  const history = useMemo(() => state.messages.reverse(), [state.messages]);
+
+  const submit = useCallback(() => {
+    if (msg?.length && msg.length > 0) {
+      dispatch({
+        type: 'writeMessage',
+        payload: {
+          participantId: userId,
+          msg,
+          atTimestamp: new Date().getTime(),
+        },
+      });
+
+      setMsg('');
+    }
+  }, [msg]);
+
   useEffect(() => {
     dispatch({
       type: 'addParticipant',
       payload: {
         id: userId,
         // color: colors[getRandomInt(0, colors.length - 1)],
-        color: randomColor(),
+        // color: randomColor(),
+        color: `#${getColorFromStr(userId)}`,
         atTimestamp: new Date().getTime(),
       },
     });
@@ -39,6 +58,24 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
       });
     };
   }, [userId]);
+
+  useEventListener('keydown', (event: object) => {
+    if (!keyInObject(event, 'key')) {
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      if (
+        keyInObject(event, 'preventDefault') &&
+        typeof event.preventDefault === 'function'
+      ) {
+        if (msg?.length && msg.length > 0) {
+          submit();
+        }
+        event.preventDefault();
+      }
+    }
+  });
 
   return (
     <div
@@ -60,10 +97,14 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
             height: 'calc(100% - 60px + 1em)',
             width: '100%',
             marginBottom: '1em',
-            overflow: 'scroll',
+            // overflow: 'scroll',
+            display: 'flex',
+            flexDirection: 'column-reverse',
+            overflowY: 'scroll',
+            scrollBehavior: 'smooth',
           }}
         >
-          {state.messages.map((msg, i) => (
+          {history.map((msg, i) => (
             <div
               key={msg.at}
               style={{
@@ -102,23 +143,7 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
             height: '60px',
           }}
         />
-        <button
-          disabled={!!(msg?.length && msg.length === 0)}
-          onClick={() => {
-            if (msg?.length && msg.length > 0) {
-              dispatch({
-                type: 'writeMessage',
-                payload: {
-                  participantId: userId,
-                  msg,
-                  atTimestamp: new Date().getTime(),
-                },
-              });
-
-              setMsg('');
-            }
-          }}
-        >
+        <button disabled={!!(msg?.length && msg.length === 0)} onClick={submit}>
           Submit
         </button>
       </div>
