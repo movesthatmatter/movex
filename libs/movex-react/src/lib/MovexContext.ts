@@ -1,9 +1,5 @@
-import { Movex } from 'movex';
 import { createContext } from 'react';
-import {
-  BaseMovexDefinitionResourcesMap,
-  MovexDefinition,
-} from 'movex';
+import { Movex, BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
 
 export type MovexContextProps<
   TResourcesMap extends BaseMovexDefinitionResourcesMap

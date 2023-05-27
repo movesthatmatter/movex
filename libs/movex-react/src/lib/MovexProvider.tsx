@@ -1,13 +1,8 @@
-// TODO: This shold come from the library
-
 import React, { useEffect, useState } from 'react';
-import { initMovex } from 'libs/movex/src/lib/client';
+import { Client } from 'movex';
 import { MovexContextProps, MovexContext } from './MovexContext';
 import { invoke } from 'movex-core-util';
-import {
-  BaseMovexDefinitionResourcesMap,
-  MovexDefinition,
-} from 'movex';
+import { BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
@@ -27,13 +22,7 @@ export const MovexProvider: React.FC<Props<{}>> = (props) => {
     const clientId = window.localStorage.getItem('movexCliendId') || undefined;
 
     invoke(async () => {
-      // const url = `http://${props.url}`;
-      // TODO: This doesn't belong here. It's a next thing so should be in a next socket provider or smtg
-      // const res = await fetch(url);
-
-      // console.log('fetch ok?', url, res.ok);
-
-      initMovex(
+      Client.initMovex(
         {
           clientId,
           url: props.socketUrl,

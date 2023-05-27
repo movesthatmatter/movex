@@ -25,6 +25,7 @@
     "paths": {
       "movex": ["libs/movex/src/index.ts"],
       "movex-core-util": ["libs/movex-core-util/src/index.ts"],
+      "movex-react": ["libs/movex-react/src/index.ts"],
       "movex-server": ["libs/movex-server/src/index.ts"]
     }
   },

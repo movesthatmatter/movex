@@ -1,18 +1,19 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { MovexContext } from './MovexContext';
-import { GetReducerAction, GetReducerState } from 'movex';
-import { MovexResource } from 'libs/movex/src/lib/client/MovexResource';
-import { MovexBoundResource } from 'libs/movex/src/lib/client/MovexBoundResource';
 import {
   ResourceIdentifier,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
 } from 'movex-core-util';
-import { BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
+import {
+  Client,
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+  GetReducerAction,
+  GetReducerState,
+} from 'movex';
+import { MovexContext } from './MovexContext';
 
-export const useMovex = () => {
-  return useContext(MovexContext);
-};
+export const useMovex = () => useContext(MovexContext);
 
 export const useMovexClientId = () => useMovex().clientId;
 
@@ -20,13 +21,20 @@ export type MovexResourceFromConfig<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends keyof TResourcesMap,
   Reducer extends MovexDefinition<TResourcesMap>['resources'][TResourceType] = MovexDefinition<TResourcesMap>['resources'][TResourceType]
-> = MovexResource<GetReducerState<Reducer>, GetReducerAction<Reducer>, string>;
+> = Client.MovexResource<
+  GetReducerState<Reducer>,
+  GetReducerAction<Reducer>,
+  string
+>;
 
 export type MovexBoundResourceFromConfig<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends keyof TResourcesMap,
   Reducer extends MovexDefinition<TResourcesMap>['resources'][TResourceType] = MovexDefinition<TResourcesMap>['resources'][TResourceType]
-> = MovexBoundResource<GetReducerState<Reducer>, GetReducerAction<Reducer>>;
+> = Client.MovexBoundResource<
+  GetReducerState<Reducer>,
+  GetReducerAction<Reducer>
+>;
 
 export const useMovexResource = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap
@@ -91,10 +99,8 @@ export const useMovexBoundResource = <
           >)
       );
 
-      console.log('State Updated', next[0]);
+      // console.log('State Updated', next[0]);
     });
-
-    // console.log('givenBoundResource', givenBoundResource.onUpdated);
 
     // TODO: Enters a loop here!
     setBoundResource({

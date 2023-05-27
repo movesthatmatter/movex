@@ -1,7 +1,7 @@
 import movexConfig from 'apps/movex-demo/movex.config';
 import useEventListener from '@use-it/event-listener';
 import { keyInObject, objectKeys } from 'movex-core-util';
-import { MovexBoundResourceFromConfig } from 'apps/movex-demo/movex-react';
+import { MovexBoundResourceFromConfig } from 'movex-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getColorFromStr } from './util';
 
@@ -19,7 +19,10 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
   const { state, dispatch } = boundChatResource;
   const [msg, setMsg] = useState<string>();
 
-  const history = useMemo(() => state.messages.slice(0).reverse(), [state.messages]);
+  const history = useMemo(
+    () => state.messages.slice(0).reverse(),
+    [state.messages]
+  );
 
   const submit = useCallback(() => {
     if (msg?.length && msg.length > 0) {
@@ -139,8 +142,7 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
                   </span>
                 ) : (
                   <>Unknown</>
-                )}
-                {' '}
+                )}{' '}
                 at {new Date(msg.at).toLocaleString()}
               </i>
             </div>

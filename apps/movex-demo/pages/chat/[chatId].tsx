@@ -1,12 +1,9 @@
-import {
-  useMovexBoundResource,
-  useMovexClientId,
-} from 'apps/movex-demo/movex-react';
-import movexConfig from 'apps/movex-demo/movex.config';
+import { useMovexBoundResource, useMovexClientId } from 'movex-react';
 import { useRouter } from 'next/router';
 import { ChatPage } from '../../modules/chat/components/ChatPage';
 import { useMemo } from 'react';
 import { toResourceIdentifierObj } from 'movex-core-util';
+import movexConfig from 'apps/movex-demo/movex.config';
 
 type Props = {};
 
