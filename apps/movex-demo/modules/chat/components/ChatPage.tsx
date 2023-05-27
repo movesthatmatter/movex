@@ -19,7 +19,7 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
   const { state, dispatch } = boundChatResource;
   const [msg, setMsg] = useState<string>();
 
-  const history = useMemo(() => state.messages.reverse(), [state.messages]);
+  const history = useMemo(() => state.messages.slice(0).reverse(), [state.messages]);
 
   const submit = useCallback(() => {
     if (msg?.length && msg.length > 0) {
@@ -77,6 +77,16 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
     }
   });
 
+  useEffect(() => {
+    dispatch({
+      type: 'setTyping',
+      payload: {
+        participantId: userId,
+        isTyping: !!(msg && msg.length > 0),
+      },
+    });
+  }, [msg, userId]);
+
   return (
     <div
       style={{
@@ -130,6 +140,8 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
                 ) : (
                   <>Unknown</>
                 )}
+                {' '}
+                at {new Date(msg.at).toLocaleString()}
               </i>
             </div>
           ))}
@@ -178,7 +190,17 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
                     // borderLeft: state.participants[p].id === userId ? 'state.participants[p]' : undefined,
                   }}
                 >
-                  {participant.id}
+                  {participant.id}{' '}
+                  {participant.isTyping && (
+                    <i
+                      style={{
+                        fontWeight: 'normal',
+                        fontSize: '.7em',
+                      }}
+                    >
+                      Is typing...
+                    </i>
+                  )}
                 </div>
               );
             })}

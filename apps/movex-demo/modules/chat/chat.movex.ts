@@ -20,10 +20,12 @@ export type ChatState = {
     } & (
       | {
           active: false;
+          isTyping?: null;
           leftAt: number;
         }
       | {
           active: true;
+          isTyping: boolean;
           leftAt?: null; // Limitation with undefined. Some jsons remove it altogether which could create mismatches. Use null
         }
     );
@@ -60,6 +62,13 @@ export type ChatActions =
         atTimestamp: number;
         // id: string;
       }
+    >
+  | Action<
+      'setTyping',
+      {
+        participantId: ParticipantId;
+        isTyping: boolean;
+      }
     >;
 
 export const chatReducer = (
@@ -77,6 +86,7 @@ export const chatReducer = (
           color: action.payload.color,
           active: true,
           leftAt: null,
+          isTyping: false,
         },
       },
     };
@@ -92,6 +102,7 @@ export const chatReducer = (
         [action.payload.id]: {
           ...state.participants[action.payload.id],
           active: false,
+          isTyping: undefined,
           leftAt: action.payload.atTimestamp,
         },
       },
@@ -108,6 +119,27 @@ export const chatReducer = (
           participantId: action.payload.participantId,
         },
       ],
+    };
+  } else if (action.type === 'setTyping') {
+    const prevParticipant = state.participants[action.payload.participantId];
+
+    if (!prevParticipant) {
+      return state;
+    }
+
+    if (!prevParticipant.active) {
+      return state;
+    }
+
+    return {
+      ...state,
+      participants: {
+        ...state.participants,
+        [action.payload.participantId]: {
+          ...prevParticipant,
+          isTyping: action.payload.isTyping,
+        },
+      },
     };
   }
 
