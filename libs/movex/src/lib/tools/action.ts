@@ -36,6 +36,8 @@ export type Action<TType extends string, TPayload = undefined> =
   | PublicAction<TType, TPayload>
   | PrivateAction<TType, TPayload>;
 
+export type ActionWithAnyPayload<TType extends string> = Action<TType, unknown>;
+
 export type ActionsCollectionMapBase = UnknownRecord;
 
 export type AnyPublicAction = PublicAction<string>;

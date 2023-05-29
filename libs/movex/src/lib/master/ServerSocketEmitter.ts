@@ -27,8 +27,6 @@ export class ServerSocketEmitter<
   ) {
     this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
-
-    console.log('[ServerSocketEmitter] constructing');
   }
 
   on<E extends keyof IOEvents<TState, TAction, TResourceType>>(
@@ -38,8 +36,6 @@ export class ServerSocketEmitter<
       ack?: (r: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>) => void
     ) => void
   ): this {
-    console.log('[ServerSocketemitter] on', event);
-
     this.socket.on(event as string, listener);
 
     return this;

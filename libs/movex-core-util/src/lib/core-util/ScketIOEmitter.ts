@@ -89,6 +89,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
     acknowledgeCb?: (response: ReturnType<TEventMap[E]>) => void
   ): boolean {
     const reqId = `${event as string}(${String(Math.random()).slice(-3)})`;
+    this.logger.debug('[ServerSocketEmitter]', reqId, 'Emit:', event, request);
 
     this.socket.emit(
       event as string,
@@ -97,7 +98,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {
             if (res.ok) {
-              this.logger.info(
+              this.logger.debug(
                 '[ServerSocketEmitter]',
                 reqId,
                 'Response Ok:',
@@ -137,7 +138,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
   ): Promise<ReturnType<TEventMap[E]>> {
     return new Promise(async (resolve, reject) => {
       const reqId = `${event as string}(${String(Math.random()).slice(-3)})`;
-      this.logger.info('[ServerSocketEmitter]', reqId, 'Emit:', event, request);
+      this.logger.debug('[ServerSocketEmitter]', reqId, 'EmitAndAcknowledge:', event, request);
 
       this.socket.emit(
         event as string,
@@ -152,7 +153,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
             // );
 
             if (res.ok) {
-              this.logger.info(
+              this.logger.debug(
                 '[ServerSocketEmitter]',
                 reqId,
                 'Response Ok:',

@@ -7,15 +7,26 @@ import {
   toResourceIdentifierStr,
 } from 'movex-core-util';
 import {
+  Action,
   ActionOrActionTupleFromAction,
+  ActionWithAnyPayload,
   AnyAction,
   GetReducerAction,
   MovexReducer,
+  isAction,
 } from '../tools';
 import { ConnectionToMasterResource } from './ConnectionToMasterResource';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import { IOConnection } from '../io-connection/io-connection';
 import * as deepObject from 'deep-object-diff';
+
+const logUnimportantStyle = 'color: grey;';
+const logImportantStyle = 'font-weight: bold;';
+const logIncomingStyle = 'color: #4CAF50; font-weight: bold;';
+const logOutgoingStyle = 'color: #1EA7FD; font-weight: bold;';
+const logOpenConnectionStyle = 'color: #EF5FA0; font-weight: bold';
+const logClosedConnectionStyle = 'color: #DF9D04; font-weight: bold';
+const logErrorStyle = 'color: red; font-weight: bold;';
 
 export class MovexResource<
   S,
@@ -85,63 +96,141 @@ export class MovexResource<
 
     // Done/TODO: Needs a way to add a resource subscriber
     this.connectionToMasterResource.addResourceSubscriber(rid).map(() => {
-      console.log('add resoure sub', this.connectionToMaster.clientId);
       // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
       this.connectionToMasterResource.get(rid).map((s) => {
-        console.log('get', s);
         resourceObservable.sync(s);
       });
     });
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
-      resourceObservable.onDispatched(({ action, next: localCheckedState }) => {
-        const [, localChecksum] = localCheckedState;
+      resourceObservable.onDispatched(
+        ({
+          action,
+          next: nextLocalCheckedState,
+          prev: prevLocalCheckedState,
+        }) => {
+          const [nextLocalState, nextLocalChecksum] = nextLocalCheckedState;
 
-        this.connectionToMasterResource
-          .emitAction(rid, action)
-          .map(async (masterChecksum) => {
-            if (masterChecksum === localChecksum) {
-              return;
-            }
-
-            // TODO: Here I need to check that the checksums are the same
-            // If not the action needs to revert, or toask the connection to give me the next state
-
-            // But when the action is reconciliatory (meaning the last one before reconiliang the state this happens, b/c it waits for the reconciliatory actions)
-            // In that case this could return that I guess, or just leave it for now
-
-            console.group(
-              `[Movex] Dispatch Ack Error: "Checksums MISMATCH"\n`,
-              `client: '${this.connectionToMaster.clientId}',\n`,
-              'action:',
-              action
-            );
-
-            // Should get the next master state
-            const masterState = await this.connectionToMasterResource
-              .get(rid)
-              .resolveUnwrap();
-
+          console.group(
+            `%c\u{25B2} %cAction Dispatched: %c${
+              isAction(action)
+                ? action.type
+                : action[0].type + ' + ' + action[1].type
+            }`,
+            logOutgoingStyle,
+            logUnimportantStyle,
+            logImportantStyle
+          );
+          console.log(
+            '%cPrev state',
+            logUnimportantStyle,
+            prevLocalCheckedState[0]
+          );
+          if (isAction(action)) {
             console.log(
-              'Master State:',
-              JSON.stringify(masterState[0], null, 2),
-              masterState[1]
+              `%cPublic Action: %c${action.type}`,
+              logOutgoingStyle,
+              logImportantStyle,
+              (action as ActionWithAnyPayload<string>).payload
+            );
+          } else {
+            const [privateAction, publicAction] = action;
+            console.log(
+              `%cPrivate action: %c${privateAction.type}`,
+              logOpenConnectionStyle,
+              logImportantStyle,
+              (privateAction as ActionWithAnyPayload<string>).payload
             );
             console.log(
-              'Local State:',
-              JSON.stringify(localCheckedState[0], null, 2),
-              localCheckedState[1]
+              `%cPublic action payload: %c${publicAction.type}`,
+              logOutgoingStyle,
+              logImportantStyle,
+              (publicAction as ActionWithAnyPayload<string>).payload
             );
-            console.log(
-              'Diff',
-              deepObject.detailedDiff(masterState, localCheckedState)
-            );
+          }
+          console.log('%cNext State', logIncomingStyle, nextLocalState);
+          console.log(
+            '%cChecksums',
+            logUnimportantStyle,
+            prevLocalCheckedState[1],
+            '>',
+            nextLocalChecksum
+          );
+          console.groupEnd();
 
-            console.groupEnd();
-          });
-      }),
+          this.connectionToMasterResource
+            .emitAction(rid, action)
+            .map(async (masterChecksum) => {
+              if (masterChecksum === nextLocalChecksum) {
+                return;
+              }
+
+              // TODO: Here I need to check that the checksums are the same
+              // If not the action needs to revert, or toask the connection to give me the next state
+
+              // But when the action is reconciliatory (meaning the last one before reconiliang the state this happens, b/c it waits for the reconciliatory actions)
+              // In that case this could return that I guess, or just leave it for now
+
+              console.group(
+                `[Movex] Dispatch Ack Error: "Checksums MISMATCH"\n`,
+                `client: '${this.connectionToMaster.clientId}',\n`,
+                'action:',
+                action
+              );
+
+              // Should get the next master state
+              const masterState = await this.connectionToMasterResource
+                .get(rid)
+                .resolveUnwrap();
+
+              console.log(
+                'Master State:',
+                JSON.stringify(masterState[0], null, 2),
+                masterState[1]
+              );
+              console.log(
+                'Local State:',
+                JSON.stringify(nextLocalCheckedState[0], null, 2),
+                nextLocalCheckedState[1]
+              );
+              console.log(
+                'Diff',
+                deepObject.detailedDiff(masterState, nextLocalCheckedState)
+              );
+
+              console.groupEnd();
+            });
+        }
+      ),
       this.connectionToMasterResource.onFwdAction(rid, (p) => {
+        const prevState = resourceObservable.get();
+
         resourceObservable.reconciliateAction(p);
+
+        const nextState = resourceObservable.get();
+
+        console.group(
+          `%c\u{25BC} %cAction Forwarded Received: %c${p.action.type}`,
+          logIncomingStyle,
+          logUnimportantStyle,
+          logImportantStyle
+        );
+        console.log('%cPrev state', logUnimportantStyle, prevState[0]);
+        console.log(
+          `%cAction: %c${p.action.type}`,
+          logOutgoingStyle,
+          logImportantStyle,
+          (p.action as ActionWithAnyPayload<string>).payload
+        );
+        console.log('%cNextState', logIncomingStyle, nextState[0]);
+        console.log(
+          '%cchecksums',
+          logUnimportantStyle,
+          prevState[1],
+          '>',
+          nextState[1]
+        );
+        console.groupEnd();
       }),
       this.connectionToMasterResource.onReconciliatoryActions(rid, (p) => {
         p.actions.forEach((action) => {

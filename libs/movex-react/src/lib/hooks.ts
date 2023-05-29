@@ -60,10 +60,10 @@ export const useMovexResource = <
 
 export const useMovexBoundResource = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
-  TResourceType extends keyof TResourcesMap
+  TResourceType extends Extract<keyof TResourcesMap, string>
 >(
   movexConfig: MovexDefinition<TResourcesMap>,
-  rid: ResourceIdentifier<string> // TODO: This should take the TResourceTpe
+  rid: ResourceIdentifier<TResourceType>
 ) => {
   const resource = useMovexResource(
     movexConfig,

@@ -78,9 +78,9 @@ export class MovexResourceObservable<
       onDispatched: (p) => {
         this.pubsy.publish('onDispatched', p);
       },
-      onStateUpdated: (s) => {
-        // console.log('[MovexClient] Dispatcher.onStaetUpdated', s);
-      },
+      // onStateUpdated: (s) => {
+      //   // console.log('Dispatcher.onStaetUpdated', s);
+      // },
     });
 
     this.dispatcher = (...args: Parameters<typeof dispatch>) => {
