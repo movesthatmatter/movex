@@ -42,7 +42,7 @@ const SocketHandler = (req, res) => {
 
         return {
           ...accum,
-          [nextResoureType]: new MovexMasterResource(nextReducer, masterStore),
+          [nextResoureType]: new MovexMasterResource(nextReducer as any, masterStore),
         };
       },
       {} as Record<string, MovexMasterResource<any, any>>
