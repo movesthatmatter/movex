@@ -5,6 +5,7 @@ import {
   PlayerLabel,
   RPS,
   selectAvailableLabels,
+  toOppositeLabel,
 } from './rockPaperScissors.movex';
 
 type Props = {
@@ -15,22 +16,51 @@ type Props = {
   userId: string;
 };
 
-// const colors = ['yellow', 'orange', 'green', 'blue'] as const;
-
 export const RPSGame: React.FC<Props> = ({ boundResource, userId }) => {
   const { state, dispatch, dispatchPrivate } = boundResource;
 
   const myPlayerLabel = useMemo((): PlayerLabel | undefined => {
-    if (state.currentGame.players.playerA?.id === userId) {
+    if (state.players.playerA?.id === userId) {
       return 'playerA';
     }
 
-    if (state.currentGame.players.playerB?.id === userId) {
+    if (state.players.playerB?.id === userId) {
       return 'playerB';
     }
 
     return undefined;
-  }, [state, userId]);
+  }, [state.players, userId]);
+
+  const oppnentPlayerLabel = useMemo(() => {
+    return myPlayerLabel ? toOppositeLabel(myPlayerLabel) : undefined;
+  }, [myPlayerLabel]);
+
+  // Add Player
+  useEffect(() => {
+    const availableLabels = selectAvailableLabels(state);
+
+    if (
+      state.players.playerA?.id === userId ||
+      state.players.playerB?.id === userId
+    ) {
+      return;
+    }
+
+    if (availableLabels.length === 0) {
+      console.warn('Player Slots taken');
+
+      return;
+    }
+
+    dispatch({
+      type: 'addPlayer',
+      payload: {
+        id: userId,
+        playerLabel: availableLabels[0],
+        atTimestamp: new Date().getTime(),
+      },
+    });
+  }, [userId, state]);
 
   const submit = useCallback(
     (play: RPS) => {
@@ -59,42 +89,6 @@ export const RPSGame: React.FC<Props> = ({ boundResource, userId }) => {
     [dispatchPrivate, myPlayerLabel]
   );
 
-  useEffect(() => {
-    const availableLabels = selectAvailableLabels(state);
-
-    if (
-      state.currentGame.players.playerA?.id === userId ||
-      state.currentGame.players.playerB?.id === userId
-    ) {
-      return;
-    }
-
-    if (availableLabels.length === 0) {
-      console.warn('Player Slots taken');
-
-      return;
-    }
-
-    dispatch({
-      type: 'addPlayer',
-      payload: {
-        id: userId,
-        playerLabel: availableLabels[0],
-        atTimestamp: new Date().getTime(),
-      },
-    });
-
-    return () => {
-      // dispatch({
-      //   type: 'removeParticipant',
-      //   payload: {
-      //     id: userId,
-      //     atTimestamp: new Date().getTime(),
-      //   },
-      // });
-    };
-  }, [userId, state]);
-
   return (
     <div
       style={
@@ -105,30 +99,51 @@ export const RPSGame: React.FC<Props> = ({ boundResource, userId }) => {
         }
       }
     >
-      <button
-        style={{
-          margin: '1em',
-        }}
-        onClick={() => submit('rock')}
-      >
-        Rock
-      </button>
-      <button
-        style={{
-          margin: '1em',
-        }}
-        onClick={() => submit('paper')}
-      >
-        Paper
-      </button>
-      <button
-        style={{
-          margin: '1em',
-        }}
-        onClick={() => submit('scissors')}
-      >
-        Scissoers
-      </button>
+      {state.winner ? (
+        <div>
+          <h3>Winner is {state.winner}</h3>
+          <button
+            onClick={() => {
+              dispatch({
+                type: 'playAgain',
+              });
+            }}
+          >
+            Play Again
+          </button>
+        </div>
+      ) : (
+        <div>
+          {oppnentPlayerLabel &&
+            state.submissions[oppnentPlayerLabel]?.play && (
+              <div>Opponent Submitted</div>
+            )}
+          <button
+            style={{
+              margin: '1em',
+            }}
+            onClick={() => submit('rock')}
+          >
+            Rock
+          </button>
+          <button
+            style={{
+              margin: '1em',
+            }}
+            onClick={() => submit('paper')}
+          >
+            Paper
+          </button>
+          <button
+            style={{
+              margin: '1em',
+            }}
+            onClick={() => submit('scissors')}
+          >
+            Scissoers
+          </button>
+        </div>
+      )}
       <br />
       <div>
         <pre>{JSON.stringify(state, null, 2)}</pre>

@@ -16,7 +16,7 @@ export const PlayRPSButton: React.FC<Props> = () => {
       <button
         onClick={() => {
           rpsResource.create(initialState).map((item) => {
-            window.location.href = window.location.origin + `/rps/${item.id}`;
+            window.location.href = window.location.origin + `/rps/${item.rid.resourceId}`;
           });
         }}
       >

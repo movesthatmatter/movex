@@ -20,21 +20,15 @@ export function toOppositeLabel<L extends PlayerLabel>(l: L) {
 type Player = {
   id: PlayerId;
   label: PlayerLabel;
-  // color: Color;
-  // submitted: boolean;
 };
 
 type RevealedSubmission = {
-  // player: Player;
   play: RPS;
 };
 
 type SecretSubmission = {
   play: '$SECRET';
-  // player: Player;
 };
-
-// const toPppositeLabel = (l: ) =>
 
 export type Submission = RevealedSubmission | SecretSubmission;
 
@@ -43,7 +37,6 @@ type GameInProgress = {
     playerA: Player | null;
     playerB: Player | null;
   };
-  // submissions: [] | [Submission] | [Submission, Submission];
   submissions: {
     playerA: Submission | null;
     playerB: Submission | null;
@@ -65,24 +58,18 @@ type GameCompleted = {
 
 type Game = GameInProgress | GameCompleted;
 
-export type State = {
-  currentGame: Game;
-  gameHistory: Game[];
-};
+export type State = Game;
 
 export const initialState: State = {
-  currentGame: {
-    players: {
-      playerA: null,
-      playerB: null,
-    },
-    winner: null,
-    submissions: {
-      playerA: null,
-      playerB: null,
-    },
+  players: {
+    playerA: null,
+    playerB: null,
   },
-  gameHistory: [],
+  winner: null,
+  submissions: {
+    playerA: null,
+    playerB: null,
+  },
 };
 
 export type Actions =
@@ -94,13 +81,7 @@ export type Actions =
         atTimestamp: number;
       }
     >
-  // | Action<
-  //     'removePlayer',
-  //     {
-  //       id: PlayerId;
-  //       atTimestamp: number;
-  //     }
-  //   >
+  | Action<'playAgain'>
   | Action<
       'submit',
       {
@@ -119,23 +100,33 @@ export const reducer = (
   state = initialState as State,
   action: Actions
 ): State => {
+  if (action.type === 'playAgain') {
+    return {
+      ...state,
+      players: state.players,
+      winner: null,
+      submissions: {
+        playerA: null,
+        playerB: null,
+      },
+    };
+  }
+
   if (action.type === 'addPlayer') {
     // If already taken return
-    if (state.currentGame.players[action.payload.playerLabel] !== null) {
+    if (state.players[action.payload.playerLabel] !== null) {
       return state;
     }
 
     return {
       ...state,
-      currentGame: {
-        ...state.currentGame,
-        players: {
-          // TODO: This is just stupid needing a recast b/c it cannot determine if the game is completed or inProgress, but at this point I care not
-          ...(state.currentGame.players as any),
-          [action.payload.playerLabel]: {
-            label: action.payload.playerLabel,
-            id: action.payload.id,
-          },
+
+      players: {
+        // TODO: This is just stupid needing a recast b/c it cannot determine if the game is completed or inProgress, but at this point I care not
+        ...(state.players as any),
+        [action.payload.playerLabel]: {
+          label: action.payload.playerLabel,
+          id: action.payload.id,
         },
       },
     };
@@ -143,40 +134,36 @@ export const reducer = (
 
   if (action.type === 'submit') {
     // If game is completed
-    if (state.currentGame.winner !== null) {
+    if (state.winner !== null) {
       return state;
     }
 
     const oppositeLabel = toOppositeLabel(action.payload.playerLabel);
 
     // 1st submission
-    if (state.currentGame.submissions[oppositeLabel] === null) {
+    if (state.submissions[oppositeLabel] === null) {
       return {
         ...state,
-        currentGame: {
-          ...state.currentGame,
-          submissions: {
-            ...(action.payload.playerLabel === 'playerA'
-              ? {
-                  playerA: {
-                    play: action.payload.rps,
-                  },
-                  playerB: null,
-                }
-              : {
-                  playerB: {
-                    play: action.payload.rps,
-                  },
-                  playerA: null,
-                }),
-          },
+        submissions: {
+          ...(action.payload.playerLabel === 'playerA'
+            ? {
+                playerA: {
+                  play: action.payload.rps,
+                },
+                playerB: null,
+              }
+            : {
+                playerB: {
+                  play: action.payload.rps,
+                },
+                playerA: null,
+              }),
         },
       };
     } else {
       // final submission: game gets completed
-
       const nextSubmission = {
-        ...state.currentGame.submissions,
+        ...state.submissions,
         [action.payload.playerLabel]: {
           play: action.payload.rps,
         },
@@ -189,53 +176,27 @@ export const reducer = (
 
       return {
         ...state,
-        currentGame: {
-          ...state.currentGame,
-          submissions: nextSubmission,
-          winner: nextWinner as any,
-        },
+        submissions: nextSubmission,
+        winner: nextWinner as any,
       };
-
-      // return {
-      //   ...state,
-      //   currentGame: {
-      //     submissions: nextSubmissions,
-      //     winner: nextSubmissions[nextWinner].play,
-      //   },
-      // };
     }
   } else if (action.type === 'setReadySubmission') {
     // If game is completed
-    if (state.currentGame.winner !== null) {
+    if (state.winner !== null) {
       return state;
     }
 
-    // if (
-    //   state.currentGame.submissions.length === 0 ||
-    //   state.currentGame.submissions.length === 1
-    // ) {
-    return {
-      ...state,
-      currentGame: {
-        ...state.currentGame,
-        submissions: {
-          ...(action.payload.playerLabel === 'playerA'
-            ? {
-                playerA: {
-                  play: '$SECRET',
-                },
-                playerB: state.currentGame.submissions.playerB,
-              }
-            : {
-                playerB: {
-                  play: '$SECRET',
-                },
-                playerA: state.currentGame.submissions.playerB,
-              }),
-        },
+    const nextSubmission = {
+      ...state.submissions,
+      [action.payload.playerLabel]: {
+        play: '$SECRET',
       },
     };
-    // }
+
+    return {
+      ...state,
+      submissions: nextSubmission,
+    };
   }
 
   return state;
@@ -276,17 +237,10 @@ const getRPSWinner = ([a, b]: [
 };
 
 export const selectAvailableLabels = (state: State): PlayerLabel[] => {
-  return playerLabels.filter((l) => state.currentGame.players[l] === null);
+  return playerLabels.filter((l) => state.players[l] === null);
 };
 
-reducer.$canReconcileState = (state: State) => {
-  // return false;
-  return (
-    state.currentGame.submissions.playerA !== null &&
-    state.currentGame.submissions.playerB !== null
-  );
-};
+reducer.$canReconcileState = (state: State) =>
+  state.submissions.playerA !== null && state.submissions.playerB !== null;
 
 export default reducer;
-
-// export default chatReducer;

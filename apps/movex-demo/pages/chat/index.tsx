@@ -16,7 +16,7 @@ const ChatLobby: React.FC<Props> = () => {
       <button
         onClick={() => {
           chatResource.create(initialChatState).map((item) => {
-            window.location.href = window.location.href + `/${item.id}`;
+            window.location.href = window.location.href + `/${item.rid.resourceId}`;
           });
         }}
       >
