@@ -177,7 +177,6 @@ export class MovexResource<
               //  and thus always failing. Besides it just makes sense to only call that on the peers no?
               //  This will have a payload exactly like it.
 
-
               if (masterChecksum === nextLocalChecksum) {
                 return;
               }

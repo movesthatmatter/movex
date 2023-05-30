@@ -10,11 +10,13 @@ beforeEach(async () => {
   await orchestrator.unsubscribe();
 });
 
-test('works', async () => {
+test('works with public actions', async () => {
   const whiteClientId = 'white-client';
   const blackClientId = 'black-client';
-  const [whiteClient, blackClient] = orchestrator.orchestrate({
-    clientIds: [whiteClientId, 'black-client'],
+  const {
+    clients: [whiteClient, blackClient],
+  } = orchestrator.orchestrate({
+    clientIds: [whiteClientId, blackClientId],
     reducer: matchReducer,
     resourceType: 'game',
   });
@@ -31,12 +33,14 @@ test('works', async () => {
     },
   });
 
+  await tillNextTick();
+
   blackMovex.dispatch({
     type: 'addPlayer',
     payload: {
       playerId: blackClientId,
-    }
-  })
+    },
+  });
 
   await tillNextTick();
 
@@ -44,7 +48,7 @@ test('works', async () => {
     ...initialMatchState,
     players: {
       [whiteClientId]: true,
-      [blackClientId]: true
+      [blackClientId]: true,
     },
   });
 

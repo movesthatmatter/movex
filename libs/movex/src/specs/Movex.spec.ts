@@ -13,7 +13,9 @@ beforeEach(async () => {
 
 describe('All', () => {
   test('Create', async () => {
-    const [counterResource] = await orchestrator.orchestrate({
+    const {
+      clients: [counterResource],
+    } = await orchestrator.orchestrate({
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
@@ -32,7 +34,9 @@ describe('All', () => {
   }, 200);
 
   test('Bind', async () => {
-    const [counterResource] = await orchestrator.orchestrate({
+    const {
+      clients: [counterResource],
+    } = await orchestrator.orchestrate({
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
@@ -53,7 +57,9 @@ describe('All', () => {
   });
 
   test('Dispatch Public Action', async () => {
-    const [counterResource] = await orchestrator.orchestrate({
+    const {
+      clients: [counterResource],
+    } = await orchestrator.orchestrate({
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
@@ -76,7 +82,9 @@ describe('All', () => {
   });
 
   test('Dispatch Private Action', async () => {
-    const [gameResource] = await orchestrator.orchestrate({
+    const {
+      clients: [gameResource],
+    } = orchestrator.orchestrate({
       clientIds: ['test-user'],
       reducer: gameReducer,
       resourceType: 'game',

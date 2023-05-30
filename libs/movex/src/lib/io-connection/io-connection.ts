@@ -1,4 +1,4 @@
-import { EventEmitter, MovexClient } from '../../../../movex-core-util/src';
+import { EventEmitter, MovexClient } from 'movex-core-util';
 import { IOEvents } from './io-events';
 import { AnyAction } from '../tools/action';
 

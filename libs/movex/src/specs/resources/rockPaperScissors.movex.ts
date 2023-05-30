@@ -91,7 +91,6 @@ export type Actions =
       {
         id: PlayerId;
         playerLabel: PlayerLabel;
-        atTimestamp: number;
       }
     >
   // | Action<

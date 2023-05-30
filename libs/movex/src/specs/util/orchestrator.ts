@@ -1,4 +1,4 @@
-import { MovexClient, invoke } from '../../../../movex-core-util/src';
+import { MovexClient, ResourceIdentifier, invoke } from 'movex-core-util';
 import { Movex } from '../../lib';
 import { ConnectionToMaster } from '../../lib/client/ConnectionToMaster';
 import { ConnectionToClient, MovexMasterServer } from '../../lib/master';
@@ -27,7 +27,7 @@ export const movexClientMasterOrchestrator = () => {
       [resourceType]: masterResource,
     });
 
-    return clientIds.map((clientId) => {
+    const clients = clientIds.map((clientId) => {
       // Would this be the only one for both client and master or seperate?
       // I believe it should be the same in order for it to work between the 2 no?
       const emitterOnMaster = new MockConnectionEmitter<S, A, TResourceType>(
@@ -61,6 +61,14 @@ export const movexClientMasterOrchestrator = () => {
 
       return mockedMovex.movex.register(resourceType, reducer);
     });
+
+    return {
+      master: {
+        getPublicState: (rid: ResourceIdentifier<TResourceType>) =>
+          masterResource.getPublicState(rid),
+      },
+      clients,
+    };
   };
 
   return {

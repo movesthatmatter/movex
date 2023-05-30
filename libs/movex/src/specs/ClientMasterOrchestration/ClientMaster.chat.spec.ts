@@ -12,7 +12,9 @@ beforeEach(async () => {
 test('Adds Single Participant', async () => {
   const participantId = 'blue-client';
 
-  const [chatClientResource] = orchestrator.orchestrate({
+  const {
+    clients: [chatClientResource],
+  } = orchestrator.orchestrate({
     clientIds: [participantId],
     reducer: chatReducer,
     resourceType: 'chat',
@@ -56,7 +58,9 @@ test('Adds Single Participant', async () => {
 test('Single Participant Writes a Message', async () => {
   const participantId = 'blue-client';
 
-  const [chatClientResource] = orchestrator.orchestrate({
+  const {
+    clients: [chatClientResource],
+  } = orchestrator.orchestrate({
     clientIds: [participantId],
     reducer: chatReducer,
     resourceType: 'chat',
@@ -122,12 +126,13 @@ test('Adding Multiple Participants', async () => {
   const orangeClient = 'orange-client';
   const yellowClient = 'yellow-client';
 
-  const [blueClientResource, orangeClientResource, yellowClientResource] =
-    orchestrator.orchestrate({
-      clientIds: [blueClient, orangeClient, yellowClient],
-      reducer: chatReducer,
-      resourceType: 'chat',
-    });
+  const {
+    clients: [blueClientResource, orangeClientResource, yellowClientResource],
+  } = orchestrator.orchestrate({
+    clientIds: [blueClient, orangeClient, yellowClient],
+    reducer: chatReducer,
+    resourceType: 'chat',
+  });
 
   const { rid } = await blueClientResource
     .create(initialChatState)
@@ -208,12 +213,13 @@ test('Multiple Participants Write Multiple Messages', async () => {
   const orangeClient = 'orange-client';
   const yellowClient = 'yellow-client';
 
-  const [blueClientResource, orangeClientResource, yellowClientResource] =
-    await orchestrator.orchestrate({
-      clientIds: [blueClient, orangeClient, yellowClient],
-      reducer: chatReducer,
-      resourceType: 'chat',
-    });
+  const {
+    clients: [blueClientResource, orangeClientResource, yellowClientResource],
+  } = orchestrator.orchestrate({
+    clientIds: [blueClient, orangeClient, yellowClient],
+    reducer: chatReducer,
+    resourceType: 'chat',
+  });
 
   const { rid } = await blueClientResource
     .create(initialChatState)

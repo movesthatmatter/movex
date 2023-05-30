@@ -107,6 +107,7 @@ export type ToPublicAction<A extends AnyAction> = A & {
 export type CheckedReconciliatoryActions<A extends AnyAction> = {
   actions: A[];
   finalChecksum: Checksum;
+  // finalState: unknown;
 };
 
 export type AnyActionTuple = [AnyPrivateAction, AnyPublicAction];

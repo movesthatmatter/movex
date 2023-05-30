@@ -1,7 +1,11 @@
+import { movexClientMasterOrchestrator } from '../util/orchestrator';
+// import matchReducer, { initialMatchState } from '../resources/matchReducer';
+import rpsReducer, {
+  initialState as rpsInitialState,
+} from '../resources/rockPaperScissors.movex';
 import { tillNextTick } from 'movex-core-util';
 import { computeCheckedState } from '../../lib/util';
-import chatReducer, { initialChatState } from '../resources/chatReducer';
-import { movexClientMasterOrchestrator } from '../util/orchestrator';
+require('console-group').install();
 
 const orchestrator = movexClientMasterOrchestrator();
 
@@ -9,319 +13,143 @@ beforeEach(async () => {
   await orchestrator.unsubscribe();
 });
 
-test('Adds Single Participant', async () => {
-  const participantId = 'blue-client';
+test('2 Clients. Both Submitting (White first) WITH Reconciliation and the reconciliatory step changes derived state', async () => {
+  const clientAId = 'client-a';
+  const clientBId = 'client-b';
 
-  const [chatClientResource] = orchestrator.orchestrate({
-    clientIds: [participantId],
-    reducer: chatReducer,
-    resourceType: 'chat',
+  const {
+    clients: [clientA, clientB],
+    master,
+  } = orchestrator.orchestrate({
+    clientIds: [clientAId, clientBId],
+    reducer: rpsReducer,
+    resourceType: 'game',
   });
 
-  const { rid } = await chatClientResource
-    .create(initialChatState)
-    .resolveUnwrap();
+  const { rid } = await clientA.create(rpsInitialState).resolveUnwrap();
 
-  const blueMovex = chatClientResource.bind(rid);
+  const aMovex = clientA.bind(rid);
+  const bMovex = clientB.bind(rid);
 
-  blueMovex.dispatch({
-    type: 'addParticipant',
+  aMovex.dispatch({
+    type: 'addPlayer',
     payload: {
-      id: participantId,
-      color: 'blue',
-      atTimestamp: 123,
+      id: clientAId,
+      playerLabel: 'playerA',
     },
   });
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
-
-  const expected = computeCheckedState({
-    ...initialChatState,
-    participants: {
-      [participantId]: {
-        active: true,
-        color: 'blue',
-        id: participantId,
-        joinedAt: 123,
-        leftAt: undefined,
-      },
-    },
-  });
-
-  expect(actual).toEqual(expected);
-});
-
-test('Single Participant Writes a Message', async () => {
-  const participantId = 'blue-client';
-
-  const [chatClientResource] = orchestrator.orchestrate({
-    clientIds: [participantId],
-    reducer: chatReducer,
-    resourceType: 'chat',
-  });
-
-  const { rid } = await chatClientResource
-    .create(initialChatState)
-    .resolveUnwrap();
-
-  const blueMovex = chatClientResource.bind(rid);
-
-  blueMovex.dispatch({
-    type: 'addParticipant',
+  bMovex.dispatch({
+    type: 'addPlayer',
     payload: {
-      id: participantId,
-      color: 'blue',
-      atTimestamp: 120,
+      id: clientBId,
+      playerLabel: 'playerB',
     },
   });
 
   await tillNextTick();
 
-  blueMovex.dispatch({
-    type: 'writeMessage',
-    payload: {
-      msg: 'Hey',
-      participantId,
-      atTimestamp: 130,
-      id: '1',
+  aMovex.dispatchPrivate(
+    {
+      type: 'submit',
+      isPrivate: true,
+      payload: {
+        playerLabel: 'playerA',
+        rps: 'paper',
+      },
     },
-  });
+    {
+      type: 'setReadySubmission',
+      payload: {
+        playerLabel: 'playerA',
+      },
+    }
+  );
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
-
-  const expected = computeCheckedState({
-    ...initialChatState,
-    participants: {
-      [participantId]: {
-        active: true,
-        color: 'blue',
-        id: participantId,
-        joinedAt: 120, // Not relevant
-        leftAt: undefined,
+  const expectedAfterPrivateAction = computeCheckedState({
+    ...rpsInitialState,
+    currentGame: {
+      ...rpsInitialState.currentGame,
+      players: {
+        playerA: {
+          id: clientAId,
+          label: 'playerA',
+        },
+        playerB: {
+          id: clientBId,
+          label: 'playerB',
+        },
+      },
+      submissions: {
+        ...rpsInitialState.currentGame.submissions,
+        playerA: {
+          play: 'paper',
+        },
       },
     },
-    messages: [
-      {
-        at: 130, // Not relevant
-        id: '1', // Not relevant
-        content: 'Hey',
-        participantId,
+  });
+
+  const actualAfterPrivateAction = aMovex.state;
+
+  expect(actualAfterPrivateAction).toEqual(expectedAfterPrivateAction);
+
+  bMovex.dispatchPrivate(
+    {
+      type: 'submit',
+      isPrivate: true,
+      payload: {
+        rps: 'rock',
+        playerLabel: 'playerB',
       },
-    ],
-  });
-
-  expect(actual).toEqual(expected);
-});
-
-test('Adding Multiple Participants', async () => {
-  const blueClient = 'blue-client';
-  const orangeClient = 'orange-client';
-  const yellowClient = 'yellow-client';
-
-  const [blueClientResource, orangeClientResource, yellowClientResource] =
-    orchestrator.orchestrate({
-      clientIds: [blueClient, orangeClient, yellowClient],
-      reducer: chatReducer,
-      resourceType: 'chat',
-    });
-
-  const { rid } = await blueClientResource
-    .create(initialChatState)
-    .resolveUnwrap();
-
-  const blueMovex = blueClientResource.bind(rid);
-  const yellowMovex = yellowClientResource.bind(rid);
-  const orangeMovex = orangeClientResource.bind(rid);
-
-  blueMovex.dispatch({
-    type: 'addParticipant',
-    payload: {
-      id: blueClient,
-      color: 'blue',
-      atTimestamp: 122,
     },
-  });
+    {
+      type: 'setReadySubmission',
+      payload: {
+        playerLabel: 'playerB',
+      },
+    }
+  );
 
   await tillNextTick();
 
-  orangeMovex.dispatch({
-    type: 'addParticipant',
-    payload: {
-      id: orangeClient,
-      color: 'orange',
-      atTimestamp: 123,
-    },
-  });
-
-  await tillNextTick();
-
-  yellowMovex.dispatch({
-    type: 'addParticipant',
-    payload: {
-      id: yellowClient,
-      color: 'yellow',
-      atTimestamp: 124,
-    },
-  });
-
-  await tillNextTick();
-
-  const actual = blueMovex.state;
-
-  const expected = computeCheckedState({
-    ...initialChatState,
-    participants: {
-      [blueClient]: {
-        active: true,
-        color: 'blue',
-        id: blueClient,
-        joinedAt: 122,
-        leftAt: undefined,
+  const expectedAfterPrivateRevelatoryAction = computeCheckedState({
+    ...rpsInitialState,
+    currentGame: {
+      players: {
+        playerA: {
+          id: clientAId,
+          label: 'playerA',
+        },
+        playerB: {
+          id: clientBId,
+          label: 'playerB',
+        },
       },
-      [orangeClient]: {
-        active: true,
-        color: 'orange',
-        id: orangeClient,
-        joinedAt: 123,
-        leftAt: undefined,
+      submissions: {
+        playerA: {
+          play: 'paper',
+        },
+        playerB: {
+          play: 'rock',
+        },
       },
-      [yellowClient]: {
-        active: true,
-        color: 'yellow',
-        id: yellowClient,
-        joinedAt: 124,
-        leftAt: undefined,
-      },
-    },
-    messages: [],
-  });
-
-  expect(actual).toEqual(expected);
-});
-
-test('Multiple Participants Write Multiple Messages', async () => {
-  const blueClient = 'blue-client';
-  const orangeClient = 'orange-client';
-  const yellowClient = 'yellow-client';
-
-  const [blueClientResource, orangeClientResource, yellowClientResource] =
-    await orchestrator.orchestrate({
-      clientIds: [blueClient, orangeClient, yellowClient],
-      reducer: chatReducer,
-      resourceType: 'chat',
-    });
-
-  const { rid } = await blueClientResource
-    .create(initialChatState)
-    .resolveUnwrap();
-
-  const blueMovex = blueClientResource.bind(rid);
-  const yellowMovex = orangeClientResource.bind(rid);
-  const orangeMovex = yellowClientResource.bind(rid);
-
-  blueMovex.dispatch({
-    type: 'addParticipant',
-    payload: {
-      id: blueClient,
-      color: 'blue',
-      atTimestamp: 123,
+      winner: 'paper',
     },
   });
 
-  await tillNextTick();
+  const actualAfterPrivateRevelatoryAction = bMovex.state;
 
-  orangeMovex.dispatch({
-    type: 'addParticipant',
-    payload: {
-      id: orangeClient,
-      color: 'orange',
-      atTimestamp: 124,
-    },
-  });
+  expect(actualAfterPrivateRevelatoryAction).toEqual(
+    expectedAfterPrivateRevelatoryAction
+  );
 
-  await tillNextTick();
+  // The 2 clients are the same after revelation
+  expect(aMovex.state).toEqual(bMovex.state);
 
-  yellowMovex.dispatch({
-    type: 'addParticipant',
-    payload: {
-      id: yellowClient,
-      color: 'yellow',
-      atTimestamp: 125,
-    },
-  });
-
-  await tillNextTick();
-
-  yellowMovex.dispatch({
-    type: 'writeMessage',
-    payload: {
-      msg: 'Hey Everybody',
-      participantId: yellowClient,
-      atTimestamp: 223,
-      id: '1',
-    },
-  });
-
-  await tillNextTick();
-
-  orangeMovex.dispatch({
-    type: 'writeMessage',
-    payload: {
-      msg: 'Hey Blue! How are you?',
-      participantId: orangeClient,
-      atTimestamp: 224,
-      id: '2',
-    },
-  });
-
-  await tillNextTick();
-
-  const actual = blueMovex.state;
-
-  const expected = computeCheckedState({
-    ...initialChatState,
-    participants: {
-      [blueClient]: {
-        active: true,
-        color: 'blue',
-        id: blueClient,
-        joinedAt: 123, // Not relevant
-        leftAt: undefined,
-      },
-      [orangeClient]: {
-        active: true,
-        color: 'orange',
-        id: orangeClient,
-        joinedAt: 124, // Not relevant
-        leftAt: undefined,
-      },
-      [yellowClient]: {
-        active: true,
-        color: 'yellow',
-        id: yellowClient,
-        joinedAt: 125, // Not relevant
-        leftAt: undefined,
-      },
-    },
-    messages: [
-      {
-        content: 'Hey Everybody',
-        participantId: yellowClient,
-        at: 223,
-        id: '1',
-      },
-      {
-        content: 'Hey Blue! How are you?',
-        participantId: orangeClient,
-        at: 224,
-        id: '2',
-      },
-    ],
-  });
-
-  expect(actual).toEqual(expected);
+  const masterPublicState = await master.getPublicState(rid).resolveUnwrap();
+  expect(masterPublicState).toEqual(actualAfterPrivateRevelatoryAction);
 });
