@@ -2,12 +2,12 @@ import { Ok } from 'ts-results';
 
 import { computeCheckedState } from '../lib/util';
 import counterReducer, { initialCounterState } from './resources/counterReducer';
-import { MovexClientResource } from '../lib/client/MovexClientResource';
+import { MovexResourceObservable } from '../lib/client/MovexResourceObservable';
 import { tillNextTick } from 'movex-core-util';
 
 describe('Observable', () => {
   test('Dispatch Local Actions', async () => {
-    const xResource = new MovexClientResource('test-client', counterReducer);
+    const xResource = new MovexResourceObservable('test-client', counterReducer);
     xResource.setMasterSyncing(false);
 
     xResource.dispatch({
@@ -38,7 +38,7 @@ describe('Observable', () => {
 
   // TODO: the applyAction got deprecated (for now). It was only used in createMasterEnv anyway
   // test('Apply Local Actions', () => {
-  //   const xResource = new MovexClientResource(counterReducer);
+  //   const xResource = new MovexResourceObservable(counterReducer);
 
   //   xResource.applyAction({
   //     type: 'increment',
@@ -64,7 +64,7 @@ describe('Observable', () => {
 
   describe('External Updates', () => {
     test('updates the unchecked state', async () => {
-      const xResource = new MovexClientResource('test-client', counterReducer);
+      const xResource = new MovexResourceObservable('test-client', counterReducer);
       xResource.setMasterSyncing(false);
 
       xResource.dispatch({
@@ -92,7 +92,7 @@ describe('Observable', () => {
 
     describe('Reconciliate Action', () => {
       test('Updates when matching', () => {
-        const xResource = new MovexClientResource(
+        const xResource = new MovexResourceObservable(
           'test-client',
           counterReducer
         );
@@ -124,7 +124,7 @@ describe('Observable', () => {
       });
 
       test('Fails when NOT matching and does not update', () => {
-        const xResource = new MovexClientResource(
+        const xResource = new MovexResourceObservable(
           'test-client',
           counterReducer
         );

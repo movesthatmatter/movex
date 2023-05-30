@@ -42,7 +42,7 @@ export class MovexMasterServer {
       payload: Parameters<
         IOEvents<S, A, TResourceType>['emitActionDispatch']
       >[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['emitActionDispatch']>
       ) => void
     ) => {
@@ -52,62 +52,75 @@ export class MovexMasterServer {
         this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
         .applyAction(rid, clientConnection.clientId, action)
         .map(({ nextPublic, nextPrivate, peerActions }) => {
           if (peerActions.type === 'reconcilable') {
-            objectKeys(peerActions.byClientId).forEach((peerId) => {
-              if (peerActions.byClientId[peerId]) {
-                const peerConnection = this.clientConnectionsByClientId[peerId];
+            // TODO: Filter out the client id so it only received the ack
+            objectKeys(peerActions.byClientId)
+              // Take out myself
+              .filter((id) => id !== clientConnection.clientId)
+              .forEach((peerId) => {
+                if (peerActions.byClientId[peerId]) {
+                  const peerConnection =
+                    this.clientConnectionsByClientId[peerId];
 
-                peerConnection.emitter.emit('reconciliateActions', {
-                  rid,
-                  ...peerActions.byClientId[peerId],
-                });
+                  peerConnection.emitter.emit('reconciliateActions', {
+                    rid,
+                    ...peerActions.byClientId[peerId],
+                  });
 
-                return;
-              }
-            });
-          } else {
-            objectKeys(peerActions.byClientId).forEach((peerId) => {
-              if (!peerActions.byClientId[peerId]) {
-                console.error(
-                  '[MovexMasterServer] Inexistant Peer Connection for peerId:',
-                  peerId
-                );
-                return;
-              }
-
-              const peerConnection = this.clientConnectionsByClientId[peerId];
-
-              // Noting to do if the connection doesn't exist
-              if (!peerConnection) {
-                return;
-              }
-
-              peerConnection.emitter.emit('fwdAction', {
-                rid,
-                ...peerActions.byClientId[peerId],
+                  return;
+                }
               });
-            });
+
+            return acknowledge?.(
+              new Ok({
+                reconciled: true,
+                ...peerActions.byClientId[clientConnection.clientId],
+              } as const)
+            );
           }
+
+          // Forwardable
+          objectKeys(peerActions.byClientId).forEach((peerId) => {
+            if (!peerActions.byClientId[peerId]) {
+              console.error(
+                '[MovexMasterServer] Inexistant Peer Connection for peerId:',
+                peerId
+              );
+              return;
+            }
+
+            const peerConnection = this.clientConnectionsByClientId[peerId];
+
+            // Noting to do if the connection doesn't exist
+            if (!peerConnection) {
+              return;
+            }
+
+            peerConnection.emitter.emit('fwdAction', {
+              rid,
+              ...peerActions.byClientId[peerId],
+            });
+          });
 
           // Send the Acknowledgement
           const nextChecksum = nextPrivate
             ? nextPrivate.checksum
             : nextPublic.checksum;
 
-          return acknowledge(new Ok(nextChecksum));
+          return acknowledge?.(new Ok({ nextChecksum }));
         })
-        .mapErr(() => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onGetResourceStateHandler = (
       payload: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['getResourceState']>
       ) => void
     ) => {
@@ -117,47 +130,53 @@ export class MovexMasterServer {
         this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
         .getState(rid, clientConnection.clientId)
-        .map((checkedState) => acknowledge(new Ok(checkedState)))
-        .mapErr((e) => acknowledge(new Err(e)));
+        .map((checkedState) => acknowledge?.(new Ok(checkedState)))
+        .mapErr((e) => acknowledge?.(new Err(e)));
     };
 
     const onCreateResourceHandler = (
       payload: Parameters<IOEvents<S, A, TResourceType>['createResource']>[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['createResource']>
       ) => void
     ) => {
       const { resourceState, resourceType } = payload;
 
+      console.log(
+        '[MovexMasterServer] onCreateResourceHandler',
+        payload,
+        acknowledge
+      );
+
       const masterResource = this.masterResourcesByType[resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
         .create(resourceType, resourceState)
         .map((r) =>
-          acknowledge(
+          acknowledge?.(
             new Ok({
               rid: r.rid,
               state: r.state,
             })
           )
         )
-        .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onAddResourceSubscriber = (
       payload: Parameters<
         IOEvents<S, A, TResourceType>['addResourceSubscriber']
       >[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['addResourceSubscriber']>
       ) => void
     ) => {
@@ -166,22 +185,22 @@ export class MovexMasterServer {
       const masterResource = this.masterResourcesByType[resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
         .addResourceSubscriber(payload.rid, clientConnection.clientId)
-        .map((r) => {
-          acknowledge(Ok.EMPTY);
+        .map(() => {
+          acknowledge?.(Ok.EMPTY);
         })
-        .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onRemoveResourceSubscriber = (
       payload: Parameters<
         IOEvents<S, A, TResourceType>['removeResourceSubscriber']
       >[0],
-      acknowledge: (
+      acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['removeResourceSubscriber']>
       ) => void
     ) => {
@@ -190,17 +209,29 @@ export class MovexMasterServer {
       const masterResource = this.masterResourcesByType[resourceType];
 
       if (!masterResource) {
-        return acknowledge(new Err('MasterResourceInexistent'));
+        return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
       masterResource
         .removeResourceSubscriber(payload.rid, clientConnection.clientId)
         .map(() => {
-          acknowledge(Ok.EMPTY);
+          acknowledge?.(Ok.EMPTY);
         })
-        .mapErr((e) => acknowledge(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
+    const onPingHandler = (
+      _: undefined,
+      acknowledge?: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['ping']>
+      ) => void
+    ) => {
+      clientConnection.emitter.emit('pong', undefined);
+
+      acknowledge?.(new Ok(undefined));
+    };
+
+    clientConnection.emitter.on('ping', onPingHandler);
     clientConnection.emitter.on('emitActionDispatch', onEmitActionHandler);
     clientConnection.emitter.on('getResourceState', onGetResourceStateHandler);
     clientConnection.emitter.on('createResource', onCreateResourceHandler);
@@ -215,11 +246,23 @@ export class MovexMasterServer {
 
     this.clientConnectionsByClientId = {
       ...this.clientConnectionsByClientId,
-      [clientConnection.clientId]: clientConnection,
+      [clientConnection.clientId]: clientConnection as ConnectionToClient<
+        any,
+        AnyAction,
+        any
+      >,
     };
+
+    console.log(
+      '[MovexMasterServer] Added Connection Succesfully',
+      this.clientConnectionsByClientId,
+      Object.keys(this.clientConnectionsByClientId).length,
+      'connections'
+    );
 
     // Unsubscribe
     return () => {
+      clientConnection.emitter.off('ping', onPingHandler);
       clientConnection.emitter.off('emitActionDispatch', onEmitActionHandler);
       clientConnection.emitter.off(
         'getResourceState',
@@ -235,6 +278,20 @@ export class MovexMasterServer {
         onRemoveResourceSubscriber
       );
     };
+  }
+
+  removeConnection(clienId: MovexClient['id']) {
+    const { [clienId]: removed, ...restOfConnections } =
+      this.clientConnectionsByClientId;
+
+    this.clientConnectionsByClientId = restOfConnections;
+
+    console.log(
+      '[MovexMasterServer] Removed Connection Succesfully',
+      this.clientConnectionsByClientId,
+      Object.keys(this.clientConnectionsByClientId).length,
+      'connections'
+    );
   }
 }
 

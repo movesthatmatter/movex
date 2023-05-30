@@ -36,6 +36,8 @@ export type Action<TType extends string, TPayload = undefined> =
   | PublicAction<TType, TPayload>
   | PrivateAction<TType, TPayload>;
 
+export type ActionWithAnyPayload<TType extends string> = Action<TType, unknown>;
+
 export type ActionsCollectionMapBase = UnknownRecord;
 
 export type AnyPublicAction = PublicAction<string>;
@@ -105,6 +107,7 @@ export type ToPublicAction<A extends AnyAction> = A & {
 export type CheckedReconciliatoryActions<A extends AnyAction> = {
   actions: A[];
   finalChecksum: Checksum;
+  // finalState: unknown;
 };
 
 export type AnyActionTuple = [AnyPrivateAction, AnyPublicAction];

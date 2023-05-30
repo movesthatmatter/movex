@@ -25,7 +25,7 @@ import { PromiseDelegate } from 'promise-delegate';
 /**
  * This is the MovexResource running on the Client
  */
-export class MovexClientResource<
+export class MovexResourceObservable<
   TState = any,
   TAction extends AnyAction = AnyAction
 > implements IObservable<CheckedState<TState>>
@@ -78,9 +78,9 @@ export class MovexClientResource<
       onDispatched: (p) => {
         this.pubsy.publish('onDispatched', p);
       },
-      onStateUpdated: (s) => {
-        // console.log('[MovexClient] Dispatcher.onStaetUpdated', s);
-      },
+      // onStateUpdated: (s) => {
+      //   // console.log('Dispatcher.onStaetUpdated', s);
+      // },
     });
 
     this.dispatcher = (...args: Parameters<typeof dispatch>) => {

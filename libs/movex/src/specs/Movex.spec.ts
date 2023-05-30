@@ -1,6 +1,6 @@
 import counterReducer from './resources/counterReducer';
 import gameReducer, { initialGameState } from './resources/gameReducer';
-import { tillNextTick } from 'movex-core-util';
+import { tillNextTick, toResourceIdentifierObj } from 'movex-core-util';
 import { computeCheckedState } from '../lib/util';
 import { movexClientMasterOrchestrator } from './util/orchestrator';
 require('console-group').install();
@@ -13,7 +13,9 @@ beforeEach(async () => {
 
 describe('All', () => {
   test('Create', async () => {
-    const [counterResource] = await orchestrator.orchestrate({
+    const {
+      clients: [counterResource],
+    } = await orchestrator.orchestrate({
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
@@ -26,13 +28,15 @@ describe('All', () => {
       .resolveUnwrap();
 
     expect(actual).toEqual({
-      rid: actual.rid, // The id isn't too important here
-      state: computeCheckedState({ count: 2 }),
+      rid: toResourceIdentifierObj(actual.rid), // The id isn't too important here
+      state: { count: 2 },
     });
   }, 200);
 
   test('Bind', async () => {
-    const [counterResource] = await orchestrator.orchestrate({
+    const {
+      clients: [counterResource],
+    } = await orchestrator.orchestrate({
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
@@ -53,7 +57,9 @@ describe('All', () => {
   });
 
   test('Dispatch Public Action', async () => {
-    const [counterResource] = await orchestrator.orchestrate({
+    const {
+      clients: [counterResource],
+    } = await orchestrator.orchestrate({
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
@@ -76,7 +82,9 @@ describe('All', () => {
   });
 
   test('Dispatch Private Action', async () => {
-    const [gameResource] = await orchestrator.orchestrate({
+    const {
+      clients: [gameResource],
+    } = orchestrator.orchestrate({
       clientIds: ['test-user'],
       reducer: gameReducer,
       resourceType: 'game',

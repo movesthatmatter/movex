@@ -5,7 +5,6 @@ import {
   MovexClient,
   objectKeys,
   toResourceIdentifierStr,
-  keyInObject,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { CheckedState } from '../core-types';
@@ -16,7 +15,6 @@ import {
   isAction,
   ToCheckedAction,
   CheckedReconciliatoryActions,
-  CheckedAction,
 } from '../tools/action';
 import { MovexReducer } from '../tools/reducer';
 import {
@@ -46,7 +44,9 @@ export class MovexMasterResource<
   ) {
     const patches = item.patches?.[clientId];
     if (patches) {
-      return this.reconcileState(item.state[0], patches);
+      return computeCheckedState(
+        this.mergeStatePatches(item.state[0], patches)
+      );
     }
 
     return item.state;
@@ -67,24 +67,11 @@ export class MovexMasterResource<
     );
   }
 
-  private reconcileState(state: TState, patches: MovexStatePatch<TState>[]) {
-    // TODO: left it here!
-    // TODO: This needs some more thinking as some use cases don't work - like what if the public state has updated
-    // since the private diffs were created – how are they applied then? B/c the resulting might not work exactly
-    // There are different types of diff and I don't now what the consequences are for each – I don't see the whole picture,
-    //  in whih case I am "overwhelmed" at thinking of a solution w/o knowing them.
-    // In case the state has changed – I could run the patch on the Public 0 => resulting Public 0.5, then a patch at Public 1 over Public 0.5
-    //  if there are different (if the checksums don't match). In which case I could do something for each scenario
-    //    I guess the Public 1 overwrites the Public 0.5 in everything except for the paths it changed (the diff)
-    // return privateDiffs.reduce(() => {}, store.public)
-
-    const reconciledState = applyMovexStatePatches(
+  private mergeStatePatches(state: TState, patches: MovexStatePatch<TState>[]) {
+    return applyMovexStatePatches(
       state,
       patches.map((p) => p.patch)
     );
-
-    // Should the checksum compute happen each time or should it be stored?
-    return computeCheckedState(reconciledState);
   }
 
   getItem<TResourceType extends GenericResourceType>(
@@ -289,13 +276,29 @@ export class MovexMasterResource<
                   [] as MovexStatePatch<TState>[]
                 );
 
+                // Merge all the private patches into the public state
+                const mergedState = this.mergeStatePatches(
+                  nextPublicState[0],
+                  allPatches
+                );
+
+                // Run it once more through the reducer with the given private action
+                // In order to calculate any derived state. If no state get calculated in
+                //  this step, in theory it just resturn the prev, but in some cases
+                //  when a different field (such as "isWinner" or "status"), needs to get computed
+                //  based on the fields modified by the private action this is when it happens!
+                const reconciledState = this.reducer(
+                  mergedState,
+                  privateAction
+                );
+
                 return this.store
                   .update(rid, {
-                    state: this.reconcileState(nextPublicState[0], allPatches),
+                    state: computeCheckedState(reconciledState),
                     // Clear the patches from the Item
                     patches: undefined,
                   })
-                  .map((nextReconciledPublicState) => {
+                  .map((nextReconciledItemFromPublicState) => {
                     const checkedReconciliatoryActionsByClientId = objectKeys(
                       prevPatchesByClientId
                     ).reduce((accum, nextClientId) => {
@@ -319,18 +322,20 @@ export class MovexMasterResource<
                         ...accum,
                         [nextClientId]: {
                           actions: allPeersPatchesAsList,
-                          finalChecksum: nextReconciledPublicState.state[1],
+                          finalChecksum:
+                            nextReconciledItemFromPublicState.state[1],
+                          // finalState: nextReconciledItemFromPublicState.state[0],
                         },
                       };
                     }, {} as Record<MovexClient['id'], CheckedReconciliatoryActions<TAction>>);
 
                     return {
                       nextPublic: {
-                        checksum: nextReconciledPublicState.state[1],
+                        checksum: nextReconciledItemFromPublicState.state[1],
                         action: publicAction,
                       },
                       nextPrivate: {
-                        checksum: nextReconciledPublicState.state[1],
+                        checksum: nextReconciledItemFromPublicState.state[1],
                         action: privateAction,
                       },
                       peerActions: {

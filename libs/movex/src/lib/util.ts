@@ -70,7 +70,7 @@ export const reconciliatePrivateFragments = <TState extends MovexState>(
 
   return allPatchesInOrder.reduce(
     jsonpatch.applyReducer,
-    // This is expensive but otherwise the state gets mutated. Need to look into maybe another way?
+    // TODO: This is expensive but otherwise the state gets mutated. Need to look into maybe another way?
     jsonpatch.deepClone(state)
   );
 };

@@ -1,4 +1,4 @@
-import { Emitter, MovexClient } from 'movex-core-util';
+import { EventEmitter, MovexClient } from 'movex-core-util';
 import { IOConnection } from '../io-connection/io-connection';
 import { AnyAction } from '../tools/action';
 import { IOEvents } from '../io-connection/io-events';
@@ -11,6 +11,6 @@ export class ConnectionToMaster<
 {
   constructor(
     public clientId: MovexClient['id'],
-    public emitter: Emitter<IOEvents<TState, TAction, TResourceType>>
+    public emitter: EventEmitter<IOEvents<TState, TAction, TResourceType>>
   ) {}
 }

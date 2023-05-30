@@ -8,7 +8,6 @@ export const getNextStateFrom = <T>(prev: T, a: NextStateGetter<T>) => {
 };
 
 export interface IObservable<T> {
-  // state: T;
   get: () => T;
   onUpdated: (fn: (state: T) => void) => () => void;
   update: (getNextState: T | ((prev: T) => T)) => void;
@@ -20,10 +19,6 @@ export class Observable<T> {
   }>();
 
   constructor(private _state: T) {}
-
-  // get state() {
-  //   return this._state;
-  // }
 
   get() {
     return this._state;
@@ -50,17 +45,8 @@ export class Observable<T> {
 
     // Hook up the update
     $next.onUpdate = (updateFn: (state: T1) => void) => {
-      console.log('on update $next');
-
       return this.onUpdate((t) => updateFn(mapFn(t)));
     };
-
-    // this.onUpdate((s) => {
-    //   $next.onUpdate(() => {
-
-    //   })
-    // })
-    // $next.onUpdate(() => {})
 
     return $next;
   }

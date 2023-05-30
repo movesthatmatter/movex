@@ -1,4 +1,4 @@
-import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
+import { tillNextTick, toResourceIdentifierObj } from 'movex-core-util';
 import { computeCheckedState } from '../../lib/util';
 import gameReducer, { initialGameState } from '../resources/gameReducer';
 import gameReducerWithDerivedState, {
@@ -6,11 +6,6 @@ import gameReducerWithDerivedState, {
 } from '../resources/gameReducerWithDerivedState';
 import { movexClientMasterOrchestrator } from '../util/orchestrator';
 require('console-group').install();
-
-const rid = toResourceIdentifierStr({
-  resourceType: 'game',
-  resourceId: 'test',
-});
 
 const orchestrator = movexClientMasterOrchestrator();
 
@@ -20,7 +15,9 @@ beforeEach(async () => {
 
 describe('Public Actions', () => {
   test('Dispatch with 1 client only', async () => {
-    const [gameClientResource] = await orchestrator.orchestrate({
+    const {
+      clients: [gameClientResource],
+    } = orchestrator.orchestrate({
       clientIds: ['test-client'],
       reducer: gameReducer,
       resourceType: 'game',
@@ -31,8 +28,8 @@ describe('Public Actions', () => {
       .resolveUnwrap();
 
     expect(created).toEqual({
-      rid: created.rid, // The id isn't too important here
-      state: computeCheckedState(initialGameState),
+      rid: toResourceIdentifierObj(created.rid), // The id isn't too important here
+      state: initialGameState,
     });
 
     const movex = gameClientResource.bind(created.rid);
@@ -47,9 +44,9 @@ describe('Public Actions', () => {
 
     await tillNextTick();
 
-    const actual = await movex.get();
+    const actual = movex.getUncheckedState();
 
-    const expected = computeCheckedState({
+    const expected = {
       ...initialGameState,
       submission: {
         ...initialGameState.submission,
@@ -59,13 +56,15 @@ describe('Public Actions', () => {
           canDraw: false,
         },
       },
-    });
+    };
 
     expect(actual).toEqual(expected);
   });
 
   test('With 2 Clients', async () => {
-    const [whiteClient, blackClient] = orchestrator.orchestrate({
+    const {
+      clients: [whiteClient, blackClient],
+    } = orchestrator.orchestrate({
       clientIds: ['white-client', 'black-client'],
       reducer: gameReducer,
       resourceType: 'game',
@@ -97,7 +96,9 @@ describe('Public Actions', () => {
 
 describe('Private Actions', () => {
   test('2 Players - Only 1 Submits', async () => {
-    const [whiteClient, blackClient] = orchestrator.orchestrate({
+    const {
+      clients: [whiteClient, blackClient],
+    } = orchestrator.orchestrate({
       clientIds: ['white-client', 'black-client'],
       reducer: gameReducer,
       resourceType: 'game',
@@ -180,7 +181,9 @@ describe('Private Actions', () => {
       return false;
     };
 
-    const [whiteClient, blackClient] = orchestrator.orchestrate({
+    const {
+      clients: [whiteClient, blackClient],
+    } = orchestrator.orchestrate({
       clientIds: ['white-client', 'black-client'],
       reducer: gameReducerWithoutRecociliation,
       resourceType: 'game',
@@ -293,7 +296,10 @@ describe('Private Actions', () => {
   });
 
   test('2 Clients. Both Submitting (White first) WITH Reconciliation', async () => {
-    const [whiteClient, blackClient] = orchestrator.orchestrate({
+    const {
+      clients: [whiteClient, blackClient],
+      master,
+    } = orchestrator.orchestrate({
       clientIds: ['white-client', 'black-client'],
       reducer: gameReducerWithDerivedState,
       resourceType: 'game',
@@ -384,6 +390,9 @@ describe('Private Actions', () => {
 
     const actualSenderState = blackMovex.state;
     expect(actualSenderState).toEqual(expected);
+
+    const masterPublicState = await master.getPublicState(rid).resolveUnwrap();
+    expect(masterPublicState).toEqual(expected);
 
     // expect(actualPeerState[0].submission.status).toBe('reconciled');
   });
