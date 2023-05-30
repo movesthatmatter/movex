@@ -1,8 +1,4 @@
-import {
-  IOPayloadResult,
-  MovexClient,
-  ResourceIdentifier,
-} from 'movex-core-util';
+import { IOPayloadResult, ResourceIdentifier } from 'movex-core-util';
 import { Checksum } from '../core-types';
 import { MovexStoreItem } from '../movex-store';
 import {
@@ -17,6 +13,8 @@ export type IOEvents<
   A extends AnyAction = AnyAction,
   TResourceType extends string = string
 > = {
+  ping: () => IOPayloadResult<void, unknown>;
+  pong: () => IOPayloadResult<void, unknown>;
   createResource: (p: {
     resourceType: TResourceType;
     resourceState: TState;
@@ -54,16 +52,25 @@ export type IOEvents<
   emitActionDispatch: (payload: {
     rid: ResourceIdentifier<TResourceType>;
     action: ActionOrActionTupleFromAction<A>;
-  }) => IOPayloadResult<Checksum, 'MasterResourceInexistent' | string>; // Type the other errors
+  }) => IOPayloadResult<
+    | {
+        reconciled?: false;
+        nextChecksum: Checksum;
+      }
+    | ({
+        reconciled: true;
+      } & CheckedReconciliatoryActions<A>),
+    'MasterResourceInexistent' | string
+  >; // Type the other errors
 
   fwdAction: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
     } & ToCheckedAction<A>
-  ) => void;
+  ) => IOPayloadResult<void, unknown>;
   reconciliateActions: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
     } & CheckedReconciliatoryActions<A>
-  ) => void;
+  ) => IOPayloadResult<void, unknown>;
 };

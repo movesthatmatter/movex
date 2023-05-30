@@ -1,8 +1,7 @@
-import { tillNextTick, toResourceIdentifierStr } from 'movex-core-util';
+import { tillNextTick } from 'movex-core-util';
 import { computeCheckedState } from '../../lib/util';
 import chatReducer, { initialChatState } from '../resources/chatReducer';
 import { movexClientMasterOrchestrator } from '../util/orchestrator';
-require('console-group').install();
 
 const orchestrator = movexClientMasterOrchestrator();
 
@@ -13,7 +12,9 @@ beforeEach(async () => {
 test('Adds Single Participant', async () => {
   const participantId = 'blue-client';
 
-  const [chatClientResource] = orchestrator.orchestrate({
+  const {
+    clients: [chatClientResource],
+  } = orchestrator.orchestrate({
     clientIds: [participantId],
     reducer: chatReducer,
     resourceType: 'chat',
@@ -57,7 +58,9 @@ test('Adds Single Participant', async () => {
 test('Single Participant Writes a Message', async () => {
   const participantId = 'blue-client';
 
-  const [chatClientResource] = await orchestrator.orchestrate({
+  const {
+    clients: [chatClientResource],
+  } = orchestrator.orchestrate({
     clientIds: [participantId],
     reducer: chatReducer,
     resourceType: 'chat',
@@ -123,35 +126,21 @@ test('Adding Multiple Participants', async () => {
   const orangeClient = 'orange-client';
   const yellowClient = 'yellow-client';
 
-  const [blueClientResource, orangeClientResource, yellowClientResource] =
-    orchestrator.orchestrate({
-      clientIds: [blueClient, orangeClient, yellowClient],
-      reducer: chatReducer,
-      resourceType: 'chat',
-    });
+  const {
+    clients: [blueClientResource, orangeClientResource, yellowClientResource],
+  } = orchestrator.orchestrate({
+    clientIds: [blueClient, orangeClient, yellowClient],
+    reducer: chatReducer,
+    resourceType: 'chat',
+  });
 
   const { rid } = await blueClientResource
     .create(initialChatState)
     .resolveUnwrap();
 
   const blueMovex = blueClientResource.bind(rid);
-  // Need to wait for the subscriber to be added
-  // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-  // so then even in the tests wouldn't be a issue, but for now this is the easiest
-  await tillNextTick();
-
   const yellowMovex = yellowClientResource.bind(rid);
-  // Need to wait for the subscriber to be added
-  // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-  // so then even in the tests wouldn't be a issue, but for now this is the easiest
-  await tillNextTick();
-
   const orangeMovex = orangeClientResource.bind(rid);
-
-  // Need to wait for the subscriber to be added
-  // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-  // so then even in the tests wouldn't be a issue, but for now this is the easiest
-  await tillNextTick();
 
   blueMovex.dispatch({
     type: 'addParticipant',
@@ -224,34 +213,21 @@ test('Multiple Participants Write Multiple Messages', async () => {
   const orangeClient = 'orange-client';
   const yellowClient = 'yellow-client';
 
-  const [blueClientResource, orangeClientResource, yellowClientResource] =
-    await orchestrator.orchestrate({
-      clientIds: [blueClient, orangeClient, yellowClient],
-      reducer: chatReducer,
-      resourceType: 'chat',
-    });
+  const {
+    clients: [blueClientResource, orangeClientResource, yellowClientResource],
+  } = orchestrator.orchestrate({
+    clientIds: [blueClient, orangeClient, yellowClient],
+    reducer: chatReducer,
+    resourceType: 'chat',
+  });
 
   const { rid } = await blueClientResource
     .create(initialChatState)
     .resolveUnwrap();
 
   const blueMovex = blueClientResource.bind(rid);
-  // Need to wait for the subscriber to be added
-  // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-  // so then even in the tests wouldn't be a issue, but for now this is the easiest
-  await tillNextTick();
-
   const yellowMovex = orangeClientResource.bind(rid);
-  // Need to wait for the subscriber to be added
-  // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-  // so then even in the tests wouldn't be a issue, but for now this is the easiest
-  await tillNextTick();
-
   const orangeMovex = yellowClientResource.bind(rid);
-  // Need to wait for the subscriber to be added
-  // TODO: This should not be the case in the real world, and also the store should implement the locker mechanism
-  // so then even in the tests wouldn't be a issue, but for now this is the easiest
-  await tillNextTick();
 
   blueMovex.dispatch({
     type: 'addParticipant',

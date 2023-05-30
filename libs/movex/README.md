@@ -29,8 +29,7 @@ Movex is a Multiplayer (Game) State Synchronization Library using Deterministic 
 - [Usage on the Client](#usage-on-the-client)
       - [Vanilla TS](#vanilla-ts)
       - [With React](#with-react)
-  - [Constraints](#constraints)
-        - [1. The Reducer Needs to stay Pure.](#1-the-reducer-needs-to-stay-pure)
+        - [2. Don't use undefined inside a reducer state. Use null instead](#2-dont-use-undefined-inside-a-reducer-state-use-null-instead)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
@@ -507,8 +506,7 @@ const CounterComponent({rid: Movex.ResourceIdentifier<'counter'>}) {
       </button>
     </div>
   )
-}f
-```
+z```
 
 ## Constraints
 
@@ -587,3 +585,7 @@ One solution for this could be a special type of dispatch, that waits for the ac
 This is a limitation of both the learning curve, and the performance of the library/game/application, as well as it breaks a bit from the "write on the client only", although the latter still is relevant as the client doesn't need to know anything ab the msater nor the developer, just to wait for a bit (the magic happens in movex), so it might not be that bad.
 
 Besides it's pretty exceptional – only when creating an id, and that id is to be used right away, otherwise the placeolder could work. In the worst case even a client generated id/time/etc is ok – just not ideal.
+
+##### 2. Don't use undefined inside a reducer state. Use null instead
+
+This has to do with how json serialized undefined, which in some cases (all?), it removes it altogether thus creating inconsistencies between the local never-serialized state. Just use null!
