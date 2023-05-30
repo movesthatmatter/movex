@@ -52,7 +52,16 @@ export type IOEvents<
   emitActionDispatch: (payload: {
     rid: ResourceIdentifier<TResourceType>;
     action: ActionOrActionTupleFromAction<A>;
-  }) => IOPayloadResult<Checksum, 'MasterResourceInexistent' | string>; // Type the other errors
+  }) => IOPayloadResult<
+    | {
+        reconciled?: false;
+        nextChecksum: Checksum;
+      }
+    | ({
+        reconciled: true;
+      } & CheckedReconciliatoryActions<A>),
+    'MasterResourceInexistent' | string
+  >; // Type the other errors
 
   fwdAction: (
     payload: {

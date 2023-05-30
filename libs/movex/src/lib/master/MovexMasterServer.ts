@@ -29,10 +29,7 @@ export class MovexMasterServer {
   > = {};
 
   constructor(
-    private masterResourcesByType: Record<
-      string,
-      MovexMasterResource<any, any>
-    >
+    private masterResourcesByType: Record<string, MovexMasterResource<any, any>>
   ) {}
 
   // This needs to respond back to the client
@@ -62,50 +59,63 @@ export class MovexMasterServer {
         .applyAction(rid, clientConnection.clientId, action)
         .map(({ nextPublic, nextPrivate, peerActions }) => {
           if (peerActions.type === 'reconcilable') {
-            objectKeys(peerActions.byClientId).forEach((peerId) => {
-              if (peerActions.byClientId[peerId]) {
-                const peerConnection = this.clientConnectionsByClientId[peerId];
+            // TODO: Filter out the client id so it only received the ack
+            objectKeys(peerActions.byClientId)
+              // Take out myself
+              .filter((id) => id !== clientConnection.clientId)
+              .forEach((peerId) => {
+                if (peerActions.byClientId[peerId]) {
+                  const peerConnection =
+                    this.clientConnectionsByClientId[peerId];
 
-                peerConnection.emitter.emit('reconciliateActions', {
-                  rid,
-                  ...peerActions.byClientId[peerId],
-                });
+                  peerConnection.emitter.emit('reconciliateActions', {
+                    rid,
+                    ...peerActions.byClientId[peerId],
+                  });
 
-                return;
-              }
-            });
-          } else {
-            objectKeys(peerActions.byClientId).forEach((peerId) => {
-              if (!peerActions.byClientId[peerId]) {
-                console.error(
-                  '[MovexMasterServer] Inexistant Peer Connection for peerId:',
-                  peerId
-                );
-                return;
-              }
-
-              const peerConnection = this.clientConnectionsByClientId[peerId];
-
-              // Noting to do if the connection doesn't exist
-              if (!peerConnection) {
-                return;
-              }
-
-              peerConnection.emitter.emit('fwdAction', {
-                rid,
-                ...peerActions.byClientId[peerId],
+                  return;
+                }
               });
-            });
+
+            return acknowledge?.(
+              new Ok({
+                reconciled: true,
+                ...peerActions.byClientId[clientConnection.clientId],
+              } as const)
+            );
           }
+
+          // Forwardable
+          objectKeys(peerActions.byClientId).forEach((peerId) => {
+            if (!peerActions.byClientId[peerId]) {
+              console.error(
+                '[MovexMasterServer] Inexistant Peer Connection for peerId:',
+                peerId
+              );
+              return;
+            }
+
+            const peerConnection = this.clientConnectionsByClientId[peerId];
+
+            // Noting to do if the connection doesn't exist
+            if (!peerConnection) {
+              return;
+            }
+
+            peerConnection.emitter.emit('fwdAction', {
+              rid,
+              ...peerActions.byClientId[peerId],
+            });
+          });
 
           // Send the Acknowledgement
           const nextChecksum = nextPrivate
             ? nextPrivate.checksum
             : nextPublic.checksum;
 
-          return acknowledge?.(new Ok(nextChecksum));
+          return acknowledge?.(new Ok({ nextChecksum }));
         })
-        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onGetResourceStateHandler = (
@@ -137,7 +147,11 @@ export class MovexMasterServer {
     ) => {
       const { resourceState, resourceType } = payload;
 
-      console.log('[MovexMasterServer] onCreateResourceHandler', payload, acknowledge)
+      console.log(
+        '[MovexMasterServer] onCreateResourceHandler',
+        payload,
+        acknowledge
+      );
 
       const masterResource = this.masterResourcesByType[resourceType];
 
@@ -176,7 +190,7 @@ export class MovexMasterServer {
 
       masterResource
         .addResourceSubscriber(payload.rid, clientConnection.clientId)
-        .map((r) => {
+        .map(() => {
           acknowledge?.(Ok.EMPTY);
         })
         .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
@@ -232,7 +246,11 @@ export class MovexMasterServer {
 
     this.clientConnectionsByClientId = {
       ...this.clientConnectionsByClientId,
-      [clientConnection.clientId]: clientConnection,
+      [clientConnection.clientId]: clientConnection as ConnectionToClient<
+        any,
+        AnyAction,
+        any
+      >,
     };
 
     console.log(

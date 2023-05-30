@@ -11,6 +11,7 @@ import {
   ActionOrActionTupleFromAction,
   ActionWithAnyPayload,
   AnyAction,
+  CheckedReconciliatoryActions,
   GetReducerAction,
   MovexReducer,
   isAction,
@@ -102,6 +103,70 @@ export class MovexResource<
       });
     });
 
+    const onReconciliateActionsHandler = (
+      p: CheckedReconciliatoryActions<A>
+    ) => {
+      const prevState = resourceObservable.get();
+
+      console.group(
+        `%c\u{25BC} %cReconciliatory Actions Received (${p.actions.length}). FinalCheckum ${p.finalChecksum}`,
+        logIncomingStyle,
+        logUnimportantStyle
+      );
+      console.log('%cPrev state', logUnimportantStyle, prevState[0]);
+
+      p.actions.forEach((action, i) => {
+        resourceObservable.applyAction(
+          action as ActionOrActionTupleFromAction<
+            GetReducerAction<typeof this.reducer>
+          >
+        );
+
+        console.log(
+          `%cAction(${i + 1}/${p.actions.length}): %c${action.type}`,
+          logOutgoingStyle,
+          logImportantStyle,
+          (action as ActionWithAnyPayload<string>).payload
+        );
+
+        // clientResource.reconciliateAction
+      });
+
+      const nextState = resourceObservable.get();
+
+      console.log('%cNextState', logIncomingStyle, nextState[0]);
+      console.log(
+        '%cchecksums',
+        logUnimportantStyle,
+        prevState[1],
+        '>',
+        nextState[1]
+      );
+
+      if (nextState[1] === p.finalChecksum) {
+        console.log(
+          '%cFinal Checksum Matches',
+          logUnimportantStyle,
+          p.finalChecksum
+        );
+      } else {
+        // console.log('Final Master State', p.finalState);
+        console.warn(
+          '%cLocal and Final Master Checksum Mismatch',
+          logErrorStyle,
+          nextState[1],
+          p.finalChecksum
+        );
+      }
+
+      console.groupEnd();
+
+      // p.actions.map(())
+      // TODO: What should the reconciliatry actions do? Apply them all together and check at the end right?
+      // If the end result don't match the checkusm this is the place where it can reask the master for the new state!
+      // This is where that amazing logic lives :D
+    };
+
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
       resourceObservable.onDispatched(
         ({
@@ -170,14 +235,15 @@ export class MovexResource<
 
           this.connectionToMasterResource
             .emitAction(rid, action)
-            .map(async (masterChecksum) => {
-              /// TODO: When the action dispatched by this client is reconciliatory
-              //  the ack should return the final checksum, not the onReconciliatory
-              //  as otherwise this will never be masterChecksum === nextLocalChecksum
-              //  and thus always failing. Besides it just makes sense to only call that on the peers no?
-              //  This will have a payload exactly like it.
+            .map(async (master) => {
+              if (master.reconciled) {
+                onReconciliateActionsHandler(master);
 
-              if (masterChecksum === nextLocalChecksum) {
+                return;
+              }
+
+              // Otherwise if it's a simple ack
+              if (master.nextChecksum === nextLocalChecksum) {
                 return;
               }
 
@@ -215,6 +281,10 @@ export class MovexResource<
               );
 
               console.groupEnd();
+
+              // TODO: This needs a safe catch to get the fresh master state
+              // But ieally this is never needed, as the action mechanism just works
+              // so I leave it w/o for now, to see if this fails a lot!
             });
         }
       ),
@@ -253,67 +323,10 @@ export class MovexResource<
 
         console.groupEnd();
       }),
-      this.connectionToMasterResource.onReconciliatoryActions(rid, (p) => {
-        const prevState = resourceObservable.get();
-
-        console.group(
-          `%c\u{25BC} %cReconciliatory Actions Received (${p.actions.length}). FinalCheckum ${p.finalChecksum}`,
-          logIncomingStyle,
-          logUnimportantStyle
-        );
-        console.log('%cPrev state', logUnimportantStyle, prevState[0]);
-
-        p.actions.forEach((action, i) => {
-          resourceObservable.applyAction(
-            action as ActionOrActionTupleFromAction<
-              GetReducerAction<typeof this.reducer>
-            >
-          );
-
-          console.log(
-            `%cAction(${i + 1}/${p.actions.length}): %c${action.type}`,
-            logOutgoingStyle,
-            logImportantStyle,
-            (action as ActionWithAnyPayload<string>).payload
-          );
-
-          // clientResource.reconciliateAction
-        });
-
-        const nextState = resourceObservable.get();
-
-        console.log('%cNextState', logIncomingStyle, nextState[0]);
-        console.log(
-          '%cchecksums',
-          logUnimportantStyle,
-          prevState[1],
-          '>',
-          nextState[1]
-        );
-
-        if (nextState[1] === p.finalChecksum) {
-          console.log(
-            '%cFinal Checksum Matches',
-            logUnimportantStyle,
-            p.finalChecksum
-          );
-        } else {
-          // console.log('Final Master State', p.finalState);
-          console.warn(
-            '%cLocal and Final Master Checksum Mismatch',
-            logErrorStyle,
-            nextState[1],
-            p.finalChecksum
-          );
-        }
-
-        console.groupEnd();
-
-        // p.actions.map(())
-        // TODO: What should the reconciliatry actions do? Apply them all together and check at the end right?
-        // If the end result don't match the checkusm this is the place where it can reask the master for the new state!
-        // This is where that amazing logic lives :D
-      }),
+      this.connectionToMasterResource.onReconciliatoryActions(
+        rid,
+        onReconciliateActionsHandler
+      ),
       // Add the client resource destroy to the list of unsubscribers
       () => resourceObservable.destroy(),
 
