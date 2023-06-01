@@ -1,0 +1,6 @@
+{
+  "resources": "Resources",
+  "reducers": "Reducers",
+  "actions": "Actions",
+  "state": "State"
+}

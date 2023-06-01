@@ -1,0 +1,72 @@
+# Reducers
+
+Each Resource, needs a Reducer to modify its state. A Movex Reducer, is almost the same as a Redux or React's useReducer' reducer. It's where the business/game logic happens. [Learn more here](https://www.tutorialspoint.com/redux/redux_reducers.htm) on what a reducer does in Redux.
+
+Example of a reducer:
+
+```ts
+// *Api might change
+
+import { Action } from 'movex';
+
+export type CounterState = {
+  count: number;
+};
+
+export const initialCounterState: CounterState = {
+  count: 0,
+};
+
+export type CounterActions =
+  | Action<'increment'>
+  | Action<'decrement'>
+  | Action<'incrementBy', number>;
+
+export default (state = initialCounterState, action: CounterActions) => {
+  if (action.type === 'increment') {
+    return {
+      ...state,
+      count: state.count + 1,
+    };
+  }
+
+  if (action.type === 'decrement') {
+    return {
+      ...state,
+      count: state.count - 1,
+    };
+  }
+
+  if (action.type === 'incrementBy') {
+    return {
+      ...state,
+      count: state.count + action.payload,
+    };
+  }
+
+  return state;
+};
+```
+
+It's a simple, deterministic mechanism that when given the same input, it always returns the same output.
+
+Where it differs from Redux is that it runs both on the Client and the Server, which makes such features as **Server Authority** and **Private States** possible.
+
+#### Client Runner
+
+The client is just an optimization, and it takes advantage of the above mentioned quality of _determinism_ (same input always returns the same output), which means that we can run it on the client even before it gets sent to the server for validation, and thus render the next state without any lag.
+
+See the secion on [State Mismatch Resynchronization](#remote-state-mismatch-resynchronization) on what happens when the remote states get out of sync and how does movex reconcile them.
+
+#### Server Runner
+
+Although, the reducer runs on the client, the Server is always the **authority**! **This is the feature that enables _Server Side Authority_ without writing server specific code.**
+_Note, this feature will only work with JS/TS codebases for the initial releases, and it will still need to be deployed manually (most likely via Docker). This is still a Work In Progress._
+
+Here is what the Server Runner does:
+
+1. Receives an action and processes the next state.
+2. Sends an acknowledgemnt back to the sender containing the checksum of the processed state.
+3. Forwards the action to the rest of the clients subscribed to that resource (peers).
+4. Computes and Stores Private State Fragments until a future _revelation_ event. (See the section on [Secret State & Private Actions](#private-actions--secret-state)).
+5. Calls the `$canRevealPrivateState` Native Action after each incoming Private Action. (This only gets called on the server)

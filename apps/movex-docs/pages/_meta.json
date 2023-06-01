@@ -1,0 +1,13 @@
+{
+  "index": {
+    "type": "page",
+    "title": "Movex",
+    "display": "hidden",
+    "theme": {
+      "layout": "raw"
+    }
+  },
+  "overview": "Overview",
+  "usage": "Usage",
+  "constraints": "Constraints"
+}

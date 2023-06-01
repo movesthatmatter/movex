@@ -1,0 +1,101 @@
+# Usage on the Client
+
+The client acts as the state keeper. The whole server sync it just incidental, but the changes are kept locally as well as in a remote store!
+
+That means the resource has its own store locally.
+
+```ts
+// *Api might change
+
+import { Action } from 'movex';
+
+export type CounterState = {
+  count: number;
+};
+
+export const initialCounterState: CounterState = {
+  count: 0,
+};
+
+export type CounterActions =
+  | Action<'increment'>
+  | Action<'decrement'>
+  | Action<'incrementBy', number>;
+
+export default (state = initialCounterState, action: CounterActions) => {
+  if (action.type === 'increment') {
+    return {
+      ...state,
+      count: state.count + 1,
+    };
+  }
+
+  if (action.type === 'decrement') {
+    return {
+      ...state,
+      count: state.count - 1,
+    };
+  }
+
+  if (action.type === 'incrementBy') {
+    return {
+      ...state,
+      count: state.count + action.payload,
+    };
+  }
+
+  return state;
+};
+```
+
+#### Vanilla TS
+
+```ts
+// Note: Api might change
+
+// instantiate it
+const movex = new Movex(config: MovexClientConfig);
+
+const conterResource = movex.registerResource('counter', counterResourceReducer);
+
+// use it
+const counterResourceIdentifier = conterResource.create();
+
+// movex.resources is MovexResource({});
+counterResource.onUpdated(counterResourceIdentifier, (nextState) => {
+  console.log('got next state', nextState);
+})
+
+```
+
+#### With React
+
+```tsx
+// Note: Api might change
+// src: App.tsx
+
+const AppComponent() {
+  const movex = useInstance(new Movex({
+    config: ClientSDKConfig
+  }));
+
+  const counterResource = useMemo(() => movex.registerResource(counterReducer), [movex])
+
+  const [counterRid, setCounterRid] = useState<Movex.ResourceIdentifier>();
+
+  return (
+    <div>
+      {counterRid ? (
+        <CounterComponent rid={counterRid}>
+      ) : (
+        <button
+          // When the resource get's created the default state becomes it' state once the response is returned
+          action={() => counterResource.create().map(setCounterRid)}
+        >
+          Create Counter
+        </button>
+      )}
+    </div>
+  )
+}
+```
