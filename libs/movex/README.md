@@ -40,7 +40,7 @@ Movex is a Multiplayer (Game) State Synchronization Library using Deterministic 
 Movex combines the following features out of the box:
 
 1. Local and Remote State Synchronization across all peers and server.
-2. Server Authoritative with Deterministic Propagation. Why is that important? Read [here](https://gafferongames.com/post/deterministic_lockstep/) or [here](https://longwelwind.**net**/blog/networking-turn-based-game/).
+2. Server Authoritative with Deterministic Propagation. Why is that important? Read [here](https://gafferongames.com/post/deterministic_lockstep/) or [here](https://longwelwind.net/blog/networking-turn-based-game/).
 3. Secret/Private State Fragments.
 4. Easy, functional way to handle the state via Actions & Reducers.
 5. Write only client code. (The server code and multiplayer mode is incidental)!!! 🥳

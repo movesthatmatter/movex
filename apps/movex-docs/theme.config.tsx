@@ -1,8 +1,8 @@
-import React from 'react'
-import { DocsThemeConfig } from 'nextra-theme-docs'
+import { DocsThemeConfig } from 'nextra-theme-docs';
+import { Logo } from './modules/Logo';
 
 const config: DocsThemeConfig = {
-  logo: <span>Movex</span>,
+  logo: <Logo />,
   project: {
     link: 'https://github.com/movesthatmatter/movex',
   },
@@ -13,6 +13,6 @@ const config: DocsThemeConfig = {
   footer: {
     text: 'Movex Docs',
   },
-}
+};
 
-export default config
+export default config;
