@@ -1,11 +1,9 @@
 # Usage on the Client
 
-The client acts as the state keeper. The whole server sync it just incidental, but the changes are kept locally as well as in a remote store!
-
-That means the resource has its own store locally.
+Remeber, the state logic lives in the reducer, which only needs to be written once, at the client level, as if building a single player or front-end only app. Movex makes it possible to take the movex.js file, upload it on a server and run it as the authority, without you, the developer having to write any specific code or hooking up anything. _(Except setting up the Movex Backend Service or using a hosting provider. But this should only be done once)._
 
 ```ts
-// *Api might change
+// counter.movex.ts
 
 import { Action } from 'movex';
 
@@ -48,15 +46,37 @@ export default (state = initialCounterState, action: CounterActions) => {
 };
 ```
 
-#### Vanilla TS
+Define the movex.config. This is where the movex reducers get assigned a resource type.
 
 ```ts
-// Note: Api might change
+// This will be read by both the client and the server
 
-// instantiate it
-const movex = new Movex(config: MovexClientConfig);
+import counterReducer from './counter.movex';
 
-const conterResource = movex.registerResource('counter', counterResourceReducer);
+export default {
+  resources: {
+    counter: counterReducer,
+  },
+};
+```
+
+```ts
+// App.ts
+const movex = await new Promise((resolve) => {
+  Client.initMovex(
+    {
+      clientId,
+      url: props.socketUrl,
+      apiKey: '',
+    },
+    resolve
+  );
+});
+
+const conterResource = movex.registerResource(
+  'counter',
+  counterResourceReducer
+);
 
 // use it
 const counterResourceIdentifier = conterResource.create();
@@ -64,38 +84,5 @@ const counterResourceIdentifier = conterResource.create();
 // movex.resources is MovexResource({});
 counterResource.onUpdated(counterResourceIdentifier, (nextState) => {
   console.log('got next state', nextState);
-})
-
-```
-
-#### With React
-
-```tsx
-// Note: Api might change
-// src: App.tsx
-
-const AppComponent() {
-  const movex = useInstance(new Movex({
-    config: ClientSDKConfig
-  }));
-
-  const counterResource = useMemo(() => movex.registerResource(counterReducer), [movex])
-
-  const [counterRid, setCounterRid] = useState<Movex.ResourceIdentifier>();
-
-  return (
-    <div>
-      {counterRid ? (
-        <CounterComponent rid={counterRid}>
-      ) : (
-        <button
-          // When the resource get's created the default state becomes it' state once the response is returned
-          action={() => counterResource.create().map(setCounterRid)}
-        >
-          Create Counter
-        </button>
-      )}
-    </div>
-  )
-}
+});
 ```

@@ -1,24 +1,6 @@
-# Public State
+# State Synchronizatoin and Mismatch Resynchronization (WIP)
 
-Just like Redux. 
-
-# Private State
-
-## How Does the Private Action/Secret State actually works?
-
-A __*Private Action*__ can only be sent in pair with a __*Public Action*__. The public action is needed to create the changes in the Public State in order for the `$canRevealPrivateState` handler to determine if it can reconcile the states or not yet. Think about it as a record of the private action being taken (could be a change of status for that player), without actually revealing the content of the action.
-
-- **On The Client**
-
-The sender's client, calls the reducer with the private action which will simply return the next state, BUT disregards the paired public one as that is only relevant to its peers (the rest of the clients).
-
-- **On the Server**
-
-The server will call the reducer with the private action, but knowing behind the scenes that is a private action, it will do something different with the result. Instead of simply merging it into the publc state, it will compute a delta from the prev to the next, and store that as a Client Private Fragment (delta) along with the action. This will allow the Sender Client to always get the _Private State_ even after a resource refetch, while all the others to get the _Public State_ or their own _Private State_ (in case they have dispatched Private Actions as well and the state hasn't reconciled yet).
-
-## Remote State Mismatch Resynchronization (WIP)
-
-Sometimes there might be mismatches in the client state and the server state. This could be due to network errors, bugs in the code or who knows what. Dealing with Shared State is hard :), but don't fret, Movex has some solutions:
+Sometimes there might be mismatches between the Client State and the Master (Server) State. This could be due to network errors, bugs in the code or who knows what. Dealing with Shared State is hard :), but don't fret, Movex has some solutions:
 
 ##### 1. Use The Checksums to its advantage (Optimal)
 
