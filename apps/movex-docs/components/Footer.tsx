@@ -1,3 +1,4 @@
+import React from 'react';
 import { Logo } from '../modules/Logo';
 import { HeartIcon } from '@heroicons/react/24/solid';
 

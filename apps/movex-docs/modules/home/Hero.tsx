@@ -1,8 +1,8 @@
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { Button } from '../../components/Button';
 import Link from 'next/link';
-import { useTheme } from 'next-themes';
-import { useCurrentTheme } from 'apps/movex-docs/hooks/useCurrentTheme';
+import { useCurrentTheme } from '../../hooks/useCurrentTheme';
 
 type Props = {};
 

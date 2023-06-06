@@ -1,3 +1,4 @@
+import React from 'react';
 import { DocsThemeConfig } from 'nextra-theme-docs';
 import { Logo } from './modules/Logo';
 import { Footer } from './components/Footer';
