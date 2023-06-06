@@ -1,14 +1,18 @@
 {
   "index": {
     "type": "page",
-    "title": "Movex",
-    "display": "hidden",
+    "title": "Home",
     "theme": {
       "layout": "raw"
-    }
+    },
+    "display": "hidden"
   },
-  "overview": "Overview",
-  "usage": "Using Movex",
-  "how": "How it works",
-  "constraints": "Constraints"
+  "docs": {
+    "title": "Docs",
+    "type": "page"
+  },
+  "about": {
+    "title": "About",
+    "type": "page"
+  }
 }

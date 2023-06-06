@@ -39,7 +39,7 @@ export type MovexBoundResourceFromConfig<
 export const useMovexResource = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap
 >(
-  movexDefinition: MovexDefinition<TResourcesMap>,
+  // movexDefinition: MovexDefinition<TResourcesMap>,
   resourceType: keyof TResourcesMap
 ) => {
   const m = useMovex();
@@ -49,9 +49,9 @@ export const useMovexResource = <
 
   useEffect(() => {
     if (m.connected) {
-      const reducer = movexDefinition.resources[resourceType]; // TODO: Why the any?
+      // const reducer = movexDefinition.resources[resourceType]; // TODO: Why the any?
 
-      setResource(m.movex.register(resourceType as string, reducer));
+      setResource(m.movex.register(resourceType as string));
     }
   }, [m.connected]);
 
@@ -66,8 +66,8 @@ export const useMovexBoundResource = <
   rid: ResourceIdentifier<TResourceType>
 ) => {
   const resource = useMovexResource(
-    movexConfig,
-    toResourceIdentifierObj(rid).resourceType
+    // movexConfig,
+    // toResourceIdentifierObj(rid).resourceType
   );
 
   const ridAsStr = useMemo(() => toResourceIdentifierStr(rid), [rid]);

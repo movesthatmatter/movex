@@ -3,5 +3,5 @@
   "reducers": "Reducers",
   "actions": "Actions",
   "state": "State",
-  "secret_state": "Secret State Fragments"
+  "secret_state": "Secret State"
 }

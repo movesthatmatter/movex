@@ -1,9 +1,8 @@
 import React from 'react';
-import { useTheme } from 'next-themes';
+import { useCurrentTheme } from '../hooks/useCurrentTheme';
 
 export const Logo: React.FC = () => {
-  const { systemTheme, theme } = useTheme();
-  const currentTheme = theme === 'system' ? systemTheme : theme;
+  const currentTheme = useCurrentTheme();
 
   return (
     <img

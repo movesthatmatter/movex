@@ -1,17 +1,24 @@
-# State Synchronizatoin and Mismatch Resynchronization (WIP)
+import { Callout } from 'nextra/components';
+
+# State Synchronizatoin and Mismatch Resynchronization
 
 Sometimes there might be mismatches between the Client State and the Master (Server) State. This could be due to network errors, bugs in the code or who knows what. Dealing with Shared State is hard :), but don't fret, Movex has some solutions:
 
+<Callout type="warning" emoji="⚠️">
+  This functionality is still a Work In Progress, and not released yet. We have
+  to come up with proper tests and validation for this as well as probably more
+  optimizations and heuristics.
+</Callout>
+
 ##### 1. Use The Checksums to its advantage (Optimal)
 
- First of all it can take advantage of the state checksums. Each Forwarded/Acknowledge Action contains the prev and next state checksum, so the clients will be able to compare that with the locally computed next checksum and proceed accordingly given the outcome.
-
+First of all it can take advantage of the state checksums. Each Forwarded/Acknowledge Action contains the prev and next state checksum, so the clients will be able to compare that with the locally computed next checksum and proceed accordingly given the outcome.
 
 **If they match all is good 🥳, if not we take advantage of the following:**
 
 The client will always store the last server reconciled checksum with its state (just in case it's needed to recompile). This will be derived from the ack/fwd received from the server, containing the next state checksum. If the client computes the same checksum than that becomes the last reconciled. If not, the below _Strategy_ needs to happen.
 
-The server also stores a map of each checksum and the action that derived it in the order in which it was received. *(TODO: This could become big pretty early on, so there might be some optimization done.)*
+The server also stores a map of each checksum and the action that derived it in the order in which it was received.
 
 When the server acks/forwards an action, and the checksum from the local state don't match, the client responds back with the last reconciled checksum it has, and the server will respond with all the actions from that point in the order of application. In theory this should set the two states in sync again, but there might be some other issues (especially if in the middle of the payload there was another action – or should it be an issue?)
 
@@ -21,6 +28,4 @@ When the client receives the reconciliatory actions (since it's reconciled state
 
 If the above doesn't work, for whatever reason, again dealing with Shared State is hard, we have the ultimate sling shot:
 
-The Client Sends for help to the Server and the Server will respond with the latest version of the reconciled state. This should set things straight for another while, but in theory this shouldn't really happen too often. Hopefully not at all! 😇 
-  
-> Note: This is still a WIP and we'll have to come up with proper tests and validation for this as well as probably more optimizations and heuristics
+The Client Sends for help to the Server and the Server will respond with the latest version of the reconciled state. This should set things straight for another while, but in theory this shouldn't really happen too often. Hopefully not at all! 😇

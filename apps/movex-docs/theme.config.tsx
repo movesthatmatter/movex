@@ -1,5 +1,6 @@
 import { DocsThemeConfig } from 'nextra-theme-docs';
 import { Logo } from './modules/Logo';
+import { Footer } from './components/Footer';
 
 const config: DocsThemeConfig = {
   logo: <Logo />,
@@ -7,11 +8,14 @@ const config: DocsThemeConfig = {
     link: 'https://github.com/movesthatmatter/movex',
   },
   chat: {
-    link: 'https://discord.com',
+    link: 'https://discord.gg/N8k447EmBh',
   },
   docsRepositoryBase: 'https://github.com/movesthatmatter/movex',
+  // footer: {
+  //   text: 'Movex',
+  // },
   footer: {
-    text: 'Movex Docs',
+    text: <Footer />,
   },
 };
 

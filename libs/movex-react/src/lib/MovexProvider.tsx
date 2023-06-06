@@ -28,6 +28,7 @@ export const MovexProvider: React.FC<Props<{}>> = (props) => {
           url: props.socketUrl,
           apiKey: '',
         },
+        props.movexDefinition,
         (movex) => {
           const clientId = movex.getClientId();
 
