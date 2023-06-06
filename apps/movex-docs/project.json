@@ -5,18 +5,24 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nrwl/next:build",
+      "executor": "@nrwl/workspace:run-commands",
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
         "root": "apps/movex-docs",
-        "outputPath": "dist/apps/movex-docs"
+        "outputPath": "dist/apps/movex-docs",
+        "command": "npx next build",
+        "cwd": "apps/movex-docs"
       },
       "configurations": {
         "development": {
-          "outputPath": "apps/movex-docs"
+          "outputPath": "apps/movex-docs",
+          "dev": true
         },
-        "production": {}
+        "production": {
+          "outputPath": "apps/movex-docs",
+          "dev": false
+        }
       }
     },
     "serve": {
