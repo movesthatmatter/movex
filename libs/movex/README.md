@@ -1,14 +1,16 @@
 <p align="center">
-
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./art/logo_b@2x">
+  <source media="(prefers-color-scheme: dark)" srcset="./art/logo_b@2x.png">
   <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="./art/logo_b_white@2x.png">
 </picture>
+<p>
 
+
+<p align="center">
  <a aria-label="License" href="https://github.com/movesthatmatter/movex/blob/main/LICENSE">
     <img alt="" src="https://img.shields.io/badge/license-MIT-green">
   </a>
-<p>
+</p>
 
 
 
