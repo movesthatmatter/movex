@@ -1,0 +1,53 @@
+# Reducers
+
+Each Resource, needs a Reducer to modify its state. A Movex Reducer, is almost the same as a Redux or React's useReducer' reducer. It's where the business/game logic happens. [Learn more here](https://www.tutorialspoint.com/redux/redux_reducers.htm) on what a reducer does in Redux.
+
+Example of a reducer:
+
+```ts
+// *Api might change
+
+import { Action } from 'movex';
+
+export type CounterState = {
+  count: number;
+};
+
+export const initialCounterState: CounterState = {
+  count: 0,
+};
+
+export type CounterActions =
+  | Action<'increment'>
+  | Action<'decrement'>
+  | Action<'incrementBy', number>;
+
+export default (state = initialCounterState, action: CounterActions) => {
+  if (action.type === 'increment') {
+    return {
+      ...state,
+      count: state.count + 1,
+    };
+  }
+
+  if (action.type === 'decrement') {
+    return {
+      ...state,
+      count: state.count - 1,
+    };
+  }
+
+  if (action.type === 'incrementBy') {
+    return {
+      ...state,
+      count: state.count + action.payload,
+    };
+  }
+
+  return state;
+};
+```
+
+It's a simple, deterministic mechanism that when given the same input, it always returns the same output.
+
+Where it differs from Redux is that it runs both on the Client and the Server, which makes such features as **Server Authority** and **Private States** possible.

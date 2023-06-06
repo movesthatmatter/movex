@@ -20,6 +20,13 @@
       }
     },
     "serve": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "npx next",
+        "cwd": "apps/movex-docs"
+      }
+    },
+    "serve_old": {
       "executor": "@nrwl/next:server",
       "defaultConfiguration": "development",
       "options": {

@@ -1,18 +1,8 @@
-import { AppProps } from 'next/app';
-import Head from 'next/head';
-import './styles.css';
+import 'tailwindcss/tailwind.css';
+import '../globals.css';
 
-function CustomApp({ Component, pageProps }: AppProps) {
-  return (
-    <>
-      <Head>
-        <title>Welcome to movex-docs!</title>
-      </Head>
-      <main className="app">
-        <Component {...pageProps} />
-      </main>
-    </>
-  );
+function MyApp({ Component, pageProps }) {
+  return <Component {...pageProps}></Component>;
 }
 
-export default CustomApp;
+export default MyApp;

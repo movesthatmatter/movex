@@ -3,16 +3,24 @@ import { SocketIOEmitter } from 'movex-core-util';
 import { ConnectionToMaster } from './ConnectionToMaster';
 import { Movex } from './Movex';
 import { IOEvents } from '../io-connection/io-events';
+import {
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+} from '../public-types';
+import { MovexFromDefintion } from './MovexFromDefintion';
 
 // TODO: The ClientId ideally isn't given from here bu retrieved somehow else. hmm
 // Or no?
-export const initMovex = (
+export const initMovex = <
+  TResourcesMap extends BaseMovexDefinitionResourcesMap
+>(
   config: {
     url: string;
     apiKey: string;
     clientId?: string;
   },
-  onReady: (movex: Movex) => void
+  movexDefinition: MovexDefinition<TResourcesMap>,
+  onReady: (movex: MovexFromDefintion<TResourcesMap>) => void
 ) => {
   // TODO: Here can check if the clientId already exists locally
   //  and send it over in the handshake for the server to determine what to do with it
@@ -38,6 +46,12 @@ export const initMovex = (
   // });
 
   emitter.onReceivedClientId((clientId) => {
-    onReady(new Movex(new ConnectionToMaster(clientId, emitter)));
+    const movex = new MovexFromDefintion<TResourcesMap>(
+      movexDefinition,
+      new ConnectionToMaster(clientId, emitter)
+    );
+
+    // movexDefinition
+    onReady(movex);
   });
 };

@@ -1,0 +1,24 @@
+# Resources
+
+A Resource at its very base is the combination of Data (State) and Subscribers (Clients) that lives in a (Remote) Store accessible to all the involved clients/peers in the system. At the Client level, a Resource it's also an Observable Object, allowing clients to subscribe to it and get change notifications in realtime. Out of the box 🤩!
+
+This makes working with resources a breeze. Here's an example:
+
+```ts
+// *Note the Api can change
+
+const counterResource = movex.registerResource(counterReducer);
+
+const { rid: counterRid } = counter.create();
+
+counterResource.onUpdated(counterRid, (nextState) => {
+  console.log('got next state', nextState);
+});
+
+counterResource.dispatch(resourceIdentifier, { type: 'increment' });
+```
+
+A resource can be anything from a room, a game, a chat box, to any portion of your game or application that needs it's own separated state & subscribers.
+
+For example your UI can display a Game of Chess inside a Room Page. The Room Resource contains all sort of items such as a chatbox, a leaderboard, video chat, etc., while the Game only contains the state of the game and the players.
+There is a requirement that only the Clients that have the right password can enter the Room, see the Game and have access to the chatbox and videochat, but the game will be "broadcasted" to "spectators" outside of the room as well. This is a fair requirement for a chess tournament actually, and thus there needs to be a distinction between the Game Resource and the Room Resource because each one of them has its own set of subscribers.
