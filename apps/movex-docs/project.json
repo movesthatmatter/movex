@@ -16,13 +16,9 @@
       },
       "configurations": {
         "development": {
-          "outputPath": "apps/movex-docs",
-          "dev": true
+          "outputPath": "apps/movex-docs"
         },
-        "production": {
-          "outputPath": "apps/movex-docs",
-          "dev": false
-        }
+        "production": {}
       }
     },
     "serve": {
