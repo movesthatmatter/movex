@@ -6,18 +6,31 @@
   "targets": {
     "build": {
       "executor": "@nrwl/workspace:run-commands",
-      "outputs": ["{options.outputPath}"],
+      "outputs": ["{workspaceRoot}/dist/apps/movex-docs"],
       "defaultConfiguration": "production",
       "options": {
         "root": "apps/movex-docs",
         "outputPath": "dist/apps/movex-docs",
-        "command": "npx next build",
+        "command": "npx next build; rm -rf $NX_WORKSPACE_ROOT/dist/apps/movex-docs; mkdir -p $NX_WORKSPACE_ROOT/dist/apps/movex-docs; mv ./.next $NX_WORKSPACE_ROOT/dist/apps/movex-docs",
         "cwd": "apps/movex-docs"
       },
       "configurations": {
         "development": {
-          "outputPath": "apps/movex-docs"
         },
+        "production": {
+        }
+      }
+    },
+    "build_new": {
+      "executor": "@nrwl/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "root": "apps/movex-docs",
+        "outputPath": "dist/apps/movex-docs"
+      },
+      "configurations": {
+        "development": {},
         "production": {}
       }
     },
