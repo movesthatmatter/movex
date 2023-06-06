@@ -11,14 +11,12 @@
       "options": {
         "root": "apps/movex-docs",
         "outputPath": "dist/apps/movex-docs",
-        "command": "npx next build; rm -rf $NX_WORKSPACE_ROOT/dist/apps/movex-docs; mkdir -p $NX_WORKSPACE_ROOT/dist/apps/movex-docs; mv ./.next $NX_WORKSPACE_ROOT/dist/apps/movex-docs",
+        "command": "npx next build; rm -rf $NX_WORKSPACE_ROOT/dist/apps/movex-docs; mkdir -p $NX_WORKSPACE_ROOT/dist/apps/movex-docs; mv ./.next $NX_WORKSPACE_ROOT/dist/apps/movex-docs; cp -r ./public $NX_WORKSPACE_ROOT/dist/apps/movex-docs; cp ./next.config.js $NX_WORKSPACE_ROOT/dist/apps/movex-docs",
         "cwd": "apps/movex-docs"
       },
       "configurations": {
-        "development": {
-        },
-        "production": {
-        }
+        "development": {},
+        "production": {}
       }
     },
     "build_new": {
