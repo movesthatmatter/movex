@@ -2,6 +2,7 @@ import {
   ArrowPathIcon,
   LockClosedIcon,
   HeartIcon,
+  FlagIcon
 } from '@heroicons/react/24/outline';
 
 export const features = [
@@ -20,7 +21,7 @@ export const features = [
     name: 'Server Authoritative. No Server Code',
     description:
       "It's important to keep the business logic outside the reach of potential bad actor clients, which is why all the state logic happens on an actual server. But there is no need for you to code, maintain or worry about the server.",
-    icon: LockClosedIcon,
+    icon: FlagIcon,
     link: {
       label: 'Learn More',
       url: '/docs/overview/server_authoritative',

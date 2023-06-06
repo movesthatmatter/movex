@@ -47,7 +47,7 @@ export const Hero: React.FC<Props> = () => {
         State without hassle.
       </h1>
       <h3 className="text-xl lg:text-3xl mb-7">
-        Movex is a <span className="italic">"predictable state container"</span>{' '}
+        Movex is a <Link href="https://redux.js.org/introduction/getting-started" target='_blank' className="italic hover:underline">"predictable state container*"</Link>{' '}
         for multi-player applications.
         <br /> Server Authoritative by nature. No Server hassle by design.
       </h3>
