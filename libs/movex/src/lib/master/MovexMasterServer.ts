@@ -147,11 +147,14 @@ export class MovexMasterServer {
     ) => {
       const { resourceState, resourceType } = payload;
 
-      console.log(
+      console.group(
         '[MovexMasterServer] onCreateResourceHandler',
         payload,
-        acknowledge
       );
+
+      console.log('this.masterResourcesByType', this.masterResourcesByType)
+
+      console.groupEnd();
 
       const masterResource = this.masterResourcesByType[resourceType];
 
@@ -254,10 +257,10 @@ export class MovexMasterServer {
     };
 
     console.log(
-      '[MovexMasterServer] Added Connection Succesfully',
-      this.clientConnectionsByClientId,
-      Object.keys(this.clientConnectionsByClientId).length,
-      'connections'
+      '[MovexMasterServer] Added Connection Succesfully:',
+      clientConnection.clientId,
+      '| Connections',
+      Object.keys(this.clientConnectionsByClientId).length
     );
 
     // Unsubscribe
@@ -289,8 +292,8 @@ export class MovexMasterServer {
     console.log(
       '[MovexMasterServer] Removed Connection Succesfully',
       this.clientConnectionsByClientId,
-      Object.keys(this.clientConnectionsByClientId).length,
-      'connections'
+      '| Connections:',
+      Object.keys(this.clientConnectionsByClientId).length
     );
   }
 }

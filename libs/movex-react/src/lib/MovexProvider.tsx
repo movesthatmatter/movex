@@ -19,29 +19,29 @@ export const MovexProvider: React.FC<Props<{}>> = (props) => {
   });
 
   useEffect(() => {
-    const clientId = window.localStorage.getItem('movexCliendId') || undefined;
+    const storedClientId =
+      window.localStorage.getItem('movexCliendId') || undefined;
 
     invoke(async () => {
-      Client.initMovex(
+      const movex = await Client.initMovex(
         {
-          clientId,
+          clientId: storedClientId,
           url: props.socketUrl,
           apiKey: '',
         },
-        props.movexDefinition,
-        (movex) => {
-          const clientId = movex.getClientId();
-
-          setContextState({
-            connected: true,
-            clientId, // TODO: Do I really need this?
-            movex,
-            movexDefinition: props.movexDefinition,
-          });
-
-          window.localStorage.setItem('movexCliendId', clientId);
-        }
+        props.movexDefinition
       );
+
+      const clientId = movex.getClientId();
+
+      setContextState({
+        connected: true,
+        clientId, // TODO: Do I really need this?
+        movex,
+        movexDefinition: props.movexDefinition,
+      });
+
+      window.localStorage.setItem('movexCliendId', clientId);
     });
 
     // TODO: Maye add destroyer?

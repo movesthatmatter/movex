@@ -59,11 +59,8 @@ export const movexServer = (
     clientId || String(Math.random()).slice(-5);
 
   socket.on('connection', (io) => {
-    console.group('Movex Connection Established');
-    console.log('Query', io.handshake.query);
-    console.groupEnd();
-
     const clientId = getClientId(io.handshake.query['clientId'] as string);
+    console.log('[MovexServer] Client Connected', clientId);
 
     const connection = new Master.ConnectionToClient(
       clientId,
@@ -75,7 +72,7 @@ export const movexServer = (
     movexMaster.addClientConnection(connection);
 
     io.on('disconnect', () => {
-      console.log('disconnected');
+      console.log('[MovexServer] Client Disconnected', clientId);
 
       movexMaster.removeConnection(clientId);
     });
