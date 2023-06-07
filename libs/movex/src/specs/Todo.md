@@ -6,6 +6,20 @@ tags: []
 
 ## Doing
 
+## To Do
+
+Examples/Show Case to add to the docs. Both as Demo running with the server and also running only on the client.
+
+## Backlog
+
+## Done
+
+Jun 7th
+
+Deployed Movex-docs. Now I'm thinking about the examples/showcase to add to the docs.
+
+Sometime in Late May
+
 Wite the SocketIO into MovexIO so it can be used. The archietcture looks like this:
 
 Ideal Version:
@@ -23,11 +37,7 @@ On Matterio I load movex. I instantiate MovexMaster with a SocketIO Emitter. I a
 
 Add an app sample to e2e the movex-backend (socket-io server Emitter) with the movex-client (socket-io client Emitter) with the whole pipeline working (locally)
 
-## To Do
-
-## Backlog
-
-## Done
+Sometime in May
 
 - Done/ Add reconciliation handler or MovexMaster 
 

@@ -49,4 +49,6 @@ export const initMovex = <
       // TODO: Add on reject as well?
       resolve(movex);
     });
+
+        // TODO: Add a way to disconnect on demand
   });
