@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const ExampleLayout: React.FC = () => {
+export const ShowcaseLayout: React.FC = () => {
   return (
     <div style={{
       height: 400,

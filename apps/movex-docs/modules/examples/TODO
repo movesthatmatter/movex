@@ -1,0 +1,2 @@
+This is actually copy & paste form movex-examples, but there is a pb with the loader
+and it doesn't transpile ts for now. Most likely b/c I'm not running nx server for this project due to nextra. Need to see it can be used otherwise

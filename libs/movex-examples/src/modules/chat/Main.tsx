@@ -1,21 +1,21 @@
-import movexConfig from 'apps/movex-demo/movex.config';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import useEventListener from '@use-it/event-listener';
 import { keyInObject, objectKeys } from 'movex-core-util';
 import { MovexBoundResourceFromConfig } from 'movex-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getColorFromStr } from './util';
+import { DemoMovexDefinition } from '../../movex';
+
+
 
 type Props = {
   boundChatResource: MovexBoundResourceFromConfig<
-    typeof movexConfig['resources'],
+    DemoMovexDefinition['resources'],
     'chat'
   >;
   userId: string;
 };
 
-// const colors = ['yellow', 'orange', 'green', 'blue'] as const;
-
-export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
+export const Main: React.FC<Props> = ({ boundChatResource, userId }) => {
   const { state, dispatch } = boundChatResource;
   const [msg, setMsg] = useState<string>();
 
@@ -44,8 +44,6 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
       type: 'addParticipant',
       payload: {
         id: userId,
-        // color: colors[getRandomInt(0, colors.length - 1)],
-        // color: randomColor(),
         color: `#${getColorFromStr(userId)}`,
         atTimestamp: new Date().getTime(),
       },
@@ -110,7 +108,6 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
             height: 'calc(100% - 60px + 1em)',
             width: '100%',
             marginBottom: '1em',
-            // overflow: 'scroll',
             display: 'flex',
             flexDirection: 'column-reverse',
             overflowY: 'scroll',
@@ -187,9 +184,6 @@ export const ChatPage: React.FC<Props> = ({ boundChatResource, userId }) => {
                     marginBottom: '5px',
                     color: participant.active ? '#000' : '#efefef',
                     fontWeight: participant.id === userId ? 'bolder' : 'normal',
-
-                    // ...state.participants[p].id ===  {}
-                    // borderLeft: state.participants[p].id === userId ? 'state.participants[p]' : undefined,
                   }}
                 >
                   {participant.id}{' '}

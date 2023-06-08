@@ -1,102 +1,102 @@
-import { Server as SocketServer } from 'socket.io';
-import { Master } from 'movex';
-import { SocketIOEmitter, objectKeys } from 'movex-core-util';
-import { IOEvents } from 'libs/movex/src/lib/io-connection/io-events';
-import { LocalMovexStore } from 'libs/movex/src/lib/movex-store';
-import { MovexMasterResource } from 'libs/movex/src/lib/master';
+// import { Server as SocketServer } from 'socket.io';
+// import { Master } from 'movex';
+// import { SocketIOEmitter, objectKeys } from 'movex-core-util';
+// import { IOEvents } from 'libs/movex/src/lib/io-connection/io-events';
+// import { LocalMovexStore } from 'libs/movex/src/lib/movex-store';
+// import { MovexMasterResource } from 'libs/movex/src/lib/master';
 
-import movexConfig from '../../movex.config';
-// import { Socket } from 'socket.io-client';
 
-const getClientId = (clientId: string) =>
-  clientId || String(Math.random()).slice(-5);
+// // import { Socket } from 'socket.io-client';
 
-// const getConnectionToClient = (clientId: string, socket: Socket) =>
+// const getClientId = (clientId: string) =>
+//   clientId || String(Math.random()).slice(-5);
 
-const SocketHandler = (req, res) => {
-  // console.log('req', req.query);
-  // const { resourceType } = res.query;
+// // const getConnectionToClient = (clientId: string, socket: Socket) =>
 
-  // if (!resourceType) {
-  //   console.error('The Resource Type not given in the query');
+// const SocketHandler = (req, res) => {
+//   // console.log('req', req.query);
+//   // const { resourceType } = res.query;
 
-  //   return;
-  // }
+//   // if (!resourceType) {
+//   //   console.error('The Resource Type not given in the query');
 
-  if (res.socket.server.movex) {
-    console.log('Movex is already running');
-  } else {
-    // TODO: Ideally all of this is part of Movex Master somehow
-    console.log('Movex is initializing');
-    const socketIO = new SocketServer(res.socket.server);
+//   //   return;
+//   // }
 
-    // The Movex Init. TODO: This should live in the movex master library
+//   if (res.socket.server.movex) {
+//     console.log('Movex is already running');
+//   } else {
+//     // TODO: Ideally all of this is part of Movex Master somehow
+//     console.log('Movex is initializing');
+//     const socketIO = new SocketServer(res.socket.server);
 
-    // TODO: Could do some sort of scanner for files, but actuall that will live on matterio
+//     // The Movex Init. TODO: This should live in the movex master library
 
-    const masterStore = new LocalMovexStore(); // TODO: This can be redis well
+//     // TODO: Could do some sort of scanner for files, but actuall that will live on matterio
 
-    const mapOfResouceReducers = objectKeys(movexConfig.resources).reduce(
-      (accum, nextResoureType) => {
-        const nextReducer = movexConfig.resources[nextResoureType];
+//     const masterStore = new LocalMovexStore(); // TODO: This can be redis well
 
-        return {
-          ...accum,
-          [nextResoureType]: new MovexMasterResource(nextReducer as any, masterStore),
-        };
-      },
-      {} as Record<string, MovexMasterResource<any, any>>
-    );
+//     const mapOfResouceReducers = objectKeys(movexConfig.resources).reduce(
+//       (accum, nextResoureType) => {
+//         const nextReducer = movexConfig.resources[nextResoureType];
 
-    const movexMaster = new Master.MovexMasterServer(mapOfResouceReducers);
+//         return {
+//           ...accum,
+//           [nextResoureType]: new MovexMasterResource(nextReducer as any, masterStore),
+//         };
+//       },
+//       {} as Record<string, MovexMasterResource<any, any>>
+//     );
 
-    // const io = new Master.ServerSocketEmitter(res.socket.server)
-    // res.socket.server.io = io;
-    // const movexMaster = new Master.MovexMasterServer();
+//     const movexMaster = new Master.MovexMasterServer(mapOfResouceReducers);
 
-    // This could be incorporated in the MovexMasterServer constructor
-    //  And wrk with a generalized vesion of on("connect") and on("disconnect")
-    socketIO.on('connect', (io) => {
-      const clientId = getClientId(io.handshake.query['clientId'] as string);
+//     // const io = new Master.ServerSocketEmitter(res.socket.server)
+//     // res.socket.server.io = io;
+//     // const movexMaster = new Master.MovexMasterServer();
 
-      console.log('[Next Socket] connected', clientId);
+//     // This could be incorporated in the MovexMasterServer constructor
+//     //  And wrk with a generalized vesion of on("connect") and on("disconnect")
+//     socketIO.on('connect', (io) => {
+//       const clientId = getClientId(io.handshake.query['clientId'] as string);
 
-      const connection = new Master.ConnectionToClient(
-        clientId,
-        new SocketIOEmitter<IOEvents>(io)
-        // new Master.ServerSocketEmitter(io)
-      );
+//       console.log('[Next Socket] connected', clientId);
 
-      io.emit('$setClientId', clientId);
+//       const connection = new Master.ConnectionToClient(
+//         clientId,
+//         new SocketIOEmitter<IOEvents>(io)
+//         // new Master.ServerSocketEmitter(io)
+//       );
 
-      movexMaster.addClientConnection(connection);
+//       io.emit('$setClientId', clientId);
 
-      // io.onAny((e, x) => {
-      //   console.log('[Next Socket] onAny', e, x);
-      // });
+//       movexMaster.addClientConnection(connection);
 
-      io.on('disconnect', () => {
-        console.log('disconnecting', clientId);
+//       // io.onAny((e, x) => {
+//       //   console.log('[Next Socket] onAny', e, x);
+//       // });
 
-        movexMaster.removeConnection(clientId);
-      });
-    });
+//       io.on('disconnect', () => {
+//         console.log('disconnecting', clientId);
 
-    res.socket.server.movex = {
-      master: movexMaster,
-      socket: socketIO,
-    };
-  }
+//         movexMaster.removeConnection(clientId);
+//       });
+//     });
 
-  res.json('ok');
-  res.end();
-};
+//     res.socket.server.movex = {
+//       master: movexMaster,
+//       socket: socketIO,
+//     };
+//   }
 
-// Not sure this is needed
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+//   res.json('ok');
+//   res.end();
+// };
 
-export default SocketHandler;
+// // Not sure this is needed
+// export const config = {
+//   api: {
+//     bodyParser: false,
+//   },
+// };
+
+// export default SocketHandler;

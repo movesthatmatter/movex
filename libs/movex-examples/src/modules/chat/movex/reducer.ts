@@ -1,78 +1,8 @@
-import { Action } from 'movex';
-import { MovexClient } from 'movex-core-util';
+import { ChatActions } from './actions';
+import { ChatState, initialChatState } from './state';
 
-export type ParticipantId = MovexClient['id'];
-export type Color = string;
-
-type ChatMsg = {
-  // id: string;
-  at: number;
-  content: string;
-  participantId: ParticipantId;
-};
-
-export type ChatState = {
-  participants: {
-    [id in ParticipantId]: {
-      id: ParticipantId;
-      color: Color;
-      joinedAt: number;
-    } & (
-      | {
-          active: false;
-          isTyping?: null;
-          leftAt: number;
-        }
-      | {
-          active: true;
-          isTyping: boolean;
-          leftAt?: null; // Limitation with undefined. Some jsons remove it altogether which could create mismatches. Use null
-        }
-    );
-  };
-  messages: ChatMsg[];
-};
-
-export const initialChatState: ChatState = {
-  participants: {},
-  messages: [],
-};
-
-export type ChatActions =
-  | Action<
-      'addParticipant',
-      {
-        id: ParticipantId;
-        color: Color;
-        atTimestamp: number;
-      }
-    >
-  | Action<
-      'removeParticipant',
-      {
-        id: ParticipantId;
-        atTimestamp: number;
-      }
-    >
-  | Action<
-      'writeMessage',
-      {
-        participantId: ParticipantId;
-        msg: string;
-        atTimestamp: number;
-        // id: string;
-      }
-    >
-  | Action<
-      'setTyping',
-      {
-        participantId: ParticipantId;
-        isTyping: boolean;
-      }
-    >;
-
-export const chatReducer = (
-  state = initialChatState as ChatState,
+export const reducer = (
+  state = initialChatState,
   action: ChatActions
 ): ChatState => {
   if (action.type === 'addParticipant') {
@@ -145,5 +75,3 @@ export const chatReducer = (
 
   return state;
 };
-
-// export default chatReducer;

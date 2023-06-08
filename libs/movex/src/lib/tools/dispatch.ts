@@ -81,6 +81,8 @@ export const createDispatcher = <
   const dispatch = (
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
   ) => {
+    console.log('[Dispatched]', 'dispatch', actionOrActionTuple);
+
     const [localAction, remoteAction] = invoke(() => {
       if (isAction(actionOrActionTuple)) {
         return [actionOrActionTuple];

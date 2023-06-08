@@ -14,5 +14,9 @@
   "about": {
     "title": "About",
     "type": "page"
+  },
+  "showcase": {
+    "title": "Showcase",
+    "type": "page"
   }
 }

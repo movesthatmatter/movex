@@ -4,12 +4,12 @@ import {
   toResourceIdentifierStr,
   objectKeys,
   ResourceIdentifierStr,
-  getRandomInt,
 } from 'movex-core-util';
 import { AsyncErr, AsyncOk, AsyncResultWrapper } from 'ts-async-results';
 import { computeCheckedState } from '../util';
 import { MovexStatePatch, MovexStore, MovexStoreItem } from './MovexStore';
 import { PromiseDelegate } from 'promise-delegate';
+import { Pubsy } from 'ts-pubsy';
 
 export class LocalMovexStore<
   TState,
@@ -19,6 +19,11 @@ export class LocalMovexStore<
   private local: Record<string, MovexStoreItem<TState, TResourceType>> = {};
 
   private locks: Record<string, PromiseDelegate> = {};
+
+  private pubsy = new Pubsy<{
+    onCreated: MovexStoreItem<TState>;
+    onUpdated: MovexStoreItem<TState>;
+  }>();
 
   constructor(
     initialResources?: Record<ResourceIdentifierStr<TResourceType>, TState>
@@ -111,7 +116,11 @@ export class LocalMovexStore<
       [ridStr]: next,
     };
 
-    return new AsyncOk(next);
+    return new AsyncOk(next).map((r) => {
+      this.pubsy.publish('onCreated', r);
+
+      return r;
+    });
   }
 
   updateState(
@@ -159,6 +168,8 @@ export class LocalMovexStore<
           })
           // Unlock it
           .map((r) => {
+            this.pubsy.publish('onUpdated', r);
+
             unlock();
             return r;
           })
@@ -197,5 +208,17 @@ export class LocalMovexStore<
     this.local = {};
 
     return AsyncOk.EMPTY;
+  }
+
+  onCreated(fn: (p: MovexStoreItem<TState>) => void) {
+    return this.pubsy.subscribe('onCreated', fn);
+  }
+
+  onUpdated(fn: (p: MovexStoreItem<TState>) => void) {
+    return this.pubsy.subscribe('onUpdated', fn);
+  }
+
+  all() {
+    return this.local;
   }
 }

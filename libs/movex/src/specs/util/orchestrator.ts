@@ -7,6 +7,11 @@ import { LocalMovexStore } from '../../lib/movex-store';
 import { AnyAction } from '../../lib/tools/action';
 import { MovexReducer } from '../../lib/tools/reducer';
 import { MockConnectionEmitter } from './MockConnectionEmitter';
+import { MovexFromDefintion } from '../../lib/client/MovexFromDefintion';
+import {
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+} from '../../lib/public-types';
 
 export const movexClientMasterOrchestrator = () => {
   let unsubscribe = async () => {};
@@ -80,7 +85,7 @@ export const movexClientMasterOrchestrator = () => {
 export type MovexClientMasterOrchestrator =
   typeof movexClientMasterOrchestrator;
 
-const orchestrateMovex = <
+export const orchestrateMovex = <
   TState extends any,
   TAction extends AnyAction = AnyAction,
   TResourceType extends string = string
@@ -107,6 +112,41 @@ const orchestrateMovex = <
 
   return {
     movex: new Movex(new ConnectionToMaster(clientId, emitterOnClient as any)),
+    emitter: emitterOnClient,
+    destroy: () => {
+      unsubscribers.forEach(invoke);
+    },
+  };
+};
+
+// TODO: this could get another name and be moved into util since it's used outside in initLocalMasterMovex
+export const orchestrateDefinedMovex = <
+  TResourceMap extends BaseMovexDefinitionResourcesMap
+>(
+  movexDefinition: MovexDefinition<TResourceMap>,
+  clientId: MovexClient['id'],
+  emitterOnMaster: MockConnectionEmitter
+) => {
+  const emitterOnClient = new MockConnectionEmitter(clientId, clientId + '-emitter');
+
+  const unsubscribers = [
+    emitterOnClient._onEmitted((r, ackCb) => {
+      console.log('[Orchestrator]', emitterOnClient.emitterLabel, '_onEmitted', r.event);
+      // Calling the master with the given event from the client in order to process it
+      emitterOnMaster._publish(r.event, r.payload, ackCb);
+    }),
+    emitterOnMaster._onEmitted((r, ackCb) => {
+      console.log('[Orchestrator]', emitterOnMaster.emitterLabel, '_onEmitted', r.event);
+      // Calling the client with the given event from the client in order to process it
+      emitterOnClient._publish(r.event, r.payload, ackCb);
+    }),
+  ];
+
+  return {
+    movex: new MovexFromDefintion<TResourceMap>(
+      movexDefinition,
+      new ConnectionToMaster(clientId, emitterOnClient)
+    ),
     emitter: emitterOnClient,
     destroy: () => {
       unsubscribers.forEach(invoke);

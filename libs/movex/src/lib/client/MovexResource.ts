@@ -7,7 +7,6 @@ import {
   toResourceIdentifierStr,
 } from 'movex-core-util';
 import {
-  Action,
   ActionOrActionTupleFromAction,
   ActionWithAnyPayload,
   AnyAction,
@@ -63,7 +62,12 @@ export class MovexResource<
         rid: toResourceIdentifierObj(item.rid),
         state: item.state[0],
         // id: toResourceIdentifierObj(item.rid).resourceId,
-      }));
+      }))
+      .map((s) => {
+        console.log("[Client Movex] resoruce created", s.rid)
+
+        return s;
+      });
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
@@ -92,11 +96,25 @@ export class MovexResource<
 
     const resourceObservable = new MovexResourceObservable(
       this.connectionToMaster.clientId,
+      rid,
       this.reducer
     );
+    
+    // TODO: Fix this!!!
+    // resourceObservable.setMasterSyncing(false);
+
+    // console.log(
+    //   '[Movex] bind() connectionToMasterResource',
+    //   this.connectionToMasterResource
+    // );
 
     // Done/TODO: Needs a way to add a resource subscriber
     this.connectionToMasterResource.addResourceSubscriber(rid).map(() => {
+      // TODO: This is where the issue is. the master never responds
+
+
+
+      console.log('[Movex] addResoruceSubscriber worked!');
       // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
       this.connectionToMasterResource.get(rid).map((s) => {
         resourceObservable.sync(s);

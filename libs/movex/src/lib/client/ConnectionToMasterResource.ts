@@ -125,7 +125,6 @@ export class ConnectionToMasterResource<
     type AddSubscriberEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['addResourceSubscriber']
     >;
-
     return AsyncResult.toAsyncResult<
       GetIOPayloadOKTypeFrom<AddSubscriberEvent>,
       GetIOPayloadErrTypeFrom<AddSubscriberEvent>
@@ -133,6 +132,11 @@ export class ConnectionToMasterResource<
       this.connectionToMaster.emitter
         .emitAndAcknowledge('addResourceSubscriber', {
           rid,
+        })
+        .then((res) => {
+            console.log('[ConnectionToMaster] addResourceSubscriber worked', rid);
+
+          return res;
         })
         .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );

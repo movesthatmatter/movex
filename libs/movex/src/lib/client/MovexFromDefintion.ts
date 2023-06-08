@@ -8,12 +8,12 @@ import {
 import { StringKeys } from 'movex-core-util';
 
 export class MovexFromDefintion<
-  TResourcesMap extends BaseMovexDefinitionResourcesMap
+  TMovexDefinitionResources extends BaseMovexDefinitionResourcesMap
 > {
   private movex: Movex;
 
   constructor(
-    private movexDefinition: MovexDefinition<TResourcesMap>,
+    private movexDefinition: MovexDefinition<TMovexDefinitionResources>,
     connectionToMaster: IOConnection<any, AnyAction, any>
   ) {
     this.movex = new Movex(connectionToMaster);
@@ -23,7 +23,11 @@ export class MovexFromDefintion<
     return this.movex.getClientId();
   }
 
-  register<S, A extends AnyAction>(resourceType: StringKeys<TResourcesMap>) {
+  register(
+    resourceType: StringKeys<
+      MovexDefinition<TMovexDefinitionResources>['resources']
+    >
+  ) {
     return this.movex.register(
       resourceType,
       this.movexDefinition.resources[resourceType]

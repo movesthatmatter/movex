@@ -147,14 +147,14 @@ export class MovexMasterServer {
     ) => {
       const { resourceState, resourceType } = payload;
 
-      console.group(
-        '[MovexMasterServer] onCreateResourceHandler',
-        payload,
-      );
+      // console.group(
+      //   '[MovexMasterServer] onCreateResourceHandler',
+      //   payload,
+      // );
 
-      console.log('this.masterResourcesByType', this.masterResourcesByType)
+      // console.log('this.masterResourcesByType', this.masterResourcesByType)
 
-      console.groupEnd();
+      // console.groupEnd();
 
       const masterResource = this.masterResourcesByType[resourceType];
 

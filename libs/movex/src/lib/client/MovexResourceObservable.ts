@@ -7,6 +7,7 @@ import {
   MovexClient,
   NextStateGetter,
   Observable,
+  ResourceIdentifier,
 } from 'movex-core-util';
 import { computeCheckedState } from '../util';
 import {
@@ -54,6 +55,7 @@ export class MovexResourceObservable<
 
   constructor(
     private clientId: MovexClient['id'],
+    public rid: ResourceIdentifier<string>,
     private reducer: MovexReducer<TState, TAction>,
 
     // Passing undefined here in order to get the default state
@@ -76,6 +78,7 @@ export class MovexResourceObservable<
       TAction
     >(this.$checkedState, this.reducer, {
       onDispatched: (p) => {
+        console.log('[MovexResourcePbservable] onDispatched', p);
         this.pubsy.publish('onDispatched', p);
       },
       // onStateUpdated: (s) => {
@@ -103,6 +106,7 @@ export class MovexResourceObservable<
    * This is the dispatch for this Movex Resource
    */
   dispatch(action: ToPublicAction<TAction>) {
+    console.log('[MovexResourceObservable] dispatch', action);
     this.dispatcher(action);
   }
 

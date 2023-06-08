@@ -10,6 +10,14 @@ tags: []
 
 Examples/Show Case to add to the docs. Both as Demo running with the server and also running only on the client.
 
+BUG: There is an interesting bug, where if a client disptached a private action once, and then does it again with a diff value the peers states get into a mismatch.
+ I think it's because the action doesnt get stored in the patch anymore on the master? Need to look into it
+
+Bug/Nice to have: [masterLocal, prbably SocketAsWell]  If two clients bind to same resource simultanoeusly, or super close to eahch other, their both take the available first slot in rps locally – but I imagine only one does it for real. Anyhow, it should be able to wait – as the store has a locking system, and only do it once ready.
+// But this might be an issue with the way getSlots works on the client in RPs. Need a better system I guess
+  - I think this is not a bug, but an actual need for a bit of a feature - to be able to swork with server only generated values or state (such as ids, random stuff, etcc), end thus be able to get those, but in that case the dispatch need NOT TO optimistically update local state, but wait for the master to sync! I believe this should work, In the future we culd have some special Movex Value creators such as Movex.createRandom() or createId or etc..which will turn off the optimistic local update by default
+
+
 ## Backlog
 
 ## Done

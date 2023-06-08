@@ -1,6 +1,6 @@
 import { useMovexResource } from 'movex-react';
-import { initialChatState } from '../../modules/chat/chat.movex';
 import { DemoMovexDefinition } from 'apps/movex-demo/movex';
+import { Chat } from 'movex-examples';
 
 type Props = {};
 
@@ -15,7 +15,7 @@ const ChatLobby: React.FC<Props> = () => {
     <div>
       <button
         onClick={() => {
-          chatResource.create(initialChatState).map((item) => {
+          chatResource.create(Chat.initialChatState).map((item) => {
             window.location.href =
               window.location.href + `/${item.rid.resourceId}`;
           });

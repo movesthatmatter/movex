@@ -1,4 +1,3 @@
-import movexConfig from 'apps/movex-demo/movex.config';
 import { MovexBoundResourceFromConfig } from 'movex-react';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
@@ -6,7 +5,9 @@ import {
   RPS,
   selectAvailableLabels,
   toOppositeLabel,
-} from './rockPaperScissors.movex';
+} from './movex';
+import movexConfig from '../../movex.config';
+import { toResourceIdentifierStr } from 'movex-core-util';
 
 type Props = {
   boundResource: MovexBoundResourceFromConfig<
@@ -16,7 +17,7 @@ type Props = {
   userId: string;
 };
 
-export const RPSGame: React.FC<Props> = ({ boundResource, userId }) => {
+export const Main: React.FC<Props> = ({ boundResource, userId }) => {
   const { state, dispatch, dispatchPrivate } = boundResource;
 
   const myPlayerLabel = useMemo((): PlayerLabel | undefined => {
@@ -37,6 +38,13 @@ export const RPSGame: React.FC<Props> = ({ boundResource, userId }) => {
 
   // Add Player
   useEffect(() => {
+    // TODO: here there is a major issue, as selectAvailableLables works with local state
+    //  but it needs to check on the actual (master) state. How to solve this?
+    //  add an api to be able to read master state seperately? 
+
+    // Or in this case change the strategy altogether, and work with master generated values, in which case 
+    // the local optimistic state udate gets turned off by default, so that means it will wait for the real staet to update.
+    // Kinda like a dispatchAndWait
     const availableLabels = selectAvailableLabels(state);
 
     if (
@@ -99,6 +107,7 @@ export const RPSGame: React.FC<Props> = ({ boundResource, userId }) => {
         }
       }
     >
+      <b>User: {userId}</b>
       {state.winner ? (
         <div>
           <h3>Winner is {state.winner}</h3>
@@ -146,6 +155,7 @@ export const RPSGame: React.FC<Props> = ({ boundResource, userId }) => {
       )}
       <br />
       <div>
+        <pre>rid: {toResourceIdentifierStr(boundResource.rid)}</pre>
         <pre>{JSON.stringify(state, null, 2)}</pre>
       </div>
     </div>

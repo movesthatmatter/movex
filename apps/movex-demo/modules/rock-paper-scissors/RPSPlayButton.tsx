@@ -1,13 +1,12 @@
-import { useMovexResource } from 'movex-react';
-import { initialState } from '../../modules/rock-paper-scissors/rockPaperScissors.movex';
+import { useMovexResourceType } from 'movex-react';
 import { DemoMovexDefinition } from 'apps/movex-demo/movex';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { Rps } from 'movex-examples';
 
 type Props = {};
 
 export const PlayRPSButton: React.FC<Props> = () => {
-  const rpsResource = useMovexResource<DemoMovexDefinition>('rps');
+  const rpsResource = useMovexResourceType<DemoMovexDefinition>('rps');
   const router = useRouter();
 
   if (!rpsResource) {
@@ -18,10 +17,7 @@ export const PlayRPSButton: React.FC<Props> = () => {
     <div>
       <button
         onClick={() => {
-          rpsResource.create(initialState).map((item) => {
-            // window.location.href =
-            //   window.location.origin + `/rps/${item.rid.resourceId}` ;
-
+          rpsResource.create(Rps.initialState).map((item) => {
             router.push(`/rps/${item.rid.resourceId}`);
           });
         }}
