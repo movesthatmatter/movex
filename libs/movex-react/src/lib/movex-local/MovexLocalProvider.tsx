@@ -1,15 +1,17 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { MovexClient, invoke, noop } from 'movex-core-util';
+import React from 'react';
+import { MovexClient, invoke } from 'movex-core-util';
 import {
   BaseMovexDefinitionResourcesMap,
   Master,
   MovexDefinition,
+  MovexMasterServer,
 } from 'movex';
 import { MovexContext, MovexContextProps } from '../MovexContext';
-import { MovexLocalContext } from './MovexLocalContext';
+
 import { getUuid } from 'libs/movex/src/lib/util';
 import { MockConnectionEmitter } from 'libs/movex/src/specs/util/MockConnectionEmitter';
 import { orchestrateDefinedMovex } from 'libs/movex/src/specs/util/orchestrator';
+import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
@@ -20,58 +22,48 @@ type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
     ) => void;
   }>;
 
-/**
- * TODO: This could be moved out of the refular library into a separate one only for devs who don't look for multiplayer
- * 
- * TODO: This needs to be a class so the generic TResourcesMap can be passed in!
- *
- * @param param0
- * @returns
- */
-export const MovexLocalProvider: React.FC<Props<any>> = ({
-  onConnected = noop,
-  ...props
-}) => {
-  const master = useContext(MovexLocalContext).master;
+type State<TResourcesMap extends BaseMovexDefinitionResourcesMap> = {
+  contextState: MovexContextProps<TResourcesMap>;
+};
 
-  const [contextState, setContextState] = useState<
-    MovexContextProps<typeof props['movexDefinition']['resources']>
-  >({
-    connected: false,
-    clientId: undefined,
-  });
+// * TODO: This could be moved out of the refular library into a separate one only for devs who don't look for multiplayer
+export class MovexLocalProviderClass<
+  TResourcesMap extends BaseMovexDefinitionResourcesMap
+> extends React.Component<Props<TResourcesMap>, State<TResourcesMap>> {
+  private unsubscribers: (() => void)[] = [];
 
-  useEffect(() => {
-    // const storedClientId =
-    //   window.localStorage.getItem('movexCliendId') || undefined;
-    if (!master) {
-      return;
-    }
+  constructor(props: Props<TResourcesMap>) {
+    super(props);
 
-    if (contextState.connected) {
-      // here disconnect and reconnect b/c it means one of the url or clientId changed, so need another instance!
-      // contextState.movex.
+    this.state = {
+      contextState: {
+        connected: false,
+        clientId: undefined,
+      },
+    };
+  }
 
-      return;
-    }
+  private orchestrate = (master: MovexMasterServer) => {
+    // Clean up the prev event handlers in case it's called multiple times (which shouldnt)
+    this.cleanUp();
 
-    const clientId = props.clientId || getUuid();
-    const emitterOnMaster = new MockConnectionEmitter(clientId, 'master-emitter');
+    const clientId = this.props.clientId || getUuid();
 
-    emitterOnMaster._onEmitted((e) => {
-      console.log('')
-      console.log('[MovexLocalProvider]', e.event);
-    })
+    const emitterOnMaster = new MockConnectionEmitter(
+      clientId,
+      'master-emitter'
+    );
 
     const connectionToClient = new Master.ConnectionToClient(
       clientId,
       emitterOnMaster
     );
 
-    const unsubscribe = master.addClientConnection(connectionToClient);
+    const unsubscribeFromConnection =
+      master.addClientConnection(connectionToClient);
 
     const mockedMovex = orchestrateDefinedMovex(
-      props.movexDefinition,
+      this.props.movexDefinition,
       clientId,
       emitterOnMaster
     );
@@ -80,92 +72,45 @@ export const MovexLocalProvider: React.FC<Props<any>> = ({
       connected: true,
       movex: mockedMovex.movex,
       clientId: mockedMovex.movex.getClientId(),
-      movexDefinition: props.movexDefinition,
+      movexDefinition: this.props.movexDefinition,
     } as const;
 
-    setContextState(nextState);
+    this.setState({
+      contextState: nextState,
+    });
 
-    onConnected(nextState);
+    this.props.onConnected?.(nextState);
 
-    return () => {
-      // unsubscribe();
-      // mockedMovex.destroy();
-    };
+    this.unsubscribers = [
+      ...this.unsubscribers,
+      unsubscribeFromConnection,
+      () => mockedMovex.destroy(),
+    ];
+  };
 
-    // TODO: Maye add destroyer?
-  }, [master, onConnected, props.clientId]);
+  private cleanUp() {
+    this.unsubscribers.forEach(invoke);
+    this.unsubscribers = [];
+  }
 
-  return (
-    <MovexContext.Provider value={contextState}>
-      {props.children}
-    </MovexContext.Provider>
-  );
-};
+  override componentWillUnmount(): void {
+    this.cleanUp();
+  }
 
-// export class MovexLocalProvider<TResourcesMap extends BaseMovexDefinitionResourcesMap> implements React.Component<Props<>> = ({
-//   onConnected = noop,
-//   ...props
-// }) => {
-//   const master = useContext(MovexLocalContext).master;
+  override render() {
+    return (
+      <>
+        <MovexLocalContextConsumerProvider onMasterReady={this.orchestrate} />
 
-//   const [contextState, setContextState] = useState<
-//     MovexContextProps<typeof props['movexDefinition']['resources']>
-//   >({
-//     connected: false,
-//     clientId: undefined,
-//   });
-
-//   useEffect(() => {
-//     // const storedClientId =
-//     //   window.localStorage.getItem('movexCliendId') || undefined;
-//     if (!master) {
-//       return;
-//     }
-
-//     if (contextState.connected) {
-//       // here disconnect and reconnect b/c it means one of the url or clientId changed, so need another instance!
-//       // contextState.movex.
-
-//       return;
-//     }
-
-//     const clientId = props.clientId || getUuid();
-//     const emitterOnMaster = new MockConnectionEmitter(clientId);
-//     const connectionToClient = new Master.ConnectionToClient(
-//       clientId,
-//       emitterOnMaster
-//     );
-
-//     const unsubscribe = master.addClientConnection(connectionToClient);
-
-//     const mockedMovex = orchestrateDefinedMovex(
-//       props.movexDefinition,
-//       clientId,
-//       emitterOnMaster
-//     );
-
-//     const nextState = {
-//       connected: true,
-//       movex: mockedMovex.movex,
-//       clientId: mockedMovex.movex.getClientId(),
-//       movexDefinition: props.movexDefinition,
-//     } as const;
-
-//     setContextState(nextState);
-
-//     onConnected(nextState, props.movexDefinition);
-
-//     return () => {
-//       unsubscribe();
-//       mockedMovex.destroy();
-//     };
-
-//     // TODO: Maye add destroyer?
-//   }, [master, onConnected, props.clientId]);
-
-//   return (
-//     <MovexContext.Provider value={contextState}>
-//       {props.children}
-//     </MovexContext.Provider>
-//   );
-// };
+        <MovexContext.Provider
+          value={
+            this.state
+              .contextState as MovexContextProps<BaseMovexDefinitionResourcesMap>
+          }
+        >
+          {this.props.children}
+        </MovexContext.Provider>
+      </>
+    );
+  }
+}

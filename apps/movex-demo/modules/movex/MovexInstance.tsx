@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { MovexLocalProvider, useMovexBoundResourceFromRid } from 'movex-react';
+import React, { useState } from 'react';
+import { MovexLocalProviderClass } from 'movex-react';
 import { MovexDefinition } from 'movex';
 import { MovexClient, ResourceIdentifier } from 'movex-core-util';
 import { MovexBoundResource } from 'libs/movex/src/lib/client';
@@ -19,7 +19,7 @@ export const MovexInstance: React.FC<Props> = ({ render, ...props }) => {
   const [clientId, setClientId] = useState<MovexClient['id']>();
 
   return (
-    <MovexLocalProvider
+    <MovexLocalProviderClass
       clientId={props.clientId}
       movexDefinition={props.movexDefinition}
       onConnected={(r) => {
@@ -34,6 +34,6 @@ export const MovexInstance: React.FC<Props> = ({ render, ...props }) => {
           render={(boundResource) => render({ boundResource, clientId })}
         />
       )}
-    </MovexLocalProvider>
+    </MovexLocalProviderClass>
   );
 };

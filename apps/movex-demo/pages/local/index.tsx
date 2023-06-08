@@ -3,7 +3,7 @@ import { PlayRPSButton } from '../../modules/rock-paper-scissors/RPSPlayButton';
 import { MovexInstance } from '../../modules/movex/MovexInstance';
 import { RPSWidget } from 'apps/movex-demo/modules/rock-paper-scissors/RPSWidget';
 import {
-  MovexLocalProvider,
+  MovexLocalProviderClass,
   useCreateMovexResourceOnDemand,
 } from 'movex-react';
 import movexConfig from 'libs/movex-examples/src/movex.config';
@@ -35,7 +35,7 @@ export function Index() {
           gap: 40
         }}
       >
-        <MovexLocalProvider
+        <MovexLocalProviderClass
           clientId="client-1"
           movexDefinition={movexConfig}
           onConnected={(r) => {
@@ -69,10 +69,11 @@ export function Index() {
               )}
             />
           )}
-        </MovexLocalProvider>
+        </MovexLocalProviderClass>
 
         {createdRid && (
           <div>
+            here
             <MovexInstance
               clientId="client-b"
               movexDefinition={movexConfig}
