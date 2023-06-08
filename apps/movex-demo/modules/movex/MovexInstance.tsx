@@ -23,7 +23,7 @@ export const MovexInstance: React.FC<Props> = ({ render, ...props }) => {
       clientId={props.clientId}
       movexDefinition={props.movexDefinition}
       onConnected={(r) => {
-        console.log('Client Connected:', r.movex.getClientId());
+        // console.log('Client Connected:', r.movex.getClientId());
 
         setClientId(r.clientId);
       }}

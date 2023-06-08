@@ -105,7 +105,7 @@ export type ToPublicAction<A extends AnyAction> = A & {
 };
 
 export type CheckedReconciliatoryActions<A extends AnyAction> = {
-  actions: A[];
+  actions: ToPublicAction<A>[];
   finalChecksum: Checksum;
   // finalState: unknown;
 };

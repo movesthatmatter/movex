@@ -15,6 +15,7 @@ import {
   isAction,
   ToCheckedAction,
   CheckedReconciliatoryActions,
+  ToPublicAction,
 } from '../tools/action';
 import { MovexReducer } from '../tools/reducer';
 import {
@@ -313,10 +314,14 @@ export class MovexMasterResource<
                         return [
                           ...prev,
                           ...peersPrevPatchesByClientId[nextPeerId].map(
-                            (p) => p.action as TAction
+                            (p) =>
+                              ({
+                                ...p.action,
+                                isPrivate: undefined, // make the action public
+                              } as ToPublicAction<TAction>)
                           ),
                         ];
-                      }, [] as TAction[]);
+                      }, [] as ToPublicAction<TAction>[]);
 
                       return {
                         ...accum,

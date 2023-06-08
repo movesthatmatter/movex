@@ -115,8 +115,7 @@ const bindResource = <
   // const boundResource = ;
   onUpdate(new MovexBoundResource($resource));
 
-  const unsubscribe = $resource.onUpdated((x) => {
-    console.log('[hooks] resource updated', x);
+  const unsubscribe = $resource.onUpdated(() => {
     onUpdate(new MovexBoundResource($resource));
   });
 

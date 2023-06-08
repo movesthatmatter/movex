@@ -62,12 +62,7 @@ export class MovexResource<
         rid: toResourceIdentifierObj(item.rid),
         state: item.state[0],
         // id: toResourceIdentifierObj(item.rid).resourceId,
-      }))
-      .map((s) => {
-        console.log("[Client Movex] resoruce created", s.rid)
-
-        return s;
-      });
+      }));
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
@@ -99,7 +94,7 @@ export class MovexResource<
       rid,
       this.reducer
     );
-    
+
     // TODO: Fix this!!!
     // resourceObservable.setMasterSyncing(false);
 
@@ -112,9 +107,6 @@ export class MovexResource<
     this.connectionToMasterResource.addResourceSubscriber(rid).map(() => {
       // TODO: This is where the issue is. the master never responds
 
-
-
-      console.log('[Movex] addResoruceSubscriber worked!');
       // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
       this.connectionToMasterResource.get(rid).map((s) => {
         resourceObservable.sync(s);
@@ -129,28 +121,29 @@ export class MovexResource<
       console.group(
         `%c\u{25BC} %cReconciliatory Actions Received (${p.actions.length}). FinalCheckum ${p.finalChecksum}`,
         logIncomingStyle,
-        logUnimportantStyle
+        logUnimportantStyle,
+        'Client:',
+        this.connectionToMaster.clientId
       );
       console.log('%cPrev state', logUnimportantStyle, prevState[0]);
 
-      p.actions.forEach((action, i) => {
-        resourceObservable.applyAction(
-          action as ActionOrActionTupleFromAction<
-            GetReducerAction<typeof this.reducer>
-          >
-        );
+      // TODO: This doesn't always work correctly, if one action rewrite a state field that 
+      //  doesnt let an adjacent action to rewrite it. so it just returns prev on subsquequent
+      // Not sure what a solution is as merging the actions together in order might not always be the best solution.
+      // Hmmm: this could be quite annoying
+      const nextState = resourceObservable.applyMultipleActions(p.actions);
 
+      console.log('[herere]', this.connectionToMaster.clientId, 'next staet', nextState);
+
+      p.actions.forEach((action, i) => {
         console.log(
           `%cAction(${i + 1}/${p.actions.length}): %c${action.type}`,
           logOutgoingStyle,
           logImportantStyle,
-          (action as ActionWithAnyPayload<string>).payload
+          (action as ActionWithAnyPayload<string>).payload,
+          action
         );
-
-        // clientResource.reconciliateAction
       });
-
-      const nextState = resourceObservable.get();
 
       console.log('%cNextState', logIncomingStyle, nextState[0]);
       console.log(
@@ -202,7 +195,9 @@ export class MovexResource<
             }`,
             logOutgoingStyle,
             logUnimportantStyle,
-            logImportantStyle
+            logImportantStyle,
+            'Client:',
+            this.connectionToMaster.clientId
           );
           console.log(
             '%cPrev state',
@@ -317,7 +312,9 @@ export class MovexResource<
           `%c\u{25BC} %cForwarded Action Received: %c${p.action.type}`,
           logIncomingStyle,
           logUnimportantStyle,
-          logImportantStyle
+          logImportantStyle,
+          'Client:',
+          this.connectionToMaster.clientId
         );
         console.log('%cPrev state', logUnimportantStyle, prevState[0]);
         console.log(

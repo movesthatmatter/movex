@@ -45,9 +45,7 @@ export class MockConnectionEmitter<
   constructor(
     private clientId: string,
     public emitterLabel: string = String(getRandomInt(10000, 99999))
-  ) {
-    console.log('Mock Emitter constructed', clientId, emitterLabel);
-  }
+  ) {}
 
   on<E extends keyof IOEvents<TState, TAction, TResourceType>>(
     event: E,
@@ -126,8 +124,8 @@ export class MockConnectionEmitter<
 
     return () => {
       // console.trace('[MockEmitter]', this.emitterLabel, 'unsubscribe from _onEmitted');
-      unsub()
-    }
+      unsub();
+    };
   }
 
   _publish<E extends keyof IOEvents>(
@@ -169,8 +167,6 @@ export class MockConnectionEmitter<
         );
       });
 
-
-      console.log('hererere calling on emitted should work', 'label', this.emitterLabel, Object.keys((this.onEmittedPubsy as any).subscribers).length)
       this.onEmittedPubsy.publish('onEmitted', {
         event,
         payload: request,
@@ -183,13 +179,6 @@ export class MockConnectionEmitter<
       });
     }
 
-    console.log(
-      '[MockEmitter]',
-      this.emitterLabel,
-      'emitted',
-      event,
-    );
-
     return true;
   }
 
@@ -199,33 +188,8 @@ export class MockConnectionEmitter<
   ) {
     return new Promise<ReturnType<IOEvents<TState, TAction, TResourceType>[E]>>(
       (resolve) => {
-        // console.log(
-        //   '[MockEmitter]',
-        //   this.emitterLabel,
-        //   'emitAndAcknowledge',
-        //   event,
-        //   this.clientId
-        // );
         this.emit(event, request, resolve);
       }
-    ).then((s) => {
-      console.info(
-        '[MockEmitter]',
-        this.emitterLabel,
-        'emitAndAcknowledge success',
-        event,
-      );
-
-      return s;
-    }, (e) => {
-      console.warn(
-        '[MockEmitter]',
-        this.emitterLabel,
-        'emitAndAcknowledge error',
-        event,
-      );    
-      
-      return e;
-    });
+    );
   }
 }

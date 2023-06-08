@@ -127,16 +127,17 @@ export const orchestrateDefinedMovex = <
   clientId: MovexClient['id'],
   emitterOnMaster: MockConnectionEmitter
 ) => {
-  const emitterOnClient = new MockConnectionEmitter(clientId, clientId + '-emitter');
+  const emitterOnClient = new MockConnectionEmitter(
+    clientId,
+    clientId + '-emitter'
+  );
 
   const unsubscribers = [
     emitterOnClient._onEmitted((r, ackCb) => {
-      console.log('[Orchestrator]', emitterOnClient.emitterLabel, '_onEmitted', r.event);
       // Calling the master with the given event from the client in order to process it
       emitterOnMaster._publish(r.event, r.payload, ackCb);
     }),
     emitterOnMaster._onEmitted((r, ackCb) => {
-      console.log('[Orchestrator]', emitterOnMaster.emitterLabel, '_onEmitted', r.event);
       // Calling the client with the given event from the client in order to process it
       emitterOnClient._publish(r.event, r.payload, ackCb);
     }),

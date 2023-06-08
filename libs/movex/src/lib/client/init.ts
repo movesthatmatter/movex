@@ -124,9 +124,11 @@ export const initMovexWithLocalMaster = <
     addClient: (clientId: string) => {
       new Promise<MovexFromDefintion<TResourceMap>>((resolve) => {
         // const clientId = getClientId(io.handshake.query['clientId'] as string);
-        console.log('[init] Client Connected', clientId);
 
-        const emitterOnMaster = new MockConnectionEmitter(clientId, 'master-emitter');
+        const emitterOnMaster = new MockConnectionEmitter(
+          clientId,
+          'master-emitter'
+        );
 
         const connection = new Master.ConnectionToClient(
           clientId,

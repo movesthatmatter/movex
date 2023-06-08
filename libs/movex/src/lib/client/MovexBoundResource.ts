@@ -19,7 +19,6 @@ export class MovexBoundResource<
   constructor(private observable: MovexResourceObservable<TState, TAction>) {}
 
   dispatch = (action: ToPublicAction<TAction>) => {
-    console.log('[MovexBoundResource] dispatch', action.type);
     this.observable.dispatch(action);
   };
 

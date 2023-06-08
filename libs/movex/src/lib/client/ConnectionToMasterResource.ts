@@ -133,11 +133,6 @@ export class ConnectionToMasterResource<
         .emitAndAcknowledge('addResourceSubscriber', {
           rid,
         })
-        .then((res) => {
-            console.log('[ConnectionToMaster] addResourceSubscriber worked', rid);
-
-          return res;
-        })
         .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );
   }

@@ -78,7 +78,6 @@ export class MovexResourceObservable<
       TAction
     >(this.$checkedState, this.reducer, {
       onDispatched: (p) => {
-        console.log('[MovexResourcePbservable] onDispatched', p);
         this.pubsy.publish('onDispatched', p);
       },
       // onStateUpdated: (s) => {
@@ -106,7 +105,6 @@ export class MovexResourceObservable<
    * This is the dispatch for this Movex Resource
    */
   dispatch(action: ToPublicAction<TAction>) {
-    console.log('[MovexResourceObservable] dispatch', action);
     this.dispatcher(action);
   }
 
@@ -124,16 +122,19 @@ export class MovexResourceObservable<
    * @param actionOrActionTuple
    * @returns
    */
-  // I took this out on April 5th b/c it doesn't make sense to return the current state (easily) now that the dispatch
-  //  always wait until the remote state comes first. Using isSynchedPromiseDelegate. If this is needed, the best would be
-  //  to make it async!
-  applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
-    const nextCheckedState =
-      this.getNextCheckedStateFromAction(actionOrActionTuple);
+  applyAction(action: ToPublicAction<TAction>) {
+    return this.$checkedState
+      .update(this.getNextCheckedStateFromAction(action))
+      .get();
+  }
 
-    this.$checkedState.update(nextCheckedState);
+  applyMultipleActions(actions: ToPublicAction<TAction>[]) {
+    const nextState = actions.reduce(
+      (prev, action) => this.computeNextState(prev, action),
+      this.getUncheckedState()
+    );
 
-    return nextCheckedState;
+    return this.$checkedState.update(computeCheckedState(nextState)).get();
   }
 
   /**
@@ -168,12 +169,13 @@ export class MovexResourceObservable<
       ? actionOrActionTuple
       : actionOrActionTuple[0];
 
-    const nextState = this.reducer(
-      this.getUncheckedState(),
-      localAction as TAction
+    return computeCheckedState(
+      this.computeNextState(this.getUncheckedState(), localAction)
     );
+  }
 
-    return computeCheckedState(nextState);
+  private computeNextState(prevState: TState, action: TAction) {
+    return this.reducer(prevState, action);
   }
 
   onUpdated(fn: (state: CheckedState<TState>) => void) {
