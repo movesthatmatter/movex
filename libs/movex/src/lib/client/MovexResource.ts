@@ -149,6 +149,8 @@ export class MovexResource<
             "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
           );
           console.groupEnd();
+
+          return masterCheckState;
         });
     };
 
@@ -312,31 +314,26 @@ export class MovexResource<
                 action
               );
 
-              // Should get the next master state
-              const masterState = await this.connectionToMasterResource
-                .get(rid)
-                .resolveUnwrap();
-
-              console.log(
-                'Master State:',
-                JSON.stringify(masterState[0], null, 2),
-                masterState[1]
-              );
-              console.log(
-                'Local State:',
-                JSON.stringify(nextLocalCheckedState[0], null, 2),
-                nextLocalCheckedState[1]
-              );
-              console.log(
-                'Diff',
-                deepObject.detailedDiff(masterState, nextLocalCheckedState)
-              );
+              await resyncLocalState()
+                .map((masterState) => {
+                  console.log(
+                    'Master State:',
+                    JSON.stringify(masterState[0], null, 2),
+                    masterState[1]
+                  );
+                  console.log(
+                    'Local State:',
+                    JSON.stringify(nextLocalCheckedState[0], null, 2),
+                    nextLocalCheckedState[1]
+                  );
+                  console.log(
+                    'Diff',
+                    deepObject.detailedDiff(masterState, nextLocalCheckedState)
+                  );
+                })
+                .resolve();
 
               console.groupEnd();
-
-              // TODO: This needs a safe catch to get the fresh master state
-              // But ieally this is never needed, as the action mechanism just works
-              // so I leave it w/o for now, to see if this fails a lot!
             });
         }
       ),
