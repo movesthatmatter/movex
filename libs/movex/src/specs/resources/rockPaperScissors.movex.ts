@@ -112,20 +112,32 @@ export type Actions =
       {
         playerLabel: PlayerLabel;
       }
-    >;
+    >
+  | Action<'playAgain'>;
 
 export const reducer = (
   state = initialState as State,
   action: Actions
 ): State => {
+  if (action.type === 'playAgain') {
+    return {
+      ...state,
+      currentGame: {
+        players: state.currentGame.players,
+        winner: null,
+        submissions: {
+          playerA: null,
+          playerB: null,
+        },
+      },
+    };
+  }
+
   if (action.type === 'addPlayer') {
     // If already taken return
     if (state.currentGame.players[action.payload.playerLabel] !== null) {
-      // console.log('add player !== null??', 'yes', state.currentGame.players)
       return state;
     }
-
-    // console.log('add player !== null??', 'no', state.currentGame.players)
 
     return {
       ...state,
@@ -186,14 +198,10 @@ export const reducer = (
         },
       };
 
-      console.log('submitting', action.payload, nextSubmission);
-
       const nextWinner = getRPSWinner([
         nextSubmission.playerA?.play,
         nextSubmission.playerB?.play,
       ]);
-
-      console.log('next winner', nextWinner); 
 
       return {
         ...state,

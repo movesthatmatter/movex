@@ -57,8 +57,6 @@ export class MovexMasterResource<
     resourceType: TResourceType,
     state: TState
   ) {
-    // console.log('[MovexMasterResource].create', resourceType);
-
     return (this.store as MovexStore<TState, TResourceType>).create(
       toResourceIdentifierStr({
         resourceType,

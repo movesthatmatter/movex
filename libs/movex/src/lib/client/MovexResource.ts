@@ -108,10 +108,49 @@ export class MovexResource<
       // TODO: This is where the issue is. the master never responds
 
       // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
-      this.connectionToMasterResource.get(rid).map((s) => {
-        resourceObservable.sync(s);
-      });
+      resyncLocalState();
     });
+
+    /**
+     * This resyncs the local & master states
+     *
+     * Note: This is an expensive call, since it asks for the whole state from the master (server),
+     * only use in situations when it's really really needed!
+     *
+     * @returns
+     */
+    const resyncLocalState = () => {
+      // This is needed in order for all the dipatches in an unsynched state get postponed until sync is back
+      resourceObservable.setUnsync();
+
+      const prevCheckedState = resourceObservable.state;
+
+      return this.connectionToMasterResource
+        .get(rid)
+        .map((masterCheckState) => {
+          resourceObservable.sync(masterCheckState);
+
+          console.group('State Resynch-ed Warning');
+          console.log(
+            '%cPrev (Local) State',
+            logUnimportantStyle,
+            prevCheckedState
+          );
+          console.log(
+            '%cNext (Master) Staet',
+            logIncomingStyle,
+            masterCheckState
+          );
+          console.debug(
+            'Diff',
+            deepObject.detailedDiff(prevCheckedState, masterCheckState)
+          );
+          console.warn(
+            "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
+          );
+          console.groupEnd();
+        });
+    };
 
     const onReconciliateActionsHandler = (
       p: CheckedReconciliatoryActions<A>
@@ -127,20 +166,7 @@ export class MovexResource<
       );
       console.log('%cPrev state', logUnimportantStyle, prevState[0]);
 
-      // TODO: This doesn't always work correctly, if one action rewrite a state field that 
-      //  doesnt let an adjacent action to rewrite it. so it just returns prev on subsquequent
-      // Not sure what a solution is as merging the actions together in order might not always be the best solution.
-      // Hmmm: this could be quite annoying
       const nextState = resourceObservable.applyMultipleActions(p.actions);
-
-      // TODO: actually when these fail for mismatch checksums, just getting the actual state from master
-      // seems like a reasonable approach here as the optimal way isn't sufficient, and it doesn't really
-      //  make any sense to complicate the logic of multiple actions merging and etc...
-      // So yeah, the default - on mismatch get the master state seems reasonable. If that isn't good enough
-      // fo a particular use case, then the developer can fix that in his own custom implemntation
-      //  eithr in the reducer or the way they send actions.
-
-      console.log('[herere]', this.connectionToMaster.clientId, 'next staet', nextState);
 
       p.actions.forEach((action, i) => {
         console.log(
@@ -167,15 +193,11 @@ export class MovexResource<
           logUnimportantStyle,
           p.finalChecksum
         );
-      } else {        
-        // TODO: actually when these fail for mismatch checksums, just getting the actual state from master
-        // seems like a reasonable approach here as the optimal way isn't sufficient, and it doesn't really
-        //  make any sense to complicate the logic of multiple actions merging and etc...
-        // So yeah, the default - on mismatch get the master state seems reasonable. If that isn't good enough
-        // fo a particular use case, then the developer can fix that in his own custom implemntation
-        //  eithr in the reducer or the way they send actions.
-          
-        
+      } else {
+        // If the checksums are different then it this case it's needed to resync.
+        // See this https://github.com/movesthatmatter/movex/issues/8
+        resyncLocalState();
+
         // Here is where this happens!!!
 
         // console.log('Final Master State', p.finalState);

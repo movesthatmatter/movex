@@ -222,6 +222,12 @@ export class MovexResourceObservable<
     return res;
   }
 
+  setUnsync() {
+    if (this.isSynchedPromiseDelegate.settled) {
+      this.isSynchedPromiseDelegate = new PromiseDelegate();
+    }
+  }
+
   /**
    * If set to false it doesn't wait for the master state to be synced
    * Good for tests at least. If not for anythign else, need to rethink it.

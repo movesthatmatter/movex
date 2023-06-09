@@ -7,7 +7,7 @@ import {
   toOppositeLabel,
 } from './movex';
 import movexConfig from '../../movex.config';
-import { toResourceIdentifierStr } from 'movex-core-util';
+import { invoke, toResourceIdentifierStr } from 'movex-core-util';
 
 type Props = {
   boundResource: MovexBoundResourceFromConfig<
@@ -40,9 +40,9 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
   useEffect(() => {
     // TODO: here there is a major issue, as selectAvailableLables works with local state
     //  but it needs to check on the actual (master) state. How to solve this?
-    //  add an api to be able to read master state seperately? 
+    //  add an api to be able to read master state seperately?
 
-    // Or in this case change the strategy altogether, and work with master generated values, in which case 
+    // Or in this case change the strategy altogether, and work with master generated values, in which case
     // the local optimistic state udate gets turned off by default, so that means it will wait for the real staet to update.
     // Kinda like a dispatchAndWait
     const availableLabels = selectAvailableLabels(state);
@@ -110,7 +110,25 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
       <b>User: {userId}</b>
       {state.winner ? (
         <div>
-          <h3>Winner is {state.winner}</h3>
+          <h3>
+            Winner is {state.winner} (
+            {invoke(() => {
+              if (state.winner === '1/2') {
+                return 'Draw';
+              }
+
+              const {
+                submissions: { playerA, playerB },
+              } = state;
+
+              if (playerA.play === state.winner) {
+                return state.players.playerA.label;
+              }
+
+              return state.players.playerB.label;
+            })}
+            )
+          </h3>
           <button
             onClick={() => {
               dispatch({
