@@ -133,6 +133,13 @@ export class MovexResource<
       // Hmmm: this could be quite annoying
       const nextState = resourceObservable.applyMultipleActions(p.actions);
 
+      // TODO: actually when these fail for mismatch checksums, just getting the actual state from master
+      // seems like a reasonable approach here as the optimal way isn't sufficient, and it doesn't really
+      //  make any sense to complicate the logic of multiple actions merging and etc...
+      // So yeah, the default - on mismatch get the master state seems reasonable. If that isn't good enough
+      // fo a particular use case, then the developer can fix that in his own custom implemntation
+      //  eithr in the reducer or the way they send actions.
+
       console.log('[herere]', this.connectionToMaster.clientId, 'next staet', nextState);
 
       p.actions.forEach((action, i) => {
@@ -160,7 +167,17 @@ export class MovexResource<
           logUnimportantStyle,
           p.finalChecksum
         );
-      } else {
+      } else {        
+        // TODO: actually when these fail for mismatch checksums, just getting the actual state from master
+        // seems like a reasonable approach here as the optimal way isn't sufficient, and it doesn't really
+        //  make any sense to complicate the logic of multiple actions merging and etc...
+        // So yeah, the default - on mismatch get the master state seems reasonable. If that isn't good enough
+        // fo a particular use case, then the developer can fix that in his own custom implemntation
+        //  eithr in the reducer or the way they send actions.
+          
+        
+        // Here is where this happens!!!
+
         // console.log('Final Master State', p.finalState);
         console.warn(
           '%cLocal and Final Master Checksum Mismatch',

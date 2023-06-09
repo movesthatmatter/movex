@@ -1,4 +1,6 @@
-import counterReducer, { initialCounterState } from './resources/counterReducer';
+import counterReducer, {
+  initialCounterState,
+} from './resources/counterReducer';
 import { toResourceIdentifierStr } from 'movex-core-util';
 import { MovexMasterResource } from '../lib/master/MovexMasterResource';
 import { computeCheckedState } from '../lib/util';
@@ -64,7 +66,7 @@ test('applies public action', async () => {
     peerActions: {
       type: 'forwardable',
       byClientId: {},
-    }
+    },
   });
 });
 
@@ -299,11 +301,21 @@ test('applies private action UNTIL Reconciliation', async () => {
       type: 'reconcilable',
       byClientId: {
         [whitePlayer]: {
-          actions: [privateBlackAction],
+          actions: [
+            {
+              ...privateBlackAction,
+              isPrivate: undefined,
+            },
+          ],
           finalChecksum: expectedPublicStateAfterReconciliation[1],
         },
         [blackPlayer]: {
-          actions: [privateWhiteAction],
+          actions: [
+            {
+              ...privateWhiteAction,
+              isPrivate: undefined,
+            },
+          ],
           finalChecksum: expectedPublicStateAfterReconciliation[1],
         },
       },

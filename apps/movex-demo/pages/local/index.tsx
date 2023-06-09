@@ -73,7 +73,6 @@ export function Index() {
 
         {createdRid && (
           <div>
-            here
             <MovexInstance
               clientId="client-b"
               movexDefinition={movexConfig}

@@ -5,7 +5,7 @@
   "scripts": {
     "commit": "git-cz",
     "start": "nx serve movex-demo",
-    "tsc-all": "tsc -b libs/movex libs/movex-server libs/movex-core-util libs/movex-react apps/movex-demo apps/movex-demo-api apps/movex-demo-e2e apps/movex-docs apps/movex-docs-e2e",
+    "tsc-all": "tsc -b libs/movex libs/movex-server libs/movex-core-util libs/movex-react libs/movex-examples apps/movex-demo apps/movex-demo-api apps/movex-demo-e2e apps/movex-docs apps/movex-docs-e2e",
     "build": "nx build movex-demo",
     "test": "nx run-many --all --target=test --skip-nx-cache",
     "push-all-libs--locally": "cd dist/libs/movex && npm version pre && yalc push && cd -; cd dist/libs/movex-server && npm version pre && yalc push && cd -; cd dist/libs/movex-core-util && npm version pre && yalc push && cd -",

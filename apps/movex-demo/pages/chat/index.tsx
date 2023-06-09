@@ -1,11 +1,11 @@
-import { useMovexResource } from 'movex-react';
+import { useMovexResourceType } from 'movex-react';
 import { DemoMovexDefinition } from 'apps/movex-demo/movex';
 import { Chat } from 'movex-examples';
 
 type Props = {};
 
 const ChatLobby: React.FC<Props> = () => {
-  const chatResource = useMovexResource<DemoMovexDefinition>('chat');
+  const chatResource = useMovexResourceType<DemoMovexDefinition>('chat');
 
   if (!chatResource) {
     return null;
