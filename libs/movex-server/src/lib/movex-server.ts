@@ -1,13 +1,7 @@
 import * as http from 'http';
 import { Server as SocketServer } from 'socket.io';
-import { LocalMovexStore, MovexStore } from 'libs/movex/src/lib/movex-store';
-import { SocketIOEmitter, objectKeys } from 'movex-core-util';
-import {
-  MovexMasterResource,
-  initMovexMaster,
-} from 'libs/movex/src/lib/master';
-import { Master, MovexDefinition } from 'movex';
-import { IOEvents } from 'libs/movex/src/lib/io-connection/io-events';
+import { SocketIOEmitter } from 'movex-core-util';
+import { Master, MovexDefinition, MovexStore, IOEvents } from 'movex';
 import express from 'express';
 import cors from 'cors';
 

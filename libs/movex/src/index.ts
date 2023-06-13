@@ -1,5 +1,7 @@
 export * from './lib';
 export * from './lib/master/MovexMasterServer';
+export * from './lib/movex-store';
+export * from './lib/io-connection/io-events';
 
 export * from './lib/public-types';
 
