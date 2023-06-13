@@ -103,13 +103,15 @@ export class MovexResource<
     //   this.connectionToMasterResource
     // );
 
-    // Done/TODO: Needs a way to add a resource subscriber
-    this.connectionToMasterResource.addResourceSubscriber(rid).map(() => {
-      // TODO: This is where the issue is. the master never responds
+    const syncLocalState = () => {
+      return this.connectionToMasterResource
+        .get(rid)
+        .map((masterCheckState) => {
+          resourceObservable.sync(masterCheckState);
 
-      // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
-      resyncLocalState();
-    });
+          return masterCheckState;
+        });
+    };
 
     /**
      * This resyncs the local & master states
@@ -125,34 +127,40 @@ export class MovexResource<
 
       const prevCheckedState = resourceObservable.state;
 
-      return this.connectionToMasterResource
-        .get(rid)
-        .map((masterCheckState) => {
-          resourceObservable.sync(masterCheckState);
+      return syncLocalState().map((masterCheckState) => {
+        console.group('State Resynch-ed Warning');
+        console.log(
+          '%cPrev (Local) State',
+          logUnimportantStyle,
+          prevCheckedState
+        );
+        console.log(
+          '%cNext (Master) Staet',
+          logIncomingStyle,
+          masterCheckState
+        );
+        console.debug(
+          'Diff',
+          deepObject.detailedDiff(prevCheckedState, masterCheckState)
+        );
+        console.warn(
+          "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
+        );
+        console.groupEnd();
 
-          console.group('State Resynch-ed Warning');
-          console.log(
-            '%cPrev (Local) State',
-            logUnimportantStyle,
-            prevCheckedState
-          );
-          console.log(
-            '%cNext (Master) Staet',
-            logIncomingStyle,
-            masterCheckState
-          );
-          console.debug(
-            'Diff',
-            deepObject.detailedDiff(prevCheckedState, masterCheckState)
-          );
-          console.warn(
-            "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
-          );
-          console.groupEnd();
-
-          return masterCheckState;
-        });
+        return masterCheckState;
+      });
     };
+
+    // Done/TODO: Needs a way to add a resource subscriber
+    this.connectionToMasterResource.addResourceSubscriber(rid).map(() => {
+      // TODO: This is where the issue is. the master never responds
+
+      // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
+      syncLocalState();
+    }).mapErr((e) => {
+      console.error('[Movex] Add Resource Subscriber Error', e);
+    });
 
     const onReconciliateActionsHandler = (
       p: CheckedReconciliatoryActions<A>

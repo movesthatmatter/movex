@@ -86,6 +86,10 @@ export class MovexResourceObservable<
     });
 
     this.dispatcher = (...args: Parameters<typeof dispatch>) => {
+      if (!this.isSynchedPromiseDelegate.settled) {
+        console.info('[Movex] Attempt to dispatch before sync!', ...args);
+      }
+
       this.isSynchedPromiseDelegate.promise.then(() => {
         dispatch(...args);
       });
