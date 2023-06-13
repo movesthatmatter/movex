@@ -1,6 +1,7 @@
 {
   "name": "movex-core-util",
-  "version": "0.0.2",
+  "version": "0.0.3",
+  "license": "MIT",
   "exports": {
     ".": "./src/index.js",
     "./io": "./src/lib/core-io.js"
