@@ -1,8 +1,7 @@
-import { EventEmitter, getRandomInt } from 'movex-core-util';
+import { EventEmitter, getRandomInt, getUuid } from 'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 import { IOEvents } from '../../lib/io-connection/io-events';
 import { AnyAction } from '../../lib/tools/action';
-import { getUuid } from '../../lib/util';
 import { UnsubscribeFn } from '../../lib/core-types';
 
 export class MockConnectionEmitter<

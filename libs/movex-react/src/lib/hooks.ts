@@ -6,15 +6,13 @@ import {
   toResourceIdentifierStr,
 } from 'movex-core-util';
 import {
-  Client,
+  MovexClient,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
   GetReducerAction,
   GetReducerState,
 } from 'movex';
 import { MovexContext } from './MovexContext';
-import { MovexBoundResource } from 'libs/movex/src/lib/client';
-import { MovexFromDefintion } from 'libs/movex/src/lib/client/MovexFromDefintion';
 
 export const useMovex = () => useContext(MovexContext);
 
@@ -24,7 +22,7 @@ export type MovexResourceFromConfig<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends keyof TResourcesMap,
   Reducer extends MovexDefinition<TResourcesMap>['resources'][TResourceType] = MovexDefinition<TResourcesMap>['resources'][TResourceType]
-> = Client.MovexResource<
+> = MovexClient.MovexResource<
   GetReducerState<Reducer>,
   GetReducerAction<Reducer>,
   string
@@ -34,7 +32,7 @@ export type MovexBoundResourceFromConfig<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends keyof TResourcesMap,
   Reducer extends MovexDefinition<TResourcesMap>['resources'][TResourceType] = MovexDefinition<TResourcesMap>['resources'][TResourceType]
-> = Client.MovexBoundResource<
+> = MovexClient.MovexBoundResource<
   GetReducerState<Reducer>,
   GetReducerAction<Reducer>
 >;
@@ -65,7 +63,7 @@ const registerMovexResourceType = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
 >(
-  movex: MovexFromDefintion<TResourcesMap>,
+  movex: MovexClient.MovexFromDefintion<TResourcesMap>,
   resourceType: TResourceType
 ) => movex.register(resourceType);
 
@@ -103,9 +101,9 @@ const bindResource = <
   TMovexDefinition extends MovexDefinition,
   TResourceType extends Extract<keyof TMovexDefinition['resources'], string>
 >(
-  resource: Client.MovexResource<any, any, any>,
+  resource: MovexClient.MovexResource<any, any, any>,
   rid: ResourceIdentifier<TResourceType>,
-  onUpdate: (p: Client.MovexBoundResource) => void
+  onUpdate: (p: MovexClient.MovexBoundResource) => void
 ) => {
   const $resource = resource.bind(toResourceIdentifierStr(rid));
 
@@ -113,10 +111,10 @@ const bindResource = <
   // TODO: One thing that might not work is the get state accessor with this, but that doesn't get invoked somewhere else
   // so it should be fine
   // const boundResource = ;
-  onUpdate(new MovexBoundResource($resource));
+  onUpdate(new MovexClient.MovexBoundResource($resource));
 
   const unsubscribe = $resource.onUpdated(() => {
-    onUpdate(new MovexBoundResource($resource));
+    onUpdate(new MovexClient.MovexBoundResource($resource));
   });
 
   return unsubscribe;
@@ -134,7 +132,7 @@ export const createMovexResource = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
 >(
-  movex: MovexFromDefintion<TResourcesMap>,
+  movex: MovexClient.MovexFromDefintion<TResourcesMap>,
   res: {
     type: TResourceType;
     state?: GetReducerState<TResourcesMap[TResourceType]>;
@@ -172,7 +170,7 @@ export const useCreateMovexResourceOnDemand = <
   useEffect(() => {
     if (resourceInit && m.connected) {
       createMovexResource<TResourcesMap, TResourceType>(
-        m.movex as MovexFromDefintion<TResourcesMap>,
+        m.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
         resourceInit
       ).map((s) => onCreated(s.rid as ResourceIdentifier<TResourceType>));
     }
@@ -195,7 +193,7 @@ export const useMovexBindOrCreateAndBindOnDemand = <
   const m = useMovex();
   const [boundResource, setBoundResource] =
     useState<
-      MovexBoundResource<
+      MovexClient.MovexBoundResource<
         GetReducerState<TResourcesMap[TResourceType]>,
         GetReducerAction<TResourcesMap[TResourceType]>
       >
@@ -227,7 +225,7 @@ export const useMovexBindOrCreateAndBindOnDemand = <
     } else {
       // Create and then bind
       createMovexResource<TResourcesMap, TResourceType>(
-        m.movex as MovexFromDefintion<TResourcesMap>,
+        m.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
         resourceInitOrRid
       ).map(({ rid }) => {
         unsubscribers = [
@@ -240,94 +238,3 @@ export const useMovexBindOrCreateAndBindOnDemand = <
 
   return boundResource;
 };
-
-// const useBindMovexResource = <
-//   TResourceMap extends BaseMovexDefinitionResourcesMap,
-//   TResourceType extends string,
-//   TState extends GetReducerState<TResourceMap[TResourceType]> = GetReducerState<
-//     TResourceMap[TResourceType]
-//   >,
-//   TACtion extends GetReducerAction<
-//     TResourceMap[TResourceType]
-//   > = GetReducerAction<TResourceMap[TResourceType]>
-// >(
-//   resource?: MovexResource<TState, TACtion, TResourceType>,
-// ) => {
-//   const m = useMovex();
-
-//   const [boundResource, setBoundResource] = useState<MovexBoundResource<TState, TACtion>>();
-
-//   useEffect(() => {
-//     if (m.connected && resource) {
-//       m.movex.register(resource as string)
-//       resource.bind()
-//     }
-//   }, [m.connected, resource]);
-
-//   return boundResource;
-// };
-
-/**
- * This is a combinatoin of useMovexCreateResource + bind
-//  */
-// export const useMovexBindOrCreateResource = <
-//   TResourcesMap extends BaseMovexDefinitionResourcesMap,
-//   TResourceType extends Extract<keyof TResourcesMap, string>
-// >(
-//   movexConfig: MovexDefinition<TResourcesMap>,
-//   ridOrResourceType: ResourceIdentifier<TResourceType> | TResourceType,
-//   initialState?: GetReducerState<TResourcesMap[TResourceType]>
-// ) => {
-//   // const resource = useMovexResource<MovexDefinition>('rps');
-//   const m = useMovex();
-//   const resourceType = useMemo(
-//     () =>
-//       isResourceIdentifier<TResourceType>(ridOrResourceType)
-//         ? toResourceIdentifierObj(ridOrResourceType).resourceType
-//         : ridOrResourceType,
-//     []
-//   );
-
-//   const [resource, setResource] = useState<
-//     MovexResourceFromDefinition<MovexDefinition<TResourcesMap>, TResourceType>
-//     // MovexResourceFromConfig<
-//     //   TMovexDefinition['resources'],
-//     //   typeof resourceType
-//     // >
-//   >();
-
-//   useEffect(() => {
-//     if (m.connected) {
-//       setResource(m.movex.register(resourceType));
-//     }
-//   }, [m.connected]);
-
-//   // const createMovexResource = useCallback(() => {
-//   //   if (!m.connected) {
-//   //     return noop;
-//   //   }
-
-//   //   return () => {
-//   //     createMovexResource(m.,)
-//   //   }
-//   // }, [m.connected]);
-
-//   useEffect(() => {
-//     if (!m.connected) {
-//       return;
-//     }
-
-//     if (!isResourceIdentifier<TResourceType>(ridOrResourceType)) {
-//       createMovexResource(m.movex, ridOrResourceType, initialState).
-//     }
-
-//   }, [m.connected, ridOrResourceType]);
-
-//   // return movexResource;
-//   //
-//   // useEffect(() => {
-//   //   if (rid) {
-//   //     // bindResource()
-//   //   }
-//   // }, [rid]);
-// };

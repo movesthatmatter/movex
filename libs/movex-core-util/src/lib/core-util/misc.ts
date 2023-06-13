@@ -1,4 +1,5 @@
-// import { nextTick } from 'process';
+import { v4 as uuidV4 } from 'uuid';
+
 declare var require: any;
 const process = require('process');
 
@@ -63,3 +64,5 @@ export const isObject = (o: unknown): o is object => {
 
 export const isFunction = (x: unknown): x is Function =>
   typeof x === 'function';
+
+export const getUuid = uuidV4;

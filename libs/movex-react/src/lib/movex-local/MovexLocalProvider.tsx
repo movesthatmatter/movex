@@ -1,16 +1,13 @@
 import React from 'react';
-import { MovexClient, invoke } from 'movex-core-util';
+import { MovexClient, getUuid, invoke } from 'movex-core-util';
 import {
   BaseMovexDefinitionResourcesMap,
   Master,
+  MovexMasterLocal,
   MovexDefinition,
   MovexMasterServer,
 } from 'movex';
 import { MovexContext, MovexContextProps } from '../MovexContext';
-
-import { getUuid } from 'libs/movex/src/lib/util';
-import { MockConnectionEmitter } from 'libs/movex/src/specs/util/MockConnectionEmitter';
-import { orchestrateDefinedMovex } from 'libs/movex/src/specs/util/orchestrator';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
@@ -49,7 +46,7 @@ export class MovexLocalProviderClass<
 
     const clientId = this.props.clientId || getUuid();
 
-    const emitterOnMaster = new MockConnectionEmitter(
+    const emitterOnMaster = new MovexMasterLocal.MockConnectionEmitter(
       clientId,
       'master-emitter'
     );
@@ -62,7 +59,7 @@ export class MovexLocalProviderClass<
     const unsubscribeFromConnection =
       master.addClientConnection(connectionToClient);
 
-    const mockedMovex = orchestrateDefinedMovex(
+    const mockedMovex = MovexMasterLocal.orchestrateDefinedMovex(
       this.props.movexDefinition,
       clientId,
       emitterOnMaster

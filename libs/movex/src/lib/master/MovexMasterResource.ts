@@ -5,6 +5,7 @@ import {
   MovexClient,
   objectKeys,
   toResourceIdentifierStr,
+  getUuid,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { CheckedState } from '../core-types';
@@ -22,7 +23,6 @@ import {
   applyMovexStatePatches,
   computeCheckedState,
   getMovexStatePatch,
-  getUuid,
 } from '../util';
 
 /**
