@@ -1,13 +1,12 @@
----
-noteId: "21461720fc9d11edbdf34d336f587b20"
-tags: []
-
----
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./art/logo_b@2x.png">
+  <img alt="Movex Logo" src="./art/logo_b_white@2x.png">
+</picture>
+<p>
 
 # movex-react
 
-This library was generated with [Nx](https://nx.dev).
+This is the React tools to make Movex work in React. 
 
-## Running unit tests
-
-Run `nx test movex-react` to execute the unit tests via [Jest](https://jestjs.io).
+Learn about Movex [here](https://github.com/movesthatmatter/movex)!

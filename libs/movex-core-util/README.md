@@ -1,11 +1,10 @@
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./art/logo_b@2x.png">
+  <img alt="Movex Logo" src="./art/logo_b_white@2x.png">
+</picture>
+<p>
+
 # movex-core-util
 
-This library was generated with [Nx](https://nx.dev).
-
-## Running unit tests
-
-Run `nx test movex-core-util` to execute the unit tests via [Jest](https://jestjs.io).
-
-## Running lint
-
-Run `nx lint movex-core-util` to execute the lint via [ESLint](https://eslint.org/).
+This is the library of utilities for [movex](https://github.com/movesthatmatter/movex)
