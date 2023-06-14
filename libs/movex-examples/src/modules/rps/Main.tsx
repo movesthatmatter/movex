@@ -7,7 +7,7 @@ import {
   toOppositeLabel,
 } from './movex';
 import movexConfig from '../../movex.config';
-import { invoke, toResourceIdentifierStr } from 'movex-core-util';
+import { invoke, logsy, toResourceIdentifierStr } from 'movex-core-util';
 
 type Props = {
   boundResource: MovexBoundResourceFromConfig<
@@ -55,7 +55,7 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
     }
 
     if (availableLabels.length === 0) {
-      console.warn('Player Slots taken');
+      logsy.warn('Player Slots taken');
 
       return;
     }

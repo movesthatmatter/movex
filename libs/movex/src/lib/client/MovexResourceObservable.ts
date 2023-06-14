@@ -4,6 +4,7 @@ import {
   getNextStateFrom,
   invoke,
   IObservable,
+  logsy,
   MovexClient,
   NextStateGetter,
   Observable,
@@ -80,14 +81,11 @@ export class MovexResourceObservable<
       onDispatched: (p) => {
         this.pubsy.publish('onDispatched', p);
       },
-      // onStateUpdated: (s) => {
-      //   // console.log('Dispatcher.onStaetUpdated', s);
-      // },
     });
 
     this.dispatcher = (...args: Parameters<typeof dispatch>) => {
       if (!this.isSynchedPromiseDelegate.settled) {
-        console.info('[Movex] Attempt to dispatch before sync!', ...args);
+        logsy.info('[Movex] Attempt to dispatch before sync!', ...args);
       }
 
       this.isSynchedPromiseDelegate.promise.then(() => {

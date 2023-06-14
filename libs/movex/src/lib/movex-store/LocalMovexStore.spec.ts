@@ -1,4 +1,5 @@
-import { tillNextTick } from 'movex-core-util';
+// import { tillNextTick } from 'movex-core-util';
+import { tillNextTick } from '../../../../movex-core-util/src';
 import { LocalMovexStore } from './LocalMovexStore';
 require('console-group').install();
 

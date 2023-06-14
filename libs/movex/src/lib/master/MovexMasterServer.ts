@@ -1,5 +1,6 @@
 import {
   MovexClient,
+  logsy,
   objectKeys,
   toResourceIdentifierObj,
 } from 'movex-core-util';
@@ -88,7 +89,7 @@ export class MovexMasterServer {
           // Forwardable
           objectKeys(peerActions.byClientId).forEach((peerId) => {
             if (!peerActions.byClientId[peerId]) {
-              console.error(
+              logsy.error(
                 '[MovexMasterServer] Inexistant Peer Connection for peerId:',
                 peerId
               );
@@ -246,7 +247,7 @@ export class MovexMasterServer {
       >,
     };
 
-    console.log(
+    logsy.log(
       '[MovexMasterServer] Added Connection Succesfully:',
       clientConnection.clientId,
       '| Connections',
@@ -279,7 +280,7 @@ export class MovexMasterServer {
 
     this.clientConnectionsByClientId = restOfConnections;
 
-    console.log(
+    logsy.log(
       '[MovexMasterServer] Removed Connection Succesfully',
       this.clientConnectionsByClientId,
       '| Connections:',

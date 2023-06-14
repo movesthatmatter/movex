@@ -1,4 +1,9 @@
-import { MovexClient, ResourceIdentifier, invoke } from 'movex-core-util';
+import {
+  MovexClient,
+  ResourceIdentifier,
+  invoke,
+  logsy,
+} from 'movex-core-util';
 import { Movex } from '../../lib';
 import { ConnectionToMaster } from '../../lib/client/ConnectionToMaster';
 import { ConnectionToClient, MovexMasterServer } from '../../lib/master';
@@ -134,10 +139,12 @@ export const orchestrateDefinedMovex = <
 
   const unsubscribers = [
     emitterOnClient._onEmitted((r, ackCb) => {
+      logsy.log('[Orchestrator] emitterOnClient _onEmitted', r);
       // Calling the master with the given event from the client in order to process it
       emitterOnMaster._publish(r.event, r.payload, ackCb);
     }),
     emitterOnMaster._onEmitted((r, ackCb) => {
+      logsy.log('[Orchestrator] emitterOnMaster _onEmitted', r);
       // Calling the client with the given event from the client in order to process it
       emitterOnClient._publish(r.event, r.payload, ackCb);
     }),

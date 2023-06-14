@@ -8,6 +8,7 @@ import {
   GetIOPayloadErrTypeFrom,
   GetIOPayloadOKTypeFrom,
   invoke,
+  logsy,
   ResourceIdentifier,
   ResourceIdentifierStr,
   toResourceIdentifierObj,
@@ -95,7 +96,7 @@ export class ConnectionToMasterResource<
     type CreateEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['createResource']
     >;
-    // console.group('[ConnectionToMasterResource].create', this.connectionToMaster.clientId, resourceType, resourceState);
+    logsy.log('[ConnectionToMasterResource].create', this.connectionToMaster.clientId, resourceType, resourceState);
 
     return AsyncResult.toAsyncResult<
       GetIOPayloadOKTypeFrom<CreateEvent>,

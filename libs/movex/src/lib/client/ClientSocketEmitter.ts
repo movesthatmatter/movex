@@ -3,6 +3,7 @@ import {
   MovexClient,
   UnsubscribeFn,
   WsResponseResultPayload,
+  logsy,
 } from 'movex-core-util';
 import { AnyAction } from '../tools/action';
 import { IOEvents } from '../io-connection/io-events';
@@ -83,13 +84,7 @@ export class ClientSocketEmitter<
     //  but outside
     this.handleClientConnection(this.io);
 
-    // this.socketInstance.on('connection', (r) => {
-    //   console.log('[ClientSocketEmitter] connected', r);
-    // });
-
     this.io.on('connect', () => {
-      // console.log('[ClientSocketEmitter] connected 2');
-
       this.pubsy.publish('socketConnect', {
         clientId: 'given from here ',
       });
@@ -113,7 +108,7 @@ export class ClientSocketEmitter<
 
     // TODO: Type this with zod
     const $clientConnectHandler = (payload: { clientId: string }) => {
-      this.logger.info('[ClientSdk] Connected Succesfully', payload);
+      logsy.info('[ClientSdk] Connected Succesfully', payload);
 
       // Resolve the socket promise now!
       this.socketConnectionDelegate.resolve(this.io);
@@ -240,7 +235,7 @@ export class ClientSocketEmitter<
       const reqId = `${event}(${String(Math.random()).slice(-3)})`;
       const connection = await this.socketConnection;
 
-      this.logger.info('[SocketEmitter]', reqId, 'Emit:', event, request);
+      logsy.info('[SocketEmitter]', reqId, 'Emit:', event, request);
 
       connection.emit(
         event,
@@ -248,15 +243,15 @@ export class ClientSocketEmitter<
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {
             if (res.ok) {
-              this.logger.info('[SocketEmitter]', reqId, 'Response Ok:', res);
+              logsy.info('[SocketEmitter]', reqId, 'Response Ok:', res);
               resolve(new Ok(res.val));
             } else {
-              this.logger.warn('[SocketEmitter]', reqId, 'Response Err:', res);
+              logsy.warn('[SocketEmitter]', reqId, 'Response Err:', res);
               reject(new Err(res.val));
             }
           },
           () => {
-            this.logger.warn(
+            logsy.warn(
               '[SocketEmitter]',
               event,
               'Request Timeout:',

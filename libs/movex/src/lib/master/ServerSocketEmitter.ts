@@ -2,6 +2,7 @@ import {
   EventEmitter,
   UnsubscribeFn,
   WsResponseResultPayload,
+  logsy,
 } from 'movex-core-util';
 import { AnyAction } from '../tools/action';
 import { IOEvents } from '../io-connection/io-events';
@@ -83,24 +84,14 @@ export class ServerSocketEmitter<
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {
             if (res.ok) {
-              this.logger.info(
-                '[ServerSocketEmitter]',
-                reqId,
-                'Response Ok:',
-                res
-              );
+              logsy.info('[ServerSocketEmitter]', reqId, 'Response Ok:', res);
               acknowledgeCb(
                 new Ok(res.val) as ReturnType<
                   IOEvents<TState, TAction, TResourceType>[E]
                 >
               );
             } else {
-              this.logger.warn(
-                '[ServerSocketEmitter]',
-                reqId,
-                'Response Err:',
-                res
-              );
+              logsy.warn('[ServerSocketEmitter]', reqId, 'Response Err:', res);
               acknowledgeCb(
                 new Err(res.val) as ReturnType<
                   IOEvents<TState, TAction, TResourceType>[E]
@@ -133,7 +124,7 @@ export class ServerSocketEmitter<
       const reqId = `${event}(${String(Math.random()).slice(-3)})`;
       // const connection = await this.socketConnection;
 
-      this.logger.info('[ServerSocketEmitter]', reqId, 'Emit:', event, request);
+      logsy.info('[ServerSocketEmitter]', reqId, 'Emit:', event, request);
 
       this.socket.emit(
         event,
@@ -141,25 +132,15 @@ export class ServerSocketEmitter<
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {
             if (res.ok) {
-              this.logger.info(
-                '[ServerSocketEmitter]',
-                reqId,
-                'Response Ok:',
-                res
-              );
+              logsy.info('[ServerSocketEmitter]', reqId, 'Response Ok:', res);
               resolve(new Ok(res.val));
             } else {
-              this.logger.warn(
-                '[ServerSocketEmitter]',
-                reqId,
-                'Response Err:',
-                res
-              );
+              logsy.warn('[ServerSocketEmitter]', reqId, 'Response Err:', res);
               reject(new Err(res.val));
             }
           },
           () => {
-            this.logger.warn(
+            logsy.warn(
               '[ServerSocketEmitter]',
               event,
               'Request Timeout:',

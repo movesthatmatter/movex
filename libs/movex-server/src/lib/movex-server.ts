@@ -1,6 +1,6 @@
 import * as http from 'http';
 import { Server as SocketServer } from 'socket.io';
-import { SocketIOEmitter } from 'movex-core-util';
+import { SocketIOEmitter, logsy } from 'movex-core-util';
 import { Master, MovexDefinition, MovexStore, IOEvents } from 'movex';
 import express from 'express';
 import cors from 'cors';
@@ -41,7 +41,7 @@ export const movexServer = (
 
   socket.on('connection', (io) => {
     const clientId = getClientId(io.handshake.query['clientId'] as string);
-    console.log('[MovexServer] Client Connected', clientId);
+    logsy.log('[MovexServer] Client Connected', clientId);
 
     const connection = new Master.ConnectionToClient(
       clientId,
@@ -53,7 +53,7 @@ export const movexServer = (
     movexMaster.addClientConnection(connection);
 
     io.on('disconnect', () => {
-      console.log('[MovexServer] Client Disconnected', clientId);
+      logsy.log('[MovexServer] Client Disconnected', clientId);
 
       movexMaster.removeConnection(clientId);
     });
@@ -65,7 +65,7 @@ export const movexServer = (
     const address = httpServer.address();
 
     if (typeof address !== 'string') {
-      console.info(`Movex Server started on port ${address?.port}`);
+      logsy.info(`Movex Server started on port ${address?.port}`);
     }
   });
 };

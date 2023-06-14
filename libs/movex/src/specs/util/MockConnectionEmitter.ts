@@ -108,7 +108,6 @@ export class MockConnectionEmitter<
       ) => void
     ) => void
   ) {
-    // console.log('[MockEmitter]', this.emitterLabel, 'subscribed to _onEmitted');
     const unsub = this.onEmittedPubsy.subscribe('onEmitted', (r) => {
       fn(
         {
@@ -122,7 +121,6 @@ export class MockConnectionEmitter<
     });
 
     return () => {
-      // console.trace('[MockEmitter]', this.emitterLabel, 'unsubscribe from _onEmitted');
       unsub();
     };
   }

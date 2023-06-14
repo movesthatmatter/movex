@@ -1,13 +1,20 @@
 import { Ok } from 'ts-results';
-
 import { computeCheckedState } from '../lib/util';
 import counterReducer, {
   initialCounterState,
 } from './resources/counterReducer';
 import { MovexResourceObservable } from '../lib/client/MovexResourceObservable';
-import { ResourceIdentifier, tillNextTick } from 'movex-core-util';
+import { globalLogsy, ResourceIdentifier, tillNextTick } from 'movex-core-util';
 
 const rid: ResourceIdentifier<string> = 'counter:test-id';
+
+beforeAll(() => {
+  globalLogsy.disable();
+});
+
+afterAll(() => {
+  globalLogsy.enable();
+});
 
 describe('Observable', () => {
   test('Dispatch Local Actions', async () => {
