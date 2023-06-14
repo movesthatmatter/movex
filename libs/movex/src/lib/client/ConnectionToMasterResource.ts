@@ -140,12 +140,17 @@ export class ConnectionToMasterResource<
           rid,
         })
         .then((res) => {
-          logsy.debug(
-            '[ConnectionToMasterResource].addResourceSubscriber rid:',
-            rid,
-            'res:',
-            res
-          );
+          if (!res.ok) {
+            console.log(
+              '[ConnectionToMasterResource].addResourceSubscriber rid:',
+              rid,
+              'res:',
+              res
+            );
+            console.log('Emitter', this.connectionToMaster.emitter);
+            console.trace('Trace');
+          }
+          
 
           return res;
         })

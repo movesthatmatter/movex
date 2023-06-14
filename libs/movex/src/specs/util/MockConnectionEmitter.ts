@@ -159,6 +159,14 @@ export class MockConnectionEmitter<
 
       // TODO: Need a way for this to call the unsubscriber
       this.ackPubsy.subscribe(ackId, (ackMsg) => {
+        console.log(
+          '[MockConnectionEmitter] emit',
+          event,
+          request,
+          'response:',
+          ackMsg
+        );
+        console.trace('[MockConnectionEmitter] Trace', event, request);
         acknowledgeCb(
           ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
         );
