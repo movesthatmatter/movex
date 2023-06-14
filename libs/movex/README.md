@@ -18,6 +18,15 @@ Movex is a Multiplayer (Game) State Synchronization Library using Deterministic 
 
 **Movex is currently in Development. Drop me a message or create an issue if you have any questions, ideas or would like to get involved.**
 
+## Features
+
+- [x] Real Time State Sync
+- [x] Secret State
+- [x] Redux API
+- [x] Authoritative Server
+- [x] No Server Specific Code
+- [ ] (WIP) No Server Hassle (_At the moment the code running on the server still needs to be manually handled._) 
+
 ## Documentation
 
 Visit https://movex.dev to get started with Movex.
