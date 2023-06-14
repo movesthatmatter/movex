@@ -27,7 +27,7 @@ const logOpenConnectionStyle = 'color: #EF5FA0; font-weight: bold';
 const logClosedConnectionStyle = 'color: #DF9D04; font-weight: bold';
 const logErrorStyle = 'color: red; font-weight: bold;';
 
-const logsy = rawLogsy.withNamespace('[MovexResource]')
+const logsy = rawLogsy.withNamespace('[MovexResource]');
 // const logsy = rawLogsy;
 
 export class MovexResource<
@@ -63,7 +63,6 @@ export class MovexResource<
       .map((item) => ({
         rid: toResourceIdentifierObj(item.rid),
         state: item.state[0],
-        // id: toResourceIdentifierObj(item.rid).resourceId,
       }));
   }
 
@@ -155,7 +154,7 @@ export class MovexResource<
         syncLocalState();
       })
       .mapErr((e) => {
-        logsy.error('[Movex] Add Resource Subscriber Error', e);
+        logsy.error('Add Resource Subscriber Error', e);
       });
 
     const onReconciliateActionsHandler = (
@@ -186,7 +185,7 @@ export class MovexResource<
 
       logsy.log('%cNextState', logIncomingStyle, nextState[0]);
       logsy.log(
-        '%cchecksums',
+        '%cChecksums',
         logUnimportantStyle,
         prevState[1],
         '>',
@@ -258,13 +257,13 @@ export class MovexResource<
           } else {
             const [privateAction, publicAction] = action;
             logsy.log(
-              `%cPrivate action: %c${privateAction.type}`,
+              `%cPrivate Action: %c${privateAction.type}`,
               logOpenConnectionStyle,
               logImportantStyle,
               (privateAction as ActionWithAnyPayload<string>).payload
             );
             logsy.log(
-              `%cPublic action payload: %c${publicAction.type}`,
+              `%cPublic Action payload: %c${publicAction.type}`,
               logOutgoingStyle,
               logImportantStyle,
               (publicAction as ActionWithAnyPayload<string>).payload
@@ -355,14 +354,14 @@ export class MovexResource<
           'Client:',
           this.connectionToMaster.clientId
         );
-        logsy.log('%cPrev state', logUnimportantStyle, prevState[0]);
+        logsy.log('%cPrev State', logUnimportantStyle, prevState[0]);
         logsy.log(
           `%cAction: %c${p.action.type}`,
           logOutgoingStyle,
           logImportantStyle,
           (p.action as ActionWithAnyPayload<string>).payload
         );
-        logsy.log('%cNextState', logIncomingStyle, nextState[0]);
+        logsy.log('%cNext State', logIncomingStyle, nextState[0]);
         if (prevState[1] !== nextState[1]) {
           logsy.log(
             '%cchecksums',

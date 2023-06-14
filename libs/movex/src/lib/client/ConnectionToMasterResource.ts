@@ -96,7 +96,12 @@ export class ConnectionToMasterResource<
     type CreateEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['createResource']
     >;
-    logsy.log('[ConnectionToMasterResource].create', this.connectionToMaster.clientId, resourceType, resourceState);
+    logsy.log(
+      '[ConnectionToMasterResource].create',
+      this.connectionToMaster.clientId,
+      resourceType,
+      resourceState
+    );
 
     return AsyncResult.toAsyncResult<
       GetIOPayloadOKTypeFrom<CreateEvent>,
@@ -133,6 +138,16 @@ export class ConnectionToMasterResource<
       this.connectionToMaster.emitter
         .emitAndAcknowledge('addResourceSubscriber', {
           rid,
+        })
+        .then((res) => {
+          logsy.debug(
+            '[ConnectionToMasterResource].addResourceSubscriber rid:',
+            rid,
+            'res:',
+            res
+          );
+
+          return res;
         })
         .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );
