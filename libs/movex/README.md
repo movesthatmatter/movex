@@ -6,13 +6,17 @@
 <p>
 
 
-<p align="center">
- <a aria-label="License" href="https://github.com/movesthatmatter/movex/blob/main/LICENSE">
-    <img alt="" src="https://img.shields.io/badge/license-MIT-green">
-  </a>
-</p>
+<div align="center">
 
+[![NPM version][npm-image]][npm-url]
+[![NPM version][license-image]][license-url]
 
+[npm-url]: https://npmjs.org/package/movex
+[npm-image]: https://img.shields.io/badge/dynamic/json?color=orange&label=movex&query=version&url=https%3A%2F%2Fraw.githubusercontent.com%2Fmovesthatmatter%2Fmovex%2Fmain%2Flibs%2Fmovex%2Fpackage.json
+[license-image]: https://img.shields.io/badge/license-MIT-green
+[license-url]: https://github.com/movesthatmatter/movex/blob/main/LICENSE
+
+</div>
 
 Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation without the need to write Server Specific Code.
 
