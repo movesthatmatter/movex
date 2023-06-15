@@ -4,9 +4,11 @@ import {
   getNextStateFrom,
   invoke,
   IObservable,
+  logsy,
   MovexClient,
   NextStateGetter,
   Observable,
+  ResourceIdentifier,
 } from 'movex-core-util';
 import { computeCheckedState } from '../util';
 import {
@@ -54,6 +56,7 @@ export class MovexResourceObservable<
 
   constructor(
     private clientId: MovexClient['id'],
+    public rid: ResourceIdentifier<string>,
     private reducer: MovexReducer<TState, TAction>,
 
     // Passing undefined here in order to get the default state
@@ -78,12 +81,13 @@ export class MovexResourceObservable<
       onDispatched: (p) => {
         this.pubsy.publish('onDispatched', p);
       },
-      // onStateUpdated: (s) => {
-      //   // console.log('Dispatcher.onStaetUpdated', s);
-      // },
     });
 
     this.dispatcher = (...args: Parameters<typeof dispatch>) => {
+      if (!this.isSynchedPromiseDelegate.settled) {
+        logsy.info('[Movex] Attempt to dispatch before sync!', ...args);
+      }
+
       this.isSynchedPromiseDelegate.promise.then(() => {
         dispatch(...args);
       });
@@ -120,16 +124,19 @@ export class MovexResourceObservable<
    * @param actionOrActionTuple
    * @returns
    */
-  // I took this out on April 5th b/c it doesn't make sense to return the current state (easily) now that the dispatch
-  //  always wait until the remote state comes first. Using isSynchedPromiseDelegate. If this is needed, the best would be
-  //  to make it async!
-  applyAction(actionOrActionTuple: ActionOrActionTupleFromAction<TAction>) {
-    const nextCheckedState =
-      this.getNextCheckedStateFromAction(actionOrActionTuple);
+  applyAction(action: ToPublicAction<TAction>) {
+    return this.$checkedState
+      .update(this.getNextCheckedStateFromAction(action))
+      .get();
+  }
 
-    this.$checkedState.update(nextCheckedState);
+  applyMultipleActions(actions: ToPublicAction<TAction>[]) {
+    const nextState = actions.reduce(
+      (prev, action) => this.computeNextState(prev, action),
+      this.getUncheckedState()
+    );
 
-    return nextCheckedState;
+    return this.$checkedState.update(computeCheckedState(nextState)).get();
   }
 
   /**
@@ -164,12 +171,13 @@ export class MovexResourceObservable<
       ? actionOrActionTuple
       : actionOrActionTuple[0];
 
-    const nextState = this.reducer(
-      this.getUncheckedState(),
-      localAction as TAction
+    return computeCheckedState(
+      this.computeNextState(this.getUncheckedState(), localAction)
     );
+  }
 
-    return computeCheckedState(nextState);
+  private computeNextState(prevState: TState, action: TAction) {
+    return this.reducer(prevState, action);
   }
 
   onUpdated(fn: (state: CheckedState<TState>) => void) {
@@ -214,6 +222,12 @@ export class MovexResourceObservable<
     this.isSynchedPromiseDelegate.resolve();
 
     return res;
+  }
+
+  setUnsync() {
+    if (this.isSynchedPromiseDelegate.settled) {
+      this.isSynchedPromiseDelegate = new PromiseDelegate();
+    }
   }
 
   /**

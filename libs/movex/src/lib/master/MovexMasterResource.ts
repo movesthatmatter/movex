@@ -5,6 +5,7 @@ import {
   MovexClient,
   objectKeys,
   toResourceIdentifierStr,
+  getUuid,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import { CheckedState } from '../core-types';
@@ -15,13 +16,13 @@ import {
   isAction,
   ToCheckedAction,
   CheckedReconciliatoryActions,
+  ToPublicAction,
 } from '../tools/action';
 import { MovexReducer } from '../tools/reducer';
 import {
   applyMovexStatePatches,
   computeCheckedState,
   getMovexStatePatch,
-  getUuid,
 } from '../util';
 
 /**
@@ -56,8 +57,6 @@ export class MovexMasterResource<
     resourceType: TResourceType,
     state: TState
   ) {
-    // console.log('[MovexMasterResource].create', resourceType);
-
     return (this.store as MovexStore<TState, TResourceType>).create(
       toResourceIdentifierStr({
         resourceType,
@@ -223,11 +222,8 @@ export class MovexMasterResource<
       }
 
       const [privateAction, publicAction] = actionOrActionTuple;
-
-      const privatePatch = getMovexStatePatch(
-        prevState,
-        this.reducer(prevState, privateAction)
-      );
+      const nextPrivateState = this.reducer(prevState, privateAction);
+      const privatePatch = getMovexStatePatch(prevState, nextPrivateState);
 
       return (
         this.store
@@ -243,8 +239,9 @@ export class MovexMasterResource<
               this.getState(rid, clientId),
 
               // Apply the Public Action
-              // (*Note The Public Action needs to get applied after the private one!)
-              // Why? TODO: Add reason
+              // *Note The Public Action needs to get applied after the private one!
+              //  otherwise the resulted private patch will be based off of the next public state
+              //  instead of the prev (private) one.
               this.store
                 .updateState(rid, this.reducer(prevState, publicAction))
                 .map((s) => s.state)
@@ -284,9 +281,9 @@ export class MovexMasterResource<
 
                 // Run it once more through the reducer with the given private action
                 // In order to calculate any derived state. If no state get calculated in
-                //  this step, in theory it just resturn the prev, but in some cases
+                //  this step, in theory it just returns the prev, but in some cases
                 //  when a different field (such as "isWinner" or "status"), needs to get computed
-                //  based on the fields modified by the private action this is when it happens!
+                //  based on the fields modified by the private action is when it's needed!
                 const reconciledState = this.reducer(
                   mergedState,
                   privateAction
@@ -313,10 +310,14 @@ export class MovexMasterResource<
                         return [
                           ...prev,
                           ...peersPrevPatchesByClientId[nextPeerId].map(
-                            (p) => p.action as TAction
+                            (p) =>
+                              ({
+                                ...p.action,
+                                isPrivate: undefined, // make the action public
+                              } as ToPublicAction<TAction>)
                           ),
                         ];
-                      }, [] as TAction[]);
+                      }, [] as ToPublicAction<TAction>[]);
 
                       return {
                         ...accum,

@@ -36,7 +36,19 @@
       "executor": "@nrwl/workspace:run-commands",
       "options": {
         "command": "npx next",
-        "cwd": "apps/movex-docs"
+        "cwd": "apps/movex-docs",
+        "buildTarget": "movex-demo:build",
+        "dev": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "movex-docs:build:development",
+          "dev": true
+        },
+        "production": {
+          "buildTarget": "movex-docs:build:production",
+          "dev": false
+        }
       }
     },
     "serve_old": {

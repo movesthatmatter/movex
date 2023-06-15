@@ -1,9 +1,9 @@
-import { useMovexBoundResource, useMovexClientId } from 'movex-react';
+import { useMovexBoundResourceFromRid, useMovexClientId } from 'movex-react';
 import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 import { toResourceIdentifierObj } from 'movex-core-util';
-import movexConfig from 'apps/movex-demo/movex.config';
-import { RPSGame } from 'apps/movex-demo/modules/rock-paper-scissors/RPSGame';
+import { Rps } from 'movex-examples';
+import movexConfig from 'libs/movex-examples/src/movex.config';
 
 type Props = {};
 
@@ -20,14 +20,14 @@ const RPSGamePage: React.FC<Props> = () => {
   );
 
   // TODO: Validate the rid is correct inside useMovexBoundResouce
-  const boundResource = useMovexBoundResource(movexConfig, rid);
+  const boundResource = useMovexBoundResourceFromRid(movexConfig, rid);
   const userId = useMovexClientId();
 
   if (!(boundResource && userId)) {
     return null;
   }
 
-  return <RPSGame boundResource={boundResource} userId={userId} />;
+  return <Rps.Main boundResource={boundResource} userId={userId} />;
 };
 
 export default RPSGamePage;

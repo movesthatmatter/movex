@@ -1,9 +1,11 @@
 import {
   GenericClientResourceShapeOfType,
+  ResourceIdentifier,
   ResourceIdentifierObj,
   ResourceIdentifierStr,
   WsResponseResultPayload,
 } from '../core-types';
+import { isObject, keyInObject } from './misc';
 
 export const toResourceIdentifierObj = <TResourceType extends string>(
   r: ResourceIdentifierObj<TResourceType> | ResourceIdentifierStr<TResourceType>
@@ -49,3 +51,24 @@ export const getResourceRId = <TResourceType extends string>(
     resourceType: r.type,
     resourceId: r.id,
   });
+
+export const isResourceIdentifier = <TType extends string>(
+  s: unknown
+): s is ResourceIdentifier<TType> => {
+  if (isObject(s)) {
+    return (
+      keyInObject(s, 'resourceType') &&
+      keyInObject(s, 'resourceId') &&
+      typeof s.resourceId === 'string' &&
+      typeof s.resourceType === 'string' &&
+      s.resourceId.length > 0 &&
+      s.resourceType.length > 0
+    );
+  }
+
+  if (typeof s === 'string') {
+    return isResourceIdentifier(toResourceIdentifierObj(s as `s:s`));
+  }
+
+  return false;
+};

@@ -1,7 +1,7 @@
 <p align="center">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./art/logo_b@2x.png">
-  <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="./art/logo_b_white@2x.png">
+<picture width="400">
+  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/221956423-bd0b1b46-a8ed-4b25-8a1c-14cdcb1de716.png" width="400">
+  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/242975504-a6faa334-a6b3-44b4-bf40-6ffcd27d9c08.png" width="400">
 </picture>
 <p>
 
@@ -17,6 +17,15 @@
 Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation without the need to write Server Specific Code.
 
 **Movex is currently in Development. Drop me a message or create an issue if you have any questions, ideas or would like to get involved.**
+
+## Features
+
+- [x] Real Time State Sync
+- [x] Secret State
+- [x] Redux API
+- [x] Authoritative Server
+- [x] No Server Specific Code
+- [ ] (WIP) No Server Hassle (_At the moment the code running on the server still needs to be manually handled._) 
 
 ## Documentation
 

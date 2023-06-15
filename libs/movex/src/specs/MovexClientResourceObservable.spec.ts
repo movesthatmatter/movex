@@ -1,13 +1,28 @@
 import { Ok } from 'ts-results';
-
 import { computeCheckedState } from '../lib/util';
-import counterReducer, { initialCounterState } from './resources/counterReducer';
+import counterReducer, {
+  initialCounterState,
+} from './resources/counterReducer';
 import { MovexResourceObservable } from '../lib/client/MovexResourceObservable';
-import { tillNextTick } from 'movex-core-util';
+import { globalLogsy, ResourceIdentifier, tillNextTick } from 'movex-core-util';
+
+const rid: ResourceIdentifier<string> = 'counter:test-id';
+
+beforeAll(() => {
+  globalLogsy.disable();
+});
+
+afterAll(() => {
+  globalLogsy.enable();
+});
 
 describe('Observable', () => {
   test('Dispatch Local Actions', async () => {
-    const xResource = new MovexResourceObservable('test-client', counterReducer);
+    const xResource = new MovexResourceObservable(
+      'test-client',
+      rid,
+      counterReducer
+    );
     xResource.setMasterSyncing(false);
 
     xResource.dispatch({
@@ -64,7 +79,11 @@ describe('Observable', () => {
 
   describe('External Updates', () => {
     test('updates the unchecked state', async () => {
-      const xResource = new MovexResourceObservable('test-client', counterReducer);
+      const xResource = new MovexResourceObservable(
+        'test-client',
+        rid,
+        counterReducer
+      );
       xResource.setMasterSyncing(false);
 
       xResource.dispatch({
@@ -94,6 +113,7 @@ describe('Observable', () => {
       test('Updates when matching', () => {
         const xResource = new MovexResourceObservable(
           'test-client',
+          rid,
           counterReducer
         );
 
@@ -126,6 +146,7 @@ describe('Observable', () => {
       test('Fails when NOT matching and does not update', () => {
         const xResource = new MovexResourceObservable(
           'test-client',
+          rid,
           counterReducer
         );
 

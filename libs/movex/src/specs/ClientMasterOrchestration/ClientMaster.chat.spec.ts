@@ -1,9 +1,17 @@
-import { tillNextTick } from 'movex-core-util';
-import { computeCheckedState } from '../../lib/util';
 import chatReducer, { initialChatState } from '../resources/chatReducer';
+import { computeCheckedState } from '../../lib/util';
 import { movexClientMasterOrchestrator } from '../util/orchestrator';
+import { globalLogsy, tillNextTick } from 'movex-core-util';
 
 const orchestrator = movexClientMasterOrchestrator();
+
+beforeAll(() => {
+  globalLogsy.disable();
+});
+
+afterAll(() => {
+  globalLogsy.enable();
+});
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();

@@ -43,3 +43,6 @@ yalc.lock
 
 # Next.js
 .next
+
+# Typescript
+tsconfig.tsbuildinfo

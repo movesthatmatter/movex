@@ -1,6 +1,10 @@
 import { createContext } from 'react';
-import { Movex, BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
-import { MovexFromDefintion } from 'libs/movex/src/lib/client/MovexFromDefintion';
+import {
+  Movex,
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+  MovexClient,
+} from 'movex';
 
 export type MovexContextProps<
   TResourcesMap extends BaseMovexDefinitionResourcesMap
@@ -14,7 +18,7 @@ export type MovexContextProps<
   | {
       connected: true;
       clientId: string;
-      movex: MovexFromDefintion<TResourcesMap>;
+      movex: MovexClient.MovexFromDefintion<TResourcesMap>;
       movexDefinition: MovexDefinition<TResourcesMap>;
     };
 

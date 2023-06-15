@@ -1,6 +1,10 @@
 import counterReducer from './resources/counterReducer';
 import gameReducer, { initialGameState } from './resources/gameReducer';
-import { tillNextTick, toResourceIdentifierObj } from 'movex-core-util';
+import {
+  globalLogsy,
+  tillNextTick,
+  toResourceIdentifierObj,
+} from 'movex-core-util';
 import { computeCheckedState } from '../lib/util';
 import { movexClientMasterOrchestrator } from './util/orchestrator';
 require('console-group').install();
@@ -11,11 +15,19 @@ beforeEach(async () => {
   await orchestrator.unsubscribe();
 });
 
+beforeAll(() => {
+  globalLogsy.disable();
+});
+
+afterAll(() => {
+  globalLogsy.enable();
+});
+
 describe('All', () => {
   test('Create', async () => {
     const {
       clients: [counterResource],
-    } = await orchestrator.orchestrate({
+    } = orchestrator.orchestrate({
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
@@ -36,7 +48,7 @@ describe('All', () => {
   test('Bind', async () => {
     const {
       clients: [counterResource],
-    } = await orchestrator.orchestrate({
+    } = orchestrator.orchestrate({
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',
@@ -59,7 +71,7 @@ describe('All', () => {
   test('Dispatch Public Action', async () => {
     const {
       clients: [counterResource],
-    } = await orchestrator.orchestrate({
+    } = orchestrator.orchestrate({
       clientIds: ['test'],
       reducer: counterReducer,
       resourceType: 'counter',

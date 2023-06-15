@@ -1,10 +1,18 @@
 import { movexClientMasterOrchestrator } from '../util/orchestrator';
 import matchReducer, { initialMatchState } from '../resources/matchReducer';
-import { tillNextTick } from 'movex-core-util';
 import { computeCheckedState } from '../../lib/util';
+import { globalLogsy, tillNextTick } from 'movex-core-util';
 require('console-group').install();
 
 const orchestrator = movexClientMasterOrchestrator();
+
+beforeAll(() => {
+  globalLogsy.disable();
+});
+
+afterAll(() => {
+  globalLogsy.enable();
+});
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();

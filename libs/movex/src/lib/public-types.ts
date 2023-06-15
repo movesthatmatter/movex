@@ -12,3 +12,12 @@ export type MovexDefinition<
   url?: string;
   resources: TResourcesMap;
 };
+
+export type MovexResourceTypesFromMovexDefinition<
+  TResourcesMap extends BaseMovexDefinitionResourcesMap
+> = Extract<keyof TResourcesMap, string>;
+
+// This one doesn't make any sense 
+// export type MovexResourceMapFromMovexDefinition<
+//   TMovexDefinition extends MovexDefinition
+// > = TMovexDefinition['resources'];

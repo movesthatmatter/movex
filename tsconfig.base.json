@@ -23,6 +23,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "baseUrl": ".",
     "paths": {
+      "movex-examples": ["libs/movex-examples/src/index.ts"],
       "movex": ["libs/movex/src/index.ts"],
       "movex-core-util": ["libs/movex-core-util/src/index.ts"],
       "movex-react": ["libs/movex-react/src/index.ts"],

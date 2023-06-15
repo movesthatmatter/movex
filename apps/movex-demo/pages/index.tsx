@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import { PlayRPSButton } from '../modules/rock-paper-scissors/RPSPlayButton';
+import { MovexInstance } from '../modules/movex/MovexInstance';
 
 const StyledPage = styled.div`
   .page {

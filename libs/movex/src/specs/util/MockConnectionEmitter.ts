@@ -1,8 +1,7 @@
-import { EventEmitter } from 'movex-core-util';
+import { EventEmitter, getRandomInt, getUuid } from 'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 import { IOEvents } from '../../lib/io-connection/io-events';
 import { AnyAction } from '../../lib/tools/action';
-import { getUuid } from '../../lib/util';
 import { UnsubscribeFn } from '../../lib/core-types';
 
 export class MockConnectionEmitter<
@@ -42,7 +41,10 @@ export class MockConnectionEmitter<
     };
   }>();
 
-  constructor(private clientId: string) {}
+  constructor(
+    private clientId: string,
+    public emitterLabel: string = String(getRandomInt(10000, 99999))
+  ) {}
 
   on<E extends keyof IOEvents<TState, TAction, TResourceType>>(
     event: E,
@@ -106,7 +108,7 @@ export class MockConnectionEmitter<
       ) => void
     ) => void
   ) {
-    return this.onEmittedPubsy.subscribe('onEmitted', (r) => {
+    const unsub = this.onEmittedPubsy.subscribe('onEmitted', (r) => {
       fn(
         {
           event: r.event as E,
@@ -117,6 +119,10 @@ export class MockConnectionEmitter<
         r.ackCb
       );
     });
+
+    return () => {
+      unsub();
+    };
   }
 
   _publish<E extends keyof IOEvents>(
@@ -153,6 +159,14 @@ export class MockConnectionEmitter<
 
       // TODO: Need a way for this to call the unsubscriber
       this.ackPubsy.subscribe(ackId, (ackMsg) => {
+        console.log(
+          '[MockConnectionEmitter] emit',
+          event,
+          request,
+          'response:',
+          ackMsg
+        );
+        console.trace('[MockConnectionEmitter] Trace', event, request);
         acknowledgeCb(
           ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
         );

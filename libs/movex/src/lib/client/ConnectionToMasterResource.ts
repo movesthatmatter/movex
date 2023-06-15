@@ -8,6 +8,7 @@ import {
   GetIOPayloadErrTypeFrom,
   GetIOPayloadOKTypeFrom,
   invoke,
+  logsy,
   ResourceIdentifier,
   ResourceIdentifierStr,
   toResourceIdentifierObj,
@@ -95,7 +96,12 @@ export class ConnectionToMasterResource<
     type CreateEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['createResource']
     >;
-    // console.group('[ConnectionToMasterResource].create', this.connectionToMaster.clientId, resourceType, resourceState);
+    logsy.log(
+      '[ConnectionToMasterResource].create',
+      this.connectionToMaster.clientId,
+      resourceType,
+      resourceState
+    );
 
     return AsyncResult.toAsyncResult<
       GetIOPayloadOKTypeFrom<CreateEvent>,
@@ -125,7 +131,6 @@ export class ConnectionToMasterResource<
     type AddSubscriberEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['addResourceSubscriber']
     >;
-
     return AsyncResult.toAsyncResult<
       GetIOPayloadOKTypeFrom<AddSubscriberEvent>,
       GetIOPayloadErrTypeFrom<AddSubscriberEvent>
@@ -133,6 +138,21 @@ export class ConnectionToMasterResource<
       this.connectionToMaster.emitter
         .emitAndAcknowledge('addResourceSubscriber', {
           rid,
+        })
+        .then((res) => {
+          if (!res.ok) {
+            console.log(
+              '[ConnectionToMasterResource].addResourceSubscriber rid:',
+              rid,
+              'res:',
+              res
+            );
+            console.log('Emitter', this.connectionToMaster.emitter);
+            console.trace('Trace');
+          }
+          
+
+          return res;
         })
         .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );
