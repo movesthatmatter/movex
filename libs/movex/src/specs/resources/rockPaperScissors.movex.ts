@@ -163,8 +163,6 @@ export const reducer = (
 
     const oppositeLabel = toOppositeLabel(action.payload.playerLabel);
 
-    // console.log('submit', action, 'opposite', oppositeLabel);
-
     // 1st submission
     if (state.currentGame.submissions[oppositeLabel] === null) {
       return {

@@ -1,4 +1,8 @@
-import { tillNextTick, toResourceIdentifierObj } from 'movex-core-util';
+import {
+  globalLogsy,
+  tillNextTick,
+  toResourceIdentifierObj,
+} from 'movex-core-util';
 import { computeCheckedState } from '../../lib/util';
 import gameReducer, { initialGameState } from '../resources/gameReducer';
 import gameReducerWithDerivedState, {
@@ -6,6 +10,14 @@ import gameReducerWithDerivedState, {
 } from '../resources/gameReducerWithDerivedState';
 import { movexClientMasterOrchestrator } from '../util/orchestrator';
 require('console-group').install();
+
+beforeAll(() => {
+  globalLogsy.disable();
+});
+
+afterAll(() => {
+  globalLogsy.enable();
+});
 
 const orchestrator = movexClientMasterOrchestrator();
 

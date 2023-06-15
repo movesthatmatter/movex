@@ -1,13 +1,7 @@
 import * as http from 'http';
 import { Server as SocketServer } from 'socket.io';
-import { LocalMovexStore, MovexStore } from 'libs/movex/src/lib/movex-store';
-import { SocketIOEmitter, objectKeys } from 'movex-core-util';
-import {
-  MovexMasterResource,
-  initMovexMaster,
-} from 'libs/movex/src/lib/master';
-import { Master, MovexDefinition } from 'movex';
-import { IOEvents } from 'libs/movex/src/lib/io-connection/io-events';
+import { SocketIOEmitter, logsy } from 'movex-core-util';
+import { Master, MovexDefinition, MovexStore, IOEvents } from 'movex';
 import express from 'express';
 import cors from 'cors';
 
@@ -47,7 +41,7 @@ export const movexServer = (
 
   socket.on('connection', (io) => {
     const clientId = getClientId(io.handshake.query['clientId'] as string);
-    console.log('[MovexServer] Client Connected', clientId);
+    logsy.log('[MovexServer] Client Connected', clientId);
 
     const connection = new Master.ConnectionToClient(
       clientId,
@@ -59,7 +53,7 @@ export const movexServer = (
     movexMaster.addClientConnection(connection);
 
     io.on('disconnect', () => {
-      console.log('[MovexServer] Client Disconnected', clientId);
+      logsy.log('[MovexServer] Client Disconnected', clientId);
 
       movexMaster.removeConnection(clientId);
     });
@@ -71,7 +65,7 @@ export const movexServer = (
     const address = httpServer.address();
 
     if (typeof address !== 'string') {
-      console.info(`Movex Server started on port ${address?.port}`);
+      logsy.info(`Movex Server started on port ${address?.port}`);
     }
   });
 };

@@ -54,8 +54,6 @@ export const createDispatcher = <
   let initiated = false;
 
   const onStateReceived = (checkedState: CheckedState<TState>) => {
-    // console.log('on (next) state received', checkedState);
-
     currentCheckedState = checkedState;
 
     initiated = true;
@@ -112,7 +110,6 @@ export const createDispatcher = <
         action: actionOrActionTuple,
       });
 
-      // console.log('going to update', nextCheckedStaxe);
       $checkedState.update(nextCheckedState);
 
       // Only if different update them

@@ -3,15 +3,14 @@ import {
   ResourceIdentifierStr,
   UnsubscribeFn,
   invoke,
+  logsy as rawLogsy,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
 } from 'movex-core-util';
 import {
-  ActionOrActionTupleFromAction,
   ActionWithAnyPayload,
   AnyAction,
   CheckedReconciliatoryActions,
-  GetReducerAction,
   MovexReducer,
   isAction,
 } from '../tools';
@@ -27,6 +26,9 @@ const logOutgoingStyle = 'color: #1EA7FD; font-weight: bold;';
 const logOpenConnectionStyle = 'color: #EF5FA0; font-weight: bold';
 const logClosedConnectionStyle = 'color: #DF9D04; font-weight: bold';
 const logErrorStyle = 'color: red; font-weight: bold;';
+
+const logsy = rawLogsy.withNamespace('[MovexResource]');
+// const logsy = rawLogsy;
 
 export class MovexResource<
   S,
@@ -61,7 +63,6 @@ export class MovexResource<
       .map((item) => ({
         rid: toResourceIdentifierObj(item.rid),
         state: item.state[0],
-        // id: toResourceIdentifierObj(item.rid).resourceId,
       }));
   }
 
@@ -98,18 +99,15 @@ export class MovexResource<
     // TODO: Fix this!!!
     // resourceObservable.setMasterSyncing(false);
 
-    // console.log(
-    //   '[Movex] bind() connectionToMasterResource',
-    //   this.connectionToMasterResource
-    // );
+    const syncLocalState = () => {
+      return this.connectionToMasterResource
+        .get(rid)
+        .map((masterCheckState) => {
+          resourceObservable.sync(masterCheckState);
 
-    // Done/TODO: Needs a way to add a resource subscriber
-    this.connectionToMasterResource.addResourceSubscriber(rid).map(() => {
-      // TODO: This is where the issue is. the master never responds
-
-      // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
-      resyncLocalState();
-    });
+          return masterCheckState;
+        });
+    };
 
     /**
      * This resyncs the local & master states
@@ -125,53 +123,58 @@ export class MovexResource<
 
       const prevCheckedState = resourceObservable.state;
 
-      return this.connectionToMasterResource
-        .get(rid)
-        .map((masterCheckState) => {
-          resourceObservable.sync(masterCheckState);
+      return syncLocalState().map((masterCheckState) => {
+        logsy.group('State Resynch-ed Warning');
+        logsy.log(
+          '%cPrev (Local) State',
+          logUnimportantStyle,
+          prevCheckedState
+        );
+        logsy.log('%cNext (Master) Staet', logIncomingStyle, masterCheckState);
+        logsy.debug(
+          'Diff',
+          deepObject.detailedDiff(prevCheckedState, masterCheckState)
+        );
+        logsy.warn(
+          "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
+        );
+        logsy.groupEnd();
 
-          console.group('State Resynch-ed Warning');
-          console.log(
-            '%cPrev (Local) State',
-            logUnimportantStyle,
-            prevCheckedState
-          );
-          console.log(
-            '%cNext (Master) Staet',
-            logIncomingStyle,
-            masterCheckState
-          );
-          console.debug(
-            'Diff',
-            deepObject.detailedDiff(prevCheckedState, masterCheckState)
-          );
-          console.warn(
-            "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
-          );
-          console.groupEnd();
-
-          return masterCheckState;
-        });
+        return masterCheckState;
+      });
     };
+
+    // Done/TODO: Needs a way to add a resource subscriber
+    this.connectionToMasterResource
+      .addResourceSubscriber(rid)
+      .map(() => {
+        // TODO: This is where the issue is. the master never responds
+
+        // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
+        syncLocalState();
+      })
+      .mapErr((e) => {
+        logsy.error('Add Resource Subscriber Error', e);
+      });
 
     const onReconciliateActionsHandler = (
       p: CheckedReconciliatoryActions<A>
     ) => {
       const prevState = resourceObservable.get();
 
-      console.group(
+      logsy.group(
         `%c\u{25BC} %cReconciliatory Actions Received (${p.actions.length}). FinalCheckum ${p.finalChecksum}`,
         logIncomingStyle,
         logUnimportantStyle,
         'Client:',
         this.connectionToMaster.clientId
       );
-      console.log('%cPrev state', logUnimportantStyle, prevState[0]);
+      logsy.log('%cPrev state', logUnimportantStyle, prevState[0]);
 
       const nextState = resourceObservable.applyMultipleActions(p.actions);
 
       p.actions.forEach((action, i) => {
-        console.log(
+        logsy.log(
           `%cAction(${i + 1}/${p.actions.length}): %c${action.type}`,
           logOutgoingStyle,
           logImportantStyle,
@@ -180,9 +183,9 @@ export class MovexResource<
         );
       });
 
-      console.log('%cNextState', logIncomingStyle, nextState[0]);
-      console.log(
-        '%cchecksums',
+      logsy.log('%cNextState', logIncomingStyle, nextState[0]);
+      logsy.log(
+        '%cChecksums',
         logUnimportantStyle,
         prevState[1],
         '>',
@@ -190,7 +193,7 @@ export class MovexResource<
       );
 
       if (nextState[1] === p.finalChecksum) {
-        console.log(
+        logsy.log(
           '%cFinal Checksum Matches',
           logUnimportantStyle,
           p.finalChecksum
@@ -202,8 +205,7 @@ export class MovexResource<
 
         // Here is where this happens!!!
 
-        // console.log('Final Master State', p.finalState);
-        console.warn(
+        logsy.warn(
           '%cLocal and Final Master Checksum Mismatch',
           logErrorStyle,
           nextState[1],
@@ -211,7 +213,7 @@ export class MovexResource<
         );
       }
 
-      console.groupEnd();
+      logsy.groupEnd();
 
       // p.actions.map(())
       // TODO: What should the reconciliatry actions do? Apply them all together and check at the end right?
@@ -228,7 +230,7 @@ export class MovexResource<
         }) => {
           const [nextLocalState, nextLocalChecksum] = nextLocalCheckedState;
 
-          console.group(
+          logsy.group(
             `%c\u{25B2} %cAction Dispatched: %c${
               isAction(action)
                 ? action.type
@@ -240,13 +242,13 @@ export class MovexResource<
             'Client:',
             this.connectionToMaster.clientId
           );
-          console.log(
+          logsy.log(
             '%cPrev state',
             logUnimportantStyle,
             prevLocalCheckedState[0]
           );
           if (isAction(action)) {
-            console.log(
+            logsy.log(
               `%cPublic Action: %c${action.type}`,
               logOutgoingStyle,
               logImportantStyle,
@@ -254,23 +256,23 @@ export class MovexResource<
             );
           } else {
             const [privateAction, publicAction] = action;
-            console.log(
-              `%cPrivate action: %c${privateAction.type}`,
+            logsy.log(
+              `%cPrivate Action: %c${privateAction.type}`,
               logOpenConnectionStyle,
               logImportantStyle,
               (privateAction as ActionWithAnyPayload<string>).payload
             );
-            console.log(
-              `%cPublic action payload: %c${publicAction.type}`,
+            logsy.log(
+              `%cPublic Action payload: %c${publicAction.type}`,
               logOutgoingStyle,
               logImportantStyle,
               (publicAction as ActionWithAnyPayload<string>).payload
             );
           }
-          console.log('%cNext State', logIncomingStyle, nextLocalState);
+          logsy.log('%cNext State', logIncomingStyle, nextLocalState);
 
           if (prevLocalCheckedState[1] !== nextLocalChecksum) {
-            console.log(
+            logsy.log(
               '%cChecksums',
               logUnimportantStyle,
               prevLocalCheckedState[1],
@@ -278,14 +280,14 @@ export class MovexResource<
               nextLocalChecksum
             );
           } else {
-            console.log(
+            logsy.log(
               '%cNo Diff',
               logUnimportantStyle,
               prevLocalCheckedState[1]
             );
           }
 
-          console.groupEnd();
+          logsy.groupEnd();
 
           this.connectionToMasterResource
             .emitAction(rid, action)
@@ -297,17 +299,16 @@ export class MovexResource<
               }
 
               // Otherwise if it's a simple ack
+
+              // And the checksums are equal stop here
               if (master.nextChecksum === nextLocalChecksum) {
                 return;
               }
 
-              // TODO: Here I need to check that the checksums are the same
-              // If not the action needs to revert, or toask the connection to give me the next state
+              // When the checksums are not the same, need to resync the state!
+              // this is expensive and ideally doesn't happen too much.
 
-              // But when the action is reconciliatory (meaning the last one before reconiliang the state this happens, b/c it waits for the reconciliatory actions)
-              // In that case this could return that I guess, or just leave it for now
-
-              console.group(
+              logsy.group(
                 `[Movex] Dispatch Ack Error: "Checksums MISMATCH"\n`,
                 `client: '${this.connectionToMaster.clientId}',\n`,
                 'action:',
@@ -316,24 +317,24 @@ export class MovexResource<
 
               await resyncLocalState()
                 .map((masterState) => {
-                  console.log(
+                  logsy.log(
                     'Master State:',
                     JSON.stringify(masterState[0], null, 2),
                     masterState[1]
                   );
-                  console.log(
+                  logsy.log(
                     'Local State:',
                     JSON.stringify(nextLocalCheckedState[0], null, 2),
                     nextLocalCheckedState[1]
                   );
-                  console.log(
+                  logsy.log(
                     'Diff',
                     deepObject.detailedDiff(masterState, nextLocalCheckedState)
                   );
                 })
                 .resolve();
 
-              console.groupEnd();
+              logsy.groupEnd();
             });
         }
       ),
@@ -344,7 +345,7 @@ export class MovexResource<
 
         const nextState = resourceObservable.get();
 
-        console.group(
+        logsy.group(
           `%c\u{25BC} %cForwarded Action Received: %c${p.action.type}`,
           logIncomingStyle,
           logUnimportantStyle,
@@ -352,16 +353,16 @@ export class MovexResource<
           'Client:',
           this.connectionToMaster.clientId
         );
-        console.log('%cPrev state', logUnimportantStyle, prevState[0]);
-        console.log(
+        logsy.log('%cPrev State', logUnimportantStyle, prevState[0]);
+        logsy.log(
           `%cAction: %c${p.action.type}`,
           logOutgoingStyle,
           logImportantStyle,
           (p.action as ActionWithAnyPayload<string>).payload
         );
-        console.log('%cNextState', logIncomingStyle, nextState[0]);
+        logsy.log('%cNext State', logIncomingStyle, nextState[0]);
         if (prevState[1] !== nextState[1]) {
-          console.log(
+          logsy.log(
             '%cchecksums',
             logUnimportantStyle,
             prevState[1],
@@ -369,10 +370,10 @@ export class MovexResource<
             nextState[1]
           );
         } else {
-          console.log('%cNo Diff', logErrorStyle, prevState[1]);
+          logsy.log('%cNo Diff', logErrorStyle, prevState[1]);
         }
 
-        console.groupEnd();
+        logsy.groupEnd();
       }),
       this.connectionToMasterResource.onReconciliatoryActions(
         rid,

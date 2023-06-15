@@ -5,9 +5,10 @@ import { AppConfig } from '../app.config';
 import { MovexProvider } from 'movex-react';
 import { useRouter } from 'next/router';
 import movexConfig from 'movex-examples';
+import { logsy } from 'movex-core-util';
 
 function CustomApp({ Component, pageProps }: AppProps) {
-  console.log(pageProps);
+  logsy.log(pageProps);
   const router = useRouter();
 
   // console.log('r', router);

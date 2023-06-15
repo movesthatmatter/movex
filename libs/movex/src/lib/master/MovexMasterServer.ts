@@ -1,5 +1,6 @@
 import {
   MovexClient,
+  globalLogsy,
   objectKeys,
   toResourceIdentifierObj,
 } from 'movex-core-util';
@@ -8,6 +9,9 @@ import { AnyAction } from '../tools/action';
 import { MovexMasterResource } from './MovexMasterResource';
 import { IOEvents } from '../io-connection/io-events';
 import { ConnectionToClient } from './ConnectionToClient';
+import { AsyncResult } from 'ts-async-results';
+
+const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
 
 /**
  * This lives on the server most likely, and it's where the
@@ -88,10 +92,7 @@ export class MovexMasterServer {
           // Forwardable
           objectKeys(peerActions.byClientId).forEach((peerId) => {
             if (!peerActions.byClientId[peerId]) {
-              console.error(
-                '[MovexMasterServer] Inexistant Peer Connection for peerId:',
-                peerId
-              );
+              logsy.error('Inexistant Peer Connection for peerId:', peerId);
               return;
             }
 
@@ -136,6 +137,9 @@ export class MovexMasterServer {
       masterResource
         .getState(rid, clientConnection.clientId)
         .map((checkedState) => acknowledge?.(new Ok(checkedState)))
+        .mapErr(AsyncResult.passThrough((e) => {
+          logsy.error('Get Resource Error', e);
+        }))
         .mapErr((e) => acknowledge?.(new Err(e)));
     };
 
@@ -161,6 +165,11 @@ export class MovexMasterServer {
               state: r.state,
             })
           )
+        )
+        .mapErr(
+          AsyncResult.passThrough((e) => {
+            logsy.error('');
+          })
         )
         .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
@@ -246,7 +255,7 @@ export class MovexMasterServer {
       >,
     };
 
-    console.log(
+    logsy.log(
       '[MovexMasterServer] Added Connection Succesfully:',
       clientConnection.clientId,
       '| Connections',
@@ -279,7 +288,7 @@ export class MovexMasterServer {
 
     this.clientConnectionsByClientId = restOfConnections;
 
-    console.log(
+    logsy.log(
       '[MovexMasterServer] Removed Connection Succesfully',
       this.clientConnectionsByClientId,
       '| Connections:',

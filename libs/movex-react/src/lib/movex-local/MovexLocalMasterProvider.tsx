@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { noop } from 'movex-core-util';
-import { BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
+import {
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+  MovexMaster,
+} from 'movex';
 import { MovexLocalContext, MovexLocalContextProps } from './MovexLocalContext';
-import { MovexMasterServer, initMovexMaster } from 'libs/movex/src/lib/master';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
     movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
-    onInit?: (master: MovexMasterServer) => void;
+    onInit?: (master: MovexMaster.MovexMasterServer) => void;
   }>;
 
 /**
@@ -21,7 +24,7 @@ export const MovexLocalMasterProvider: React.FC<Props<{}>> = ({
   ...props
 }) => {
   const [contextState] = useState<MovexLocalContextProps>({
-    master: initMovexMaster(props.movexDefinition),
+    master: MovexMaster.initMovexMaster(props.movexDefinition),
   });
 
   useEffect(() => {

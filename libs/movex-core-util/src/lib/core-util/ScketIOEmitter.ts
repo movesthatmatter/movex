@@ -1,13 +1,11 @@
-import {
-  EventEmitter,
-  UnsubscribeFn,
-  WsResponseResultPayload,
-} from 'movex-core-util';
 import { Err, Ok } from 'ts-results';
 import { Socket as ServerSocket } from 'socket.io';
 import { Socket as ClientSocket } from 'socket.io-client';
 import { EventMap } from 'typed-emitter';
 import { Pubsy } from 'ts-pubsy';
+import { EventEmitter, UnsubscribeFn } from './EventEmitter';
+import { logsy } from './Logsy';
+import { WsResponseResultPayload } from '../core-types';
 
 export type SocketIO = ServerSocket | ClientSocket;
 
@@ -29,7 +27,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
     this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
 
-    this.logger.debug('[SocketEmitter] constructing');
+    logsy.debug('[SocketEmitter] constructing');
 
     // This might need to be moved from here into the master connection or somewhere client specific!
     this.socket.onAny((ev, clientId) => {
@@ -50,7 +48,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
       ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
-    this.logger.debug('[SocketEmitter] subscribed to:', event);
+    logsy.debug('[SocketEmitter] subscribed to:', event);
 
     this.socket.on(event as string, listener);
 
@@ -89,7 +87,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
     acknowledgeCb?: (response: ReturnType<TEventMap[E]>) => void
   ): boolean {
     const reqId = `${event as string}(${String(Math.random()).slice(-3)})`;
-    this.logger.debug('[ServerSocketEmitter]', reqId, 'Emit:', event, request);
+    logsy.debug('[ServerSocketEmitter]', reqId, 'Emit:', event, request);
 
     this.socket.emit(
       event as string,
@@ -98,20 +96,10 @@ export class SocketIOEmitter<TEventMap extends EventMap>
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {
             if (res.ok) {
-              this.logger.debug(
-                '[ServerSocketEmitter]',
-                reqId,
-                'Response Ok:',
-                res
-              );
+              logsy.debug('[ServerSocketEmitter]', reqId, 'Response Ok:', res);
               acknowledgeCb(new Ok(res.val) as ReturnType<TEventMap[E]>);
             } else {
-              this.logger.warn(
-                '[ServerSocketEmitter]',
-                reqId,
-                'Response Err:',
-                res
-              );
+              logsy.warn('[ServerSocketEmitter]', reqId, 'Response Err:', res);
               acknowledgeCb(new Err(res.val) as ReturnType<TEventMap[E]>);
             }
           },
@@ -138,40 +126,29 @@ export class SocketIOEmitter<TEventMap extends EventMap>
   ): Promise<ReturnType<TEventMap[E]>> {
     return new Promise(async (resolve, reject) => {
       const reqId = `${event as string}(${String(Math.random()).slice(-3)})`;
-      this.logger.debug('[ServerSocketEmitter]', reqId, 'EmitAndAcknowledge:', event, request);
+      logsy.debug(
+        '[ServerSocketEmitter]',
+        reqId,
+        'EmitAndAcknowledge:',
+        event,
+        request
+      );
 
       this.socket.emit(
         event as string,
         request,
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {
-            // console.log(
-            //   '[SoketIOEmitter] on ack for event',
-            //   event,
-            //   request,
-            //   res
-            // );
-
             if (res.ok) {
-              this.logger.debug(
-                '[ServerSocketEmitter]',
-                reqId,
-                'Response Ok:',
-                res
-              );
+              logsy.debug('[ServerSocketEmitter]', reqId, 'Response Ok:', res);
               resolve(new Ok(res.val));
             } else {
-              this.logger.warn(
-                '[ServerSocketEmitter]',
-                reqId,
-                'Response Err:',
-                res
-              );
+              logsy.warn('[ServerSocketEmitter]', reqId, 'Response Err:', res);
               reject(new Err(res.val));
             }
           },
           () => {
-            this.logger.warn(
+            logsy.warn(
               '[ServerSocketEmitter]',
               event,
               'Request Timeout:',

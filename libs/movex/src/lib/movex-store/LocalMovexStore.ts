@@ -4,12 +4,27 @@ import {
   toResourceIdentifierStr,
   objectKeys,
   ResourceIdentifierStr,
+  globalLogsy,
+  toResultError,
 } from 'movex-core-util';
-import { AsyncErr, AsyncOk, AsyncResultWrapper } from 'ts-async-results';
+import {
+  AsyncErr,
+  AsyncOk,
+  AsyncResult,
+  AsyncResultWrapper,
+} from 'ts-async-results';
 import { computeCheckedState } from '../util';
-import { MovexStatePatch, MovexStore, MovexStoreItem } from './MovexStore';
+import {
+  MovexStatePatch,
+  MovexStore,
+  MovexStoreGetResourceError,
+  MovexStoreItem,
+  MovexStoreUpdateResourceError,
+} from './MovexStore';
 import { PromiseDelegate } from 'promise-delegate';
 import { Pubsy } from 'ts-pubsy';
+
+const logsy = globalLogsy.withNamespace('[LocalMovexStore]');
 
 export class LocalMovexStore<
   TState,
@@ -47,13 +62,19 @@ export class LocalMovexStore<
 
     // If there is a previous lock, wait for it
     if (prevLock) {
-      await prevLock.promise.then(() => {
-        // Clean itself up
-        const { name: removed, ...rest } = this.locks;
+      try {
+        await prevLock.promise.then(() => {
+          // Clean itself up
+          const { name: removed, ...rest } = this.locks;
 
-        // Remove the current delegate from locks
-        this.locks = rest;
-      });
+          // Remove the current delegate from locks
+          this.locks = rest;
+        });
+      } catch (e) {
+        return Promise.reject(
+          toResultError('LocalMovexStore', 'Create Lock Issue', { error: e })
+        );
+      }
     }
 
     const nextLock = new PromiseDelegate();
@@ -79,7 +100,11 @@ export class LocalMovexStore<
       await this.waitForLock(toResourceIdentifierStr(rid));
 
       return this.getWithoutLock(rid);
-    });
+    }).mapErr(
+      AsyncResult.passThrough((e) => {
+        logsy.error('Get Error', e);
+      })
+    );
   }
 
   /**
@@ -92,14 +117,25 @@ export class LocalMovexStore<
    * @param rid
    * @returns
    */
-  private getWithoutLock(rid: ResourceIdentifier<TResourceType>) {
+  private getWithoutLock(
+    rid: ResourceIdentifier<TResourceType>
+  ): AsyncResult<
+    MovexStoreItem<TState, TResourceType>,
+    MovexStoreGetResourceError
+  > {
     const item = this.local[toResourceIdentifierStr(rid)];
 
     if (item) {
       return new AsyncOk(item);
     }
 
-    return new AsyncErr('NOT_EXISTENT');
+    return new AsyncErr({
+      type: 'MovexStoreError',
+      reason: 'ResourceInexistent',
+      content: {
+        rid,
+      },
+    });
   }
 
   create(rid: ResourceIdentifier<TResourceType>, nextState: TState) {
@@ -116,11 +152,17 @@ export class LocalMovexStore<
       [ridStr]: next,
     };
 
-    return new AsyncOk(next).map((r) => {
-      this.pubsy.publish('onCreated', r);
-
-      return r;
-    });
+    return new AsyncOk(next)
+      .map(
+        AsyncResult.passThrough((r) => {
+          this.pubsy.publish('onCreated', r);
+        })
+      )
+      .mapErr(
+        AsyncResult.passThrough((e) => {
+          logsy.error('Create Error', e);
+        })
+      );
   }
 
   updateState(
@@ -143,7 +185,11 @@ export class LocalMovexStore<
           prev: MovexStoreItem<TState, TResourceType>
         ) => MovexStoreItem<TState, TResourceType>)
       | Partial<MovexStoreItem<TState, TResourceType>>
-  ) {
+  ): AsyncResult<
+    MovexStoreItem<TState, TResourceType>,
+    MovexStoreUpdateResourceError
+  > {
+    const logId = String(Math.random()).slice(-3);
     return new AsyncResultWrapper(async () => {
       const unlock = await this.createLock(toResourceIdentifierStr(rid));
 
@@ -167,21 +213,22 @@ export class LocalMovexStore<
             return this.local[prev.rid];
           })
           // Unlock it
-          .map((r) => {
-            this.pubsy.publish('onUpdated', r);
-
-            unlock();
-            return r;
-          })
-          .mapErr((e) => {
-            unlock();
-            return e;
-          })
+          .map(AsyncResult.passThrough(unlock))
+          .mapErr(AsyncResult.passThrough(unlock))
+          // And publish the onUpdated
+          .map(
+            AsyncResult.passThrough((r) => {
+              this.pubsy.publish('onUpdated', r);
+            })
+          )
       );
-    });
+    }).mapErr(
+      AsyncResult.passThrough((e) => {
+        logsy.error('Update Error', e, rid);
+      })
+    );
   }
 
-  // TODO: This should use the update
   addPrivatePatch(
     rid: ResourceIdentifier<TResourceType>,
     patchGroupKey: string,

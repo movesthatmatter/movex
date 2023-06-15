@@ -10,7 +10,9 @@ function CustomApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   return (
-    <MovexLocalMasterProvider movexDefinition={movexConfig}>
+    <MovexLocalMasterProvider movexDefinition={movexConfig} onInit={(x) => {
+      console.log('[MovexLocalMaster] initiated', x);
+    }}>
       <Head>
         <title>Welcome to movex-demo!</title>
       </Head>
