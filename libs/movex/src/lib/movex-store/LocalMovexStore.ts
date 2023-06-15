@@ -20,6 +20,7 @@ import {
   MovexStoreGetResourceError,
   MovexStoreItem,
   MovexStoreUpdateResourceError,
+  toMovexStoreError,
 } from './MovexStore';
 import { PromiseDelegate } from 'promise-delegate';
 import { Pubsy } from 'ts-pubsy';
@@ -62,13 +63,19 @@ export class LocalMovexStore<
 
     // If there is a previous lock, wait for it
     if (prevLock) {
-      await prevLock.promise.then(() => {
-        // Clean itself up
-        const { name: removed, ...rest } = this.locks;
+      try {
+        await prevLock.promise.then(() => {
+          // Clean itself up
+          const { name: removed, ...rest } = this.locks;
 
-        // Remove the current delegate from locks
-        this.locks = rest;
-      });
+          // Remove the current delegate from locks
+          this.locks = rest;
+        });
+      } catch (e) {
+        return Promise.reject(
+          toResultError('LocalMovexStore', 'Create Lock Issue', { error: e })
+        );
+      }
     }
 
     const nextLock = new PromiseDelegate();
@@ -183,41 +190,67 @@ export class LocalMovexStore<
     MovexStoreItem<TState, TResourceType>,
     MovexStoreUpdateResourceError
   > {
+    const logId = String(Math.random()).slice(-3);
     return new AsyncResultWrapper(async () => {
-      const unlock = await this.createLock(toResourceIdentifierStr(rid));
+      logsy.info(logId, 'Updating...', toResourceIdentifierStr(rid));
 
-      return (
-        this.getWithoutLock(rid)
-          .map((prev) => {
-            const nextItem =
-              typeof getNext === 'function' ? getNext(prev) : getNext;
+      try {
+        const unlock = await this.createLock(toResourceIdentifierStr(rid)).then(
+          (r) => {
+            logsy.debug(logId, 'unlock success');
 
-            this.local = {
-              ...this.local,
-              [prev.rid]: {
-                ...prev,
-                ...nextItem,
+            return r;
+          }
+          // (e) => {
+          //   logsy.debug(logId, 'unlock errored', e);
+          //   return e;
+          // }
+        );
 
-                // This cannot be changed!
-                rid: prev.rid,
-              },
-            };
+        logsy.debug(logId, 'unlock achieved');
 
-            return this.local[prev.rid];
-          })
-          // Unlock it
-          .map(AsyncResult.passThrough(unlock))
-          .mapErr(AsyncResult.passThrough(unlock))
-          // And publish the onUpdated
-          .map(
-            AsyncResult.passThrough((r) => {
-              this.pubsy.publish('onUpdated', r);
+        return (
+          this.getWithoutLock(rid)
+            .map((prev) => {
+              const nextItem =
+                typeof getNext === 'function' ? getNext(prev) : getNext;
+
+              logsy.debug(logId, 'next item', nextItem);
+
+              this.local = {
+                ...this.local,
+                [prev.rid]: {
+                  ...prev,
+                  ...nextItem,
+
+                  // This cannot be changed!
+                  rid: prev.rid,
+                },
+              };
+
+              logsy.debug(logId, 'next item', nextItem);
+              logsy.debug(logId, 'all store', this.local);
+              return this.local[prev.rid];
             })
-          )
-      );
+            // Unlock it
+            .map(AsyncResult.passThrough(unlock))
+            .mapErr(AsyncResult.passThrough(unlock))
+            // And publish the onUpdated
+            .map(
+              AsyncResult.passThrough((r) => {
+                this.pubsy.publish('onUpdated', r);
+              })
+            )
+        );
+      } catch (e) {
+        return new AsyncErr(
+          toMovexStoreError('GenericError', e) as MovexStoreUpdateResourceError
+        );
+      }
     }).mapErr(
       AsyncResult.passThrough((e) => {
-        logsy.error('Update Error', e);
+        logsy.debug(logId, 'Update Error', e);
+        logsy.error('Update Error', e, rid);
       })
     );
   }
