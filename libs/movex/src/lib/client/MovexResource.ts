@@ -299,15 +299,14 @@ export class MovexResource<
               }
 
               // Otherwise if it's a simple ack
+
+              // And the checksums are equal stop here
               if (master.nextChecksum === nextLocalChecksum) {
                 return;
               }
 
-              // TODO: Here I need to check that the checksums are the same
-              // If not the action needs to revert, or toask the connection to give me the next state
-
-              // But when the action is reconciliatory (meaning the last one before reconiliang the state this happens, b/c it waits for the reconciliatory actions)
-              // In that case this could return that I guess, or just leave it for now
+              // When the checksums are not the same, need to resync the state!
+              // this is expensive and ideally doesn't happen too much.
 
               logsy.group(
                 `[Movex] Dispatch Ack Error: "Checksums MISMATCH"\n`,
