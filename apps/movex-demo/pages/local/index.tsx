@@ -1,16 +1,9 @@
 import styled from '@emotion/styled';
-import { PlayRPSButton } from '../../modules/rock-paper-scissors/RPSPlayButton';
-import { MovexInstance } from '../../modules/movex/MovexInstance';
-import { RPSWidget } from 'apps/movex-demo/modules/rock-paper-scissors/RPSWidget';
-import {
-  MovexLocalProviderClass,
-  useCreateMovexResourceOnDemand,
-} from 'movex-react';
+import { MovexLocalInstance } from 'movex-react';
 import movexConfig from 'libs/movex-examples/src/movex.config';
 import { useState } from 'react';
-import { MovexClient, ResourceIdentifier } from 'movex-core-util';
+import { ResourceIdentifier } from 'movex-core-util';
 import { Rps } from 'movex-examples';
-import { MovexInstanceRender } from 'apps/movex-demo/modules/movex/MovexinstanceRender';
 
 const StyledPage = styled.div`
   .page {
@@ -18,8 +11,7 @@ const StyledPage = styled.div`
 `;
 
 export function Index() {
-  const [createdRid, setCreatedRid] = useState<ResourceIdentifier<string>>();
-  const [clientId, setClientId] = useState<string>();
+  const [createdRid, setCreatedRid] = useState<ResourceIdentifier<'rps'>>();
 
   /*
    * Replace the elements below with your own.
@@ -32,50 +24,40 @@ export function Index() {
         style={{
           display: 'flex',
           flexDirection: 'row',
-          gap: 40
+          gap: 40,
         }}
       >
-        <MovexLocalProviderClass
+        <MovexLocalInstance
           clientId="client-1"
           movexDefinition={movexConfig}
-          onConnected={(r) => {
+          resourceType="rps"
+          rid={createdRid}
+
+          // TODO Tthi should actually be another component MovexBoundResource w props.onRegistered, so there can be multiple resources used per local instance
+          onRegistered={(r) => {
+            console.log('on registerd', r);
+
             if (createdRid) {
               return;
             }
 
-            if (r.connected) {
-              // console.log('Client Created:', r.movex.getClientId());
+            console.log('craeting rid');
 
-              setClientId(r.clientId);
-              // TODO: This needs to be typed. rps is any now
-              r.movex
-                .register('rps')
-                .create(Rps.initialState)
-                .map(({ rid }) => {
-                  setCreatedRid(rid);
-                });
-            }
+            r.create(Rps.initialState).map(({ rid }) => {
+              setCreatedRid(rid);
+            });
           }}
-        >
-          {clientId && createdRid && (
-            <MovexInstanceRender
-              rid={createdRid}
-              movexDefinition={movexConfig}
-              render={(boundResource) => (
-                <Rps.Main
-                  boundResource={boundResource as any}
-                  userId={clientId}
-                />
-              )}
-            />
+          render={(r) => (
+            <Rps.Main boundResource={r.boundResource} userId={r.clientId} />
           )}
-        </MovexLocalProviderClass>
+        />
 
         {createdRid && (
           <div>
-            <MovexInstance
+            <MovexLocalInstance
               clientId="client-b"
               movexDefinition={movexConfig}
+              resourceType="rps"
               rid={createdRid}
               render={({ boundResource, clientId }) => (
                 <Rps.Main

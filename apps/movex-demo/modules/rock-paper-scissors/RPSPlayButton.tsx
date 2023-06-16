@@ -1,12 +1,12 @@
 import { useMovexResourceType } from 'movex-react';
-import { DemoMovexDefinition } from 'apps/movex-demo/movex';
+import movexConfig from 'movex-examples';
 import { useRouter } from 'next/router';
 import { Rps } from 'movex-examples';
 
 type Props = {};
 
 export const PlayRPSButton: React.FC<Props> = () => {
-  const rpsResource = useMovexResourceType<DemoMovexDefinition>('rps');
+  const rpsResource = useMovexResourceType(movexConfig, 'rps');
   const router = useRouter();
 
   if (!rpsResource) {

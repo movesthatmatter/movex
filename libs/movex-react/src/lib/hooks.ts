@@ -11,6 +11,7 @@ import {
   MovexDefinition,
   GetReducerAction,
   GetReducerState,
+  Movex,
 } from 'movex';
 import { MovexContext } from './MovexContext';
 
@@ -30,29 +31,28 @@ export type MovexResourceFromConfig<
 
 export type MovexBoundResourceFromConfig<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
-  TResourceType extends keyof TResourcesMap,
+  TResourceType extends Extract<keyof TResourcesMap, string>,
   Reducer extends MovexDefinition<TResourcesMap>['resources'][TResourceType] = MovexDefinition<TResourcesMap>['resources'][TResourceType]
 > = MovexClient.MovexBoundResource<
   GetReducerState<Reducer>,
   GetReducerAction<Reducer>
 >;
 
-export const useMovexResourceType = <TMovexDefinition extends MovexDefinition>(
-  resourceType: Extract<keyof TMovexDefinition['resources'], string>
+export const useMovexResourceType = <
+  TResourcesMap extends BaseMovexDefinitionResourcesMap,
+  TResourceType extends Extract<keyof TResourcesMap, string>
+>(
+  movexConfig: MovexDefinition<TResourcesMap>,
+  resourceType: TResourceType
 ) => {
   const m = useMovex();
 
   const [resource, setResource] =
-    useState<
-      MovexResourceFromConfig<
-        TMovexDefinition['resources'],
-        typeof resourceType
-      >
-    >();
+    useState<MovexResourceFromConfig<TResourcesMap, TResourceType>>();
 
   useEffect(() => {
     if (m.connected) {
-      setResource(registerMovexResourceType(m.movex, resourceType));
+      setResource(m.movex.register(resourceType) as any); // TODO: ? why any?
     }
   }, [m.connected]);
 
@@ -75,6 +75,7 @@ export const useMovexBoundResourceFromRid = <
   rid: ResourceIdentifier<TResourceType>
 ) => {
   const resource = useMovexResourceType(
+    movexDefinition,
     toResourceIdentifierObj(rid).resourceType
   );
   const ridAsStr = useMemo(() => toResourceIdentifierStr(rid), [rid]);
@@ -135,7 +136,7 @@ export const createMovexResource = <
   movex: MovexClient.MovexFromDefintion<TResourcesMap>,
   res: {
     type: TResourceType;
-    state?: GetReducerState<TResourcesMap[TResourceType]>;
+    state: GetReducerState<TResourcesMap[TResourceType]>;
   }
 ) => registerMovexResourceType(movex, res.type).create(res.state);
 
