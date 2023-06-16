@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMovexBoundResourceFromRid } from 'movex-react';
+import { useMovexBoundResourceFromRid, useMovexClientId } from 'movex-react';
 import { MovexDefinition, MovexClient } from 'movex';
 import { ResourceIdentifier } from 'movex-core-util';
 
@@ -9,11 +9,12 @@ type Props = React.PropsWithChildren<{
   render: (boundResource: MovexClient.MovexBoundResource) => React.ReactNode;
 }>;
 
-export const MovexLocalInstanceRender: React.FC<Props> = (props) => {
+export const MovexResourceBounder: React.FC<Props> = (props) => {
+  const clientId = useMovexClientId();
   const boundResource = useMovexBoundResourceFromRid(
     props.movexDefinition,
     props.rid
   );
 
-  return <>{boundResource && props.render(boundResource)}</>;
+  return <>{clientId && boundResource && props.render(boundResource)}</>;
 };

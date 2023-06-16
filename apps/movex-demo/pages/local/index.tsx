@@ -1,9 +1,9 @@
 import styled from '@emotion/styled';
-import { MovexLocalInstance } from 'movex-react';
+import { MovexBoundResource, MovexLocalInstance } from 'movex-react';
 import movexConfig from 'libs/movex-examples/src/movex.config';
 import { useState } from 'react';
 import { ResourceIdentifier } from 'movex-core-util';
-import { Rps } from 'movex-examples';
+import { Chat, Rps } from 'movex-examples';
 
 const StyledPage = styled.div`
   .page {
@@ -11,7 +11,8 @@ const StyledPage = styled.div`
 `;
 
 export function Index() {
-  const [createdRid, setCreatedRid] = useState<ResourceIdentifier<'rps'>>();
+  const [rpsRid, setRpsRid] = useState<ResourceIdentifier<'rps'>>();
+  const [chatRid, setChatRid] = useState<ResourceIdentifier<'chat'>>();
 
   /*
    * Replace the elements below with your own.
@@ -30,42 +31,69 @@ export function Index() {
         <MovexLocalInstance
           clientId="client-1"
           movexDefinition={movexConfig}
-          resourceType="rps"
-          rid={createdRid}
+          onConnected={(movex) => {
+            movex
+              .register('rps')
+              .create(Rps.initialState)
+              .map(({ rid }) => {
+                setRpsRid(rid);
+              });
 
-          // TODO Tthi should actually be another component MovexBoundResource w props.onRegistered, so there can be multiple resources used per local instance
-          onRegistered={(r) => {
-            console.log('on registerd', r);
-
-            if (createdRid) {
-              return;
-            }
-
-            console.log('craeting rid');
-
-            r.create(Rps.initialState).map(({ rid }) => {
-              setCreatedRid(rid);
-            });
+            movex
+              .register('chat')
+              .create(Chat.initialChatState)
+              .map(({ rid }) => {
+                setChatRid(rid);
+              });
           }}
-          render={(r) => (
-            <Rps.Main boundResource={r.boundResource} userId={r.clientId} />
-          )}
-        />
-
-        {createdRid && (
-          <div>
-            <MovexLocalInstance
-              clientId="client-b"
+        >
+          {rpsRid && (
+            <MovexBoundResource
+              rid={rpsRid}
               movexDefinition={movexConfig}
-              resourceType="rps"
-              rid={createdRid}
               render={({ boundResource, clientId }) => (
-                <Rps.Main
-                  boundResource={boundResource as any}
+                <Rps.Main boundResource={boundResource} userId={clientId} />
+              )}
+            />
+          )}
+          {chatRid && (
+            <MovexBoundResource
+              rid={chatRid}
+              movexDefinition={movexConfig}
+              render={({ boundResource, clientId }) => (
+                <Chat.Main
+                  boundChatResource={boundResource}
                   userId={clientId}
                 />
               )}
             />
+          )}
+        </MovexLocalInstance>
+
+        {rpsRid && chatRid && (
+          <div>
+            <MovexLocalInstance
+              clientId="client-b"
+              movexDefinition={movexConfig}
+            >
+              <MovexBoundResource
+                rid={rpsRid}
+                movexDefinition={movexConfig}
+                render={({ boundResource, clientId }) => (
+                  <Rps.Main boundResource={boundResource} userId={clientId} />
+                )}
+              />
+              <MovexBoundResource
+                rid={chatRid}
+                movexDefinition={movexConfig}
+                render={({ boundResource, clientId }) => (
+                  <Chat.Main
+                    boundChatResource={boundResource}
+                    userId={clientId}
+                  />
+                )}
+              />
+            </MovexLocalInstance>
             {/* TODO here we have an issue. Normally these 2 should be ableto be created simulatneously, but htey fail now, both taking the same slot 
           – maybe due to the fact that the master doesnt hae time to respond??? */}
             {/* <MovexInstance

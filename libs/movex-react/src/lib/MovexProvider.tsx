@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Client } from 'movex';
 import { MovexContextProps, MovexContext } from './MovexContext';
 import { MovexClient, invoke, noop } from 'movex-core-util';
@@ -15,10 +15,17 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
         { connected: true }
       >
     ) => void;
+    onDisconnected?: (
+      state: Extract<
+        MovexContextProps<TMovexConfigResourcesMap>,
+        { connected: false }
+      >
+    ) => void;
   }>;
 
 export const MovexProvider: React.FC<Props<{}>> = ({
   onConnected = noop,
+  onDisconnected = noop,
   ...props
 }) => {
   const [contextState, setContextState] = useState<
@@ -28,14 +35,10 @@ export const MovexProvider: React.FC<Props<{}>> = ({
     clientId: undefined,
   });
 
+  const didConnect = useRef(false);
+
   useEffect(() => {
-    // const storedClientId =
-    //   window.localStorage.getItem('movexCliendId') || undefined;
-
     if (contextState.connected) {
-      // here disconnect and reconnect b/c it means one of the url or clientId changed, so need another instance!
-      // contextState.movex.
-
       return;
     }
 
@@ -61,11 +64,19 @@ export const MovexProvider: React.FC<Props<{}>> = ({
       setContextState(nextState);
 
       onConnected(nextState);
+      didConnect.current = true;
       // window.localStorage.setItem('movexCliendId', clientId);
     });
 
     // TODO: Maye add destroyer?
   }, [props.socketUrl, props.clientId, onConnected]);
+
+  // On Disconnect
+  useEffect(() => {
+    if (contextState.connected === false && didConnect) {
+      onDisconnected(contextState);
+    }
+  }, [contextState.connected, onDisconnected]);
 
   return (
     <MovexContext.Provider value={contextState}>

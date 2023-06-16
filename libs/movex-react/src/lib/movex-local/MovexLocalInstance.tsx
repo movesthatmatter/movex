@@ -1,39 +1,21 @@
 import React from 'react';
-import { MovexLocalProvider } from 'movex-react';
-import {
-  MovexDefinition,
-  Client,
-  BaseMovexDefinitionResourcesMap,
-  GetReducerState,
-  GetReducerAction,
-} from 'movex';
-import { MovexClient, ResourceIdentifier } from 'movex-core-util';
-import { MovexLocalInstanceRender } from './MovexLocalInstanceRender';
-import { MovexResource } from 'libs/movex/src/lib/client';
+import { MovexContextProps, MovexLocalProvider } from 'movex-react';
+import { MovexDefinition, BaseMovexDefinitionResourcesMap } from 'movex';
+import { MovexClient } from 'movex-core-util';
 
 type Props<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
 > = React.PropsWithChildren<{
   movexDefinition: MovexDefinition<TResourcesMap>;
-  resourceType: TResourceType;
-  rid?: ResourceIdentifier<TResourceType>;
-  render: (p: {
-    boundResource: Client.MovexBoundResource<
-      GetReducerState<TResourcesMap[TResourceType]>,
-      GetReducerAction<TResourcesMap[TResourceType]>
-    >;
-    clientId: MovexClient['id'];
-  }) => React.ReactNode;
   clientId?: string;
-  onRegistered?: (
-    // state: Pick<Extract<MovexContextProps<TResourcesMap>, { connected: true }>, 'movex'>
-    resource: MovexResource<
-      GetReducerState<TResourcesMap[TResourceType]>,
-      GetReducerAction<TResourcesMap[TResourceType]>,
-      TResourceType
-    >
+  onConnected?: (
+    state: Extract<
+      MovexContextProps<TResourcesMap>,
+      { connected: true }
+    >['movex']
   ) => void;
+  onDisconnected?: () => void;
 }>;
 
 type State = {
@@ -60,21 +42,16 @@ export class MovexLocalInstance<
         onConnected={(r) => {
           this.setState({ clientId: r.clientId });
 
-          this.props.onRegistered?.(r.movex.register(this.props.resourceType));
+          this.props.onConnected?.(r.movex);
+        }}
+        onDisconnected={() => {
+          this.setState({ clientId: undefined });
+
+          this.props.onDisconnected?.();
         }}
       >
-        {clientId && this.props.rid && (
-          <MovexLocalInstanceRender
-            movexDefinition={this.props.movexDefinition}
-            rid={this.props.rid}
-            render={(boundResource) =>
-              this.props.render({
-                boundResource,
-                clientId,
-              })
-            }
-          />
-        )}
+        {/* {clientId && this.props.rid && ( */}
+        {clientId && <>{this.props.children}</>}
       </MovexLocalProvider>
     );
   }

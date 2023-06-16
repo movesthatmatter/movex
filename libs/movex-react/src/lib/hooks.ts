@@ -98,7 +98,7 @@ export const useMovexBoundResourceFromRid = <
   return boundResource;
 };
 
-const bindResource = <
+export const bindResource = <
   TMovexDefinition extends MovexDefinition,
   TResourceType extends Extract<keyof TMovexDefinition['resources'], string>
 >(
