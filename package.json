@@ -1,6 +1,6 @@
 {
   "name": "movex",
-  "version": "0.0.4",
+  "version": "0.0.5-2",
   "license": "MIT",
   "description": "Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation without the need to write Server Specific Code.",
   "scripts": {
@@ -30,7 +30,6 @@
     "@types/object-hash": "^3.0.2",
     "@types/uuid": "^9.0.0",
     "@use-it/event-listener": "^0.1.7",
-    "console-group": "^0.3.3",
     "core-js": "^3.6.5",
     "cors": "^2.8.5",
     "deep-clone": "^3.0.3",
@@ -96,6 +95,7 @@
     "@typescript-eslint/parser": "^5.36.1",
     "autoprefixer": "^10.4.14",
     "babel-jest": "28.1.1",
+    "console-group": "^0.3.3",
     "cypress": "^11.0.0",
     "cz-git": "^1.6.1",
     "eslint": "~8.15.0",
@@ -112,6 +112,7 @@
     "nx": "15.2.4",
     "postcss": "^8.4.24",
     "prettier": "^2.6.2",
+    "process": "^0.11.10",
     "react-test-renderer": "18.2.0",
     "redis-mock": "https://github.com/movesthatmatter/redis-mock.git#fix-set-nx-and-zpopmin",
     "start-server-and-test": "^1.15.2",
