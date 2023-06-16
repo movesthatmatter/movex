@@ -2,8 +2,9 @@ import { movexClientMasterOrchestrator } from '../util/orchestrator';
 import rpsReducer, {
   initialState as rpsInitialState,
 } from '../resources/rockPaperScissors.movex';
-import { globalLogsy, tillNextTick } from 'movex-core-util';
+import { globalLogsy } from 'movex-core-util';
 import { computeCheckedState } from '../../lib/util';
+import { tillNextTick } from '../util/misc';
 require('console-group').install();
 
 const orchestrator = movexClientMasterOrchestrator();

@@ -17,4 +17,4 @@
 
 # movex-core-util
 
-This is the library of utilities for [movex](https://github.com/movesthatmatter/movex)
+Movex Core util is the library of utilities for [movex](https://github.com/movesthatmatter/movex)

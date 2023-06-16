@@ -1,7 +1,8 @@
 {
   "name": "movex-core-util",
-  "version": "0.0.4",
+  "version": "0.0.5-1",
   "license": "MIT",
+  "description": "Movex Core Util is the library of utilities for Movex",
   "exports": {
     ".": "./src/index.js",
     "./io": "./src/lib/core-io.js"

@@ -1,7 +1,8 @@
 import chatReducer, { initialChatState } from '../resources/chatReducer';
 import { computeCheckedState } from '../../lib/util';
 import { movexClientMasterOrchestrator } from '../util/orchestrator';
-import { globalLogsy, tillNextTick } from 'movex-core-util';
+import { globalLogsy } from 'movex-core-util';
+import { tillNextTick } from '../util/misc';
 
 const orchestrator = movexClientMasterOrchestrator();
 
