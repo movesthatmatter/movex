@@ -2,5 +2,22 @@
   "name": "movex",
   "version": "0.0.5-4",
   "license": "MIT",
-  "description": "Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation without the need to write Server Specific Code."
+  "description": "Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation without the need to write Server Specific Code.",
+  "author": {
+    "name": "Gabriel C. Troia",
+    "url": "https://twitter.com/gctroia"
+  },
+  "repository": "https://github.com/movesthatmatter/movex",
+  "homepage": "https://movex.dev",
+  "keywords": [
+    "state",
+    "redux",
+    "react",
+    "game",
+    "app",
+    "framework"
+  ],
+  "engines": {
+    "node": ">= 0.14.0"
+  }
 }

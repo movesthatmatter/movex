@@ -3,5 +3,22 @@
   "version": "0.0.5-4",
   "license": "MIT",
   "type": "commonjs",
-  "description": "Movex Server is the backend runtime for Movex"
+  "description": "Movex Server is the backend runtime for Movex",
+  "author": {
+    "name": "Gabriel C. Troia",
+    "url": "https://twitter.com/gctroia"
+  },
+  "repository": "https://github.com/movesthatmatter/movex",
+  "homepage": "https://movex.dev",
+  "keywords": [
+    "state",
+    "redux",
+    "react",
+    "game",
+    "app",
+    "framework"
+  ],
+  "engines": {
+    "node": ">= 0.14.0"
+  }
 }
