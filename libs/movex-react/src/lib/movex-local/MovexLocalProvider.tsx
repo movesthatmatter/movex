@@ -17,6 +17,9 @@ type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
     onConnected?: (
       state: Extract<MovexContextProps<TResourcesMap>, { connected: true }>
     ) => void;
+    onDisconnected?: (
+      state: Extract<MovexContextProps<TResourcesMap>, { connected: false }>
+    ) => void;
   }>;
 
 type State<TResourcesMap extends BaseMovexDefinitionResourcesMap> = {
@@ -24,7 +27,7 @@ type State<TResourcesMap extends BaseMovexDefinitionResourcesMap> = {
 };
 
 // * TODO: This could be moved out of the refular library into a separate one only for devs who don't look for multiplayer
-export class MovexLocalProviderClass<
+export class MovexLocalProvider<
   TResourcesMap extends BaseMovexDefinitionResourcesMap
 > extends React.Component<Props<TResourcesMap>, State<TResourcesMap>> {
   private unsubscribers: (() => void)[] = [];
@@ -98,7 +101,6 @@ export class MovexLocalProviderClass<
     return (
       <>
         <MovexLocalContextConsumerProvider onMasterReady={this.orchestrate} />
-
         <MovexContext.Provider
           value={
             this.state

@@ -61,7 +61,7 @@ export class MovexResource<
     return this.connectionToMasterResource
       .create(this.resourceType, state)
       .map((item) => ({
-        rid: toResourceIdentifierObj(item.rid),
+        rid: toResourceIdentifierObj<TResourceType>(item.rid),
         state: item.state[0],
       }));
   }

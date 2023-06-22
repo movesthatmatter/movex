@@ -6,6 +6,7 @@ import {
   MovexDefinition,
 } from '../public-types';
 import { StringKeys } from 'movex-core-util';
+import { GetReducerAction, GetReducerState } from '../tools';
 
 export class MovexFromDefintion<
   TMovexDefinitionResources extends BaseMovexDefinitionResourcesMap
@@ -23,14 +24,16 @@ export class MovexFromDefintion<
     return this.movex.getClientId();
   }
 
-  register(
-    resourceType: StringKeys<
-      MovexDefinition<TMovexDefinitionResources>['resources']
-    >
+  register<TResourceType extends StringKeys<TMovexDefinitionResources>>(
+    resourceType: TResourceType
   ) {
-    return this.movex.register(
-      resourceType,
-      this.movexDefinition.resources[resourceType]
-    );
+    const reducer = this.movexDefinition.resources[resourceType];
+    type Reducer = typeof reducer;
+
+    return this.movex.register<
+      GetReducerState<Reducer>,
+      GetReducerAction<Reducer>,
+      TResourceType
+    >(resourceType, reducer);
   }
 }

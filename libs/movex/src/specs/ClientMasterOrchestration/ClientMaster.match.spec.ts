@@ -1,7 +1,8 @@
 import { movexClientMasterOrchestrator } from '../util/orchestrator';
 import matchReducer, { initialMatchState } from '../resources/matchReducer';
 import { computeCheckedState } from '../../lib/util';
-import { globalLogsy, tillNextTick } from 'movex-core-util';
+import { globalLogsy } from 'movex-core-util';
+import { tillNextTick } from '../util/misc';
 require('console-group').install();
 
 const orchestrator = movexClientMasterOrchestrator();

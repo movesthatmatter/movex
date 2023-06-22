@@ -4,7 +4,8 @@ import counterReducer, {
   initialCounterState,
 } from './resources/counterReducer';
 import { MovexResourceObservable } from '../lib/client/MovexResourceObservable';
-import { globalLogsy, ResourceIdentifier, tillNextTick } from 'movex-core-util';
+import { globalLogsy, ResourceIdentifier } from 'movex-core-util';
+import { tillNextTick } from './util/misc';
 
 const rid: ResourceIdentifier<string> = 'counter:test-id';
 

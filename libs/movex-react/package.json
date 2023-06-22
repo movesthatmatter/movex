@@ -1,5 +1,23 @@
 {
   "name": "movex-react",
-  "version": "0.0.4",
-  "license": "MIT"
+  "version": "0.0.5-4",
+  "license": "MIT",
+  "description": "Movex React is the library of React components for Movex",
+  "author": {
+    "name": "Gabriel C. Troia",
+    "url": "https://twitter.com/gctroia"
+  },
+  "repository": "https://github.com/movesthatmatter/movex",
+  "homepage": "https://movex.dev",
+  "keywords": [
+    "state",
+    "redux",
+    "react",
+    "game",
+    "app",
+    "framework"
+  ],
+  "engines": {
+    "node": ">= 0.14.0"
+  }
 }

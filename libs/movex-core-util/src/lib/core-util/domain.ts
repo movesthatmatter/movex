@@ -72,3 +72,11 @@ export const isResourceIdentifier = <TType extends string>(
 
   return false;
 };
+
+export const isSameResourceIdentifier = <
+  AType extends string,
+  BType extends string
+>(
+  aRid: ResourceIdentifier<AType>,
+  bRid: ResourceIdentifier<BType>
+) => toResourceIdentifierStr(aRid) === toResourceIdentifierStr(bRid);

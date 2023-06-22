@@ -27,7 +27,9 @@
         "tsConfig": "libs/movex-core-util/tsconfig.lib.json",
         "packageJson": "libs/movex-core-util/package.json",
         "main": "libs/movex-core-util/src/index.ts",
-        "assets": ["libs/movex-core-util/*.md"]
+        "assets": ["libs/movex-core-util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": true,
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     }
   },

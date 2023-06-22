@@ -11,7 +11,9 @@
         "outputPath": "dist/libs/movex",
         "main": "libs/movex/src/index.ts",
         "tsConfig": "libs/movex/tsconfig.lib.json",
-        "assets": ["libs/movex/*.md"]
+        "assets": ["libs/movex/*.md"],
+        "updateBuildableProjectDepsInPackageJson": true,
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {

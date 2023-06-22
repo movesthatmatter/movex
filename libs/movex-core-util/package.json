@@ -1,7 +1,25 @@
 {
   "name": "movex-core-util",
-  "version": "0.0.4",
+  "description": "Movex Core Util is the library of utilities for Movex",
+  "version": "0.0.5-4",
   "license": "MIT",
+  "author": {
+    "name": "Gabriel C. Troia",
+    "url": "https://twitter.com/gctroia"
+  },
+  "repository": "https://github.com/movesthatmatter/movex",
+  "homepage": "https://movex.dev",
+  "keywords": [
+    "state",
+    "redux",
+    "react",
+    "game",
+    "app",
+    "framework"
+  ],
+  "engines": {
+    "node": ">= 0.14.0"
+  },
   "exports": {
     ".": "./src/index.js",
     "./io": "./src/lib/core-io.js"
