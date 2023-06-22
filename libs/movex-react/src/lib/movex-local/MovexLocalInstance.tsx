@@ -1,7 +1,8 @@
 import React from 'react';
-import { MovexContextProps, MovexLocalProvider } from 'movex-react';
 import { MovexDefinition, BaseMovexDefinitionResourcesMap } from 'movex';
 import { MovexClient } from 'movex-core-util';
+import { MovexContextProps } from '../MovexContext';
+import { MovexLocalProvider } from './MovexLocalProvider';
 
 type Props<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,

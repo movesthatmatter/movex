@@ -15,7 +15,6 @@ import {
   toResourceIdentifierObj,
   MovexClient as MovexClientUser,
 } from 'movex-core-util';
-import { MovexFromDefintion } from 'libs/movex/src/lib/client';
 import { MovexContextStateChange } from './MovexContextStateChange';
 
 type Props<
@@ -69,7 +68,7 @@ export class MovexBoundResource<
   }
 
   private registerAndBoundResourceIfNotAlready(
-    movex: MovexFromDefintion<TResourcesMap>,
+    movex: MovexClient.MovexFromDefintion<TResourcesMap>,
     clientId: MovexClientUser['id']
   ) {
     if (this.state.boundResource) {
@@ -103,7 +102,7 @@ export class MovexBoundResource<
           }
 
           this.registerAndBoundResourceIfNotAlready(
-            r.movex as MovexFromDefintion<TResourcesMap>,
+            r.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
             r.clientId
           );
         }}
