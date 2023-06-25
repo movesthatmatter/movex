@@ -24,7 +24,11 @@
     "build": "nx build movex-demo",
     "test": "nx run-many --all --target=test --skip-nx-cache",
     "push-all-libs--locally": "cd dist/libs/movex && npm version pre && yalc push && cd -; cd dist/libs/movex-server && npm version pre && yalc push && cd -; cd dist/libs/movex-core-util && npm version pre && yalc push && cd -; cd dist/libs/movex-react && npm version pre && yalc push && cd -;",
-    "publish-all-libs": "cd dist/libs/movex && npm publish && cd -; cd dist/libs/movex-server && npm publish && cd -; cd dist/libs/movex-core-util && npm publish && cd -; cd dist/libs/movex-react && npm publish && cd -",
+    "publish-movex": "cd dist/libs/movex && npm publish && cd -;",
+    "publish-movex-server": "cd dist/libs/movex-server && npm publish && cd -;",
+    "publish-movex-core-util": "cd dist/libs/movex-core-util && npm publish && cd -;",
+    "publish-movex-react": "cd dist/libs/movex-react && npm publish && cd -",
+    "publish-all-libs": "npm run publish-movex && npm run publish-movex-server && npm run publish-movex-core-util && npm run publish-movex-react;",
     "build-all-libs": "npx nx run-many --parallel --target=build --projects=movex-core-util,movex,movex-server,movex-react",
     "deploy": "git diff --exit-code HEAD && flyctl deploy -c apps/movex-demo-api/fly.toml --dockerfile apps/movex-demo-api/Dockerfile -e APP_REVISION=$(git rev-parse --short HEAD) --remote-only"
   },
