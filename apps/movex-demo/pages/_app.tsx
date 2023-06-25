@@ -1,4 +1,5 @@
 import { AppProps } from 'next/app';
+import { Analytics } from '@vercel/analytics/react';
 import Head from 'next/head';
 import './styles.css';
 import { MovexLocalMasterProvider } from 'movex-react';
@@ -10,14 +11,18 @@ function CustomApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   return (
-    <MovexLocalMasterProvider movexDefinition={movexConfig} onInit={(x) => {
-      console.log('[MovexLocalMaster] initiated', x);
-    }}>
+    <MovexLocalMasterProvider
+      movexDefinition={movexConfig}
+      onInit={(x) => {
+        console.log('[MovexLocalMaster] initiated', x);
+      }}
+    >
       <Head>
         <title>Welcome to movex-demo!</title>
       </Head>
       <main className="app">
         <Component {...pageProps} />
+        <Analytics />
       </main>
     </MovexLocalMasterProvider>
   );

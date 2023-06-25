@@ -44,6 +44,7 @@
     "@types/object-hash": "^3.0.2",
     "@types/uuid": "^9.0.0",
     "@use-it/event-listener": "^0.1.7",
+    "@vercel/analytics": "^1.0.1",
     "core-js": "^3.6.5",
     "cors": "^2.8.5",
     "deep-clone": "^3.0.3",
