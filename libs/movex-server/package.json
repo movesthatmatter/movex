@@ -18,10 +18,8 @@
     "app",
     "framework"
   ],
+  "main": "./src/index.js",
   "bin": "./src/bin.js",
-  "exports": {
-    "./bin/movex-server": "./bin.js"
-  },
   "engines": {
     "node": ">= 0.14.0"
   }

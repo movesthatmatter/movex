@@ -65,7 +65,7 @@ export const movexServer = (
     const address = httpServer.address();
 
     if (typeof address !== 'string') {
-      logsy.info(`Movex Server started on port ${address?.port}`);
+      logsy.info(`Movex Server started on port ${address?.port} for definition`, Object.keys(definition.resources));
     }
   });
 };
