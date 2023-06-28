@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const cwd = require('process').cwd();
-const { build } = require('esbuild');
+const { build, context } = require('esbuild');
 const serve = require('@es-exec/esbuild-plugin-serve').default;
 const copy = require('esbuild-plugin-copy').default;
 
@@ -14,7 +14,7 @@ const sharedConfig = {
   external: Object.keys(dependencies).concat(Object.keys(peerDependencies)),
 };
 
-build({
+context({
   ...sharedConfig,
   platform: 'node',
   outfile: `${cwd}/.movex/dist/index.js`,
@@ -29,3 +29,4 @@ build({
     serve({ main: './.movex/run.js' }),
   ],
 });
+
