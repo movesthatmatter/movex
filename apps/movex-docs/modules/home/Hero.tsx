@@ -7,9 +7,22 @@ import { useCurrentTheme } from '../../hooks/useCurrentTheme';
 type Props = {};
 
 const appTypes = ['App', 'Game', 'Chat', 'To-Do', 'Doc'];
-const lightColors = ['bg-red-200', 'bg-blue-200', 'bg-green-200', 'bg-yellow-200', 'bg-orange-200', 'bg-purple-200'];
-const darkColors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-orange-500', 'bg-purple-500'];
-
+const lightColors = [
+  'bg-red-200',
+  'bg-blue-200',
+  'bg-green-200',
+  'bg-yellow-200',
+  'bg-orange-200',
+  'bg-purple-200',
+];
+const darkColors = [
+  'bg-red-500',
+  'bg-blue-500',
+  'bg-green-500',
+  'bg-yellow-500',
+  'bg-orange-500',
+  'bg-purple-500',
+];
 
 export const Hero: React.FC<Props> = () => {
   const [indexes, setIndexes] = useState({
@@ -47,16 +60,25 @@ export const Hero: React.FC<Props> = () => {
         State without hassle.
       </h1>
       <h3 className="text-xl lg:text-3xl mb-7">
-        Movex is a <Link href="https://redux.js.org/introduction/getting-started" target='_blank' className="italic hover:underline">"predictable state container*"</Link>{' '}
+        Movex is a{' '}
+        <Link
+          href="https://redux.js.org/introduction/getting-started"
+          target="_blank"
+          className="italic hover:underline"
+        >
+          "predictable state container*"
+        </Link>{' '}
         for multi-player applications.
         <br /> Server Authoritative by nature. No Server hassle by design.
       </h3>
       <div className="mx-auto flex items-center justify-center gap-5">
-        <Link href="/docs/what">
-          <Button className='bg-gradient-to-r from-movexBlue-400 via-indigo-500 to-purple-500 hover:to-movexBlue-500 via-indigo-500 hover:from-purple-300'>See Docs</Button>
+        <Link href="/docs/get_started">
+          <Button className="bg-gradient-to-r from-movexBlue-400 via-indigo-500 to-purple-500 hover:to-movexBlue-500 via-indigo-500 hover:from-purple-300">
+            Get Started
+          </Button>
         </Link>
         <Link target="_blank" href="https://github.com/movesthatmatter/movex">
-          <Button type="clear" className=''>
+          <Button type="clear" className="">
             Github
             <span aria-hidden="true">→</span>
           </Button>
