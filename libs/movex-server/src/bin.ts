@@ -1,16 +1,32 @@
 #!/usr/bin/env node
 
-import { movexServer } from './lib/movex-server';
+const cwd = require('process').cwd();
 
-type Check = number;
+const { build } = require('esbuild');
+const serve = require('@es-exec/esbuild-plugin-serve').default;
+const copy = require('esbuild-plugin-copy').default;
 
-const x: Check = 2;
+const { dependencies, peerDependencies } = require(`${cwd}/package.json`);
 
-movexServer(
-  {},
-  {
-    resources: {},
-  }
-);
+const sharedConfig = {
+  entryPoints: [`${cwd}/src/movex.config.ts`],
+  bundle: true,
+  minify: true,
+  external: Object.keys(dependencies).concat(Object.keys(peerDependencies)),
+};
 
-console.log('bin wooooorks', x);
+build({
+  ...sharedConfig,
+  platform: 'node',
+  outfile: `${cwd}/.movex/dist/index.js`,
+  plugins: [
+    copy({
+      resolveFrom: 'cwd',
+      assets: {
+        from: ['node_modules/movex-server/src/run.js'],
+        to: [`./.movex`],
+      },
+    }),
+    serve({ main: './.movex/run.js' }),
+  ],
+});

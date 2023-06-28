@@ -7,17 +7,6 @@ import {
 
 export const features = [
   {
-    name: 'Real-Time Sync',
-    description:
-      "The State is shared in real-time with all the peers subscribed to its Resource.",
-    icon: ArrowPathIcon,
-    link: {
-      label: 'Learn More',
-      url: '/docs/overview/realtime',
-    },
-    color: 'blue-500',
-  },
-  {
     name: 'Server Authoritative. No Server Code',
     description:
       "It's important to keep the business logic outside the reach of potential bad actor clients, which is why all the state logic happens on an actual server. But there is no need for you to code, maintain or worry about the server.",
@@ -38,6 +27,17 @@ export const features = [
       url: '/docs/overview/secret_state',
     },
     color: 'yellow-300',
+  },
+  {
+    name: 'Real-Time Sync',
+    description:
+      "The State is shared in real-time with all the peers subscribed to its Resource.",
+    icon: ArrowPathIcon,
+    link: {
+      label: 'Learn More',
+      url: '/docs/overview/realtime',
+    },
+    color: 'blue-500',
   },
   {
     name: 'Functional & Familiar',
