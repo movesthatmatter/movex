@@ -1,6 +1,6 @@
 {
   "name": "movex",
-  "version": "0.0.6-13",
+  "version": "0.0.6-17",
   "license": "MIT",
   "description": "Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation without the need to write Server Specific Code.",
   "author": {
@@ -19,7 +19,6 @@
   ],
   "type": "commonjs",
   "main": "./src/index.js",
-  "bin": "./src/bin.js",
   "engines": {
     "node": ">= 0.14.0"
   }

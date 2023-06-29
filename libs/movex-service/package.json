@@ -1,8 +1,9 @@
 {
-  "name": "movex-core-util",
+  "name": "movex-service",
   "version": "0.0.6-17",
-  "description": "Movex Core Util is the library of utilities for Movex",
   "license": "MIT",
+  "type": "commonjs",
+  "description": "Movex Service is the CLI for Movex",
   "author": {
     "name": "Gabriel C. Troia",
     "url": "https://twitter.com/gctroia"
@@ -17,12 +18,11 @@
     "app",
     "framework"
   ],
-  "type": "commonjs",
+  "main": "./src/index.js",
+  "bin": {
+    "movex": "./src/bin.js"
+  },
   "engines": {
     "node": ">= 0.14.0"
-  },
-  "exports": {
-    ".": "./src/index.js",
-    "./io": "./src/lib/core-io.js"
   }
 }

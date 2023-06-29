@@ -28,8 +28,9 @@
     "publish-movex-server": "cd dist/libs/movex-server && npm publish && cd -;",
     "publish-movex-core-util": "cd dist/libs/movex-core-util && npm publish && cd -;",
     "publish-movex-react": "cd dist/libs/movex-react && npm publish && cd -",
-    "publish-all-libs": "npm run publish-movex && npm run publish-movex-server && npm run publish-movex-core-util && npm run publish-movex-react;",
-    "build-all-libs": "npx nx run-many --parallel --target=build --projects=movex-core-util,movex,movex-server,movex-react",
+    "publish-movex-service": "cd dist/libs/movex-service && npm publish && cd -",
+    "publish-all-libs": "npm run publish-movex && npm run publish-movex-server && npm run publish-movex-core-util && npm run publish-movex-react && npm run publish-movex-service",
+    "build-all-libs": "npx nx run-many --parallel --target=build --projects=movex-core-util,movex,movex-server,movex-react,movex-service",
     "deploy": "git diff --exit-code HEAD && flyctl deploy -c apps/movex-demo-api/fly.toml --dockerfile apps/movex-demo-api/Dockerfile -e APP_REVISION=$(git rev-parse --short HEAD) --remote-only"
   },
   "private": false,
