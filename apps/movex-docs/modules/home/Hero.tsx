@@ -72,7 +72,7 @@ export const Hero: React.FC<Props> = () => {
         <br /> Server Authoritative by nature. No Server hassle by design.
       </h3>
       <div className="mx-auto flex items-center justify-center gap-5">
-        <Link href="/docs/get_started">
+        <Link href="/docs/overview/get_started">
           <Button className="bg-gradient-to-r from-movexBlue-400 via-indigo-500 to-purple-500 hover:to-movexBlue-500 via-indigo-500 hover:from-purple-300">
             Get Started
           </Button>

@@ -1,0 +1,87 @@
+# Getting Started
+
+A small React example to get you up and running with Movex.
+
+### 0. Pre-requisites: Create React App and Run it
+
+See more [here](https://create-react-app.dev/docs/getting-started).
+
+```bash copy
+npx create-react-app my-movex-app --template typescript
+cd my-movex-app
+yarn start
+```
+
+### 1. Install it
+
+```bash copy
+yarn add movex movex-react; yarn add --dev movex-service
+```
+
+### 3. Create the Movex Config File
+
+```ts copy
+// src/movex.config.ts
+
+export default {
+  url: undefined,
+  resources: {},
+};
+```
+
+### 2. Start Movex in Dev Mode
+
+```bash copy
+npx movex dev
+```
+
+### 3. Wrap the App in the MovexProvider 
+
+```ts copy filename="src/App.tsx" {4-5, 9-15, 32}
+import React from 'react';
+import logo from './logo.svg';
+import './App.css';
+import { MovexProvider } from 'movex-react';
+import movexConfig from './movex.config';
+ 
+function App() {
+  return (
+    <MovexProvider
+      movexDefinition={movexConfig}
+      socketUrl="localhost:3333"
+      onConnected={() => {
+        console.log('Movex Connected');
+      }}
+    >
+      <div className="App">
+        <header className="App-header">
+          <img src={logo} className="App-logo" alt="logo" />
+          <p>
+            Edit <code>src/App.tsx</code> and save to reload.
+          </p>
+          <a
+            className="App-link"
+            href="https://reactjs.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Learn React
+          </a>
+        </header>
+      </div>
+    </MovexProvider>
+  );
+}
+ 
+export default App;
+```
+
+### 4. Create a new Movex Resource
+
+TBD
+
+### 5. Use it 
+
+TBD
+
+### 6.
