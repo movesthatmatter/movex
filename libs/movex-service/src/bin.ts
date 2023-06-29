@@ -36,7 +36,9 @@ const go = (args: string[]) => {
     entryPoints: [`${cwd}/src/movex.config.ts`],
     bundle: true,
     minify: false,
-    external: Object.keys(dependencies).concat(Object.keys(peerDependencies)),
+    external: Object.keys(dependencies || {}).concat(
+      Object.keys(peerDependencies || {})
+    ),
     platform: 'node',
     outfile: `${cwd}/.movex/dist/index.js`,
   };
@@ -56,7 +58,7 @@ const go = (args: string[]) => {
   const copyRunPlugin = copy({
     resolveFrom: 'cwd',
     assets: {
-      from: ['node_modules/movex/src/bin/runner.js'],
+      from: ['node_modules/movex-service/src/runner.js'],
       to: [`./.movex`],
     },
   });
