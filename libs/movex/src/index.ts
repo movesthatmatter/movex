@@ -14,10 +14,10 @@ export * as MovexMaster from './lib/master';
 export * as MovexMasterLocal from './lib/master-local';
 
 export {
-  ResourceIdentifier,
-  ResourceIdentifierObj,
-  ResourceIdentifierStr,
-  AnyResourceIdentifier,
+  type ResourceIdentifier,
+  type ResourceIdentifierObj,
+  type ResourceIdentifierStr,
+  type AnyResourceIdentifier,
   toResourceIdentifierObj as toRidAsObj,
   toResourceIdentifierStr as toRidAsStr,
 } from 'movex-core-util';
