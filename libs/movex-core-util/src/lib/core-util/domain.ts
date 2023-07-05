@@ -52,9 +52,9 @@ export const getResourceRId = <TResourceType extends string>(
     resourceId: r.id,
   });
 
-export const isResourceIdentifier = <TType extends string>(
+export const isResourceIdentifier = (
   s: unknown
-): s is ResourceIdentifier<TType> => {
+): s is ResourceIdentifier<string> => {
   if (isObject(s)) {
     return (
       keyInObject(s, 'resourceType') &&
@@ -80,3 +80,9 @@ export const isSameResourceIdentifier = <
   aRid: ResourceIdentifier<AType>,
   bRid: ResourceIdentifier<BType>
 ) => toResourceIdentifierStr(aRid) === toResourceIdentifierStr(bRid);
+
+export const isResourceIdentifierOfType = <TType extends string>(
+  t: TType,
+  s: unknown
+): s is ResourceIdentifier<TType> =>
+  isResourceIdentifier(s) && toResourceIdentifierObj(s).resourceType === t;

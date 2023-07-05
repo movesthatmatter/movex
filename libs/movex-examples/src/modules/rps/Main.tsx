@@ -97,37 +97,36 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
     [dispatchPrivate, myPlayerLabel]
   );
 
+  const winner = useMemo(() => {
+    if (!state.winner) {
+      return undefined;
+    }
+
+    if (state.winner === '1/2') {
+      return '1/2';
+    }
+
+    const {
+      submissions: { playerA },
+    } = state;
+
+    if (playerA.play === state.winner) {
+      return state.players.playerA.label;
+    }
+
+    return state.players.playerB.label;
+  }, [state.winner]);
+
   return (
-    <div
-      style={
-        {
-          // display: 'flex',
-          // flex: 1,
-          // flexDirection: 'column',
-        }
-      }
-    >
-      <b>User: {userId}</b>
+    <div style={{}} className='p-10'>
       {state.winner ? (
         <div>
           <h3>
-            Winner is {state.winner} (
-            {invoke(() => {
-              if (state.winner === '1/2') {
-                return 'Draw';
-              }
-
-              const {
-                submissions: { playerA, playerB },
-              } = state;
-
-              if (playerA.play === state.winner) {
-                return state.players.playerA.label;
-              }
-
-              return state.players.playerB.label;
-            })}
-            )
+            {winner === '1/2'
+              ? 'Draw'
+              : winner === myPlayerLabel
+              ? 'You Won'
+              : 'You Lost'}
           </h3>
           <button
             onClick={() => {
@@ -148,6 +147,11 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
           <button
             style={{
               margin: '1em',
+              padding: '1em',
+              ...(myPlayerLabel &&
+                state.submissions[myPlayerLabel]?.play === 'rock' && {
+                  background: 'red',
+                }),
             }}
             onClick={() => submit('rock')}
           >
@@ -156,6 +160,11 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
           <button
             style={{
               margin: '1em',
+              padding: '1em',
+              ...(myPlayerLabel &&
+                state.submissions[myPlayerLabel]?.play === 'paper' && {
+                  background: 'red',
+                }),
             }}
             onClick={() => submit('paper')}
           >
@@ -164,18 +173,23 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
           <button
             style={{
               margin: '1em',
+              padding: '1em',
+              ...(myPlayerLabel &&
+                state.submissions[myPlayerLabel]?.play === 'scissors' && {
+                  background: 'red',
+                }),
             }}
             onClick={() => submit('scissors')}
           >
-            Scissoers
+            Scissors
           </button>
         </div>
       )}
-      <br />
-      <div>
+      {/* <br /> */}
+      {/* <div>
         <pre>rid: {toResourceIdentifierStr(boundResource.rid)}</pre>
         <pre>{JSON.stringify(state, null, 2)}</pre>
-      </div>
+      </div> */}
     </div>
   );
 };

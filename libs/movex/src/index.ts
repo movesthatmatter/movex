@@ -20,4 +20,7 @@ export {
   type AnyResourceIdentifier,
   toResourceIdentifierObj as toRidAsObj,
   toResourceIdentifierStr as toRidAsStr,
+  isResourceIdentifier as isRid,
+  isResourceIdentifierOfType as isRidOfType,
+  isSameResourceIdentifier as isSameRid,
 } from 'movex-core-util';
