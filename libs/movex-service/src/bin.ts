@@ -14,6 +14,11 @@ const go = (args: string[]) => {
     serve: 'Serves the Movex Service',
   };
 
+  const options = {
+    '--path': 'The Path to the movex.config',
+    '--help': 'The Manual',
+  };
+
   const hasCommand = <K extends keyof typeof commands>(k: K): boolean =>
     args.includes(k);
 
@@ -28,12 +33,26 @@ const go = (args: string[]) => {
   }
 
   if (!hasAnyCommand) {
-    console.log('No command given. See --help');
+    console.warn('No command given. See --help');
     return;
   }
 
+  let givenPath = '';
+  const indexOfPath = args.indexOf('--path');
+  if (indexOfPath > -1) {
+    const p = args[indexOfPath + 1];
+    if (!p) {
+      console.warn('The Path must be given when using --path');
+      return;
+    }
+
+    givenPath = `${cwd}/${p}`;
+  }
+
+  const pathToConfig = givenPath || `${cwd}/src/movex.config.ts`;
+
   const sharedConfig = {
-    entryPoints: [`${cwd}/src/movex.config.ts`],
+    entryPoints: [pathToConfig],
     bundle: true,
     minify: false,
     external: Object.keys(dependencies || {}).concat(
