@@ -74,7 +74,7 @@ export class MovexResourceObservable<
     // TODO: Add Use case for how to deal with creation. When the get doesn't return anything?!
     // something like: if it returns record doesnt exist, use create instead of get? or io.getOrCreate()?
 
-    const { dispatch, unsubscribe: unsubscribeDispatch } = createDispatcher<
+    const { dispatch, unsubscribe: unsubscribeFromDispatch } = createDispatcher<
       TState,
       TAction
     >(this.$checkedState, this.reducer, {
@@ -92,7 +92,7 @@ export class MovexResourceObservable<
         dispatch(...args);
       });
     };
-    this.unsubscribers.push(unsubscribeDispatch);
+    this.unsubscribers.push(unsubscribeFromDispatch);
 
     // const offFwdAction = masterResourceIO.onFwdAction<TAction>((fwd) => {
     //   // Whatever needs to happen here more!
@@ -258,7 +258,7 @@ export class MovexResourceObservable<
     );
   }
 
-  // This to be called when destroying not used anymore in order to clean the update subscriptions
+  // This to be called when the obervable is not used anymore in order to clean the update subscriptions
   destroy() {
     this.unsubscribers.forEach(invoke);
   }
