@@ -3,25 +3,26 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../components/Button';
 import Link from 'next/link';
 import { useCurrentTheme } from '../../hooks/useCurrentTheme';
+import { Code, CopyToClipboard, Pre } from 'nextra/components';
 
 type Props = {};
 
 const appTypes = ['App', 'Game', 'Chat', 'To-Do', 'Doc'];
 const lightColors = [
-  'bg-red-200',
-  'bg-blue-200',
-  'bg-green-200',
-  'bg-yellow-200',
-  'bg-orange-200',
-  'bg-purple-200',
+  'text-red-500',
+  // 'text-blue-500',
+  'text-green-500',
+  'text-yellow-500',
+  'text-orange-500',
+  'text-purple-500',
 ];
 const darkColors = [
-  'bg-red-500',
-  'bg-blue-500',
-  'bg-green-500',
-  'bg-yellow-500',
-  'bg-orange-500',
-  'bg-purple-500',
+  'text-red-500',
+  // 'text-blue-500',
+  'text-green-500',
+  'text-yellow-500',
+  'text-orange-500',
+  'text-purple-500',
 ];
 
 export const Hero: React.FC<Props> = () => {
@@ -46,9 +47,9 @@ export const Hero: React.FC<Props> = () => {
   }, [indexes]);
 
   return (
-    <div className="text-center pt-6 pb-4 lg:pt-32 lg:pb-20">
-      <h1 className="text-4xl lg:text-6xl font-bold mb-4 lg:mb-10">
-        Share your{' '}
+    <div className="text-center pt-6 pb-4 lg:pt-32 lg:pb-20 lg:pl-14 lg:pr-14">
+      <h1 className="text-6xl lg:text-8xl font-bold mb-4 lg:mb-10">
+        <span className="text-transparent bg-clip-text bg-gradient-to-l from-movexBlue-600 to-movexBlue-300 text-movexBlue-500">Mutiplayer</span>{' '}
         <span
           className={`
           ${(currentTheme === 'dark' ? darkColors : lightColors)[indexes.color]}
@@ -59,7 +60,7 @@ export const Hero: React.FC<Props> = () => {
         </span>{' '}
         State without hassle.
       </h1>
-      <h3 className="text-xl lg:text-3xl mb-7">
+      <h3 className="text-xl lg:text-2xl mb-7 !leading-normal text-slate-500">
         Movex is a{' '}
         <Link
           href="https://redux.js.org/introduction/getting-started"
@@ -68,7 +69,7 @@ export const Hero: React.FC<Props> = () => {
         >
           "predictable state container*"
         </Link>{' '}
-        for multi-player applications.
+        for multiplayer applications.
         <br /> Server Authoritative by nature. No Server hassle by design.
       </h3>
       <div className="mx-auto flex items-center justify-center gap-5">
@@ -77,12 +78,23 @@ export const Hero: React.FC<Props> = () => {
             Get Started
           </Button>
         </Link>
-        <Link target="_blank" href="https://github.com/movesthatmatter/movex">
+        <Link href="#examples">
           <Button type="clear" className="">
-            Github
-            <span aria-hidden="true">→</span>
+            See Exmaples
           </Button>
         </Link>
+      </div>
+
+      <div
+        className="mt-10 md:w-3/4 lg:w-1/2"
+        style={{
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}
+      >
+        <Pre hasCopyCode lang="bash">
+          <Code>yarn add movex; yarn add --dev movex-service</Code>
+        </Pre>
       </div>
     </div>
   );

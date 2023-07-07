@@ -12,6 +12,7 @@ const go = (args: string[]) => {
   const commands = {
     dev: 'Starts the Movex Service in watch mode',
     serve: 'Serves the Movex Service',
+    build: 'Builds the project and wraps it in Movex',
   };
 
   const options = {
@@ -105,6 +106,20 @@ const go = (args: string[]) => {
 
       ctx.rebuild();
       ctx.dispose();
+    })();
+  } else if (hasCommand('build')) {
+    (async () => {
+      const ctx = await esb.context({
+        ...sharedConfig,
+        plugins: [copyRunPlugin],
+      });
+
+      console.log('Building...');
+
+      ctx.rebuild();
+      ctx.dispose();
+
+      console.log('Finished Building', sharedConfig.outfile);
     })();
   }
 };

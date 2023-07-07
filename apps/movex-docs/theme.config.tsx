@@ -28,6 +28,10 @@ const config: DocsThemeConfig = {
   footer: {
     text: <Footer />,
   },
+  // darkMode: false,
+  // nextThemes: {
+  //   defaultTheme: 'dark',
+  // },
   useNextSeoProps: () => {
     const { asPath } = useRouter();
 

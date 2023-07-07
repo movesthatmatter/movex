@@ -23,7 +23,7 @@
     "tsc-all": "tsc -b libs/movex libs/movex-server libs/movex-core-util libs/movex-react libs/movex-examples apps/movex-demo apps/movex-demo-api apps/movex-demo-e2e apps/movex-docs apps/movex-docs-e2e",
     "build": "nx build movex-demo",
     "test": "nx run-many --all --target=test --skip-nx-cache",
-    "push-all-libs--locally": "cd dist/libs/movex && npm version pre && yalc push && cd -; cd dist/libs/movex-server && npm version pre && yalc push && cd -; cd dist/libs/movex-core-util && npm version pre && yalc push && cd -; cd dist/libs/movex-react && npm version pre && yalc push && cd -;",
+    "push-all-libs--locally": "cd dist/libs/movex && npm version pre && yalc push && cd -; cd dist/libs/movex-server && npm version pre && yalc push && cd -; cd dist/libs/movex-core-util && npm version pre && yalc push && cd -; cd dist/libs/movex-react && npm version pre && yalc push && cd -; cd dist/libs/movex-service && npm version pre && yalc push && cd -;",
     "publish-movex": "cd dist/libs/movex && npm publish && cd -;",
     "publish-movex-server": "cd dist/libs/movex-server && npm publish && cd -;",
     "publish-movex-core-util": "cd dist/libs/movex-core-util && npm publish && cd -;",

@@ -11,6 +11,16 @@
     "title": "Docs",
     "type": "page"
   },
+  "faqs": {
+    "title": "Faqs",
+    "type": "page",
+    "href": "#faqs"
+  },
+  "exampples": {
+    "title": "Examples",
+    "type": "page",
+    "href": "#examples"
+  },
   "about": {
     "title": "About",
     "type": "page"

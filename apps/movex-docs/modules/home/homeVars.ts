@@ -2,7 +2,7 @@ import {
   ArrowPathIcon,
   LockClosedIcon,
   HeartIcon,
-  FlagIcon
+  FlagIcon,
 } from '@heroicons/react/24/outline';
 
 export const features = [
@@ -13,7 +13,7 @@ export const features = [
     icon: FlagIcon,
     link: {
       label: 'Learn More',
-      url: '/docs/overview/server_authoritative',
+      url: '/docs/features/server_authoritative',
     },
     color: 'orange-500',
   },
@@ -24,18 +24,18 @@ export const features = [
     icon: LockClosedIcon,
     link: {
       label: 'Learn More',
-      url: '/docs/overview/secret_state',
+      url: '/docs/features/secret_state',
     },
     color: 'yellow-300',
   },
   {
     name: 'Real-Time Sync',
     description:
-      "The State is shared in real-time with all the peers subscribed to its Resource.",
+      'The State is shared in real-time with all the peers subscribed to its Resource.',
     icon: ArrowPathIcon,
     link: {
       label: 'Learn More',
-      url: '/docs/overview/realtime',
+      url: '/docs/features/realtime',
     },
     color: 'blue-500',
   },
@@ -46,8 +46,65 @@ export const features = [
     icon: HeartIcon,
     link: {
       label: 'Learn More',
-      url: '/docs/overview/functional',
+      url: '/docs/features/functional',
     },
     color: 'red-500',
   },
 ];
+
+export const faqs = [
+  {
+    q: 'What does "No Server Code" or "No Server Hassle" really mean?',
+    a: "It means there that you, the developer, don't have to write, build, distribute or maintain any server code. You only have to concern with the client/local code as you'd be developing for single player/user and movex takes care of the server part seamlessly.",
+    link: {
+      label: 'See more here',
+      url: '/docs/features/server_authoritative',
+    },
+  },
+  {
+    q: 'How can there be "Server Authoritative" without a server?',
+    a: "Spot on, detective! There is in fact a server sunning, but it's just abstracted away by movex + movex-service so you don't have to bother with it.",
+    link: {
+      label: 'See more here',
+      url: '/docs/features/server_authoritative',
+    },
+  },
+  {
+    q: 'Can I use Movex with "X" framework or game engine?',
+    a: "At the moment, we haven't tried it on any game engine (but will do that in the close future) but in theory it should work with any application (or game) as long as the codebase is in javascript/typescript.",
+  },
+  {
+    q: 'What kind of games can I build with Movex?',
+    a: "Movex uses Deterministic Action Propagation under the hood, which means it's propagating Actions (small bits of data) from client to server and server to client(s). This works great for games (or applications) with unfrequent changes (traffic) such as a turn-based game (e.g. Age of Empires) but will most likely not be enough for a shooter or something that requires a lot of user input sent over the network. There are some ideas to make that possible in the future as well.",
+    link: {
+      label: "Read more about Deterministic Propagation",
+      url: "http://localhost:3000/docs/features/server_authoritative#determinstic-action-propagation-method"
+    }
+  },
+  {
+    q: 'Can I use Movex React?',
+    a: "Yes. Just use `movex-react`.",
+    link: {
+      label: "Get Started with React",
+      url: "http://localhost:3000/docs/overview/get_started"
+    }
+  },
+];
+
+export const community = [
+  {
+    name: 'Discord',
+    icon: '',
+    desc: 'Get your questions answered right away on Discord',
+  },
+  {
+    name: 'Github',
+    icon: '',
+    desc: 'Contribute or Open Issues on our Github repo.',
+  },
+  {
+    name: 'Twitter',
+    icon: '',
+    desc: 'Whatcha gonna\' say?',
+  },
+]

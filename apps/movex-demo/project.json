@@ -10,7 +10,8 @@
       "defaultConfiguration": "production",
       "options": {
         "root": "apps/movex-demo",
-        "outputPath": "dist/apps/movex-demo"
+        "outputPath": "dist/apps/movex-demo",
+        "postcssConfig": "apps/movex-demo/postcss.config.js"
       },
       "configurations": {
         "development": {
@@ -24,7 +25,8 @@
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "movex-demo:build",
-        "dev": true
+        "dev": true,
+        "postcssConfig": "apps/movex-demo/postcss.config.js"
       },
       "configurations": {
         "development": {

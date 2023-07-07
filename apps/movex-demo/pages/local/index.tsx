@@ -26,6 +26,7 @@ export function Index() {
           display: 'flex',
           flexDirection: 'row',
           gap: 40,
+          height: '100%',
         }}
       >
         <MovexLocalInstance
