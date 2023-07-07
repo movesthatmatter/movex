@@ -2,7 +2,6 @@ import {
   MovexBoundResource,
   MovexLocalInstance,
   MovexLocalMasterProvider,
-  MovexProvider
 } from 'movex-react';
 import movexConfig from 'libs/movex-examples/src/movex.config';
 import { useState } from 'react';
@@ -23,7 +22,7 @@ export function Index() {
   }
 
   return (
-    <MovexProvider socketUrl='localhost:3333' movexDefinition={movexConfig}>
+    <MovexLocalMasterProvider movexDefinition={movexConfig}>
       <MovexLocalInstance
         clientId={user}
         movexDefinition={movexConfig}

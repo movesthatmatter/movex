@@ -44,9 +44,7 @@ import { features, faqs, community } from '../modules/home/homeVars';
 }}>
 
   <div className="container mx-auto max-w-[90rem] gap-2 pl-[max(env(safe-area-inset-left),1.5rem)] pr-[max(env(safe-area-inset-right),1.5rem)] p-16">
-    <div style={{
-      height: 200,
-    }} className="mb-10">
+    <div className="mb-10">
       <h1 className="text-7xl text-black font-bold">
         Try Movex with a Game of
         <span className="text-purple-500">
@@ -57,9 +55,14 @@ import { features, faqs, community } from '../modules/home/homeVars';
       </h1>
     </div>
 
-    <iframe src="http://localhost:4200/local/rps" className="w-full h-full" style={{
-      height: 500
-    }} />
+    <div className="w-full flex">
+      <iframe src="http://localhost:4200/local/rps/2?user=a" className="w-full h-full" style={{
+        height: 500
+      }} />
+      <iframe src="http://localhost:4200/local/rps/2?user=b" className="w-full h-full" style={{
+        height: 500
+      }} />
+    </div>
 
   </div>
 </div>

@@ -8,7 +8,7 @@ import '../globals.css';
 
 function CustomApp({ Component, pageProps }: AppProps) {
   return (
-    <MovexLocalMasterProvider movexDefinition={movexConfig}>
+    <>
       <Head>
         <title>Welcome to movex-demo!</title>
       </Head>
@@ -16,7 +16,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
         <Component {...pageProps} />
         <Analytics />
       </main>
-    </MovexLocalMasterProvider>
+    </>
   );
 }
 
