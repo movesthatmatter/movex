@@ -1,12 +1,12 @@
 import { tillNextTick } from '../../specs/util/misc';
-import { LocalMovexStore } from './LocalMovexStore';
+import { MemoryMovexStore } from './MemoryMovexStore';
 require('console-group').install();
 
 describe('Concurrency', () => {
   test('Concurrent Updates wait for each other in FIFO order instead of updating at the same time, resulting in the 2nd update to work with stale state', async () => {
     const rid = 'test:1';
 
-    const store = new LocalMovexStore<{ count: number }>({
+    const store = new MemoryMovexStore<{ count: number }>({
       [rid]: {
         count: 0,
       },

@@ -18,6 +18,7 @@ export type IOEvents<
   createResource: (p: {
     resourceType: TResourceType;
     resourceState: TState;
+    resourceId?: string;
     // clientId: MovexClient['id']; // Needed?
   }) => IOPayloadResult<
     {

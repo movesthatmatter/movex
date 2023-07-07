@@ -55,14 +55,15 @@ export class MovexMasterResource<
 
   create<TResourceType extends GenericResourceType>(
     resourceType: TResourceType,
-    state: TState
+    resourceState: TState,
+    resourceId?: string
   ) {
     return (this.store as MovexStore<TState, TResourceType>).create(
       toResourceIdentifierStr({
         resourceType,
-        resourceId: getUuid(), // should this be defined here? Probably but it could also be given from outside
+        resourceId: resourceId || getUuid(),
       }),
-      state
+      resourceState
     );
   }
 

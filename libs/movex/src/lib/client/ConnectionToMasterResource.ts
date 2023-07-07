@@ -8,7 +8,6 @@ import {
   GetIOPayloadErrTypeFrom,
   GetIOPayloadOKTypeFrom,
   invoke,
-  logsy,
   ResourceIdentifier,
   ResourceIdentifierStr,
   toResourceIdentifierObj,
@@ -92,17 +91,14 @@ export class ConnectionToMasterResource<
     ];
   }
 
-  create(resourceType: TResourceType, resourceState: TState) {
+  create(
+    resourceType: TResourceType,
+    resourceState: TState,
+    resourceId?: string // Sometimes the id of the resource must be given from outside
+  ) {
     type CreateEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['createResource']
     >;
-    logsy.log(
-      '[ConnectionToMasterResource].create',
-      this.connectionToMaster.clientId,
-      resourceType,
-      resourceState
-    );
-
     return AsyncResult.toAsyncResult<
       GetIOPayloadOKTypeFrom<CreateEvent>,
       GetIOPayloadErrTypeFrom<CreateEvent>
@@ -112,6 +108,7 @@ export class ConnectionToMasterResource<
           // clientId: this.connectionToMaster.clientId,
           resourceState,
           resourceType,
+          resourceId,
         })
         .then((res) =>
           res.ok
@@ -150,7 +147,6 @@ export class ConnectionToMasterResource<
             console.log('Emitter', this.connectionToMaster.emitter);
             console.trace('Trace');
           }
-          
 
           return res;
         })

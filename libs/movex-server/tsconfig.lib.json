@@ -6,6 +6,6 @@
     "types": ["node"],
     "module": "CommonJS"
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "src/bin.js"],
   "exclude": ["jest.config.ts", "**/*.spec.ts", "**/*.test.ts"]
 }

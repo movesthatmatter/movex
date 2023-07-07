@@ -15,9 +15,11 @@ type Props = {
     'rps'
   >;
   userId: string;
+  buttonClassName?: string;
+  containerClassName?: string;
 };
 
-export const Main: React.FC<Props> = ({ boundResource, userId }) => {
+export const Main: React.FC<Props> = ({ boundResource, userId, ...props }) => {
   const { state, dispatch, dispatchPrivate } = boundResource;
 
   const myPlayerLabel = useMemo((): PlayerLabel | undefined => {
@@ -118,7 +120,7 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
   }, [state.winner]);
 
   return (
-    <div style={{}} className='p-10'>
+    <div className="">
       {state.winner ? (
         <div>
           <h3>
@@ -145,6 +147,7 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
               <div>Opponent Submitted</div>
             )}
           <button
+            className={props.buttonClassName}
             style={{
               margin: '1em',
               padding: '1em',
@@ -152,23 +155,27 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
                 state.submissions[myPlayerLabel]?.play === 'rock' && {
                   background: 'red',
                 }),
+              fontSize: '100px',
             }}
             onClick={() => submit('rock')}
           >
-            Rock
+            👊
           </button>
           <button
-            style={{
-              margin: '1em',
-              padding: '1em',
-              ...(myPlayerLabel &&
-                state.submissions[myPlayerLabel]?.play === 'paper' && {
-                  background: 'red',
-                }),
-            }}
+
+            // style={{
+            //   margin: '1em',
+            //   padding: '1em',
+            //   ...(myPlayerLabel &&
+            //     state.submissions[myPlayerLabel]?.play === 'paper' && {
+            //       background: 'red',
+            //       borderRadius: '100%',
+            //     }),
+            //   fontSize: '100px',
+            // }}
             onClick={() => submit('paper')}
           >
-            Paper
+            ✋
           </button>
           <button
             style={{
@@ -178,10 +185,11 @@ export const Main: React.FC<Props> = ({ boundResource, userId }) => {
                 state.submissions[myPlayerLabel]?.play === 'scissors' && {
                   background: 'red',
                 }),
+              fontSize: '100px',
             }}
             onClick={() => submit('scissors')}
           >
-            Scissors
+            ✌️
           </button>
         </div>
       )}

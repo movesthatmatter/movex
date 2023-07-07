@@ -26,13 +26,11 @@ import { Pubsy } from 'ts-pubsy';
 
 const logsy = globalLogsy.withNamespace('[LocalMovexStore]');
 
-export class LocalMovexStore<
+export class LocalStorageMovexStore<
   TState,
   TResourceType extends GenericResourceType = GenericResourceType
 > implements MovexStore<TState, TResourceType>
 {
-  private local: Record<string, MovexStoreItem<TState, TResourceType>> = {};
-
   private locks: Record<string, PromiseDelegate> = {};
 
   private pubsy = new Pubsy<{
@@ -41,20 +39,29 @@ export class LocalMovexStore<
   }>();
 
   constructor(
+    private store: Storage,
     initialResources?: Record<ResourceIdentifierStr<TResourceType>, TState>
   ) {
     if (initialResources) {
-      this.local = objectKeys(initialResources).reduce((accum, nextRid) => {
-        return {
-          ...accum,
-          [nextRid]: {
+      objectKeys(initialResources).forEach((nextRid) => {
+        this.store.setItem(
+          nextRid,
+          this.encodeItem({
             rid: nextRid,
             state: computeCheckedState(initialResources[nextRid]),
             subscribers: {},
-          },
-        };
-      }, {} as Record<string, MovexStoreItem<TState, TResourceType>>);
+          })
+        );
+      });
     }
+  }
+
+  private encodeItem(item: MovexStoreItem<TState, TResourceType>) {
+    return JSON.stringify(item);
+  }
+
+  private decodeItem(str: string): MovexStoreItem<TState, TResourceType> {
+    return JSON.parse(str);
   }
 
   private async createLock(name: string) {
@@ -123,19 +130,32 @@ export class LocalMovexStore<
     MovexStoreItem<TState, TResourceType>,
     MovexStoreGetResourceError
   > {
-    const item = this.local[toResourceIdentifierStr(rid)];
+    // const item = this.local[toResourceIdentifierStr(rid)];
+    const rawItem = this.store.getItem(toResourceIdentifierStr(rid));
 
-    if (item) {
-      return new AsyncOk(item);
+    if (!rawItem) {
+      return new AsyncErr({
+        type: 'MovexStoreError',
+        reason: 'ResourceInexistent',
+        content: {
+          rid,
+        },
+      });
     }
 
-    return new AsyncErr({
-      type: 'MovexStoreError',
-      reason: 'ResourceInexistent',
-      content: {
-        rid,
-      },
-    });
+    const item = this.decodeItem(rawItem);
+
+    if (!item) {
+      return new AsyncErr({
+        type: 'MovexStoreError',
+        reason: 'ResourceIsCorrupt',
+        content: {
+          rid,
+        },
+      });
+    }
+
+    return new AsyncOk(item);
   }
 
   create(rid: ResourceIdentifier<TResourceType>, nextState: TState) {
@@ -147,10 +167,7 @@ export class LocalMovexStore<
       subscribers: {},
     };
 
-    this.local = {
-      ...this.local,
-      [ridStr]: next,
-    };
+    this.store.setItem(ridStr, this.encodeItem(next));
 
     return new AsyncOk(next)
       .map(
@@ -189,28 +206,26 @@ export class LocalMovexStore<
     MovexStoreItem<TState, TResourceType>,
     MovexStoreUpdateResourceError
   > {
-    const logId = String(Math.random()).slice(-3);
     return new AsyncResultWrapper(async () => {
       const unlock = await this.createLock(toResourceIdentifierStr(rid));
 
       return (
         this.getWithoutLock(rid)
           .map((prev) => {
-            const nextItem =
+            const nextPartialItem =
               typeof getNext === 'function' ? getNext(prev) : getNext;
 
-            this.local = {
-              ...this.local,
-              [prev.rid]: {
-                ...prev,
-                ...nextItem,
+            const nextItem = {
+              ...prev,
+              ...nextPartialItem,
 
-                // This cannot be changed!
-                rid: prev.rid,
-              },
+              // This cannot be changed!
+              rid: prev.rid,
             };
 
-            return this.local[prev.rid];
+            this.store.setItem(prev.rid, this.encodeItem(nextItem));
+
+            return nextItem;
           })
           // Unlock it
           .map(AsyncResult.passThrough(unlock))
@@ -243,16 +258,14 @@ export class LocalMovexStore<
     }));
   }
 
-  remove(key: string) {
-    const { [key]: remove, ...rest } = this.local;
-
-    this.local = rest;
+  remove(rid: ResourceIdentifier<TResourceType>) {
+    this.store.removeItem(toResourceIdentifierStr(rid));
 
     return AsyncOk.EMPTY;
   }
 
   clearAll() {
-    this.local = {};
+    this.store.clear();
 
     return AsyncOk.EMPTY;
   }
@@ -266,6 +279,6 @@ export class LocalMovexStore<
   }
 
   all() {
-    return this.local;
+    return this.store;
   }
 }
