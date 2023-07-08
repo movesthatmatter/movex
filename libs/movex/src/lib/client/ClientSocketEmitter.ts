@@ -235,8 +235,6 @@ export class ClientSocketEmitter<
       const reqId = `${event}(${String(Math.random()).slice(-3)})`;
       const connection = await this.socketConnection;
 
-      logsy.info('[SocketEmitter]', reqId, 'Emit:', event, request);
-
       connection.emit(
         event,
         request,
