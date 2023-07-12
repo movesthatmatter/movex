@@ -1,20 +1,16 @@
-import {
-  MovexBoundResource,
-  MovexLocalInstance,
-  MovexLocalMasterProvider,
-  MovexProvider
-} from 'movex-react';
+import { MovexBoundResource, MovexProvider } from 'movex-react';
 import movexConfig from 'libs/movex-examples/src/movex.config';
 import { useState } from 'react';
 import { ResourceIdentifier } from 'movex-core-util';
 import { Rps } from 'movex-examples';
 import { useRouter } from 'next/router';
-import { toRidAsStr } from 'movex';
 import { RPSUi } from 'apps/movex-demo/modules/rock-paper-scissors/RPSUi';
 
 export function Index() {
   const [rpsRid, setRpsRid] = useState<ResourceIdentifier<'rps'>>();
-  const { rpsId, user } = useRouter().query;
+  const { rpsId, user, backgroundColor } = useRouter().query;
+
+  console.log('backgroundColor 2', backgroundColor);
 
   if (
     !(rpsId && typeof rpsId === 'string' && user && typeof user === 'string')
@@ -23,8 +19,9 @@ export function Index() {
   }
 
   return (
-    <MovexProvider socketUrl='localhost:3333' movexDefinition={movexConfig}>
-      <MovexLocalInstance
+    <>
+      <MovexProvider
+        socketUrl="localhost:3333"
         clientId={user}
         movexDefinition={movexConfig}
         onConnected={(movex) => {
@@ -46,21 +43,20 @@ export function Index() {
             rid={rpsRid}
             movexDefinition={movexConfig}
             render={({ boundResource, clientId }) => (
-              <div className="w-full">
-                <div className="">
-                  <RPSUi boundResource={boundResource} userId={clientId} />
-                </div>
-                <div className="bg-slate-100">
-                  <span>rid: {toRidAsStr(rpsRid)}</span>
-                  <span>{'    '}</span>
-                  <span>user: {clientId}</span>
-                </div>
-              </div>
+              <RPSUi
+                boundResource={boundResource}
+                userId={clientId}
+                backgroundColor={
+                  typeof backgroundColor === 'string'
+                    ? backgroundColor
+                    : undefined
+                }
+              />
             )}
           />
         )}
-      </MovexLocalInstance>
-    </MovexLocalMasterProvider>
+      </MovexProvider>
+    </>
   );
 }
 

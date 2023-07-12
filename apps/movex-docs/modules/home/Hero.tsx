@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../components/Button';
 import Link from 'next/link';
 import { useCurrentTheme } from '../../hooks/useCurrentTheme';
-import { Code, CopyToClipboard, Pre } from 'nextra/components';
+import { Code, Pre } from 'nextra/components';
 
 type Props = {};
 
@@ -78,11 +78,16 @@ export const Hero: React.FC<Props> = () => {
             Get Started
           </Button>
         </Link>
-        <Link href="#examples">
+        <Link href="https://github.com/movesthatmatter/movex" target='_blank'>
+          <Button type='clear' className="">
+            See Github
+          </Button>
+        </Link>
+        {/* <Link href="#examples">
           <Button type="clear" className="">
             See Exmaples
           </Button>
-        </Link>
+        </Link> */}
       </div>
 
       <div

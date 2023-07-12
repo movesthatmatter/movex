@@ -15,11 +15,14 @@ html {
   line-height: 1.5;
   tab-size: 4;
   scroll-behavior: smooth;
+  background: transparent;
 }
 body {
   font-family: inherit;
   line-height: inherit;
   margin: 0;
+  background: transparent;
+  background: blue;
 }
 h1,
 h2,

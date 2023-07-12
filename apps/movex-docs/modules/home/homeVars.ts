@@ -4,6 +4,7 @@ import {
   HeartIcon,
   FlagIcon,
 } from '@heroicons/react/24/outline';
+import themeConfig from '../../theme.config';
 
 export const features = [
   {
@@ -69,10 +70,10 @@ export const faqs = [
       url: '/docs/features/server_authoritative',
     },
   },
-  {
-    q: 'Can I use Movex with "X" framework or game engine?',
-    a: "At the moment, we haven't tried it on any game engine (but will do that in the close future) but in theory it should work with any application (or game) as long as the codebase is in javascript/typescript.",
-  },
+  // {
+  //   q: 'Can I use Movex with "X" framework or game engine?',
+  //   a: "At the moment, we haven't tried it on any game engine (but will do that in the close future) but in theory it should work with any application (or game) as long as the codebase is in javascript/typescript.",
+  // },
   {
     q: 'What kind of games can I build with Movex?',
     a: "Movex uses Deterministic Action Propagation under the hood, which means it's propagating Actions (small bits of data) from client to server and server to client(s). This works great for games (or applications) with unfrequent changes (traffic) such as a turn-based game (e.g. Age of Empires) but will most likely not be enough for a shooter or something that requires a lot of user input sent over the network. There are some ideas to make that possible in the future as well.",
@@ -82,10 +83,10 @@ export const faqs = [
     }
   },
   {
-    q: 'Can I use Movex React?',
+    q: 'Can I use Movex with React?',
     a: "Yes. Just use `movex-react`.",
     link: {
-      label: "Get Started with React",
+      label: "See how",
       url: "http://localhost:3000/docs/overview/get_started"
     }
   },
@@ -96,15 +97,18 @@ export const community = [
     name: 'Discord',
     icon: '',
     desc: 'Get your questions answered right away on Discord',
+    link: themeConfig.chat?.link || '',
   },
   {
     name: 'Github',
     icon: '',
     desc: 'Contribute or Open Issues on our Github repo.',
+    link: themeConfig.project?.link || '',
   },
-  {
-    name: 'Twitter',
-    icon: '',
-    desc: 'Whatcha gonna\' say?',
-  },
+  // {
+  //   name: 'Twitter',
+  //   icon: '',
+  //   desc: 'Whatcha gonna\' say?',
+  //   link: themeConfig.project?.link || '',
+  // },
 ]
