@@ -1,0 +1,74 @@
+# Deploying Movex
+
+Event though you don't have to write any server specific code for Movex to work there still needs to be a server running the show. It's waht makes [Server-Authoritative](/docs/features/server_authoritative) possible.
+
+### 1. Generic Deploying
+
+_This example uses yarn, but you should change the installing commands to the prefered package manager._
+
+1. Make sure the Cli (Movex-Service) is installed
+
+```bash copy
+yarn add --dev movex-service
+```
+
+2. Install all the project dependencies
+
+```bash copy
+yarn;
+```
+
+3. Serve it
+```bash copy
+npx movex serve
+```
+
+### 2. Via Docker
+
+Here is a sample Dockerfile. You can paste it as is if you're using 'yarn' or change to accordingly to the package manager of your choice (lines 12-13).
+
+```docker showLineNumbers copy {12-13}
+FROM node:16-alpine as builder
+
+ENV NODE_ENV build
+
+# USER node
+WORKDIR /home/node
+
+COPY ./package*.json ./
+COPY ./yarn.lock ./
+
+# Install global deps
+RUN apk add g++ make py3-pip git yarn
+RUN rm -rf node_modules && yarn install --frozen-lockfile && yarn add movex-server movex-service
+
+COPY --chown=node:node . .
+
+CMD ["npx", "movex build"]
+
+# RUN node build
+
+# ---
+
+FROM node:16-alpine
+
+ENV NODE_ENV production
+
+EXPOSE 3333
+
+# USER node
+WORKDIR /home/node
+
+COPY --from=builder --chown=node:node /home/node/local ./local/
+COPY --from=builder --chown=node:node /home/node/node_modules/ ./node_modules/
+COPY --from=builder --chown=node:node /home/node/dist/ ./dist/
+COPY --from=builder --chown=node:node /home/node/runner.js ./
+
+ENTRYPOINT ["node", "runner.js"]
+```
+
+Also, make sure to map the Exposed PORT (i.e. 3333) to the desired port when you're running the built image. 
+
+```bash copy
+ docker run -d -p 3333:{MY_PORT}
+```
