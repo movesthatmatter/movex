@@ -1,4 +1,4 @@
-export * from './MovexProvider';
+export { MovexProviderClass as MovexProvider } from './MovexProviderClass';
 export * from './MovexContext';
 export * from './MovexBoundResource';
 export * from './hooks';

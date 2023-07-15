@@ -149,7 +149,7 @@ export class MovexMasterServer {
         p: ReturnType<IOEvents<S, A, TResourceType>['createResource']>
       ) => void
     ) => {
-      const { resourceState, resourceType } = payload;
+      const { resourceState, resourceType, resourceId } = payload;
       const masterResource = this.masterResourcesByType[resourceType];
 
       if (!masterResource) {
@@ -157,7 +157,7 @@ export class MovexMasterServer {
       }
 
       masterResource
-        .create(resourceType, resourceState)
+        .create(resourceType, resourceState, resourceId)
         .map((r) =>
           acknowledge?.(
             new Ok({
@@ -171,7 +171,7 @@ export class MovexMasterServer {
             logsy.error('');
           })
         )
-        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
     const onAddResourceSubscriber = (

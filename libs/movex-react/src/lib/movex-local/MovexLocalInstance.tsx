@@ -1,6 +1,6 @@
 import React from 'react';
 import { MovexDefinition, BaseMovexDefinitionResourcesMap } from 'movex';
-import { MovexClient } from 'movex-core-util';
+import { MovexClient, StringKeys } from 'movex-core-util';
 import { MovexContextProps } from '../MovexContext';
 import { MovexLocalProvider } from './MovexLocalProvider';
 
@@ -25,7 +25,7 @@ type State = {
 
 export class MovexLocalInstance<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
-  TResourceType extends Extract<keyof TResourcesMap, string>
+  TResourceType extends StringKeys<TResourcesMap>
 > extends React.Component<Props<TResourcesMap, TResourceType>, State> {
   constructor(props: Props<TResourcesMap, TResourceType>) {
     super(props);

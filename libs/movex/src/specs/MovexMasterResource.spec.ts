@@ -6,14 +6,14 @@ import { MovexMasterResource } from '../lib/master/MovexMasterResource';
 import { computeCheckedState } from '../lib/util';
 import { GetReducerAction } from '../lib/tools/reducer';
 import gameReducer, { initialGameState } from './resources/gameReducer';
-import { LocalMovexStore } from '../lib/movex-store';
+import { MemoryMovexStore } from '../lib/movex-store';
 
 const rid = toResourceIdentifierStr({ resourceType: 'c', resourceId: '1' });
 
 test('gets initial state', async () => {
   const master = new MovexMasterResource(
     counterReducer,
-    new LocalMovexStore({
+    new MemoryMovexStore({
       [rid]: initialCounterState,
     })
   );
@@ -32,7 +32,7 @@ test('gets initial state', async () => {
 test('applies public action', async () => {
   const master = new MovexMasterResource(
     counterReducer,
-    new LocalMovexStore({
+    new MemoryMovexStore({
       [rid]: initialCounterState,
     })
   );
@@ -73,7 +73,7 @@ test('applies public action', async () => {
 test('applies only one private action w/o getting to reconciliation', async () => {
   const master = new MovexMasterResource(
     counterReducer,
-    new LocalMovexStore({
+    new MemoryMovexStore({
       [rid]: initialCounterState,
     })
   );
@@ -137,7 +137,7 @@ test('applies only one private action w/o getting to reconciliation', async () =
 test('applies private action UNTIL Reconciliation', async () => {
   const master = new MovexMasterResource(
     gameReducer,
-    new LocalMovexStore({
+    new MemoryMovexStore({
       [rid]: initialGameState,
     })
   );

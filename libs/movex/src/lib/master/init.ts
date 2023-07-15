@@ -1,5 +1,5 @@
-import { invoke, logsy, objectKeys } from 'movex-core-util';
-import { LocalMovexStore, MovexStore } from '../movex-store';
+import { objectKeys } from 'movex-core-util';
+import { MovexStore } from '../movex-store';
 import {
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
@@ -11,33 +11,8 @@ export const initMovexMaster = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap
 >(
   definition: MovexDefinition<TResourcesMap>,
-  movexStore: 'memory' | MovexStore<any, any> = 'memory' // | 'redis' once it's implemented
+  store: MovexStore<any, any> // | 'redis' once it's implemented
 ) => {
-  const store = invoke(() => {
-    if (movexStore === 'memory') {
-      const localStore = new LocalMovexStore();
-
-      localStore.onCreated((s) => {
-        logsy.group('[Master.LocalStore] onCreated');
-        logsy.log('Item', s);
-        logsy.log('All Store', localStore.all());
-        logsy.groupEnd();
-      });
-
-      localStore.onUpdated((s) => {
-        logsy.group('[Master.LocalStore] onUpdated');
-        logsy.log('Item', s);
-        logsy.log('All Store', localStore.all());
-        logsy.groupEnd();
-      });
-
-      return localStore;
-    }
-
-    // TODO: This can be redis well
-    return movexStore;
-  });
-
   const mapOfResouceReducers = objectKeys(definition.resources).reduce(
     (accum, nextResoureType) => {
       const nextReducer = definition.resources[nextResoureType];

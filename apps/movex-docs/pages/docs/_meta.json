@@ -1,7 +1,8 @@
 {
-  "what": "What is Movex?",
   "overview": "Overview",
+  "features": "Features",
   "usage": "Using Movex",
+  "deploy": "Deploy Movex",
   "how": "How it works",
   "constraints": "Constraints"
 }

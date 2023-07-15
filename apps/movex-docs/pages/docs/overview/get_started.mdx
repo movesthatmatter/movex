@@ -1,0 +1,339 @@
+# Getting Started
+
+A small React example to get you up and running with Movex. 
+
+You can see the code here https://github.com/movesthatmatter/movex-counter-example.
+
+### Pre-requisites: Create React App and Run it
+
+See more [here](https://create-react-app.dev/docs/getting-started).
+
+```bash copy
+npx create-react-app my-movex-app --template typescript
+cd my-movex-app
+yarn start
+```
+
+### 1. Install it
+
+```bash copy
+yarn add movex movex-react; yarn add --dev movex-service
+```
+
+### 3. Create the Movex Config File
+
+```ts copy filename="src/movex.config.ts"
+export default {
+  url: undefined,
+  resources: {},
+};
+```
+
+### 2. Start Movex in Dev Mode
+
+```bash copy
+npx movex dev
+```
+
+### 3. Wrap the App in the MovexProvider
+
+```ts copy filename="src/App.tsx" {4-5, 9-15, 32}
+import React from 'react';
+import logo from './logo.svg';
+import './App.css';
+import { MovexProvider } from 'movex-react';
+import movexConfig from './movex.config';
+
+function App() {
+  return (
+    <MovexProvider
+      movexDefinition={movexConfig}
+      socketUrl="localhost:3333"
+      onConnected={() => {
+        console.log('Movex Connected');
+      }}
+    >
+      <div className="App">
+        <header className="App-header">
+          <img src={logo} className="App-logo" alt="logo" />
+          <p>
+            Edit <code>src/App.tsx</code> and save to reload.
+          </p>
+          <a
+            className="App-link"
+            href="https://reactjs.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Learn React
+          </a>
+        </header>
+      </div>
+    </MovexProvider>
+  );
+}
+
+export default App;
+```
+
+### 4. Add a Movex Resource
+
+In this short tutorial we're going to build a Counter App that will sync in realtime with anybody who loads it out of the box.
+
+###### Add the movex file (action, state, reducer) to define the resource.
+
+```ts copy filename="src/counter.movex.ts"
+import { Action } from 'movex';
+
+// State
+export type CounterState = {
+  count: number;
+};
+
+export const initialCounterState: CounterState = {
+  count: 0,
+};
+
+// Actions
+export type CounterActions =
+  | Action<'increment'>
+  | Action<'decrement'>
+  | Action<'incrementBy', number>;
+
+// Reducer
+export const reducer = (
+  state = initialCounterState,
+  action: CounterActions
+) => {
+  if (action.type === 'increment') {
+    return {
+      ...state,
+      count: state.count + 1,
+    };
+  }
+
+  if (action.type === 'decrement') {
+    return {
+      ...state,
+      count: state.count - 1,
+    };
+  }
+
+  if (action.type === 'incrementBy') {
+    return {
+      ...state,
+      count: state.count + action.payload,
+    };
+  }
+
+  return state;
+};
+
+export default reducer;
+```
+
+###### And Reference it in the movex.config file by a name (counter)
+
+```ts copy filename="src/movex.config.ts" {1, 5-7}
+import counterReducer from './counter.movex';
+
+export default {
+  url: undefined,
+  resources: {
+    counter: counterReducer,
+  },
+};
+```
+
+### 5. Let's add the Counter Component
+
+For this tutorial, well keep the UI very basic since it's not the main point.
+
+```ts copy showLineNumbers filename="src/Counter.tsx"
+import { useMovexBoundResourceFromRid } from 'movex-react';
+import React from 'react';
+import movexConfig from './movex.config';
+import { ResourceIdentifier } from 'movex';
+
+type Props = {
+  rid: ResourceIdentifier<'counter'>;
+};
+
+export const Counter: React.FC<Props> = (props) => {
+  const counter = useMovexBoundResourceFromRid(movexConfig, props.rid);
+
+  if (!counter) {
+    return null;
+  }
+
+  return (
+    <div>
+      <button>Increment</button>
+      <h1>{counter.state.count}</h1>
+      <button>Decrement</button>
+    </div>
+  );
+};
+```
+
+##### What's happening here?
+
+On line 11 we're binding to the counter resource by rid. This means that now we get access to the Resource state by `counter.state` and to the Action Dispatcher by accessing `counter.dispatch()`
+
+In the following lines we're rendering a very simple UI, which displays the Counter State at _line 20_ and adding two Buttons which will be responsible for trigger the "Increment" and "Decrement" actions.
+
+### 5. And hook it up with our App
+
+```ts copy showLineNumbers filename="src/App.tsx" {5-7, 10-13, 22-29, 32-39}
+import React, { useMemo } from 'react';
+import './App.css';
+import { MovexProvider } from 'movex-react';
+import movexConfig from './movex.config';
+import { toRidAsStr, ResourceIdentifier } from 'movex';
+import { initialCounterState } from './counter.movex';
+import { Counter } from './Counter';
+
+function App() {
+  const counterRid = useMemo(() => {
+    const params = new URL(window.location as any).searchParams;
+    return params.get('rid') as ResourceIdentifier<'counter'>;
+  }, [window.location.href]);
+
+  return (
+    <MovexProvider
+      movexDefinition={movexConfig}
+      socketUrl="localhost:3333"
+      onConnected={(instance) => {
+        console.log('Movex Connected');
+
+        if (!counterRid) {
+          instance
+            .register('counter')
+            .create(initialCounterState)
+            .map((counterResource) => {
+              window.location.href += `?rid=${toRidAsStr(counterResource.rid)}`;
+            });
+        }
+      }}
+    >
+      <div
+        className="App"
+        style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {counterRid && <Counter rid={toRidAsStr(counterRid)} />}
+      </div>
+    </MovexProvider>
+  );
+}
+
+export default App;
+```
+
+#### What's going on here?
+
+To keep things simple, we're creating a new Counter Resource as soon as posisble – once a movex instance is connected (_Lines 22-29_).
+
+Once the Resource gets created (_line 27_), we add its rid (_ResourceIdentifier_) to the url param so it can be used by an outsider as well. More on this later.
+
+{/* Teh counterRid at line 10, simply reads the url */}
+Then, render the Counter Component if there is a rid set in the url params.
+
+This is how it looks like so far:
+
+<br />
+
+import Image from 'next/image';
+
+<Image
+  src="/static/get_started/counter_ui_1.png"
+  alt="Hello"
+  width={700}
+  height={500}
+/>
+
+### 5. Let's add the Actions
+
+At this point we can see the state of the Counter Resource but cannot do much with it.
+
+Let's make that possible by `dispatching` some `actions` in the on click handlers of the "Increment" and "Decrement" buttons we created above.
+
+It should look like this.
+
+```ts copy showLineNumbers filename="src/Counter.tsx" {20-24, 30-34}
+import { useMovexBoundResourceFromRid } from 'movex-react';
+import React from 'react';
+import movexConfig from './movex.config';
+import { ResourceIdentifier } from 'movex';
+
+type Props = {
+  rid: ResourceIdentifier<'counter'>;
+};
+
+export const Counter: React.FC<Props> = (props) => {
+  const counter = useMovexBoundResourceFromRid(movexConfig, props.rid);
+
+  if (!counter) {
+    return null;
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => {
+          counter.dispatch({
+            type: 'increment',
+          });
+        }}
+      >
+        Increment
+      </button>
+      <h1>{counter.state.count}</h1>
+      <button
+        onClick={() => {
+          counter.dispatch({
+            type: 'decrement',
+          });
+        }}
+      >
+        Decrement
+      </button>
+    </div>
+  );
+};
+```
+
+And you should be able to see this:
+
+<br />
+
+<Image
+  src="/static/get_started/counter_1_screen_2.gif"
+  alt="Hello"
+  width={700}
+  height={500}
+/>
+
+### 6. Now bring in multi-players
+
+Open the URL in another browser tab or 2, or even 9 and start clicking the buttons. The changes will be synced in realtime, without any server-side coding.
+
+<Image
+  src="/static/get_started/counter_9_screens.gif"
+  alt="Hello"
+  style={{
+    marginTop: '1em',
+  }}
+  width={700}
+  height={500}
+/>
+
+The world is your oyster now – go make multiplayer gameees! :D
+
+### 7. Homework
+
+If you want an extra step, implement the "incrementBy" Action and functionality.

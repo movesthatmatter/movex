@@ -1,6 +1,4 @@
-import { invoke } from 'movex-core-util';
 import { AnyAction, ToPrivateAction, ToPublicAction } from '../tools/action';
-import { UnsubscribeFn } from '../core-types';
 import { MovexResourceObservable } from './MovexResourceObservable';
 
 /**
@@ -12,8 +10,6 @@ export class MovexBoundResource<
   TState = any,
   TAction extends AnyAction = AnyAction
 > {
-  private unsubscribers: UnsubscribeFn[] = [];
-
   public rid = this.observable.rid;
 
   constructor(private observable: MovexResourceObservable<TState, TAction>) {}
@@ -37,8 +33,8 @@ export class MovexBoundResource<
     return this.observable.getUncheckedState();
   };
 
-  // This to be called when destroying not used anymore in order to clean the update subscriptions
+  // This to be called when not used anymore in order to clean the update subscriptions
   destroy = () => {
-    this.unsubscribers.forEach(invoke);
+    this.observable.destroy();
   };
 }

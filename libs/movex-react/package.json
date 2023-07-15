@@ -1,6 +1,6 @@
 {
   "name": "movex-react",
-  "version": "0.0.5",
+  "version": "0.0.6-27",
   "license": "MIT",
   "description": "Movex React is the library of React components for Movex",
   "author": {
@@ -17,7 +17,11 @@
     "app",
     "framework"
   ],
+  "type": "commonjs",
   "engines": {
     "node": ">= 0.14.0"
+  },
+  "peerDependencies": {
+    "react": "18.0.0"
   }
 }

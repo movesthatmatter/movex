@@ -44,10 +44,19 @@ export type ResourceInexistentError = ResultError<{
   };
 }>;
 
+export type ResourceIsCorruptError = ResultError<{
+  type: 'MovexStoreError';
+  reason: 'ResourceIsCorrupt';
+  content: {
+    rid: AnyResourceIdentifier;
+  };
+}>;
+
 type GenericMovexStoreError = GenericResultError<'MovexStoreError'>;
 
 export type MovexStoreGetResourceError =
   | ResourceInexistentError
+  | ResourceIsCorruptError
   | GenericMovexStoreError;
 
 export type MovexStoreCreateResourceError =
@@ -59,6 +68,7 @@ export type MovexStoreCreateResourceError =
 
 export type MovexStoreUpdateResourceError =
   | ResourceInexistentError
+  | ResourceIsCorruptError
   | GenericMovexStoreError;
 
 export type MovexStoreRemoveResourceError =
@@ -116,7 +126,7 @@ export interface MovexStore<
     MovexStoreUpdateResourceError
   >;
   remove: (
-    rid: GenericResourceType
+    rid: ResourceIdentifier<TResourceType>
   ) => AsyncResult<void, MovexStoreRemoveResourceError>;
 
   clearAll: () => AsyncResult<void, GenericMovexStoreError>;

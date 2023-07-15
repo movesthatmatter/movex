@@ -27,8 +27,6 @@ export class SocketIOEmitter<TEventMap extends EventMap>
     this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
 
-    logsy.debug('[SocketEmitter] constructing');
-
     // This might need to be moved from here into the master connection or somewhere client specific!
     this.socket.onAny((ev, clientId) => {
       if (ev === '$setClientId' && typeof clientId === 'string') {
@@ -62,6 +60,8 @@ export class SocketIOEmitter<TEventMap extends EventMap>
       ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
+    logsy.debug('[SocketEmitter] unsubscribed to:', event);
+
     this.socket.off(event as string, listener);
 
     return this;

@@ -1,5 +1,5 @@
 import io from 'socket.io-client';
-import { SocketIOEmitter, objectKeys } from 'movex-core-util';
+import { SocketIOEmitter, logsy, objectKeys } from 'movex-core-util';
 import { ConnectionToMaster } from './ConnectionToMaster';
 import { IOEvents } from '../io-connection/io-events';
 import {
@@ -9,7 +9,7 @@ import {
 import { MovexFromDefintion } from './MovexFromDefintion';
 import { MockConnectionEmitter } from '../../specs/util/MockConnectionEmitter';
 import { MovexMasterResource, MovexMasterServer } from '../master';
-import { LocalMovexStore } from '../movex-store';
+import { MemoryMovexStore } from '../movex-store';
 import { orchestrateDefinedMovex } from '../../specs/util/orchestrator';
 import { Master } from 'movex';
 
@@ -104,7 +104,7 @@ export const initMovexWithLocalMaster = <
   //  { movex: Movex, addNewClientConnection: () => {}}
   // or simply returns that method: addNewClient, which return a Movex (for the client) when added!
 
-  const masterStore = new LocalMovexStore<any>();
+  const masterStore = new MemoryMovexStore<any>();
 
   const mapOfResouceReducers = objectKeys(movexDefinition.resources).reduce(
     (accum, nextResoureType) => {
@@ -155,7 +155,7 @@ export const initMovexWithLocalMaster = <
       });
     },
     removeClient: (clientId: string) => {
-      console.log('[MovexServer] Client Disconnected', clientId);
+      logsy.log('[MovexServer] Client Disconnected', clientId);
 
       masterServer.removeConnection(clientId);
     },

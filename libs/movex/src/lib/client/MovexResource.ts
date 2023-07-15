@@ -57,9 +57,9 @@ export class MovexResource<
     );
   }
 
-  create(state: S) {
+  create(state: S, resourceId?: string) {
     return this.connectionToMasterResource
-      .create(this.resourceType, state)
+      .create(this.resourceType, state, resourceId)
       .map((item) => ({
         rid: toResourceIdentifierObj<TResourceType>(item.rid),
         state: item.state[0],
@@ -67,7 +67,11 @@ export class MovexResource<
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
-    return this.connectionToMasterResource.get(rid).map(([state]) => state);
+    return this.connectionToMasterResource.get(rid).map(([state]) => ({
+      // This is rempaed in this way in order to return the same payload as "create"
+      rid,
+      state,
+    }));
 
     // TODO: Once a client can bind multiple times this could also sync with the obsservable
     // .map((s) => {

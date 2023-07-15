@@ -1,7 +1,13 @@
 import * as http from 'http';
 import { Server as SocketServer } from 'socket.io';
 import { SocketIOEmitter, logsy } from 'movex-core-util';
-import { Master, MovexDefinition, MovexStore, IOEvents } from 'movex';
+import {
+  Master,
+  MovexDefinition,
+  MovexStore,
+  IOEvents,
+  MemoryMovexStore,
+} from 'movex';
 import express from 'express';
 import cors from 'cors';
 
@@ -34,7 +40,9 @@ export const movexServer = (
     },
   });
 
-  const movexMaster = Master.initMovexMaster(definition, movexStore);
+  const store = movexStore === 'memory' ? new MemoryMovexStore() : movexStore;
+
+  const movexMaster = Master.initMovexMaster(definition, store);
 
   const getClientId = (clientId: string) =>
     clientId || String(Math.random()).slice(-5);
@@ -65,7 +73,10 @@ export const movexServer = (
     const address = httpServer.address();
 
     if (typeof address !== 'string') {
-      logsy.info(`Movex Server started on port ${address?.port}`);
+      logsy.info(
+        `Movex Server started on port ${address?.port} for definition`,
+        Object.keys(definition.resources)
+      );
     }
   });
 };

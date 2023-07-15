@@ -21,11 +21,13 @@ export function Index() {
    */
   return (
     <StyledPage>
+      yeeeep
       <div
         style={{
           display: 'flex',
           flexDirection: 'row',
           gap: 40,
+          height: '100%',
         }}
       >
         <MovexLocalInstance

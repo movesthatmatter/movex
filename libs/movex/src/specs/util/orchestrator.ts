@@ -8,7 +8,7 @@ import { Movex } from '../../lib';
 import { ConnectionToMaster } from '../../lib/client/ConnectionToMaster';
 import { ConnectionToClient, MovexMasterServer } from '../../lib/master';
 import { MovexMasterResource } from '../../lib/master/MovexMasterResource';
-import { LocalMovexStore } from '../../lib/movex-store';
+import { MemoryMovexStore } from '../../lib/movex-store';
 import { AnyAction } from '../../lib/tools/action';
 import { MovexReducer } from '../../lib/tools/reducer';
 import { MockConnectionEmitter } from './MockConnectionEmitter';
@@ -30,7 +30,7 @@ export const movexClientMasterOrchestrator = () => {
     reducer: MovexReducer<S, A>;
     resourceType: TResourceType;
   }) => {
-    const masterStore = new LocalMovexStore<S>();
+    const masterStore = new MemoryMovexStore<S>();
 
     const masterResource = new MovexMasterResource(reducer, masterStore);
     const masterServer = new MovexMasterServer({
