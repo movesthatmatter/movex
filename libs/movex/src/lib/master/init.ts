@@ -11,9 +11,9 @@ export const initMovexMaster = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap
 >(
   definition: MovexDefinition<TResourcesMap>,
-  store: MovexStore<any, any> // | 'redis' once it's implemented
+  store: MovexStore<TResourcesMap> // | 'redis' once it's implemented
 ) => {
-  const mapOfResouceReducers = objectKeys(definition.resources).reduce(
+  const mapOfResourceReducers = objectKeys(definition.resources).reduce(
     (accum, nextResoureType) => {
       const nextReducer = definition.resources[nextResoureType];
 
@@ -25,5 +25,5 @@ export const initMovexMaster = <
     {} as Record<string, MovexMasterResource<any, any>>
   );
 
-  return new MovexMasterServer(mapOfResouceReducers);
+  return new MovexMasterServer(mapOfResourceReducers);
 };

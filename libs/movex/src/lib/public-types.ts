@@ -6,6 +6,11 @@ export type BaseMovexDefinitionResourcesMap = Record<
   MovexReducer<any, any>
 >;
 
+export type UnknownMovexDefinitionResourcesMap = Record<
+  string,
+  MovexReducer<unknown>
+>;
+
 export type MovexDefinition<
   TResourcesMap extends BaseMovexDefinitionResourcesMap = BaseMovexDefinitionResourcesMap
 > = {

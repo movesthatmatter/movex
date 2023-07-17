@@ -14,7 +14,9 @@ test('gets initial state', async () => {
   const master = new MovexMasterResource(
     counterReducer,
     new MemoryMovexStore({
-      [rid]: initialCounterState,
+      c: {
+        [rid]: initialCounterState,
+      },
     })
   );
 
@@ -33,7 +35,9 @@ test('applies public action', async () => {
   const master = new MovexMasterResource(
     counterReducer,
     new MemoryMovexStore({
-      [rid]: initialCounterState,
+      c: {
+        [rid]: initialCounterState,
+      },
     })
   );
 
@@ -74,7 +78,9 @@ test('applies only one private action w/o getting to reconciliation', async () =
   const master = new MovexMasterResource(
     counterReducer,
     new MemoryMovexStore({
-      [rid]: initialCounterState,
+      c: {
+        [rid]: initialCounterState,
+      },
     })
   );
 
@@ -138,7 +144,9 @@ test('applies private action UNTIL Reconciliation', async () => {
   const master = new MovexMasterResource(
     gameReducer,
     new MemoryMovexStore({
-      [rid]: initialGameState,
+      c: {
+        [rid]: initialGameState,
+      },
     })
   );
 

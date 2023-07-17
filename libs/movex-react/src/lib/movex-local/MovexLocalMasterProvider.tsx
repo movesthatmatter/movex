@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { invoke, logsy, noop } from 'movex-core-util';
+import {
+  ResourceIdentifierObj,
+  StringKeys,
+  invoke,
+  logsy,
+  noop,
+  toResourceIdentifierObj,
+} from 'movex-core-util';
 import {
   BaseMovexDefinitionResourcesMap,
-  LocalStorageMovexStore,
+  GetReducerState,
   MemoryMovexStore,
   MovexDefinition,
   MovexMaster,
+  MovexStoreItem,
 } from 'movex';
 import { MovexLocalContext, MovexLocalContextProps } from './MovexLocalContext';
 
@@ -13,6 +21,15 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
     movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
     onInit?: (master: MovexMaster.MovexMasterServer) => void;
+    onMasterResourceUpdated?: <
+      TResourceType extends StringKeys<TMovexConfigResourcesMap>
+    >(
+      item: MovexStoreItem<
+        GetReducerState<TMovexConfigResourcesMap[TResourceType]>,
+        TResourceType
+      >,
+      updateKind: 'create' | 'update'
+    ) => void;
   }>;
 
 /**
@@ -23,6 +40,7 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
  */
 export const MovexLocalMasterProvider: React.FC<Props<{}>> = ({
   onInit = noop,
+  onMasterResourceUpdated = noop,
   ...props
 }) => {
   const [contextState, setContextState] = useState<MovexLocalContextProps>();
@@ -42,7 +60,9 @@ export const MovexLocalMasterProvider: React.FC<Props<{}>> = ({
       //   console.log('yess', e.key);
       // });
 
-      const localStore = new MemoryMovexStore();
+      const localStore = new MemoryMovexStore<
+        typeof props['movexDefinition']['resources']
+      >();
 
       const unsubscribers = [
         localStore.onCreated((s) => {
@@ -50,12 +70,19 @@ export const MovexLocalMasterProvider: React.FC<Props<{}>> = ({
           logsy.log('Item', s);
           logsy.log('All Store', localStore.all());
           logsy.groupEnd();
+
+          onMasterResourceUpdated(s as any, 'create');
         }),
         localStore.onUpdated((s) => {
           logsy.group('[Master.LocalStore] onUpdated');
           logsy.log('Item', s);
           logsy.log('All Store', localStore.all());
           logsy.groupEnd();
+
+          // onMasterResourceUpdated(s as MovexStoreItem<
+          //   ,
+          //   TResourceType
+          // >, 'update');
         }),
       ];
 

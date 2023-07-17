@@ -1,3 +1,3 @@
 export * from './MovexStore';
 export * from './MemoryMovexStore';
-export * from './LocalStorageMovexStore';
+// export * from './LocalStorageMovexStore';

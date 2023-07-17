@@ -30,7 +30,7 @@ export const movexClientMasterOrchestrator = () => {
     reducer: MovexReducer<S, A>;
     resourceType: TResourceType;
   }) => {
-    const masterStore = new MemoryMovexStore<S>();
+    const masterStore = new MemoryMovexStore<Record<any, () => S>>();
 
     const masterResource = new MovexMasterResource(reducer, masterStore);
     const masterServer = new MovexMasterServer({

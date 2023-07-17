@@ -36,7 +36,7 @@ export class MovexMasterResource<
 > {
   constructor(
     private reducer: MovexReducer<TState, TAction>,
-    private store: MovexStore<TState>
+    private store: MovexStore<Record<string, MovexReducer<TState, TAction>>>
   ) {}
 
   private computeClientState(
@@ -58,7 +58,7 @@ export class MovexMasterResource<
     resourceState: TState,
     resourceId?: string
   ) {
-    return (this.store as MovexStore<TState, TResourceType>).create(
+    return this.store.create(
       toResourceIdentifierStr({
         resourceType,
         resourceId: resourceId || getUuid(),

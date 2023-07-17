@@ -8,10 +8,13 @@ import {
   ResourceIdentifier,
   ResourceIdentifierStr,
   ResultError,
+  StringKeys,
   toResultError,
 } from 'movex-core-util';
 import { AnyAction } from '../tools/action';
 import { CheckedState } from '../core-types';
+import { BaseMovexDefinitionResourcesMap } from '../public-types';
+import { GetReducerState } from '../tools';
 
 export type MovexStatePatch<T> = {
   action: AnyAction;
@@ -33,6 +36,15 @@ export type MovexStoreItem<
     {
       subscribedAt: number;
     }
+  >;
+};
+
+export type MovexStoreItemsMapByType<
+  TResourcesMap extends BaseMovexDefinitionResourcesMap
+> = {
+  [resourceType in StringKeys<TResourcesMap>]?: Record<
+    ResourceIdentifierStr<resourceType>,
+    MovexStoreItem<GetReducerState<TResourcesMap[resourceType]>, resourceType>
   >;
 };
 
@@ -82,50 +94,79 @@ export type MovexStoreError =
   | MovexStoreRemoveResourceError;
 
 export interface MovexStore<
-  T,
-  TResourceType extends GenericResourceType = GenericResourceType
+  TResourcesMap extends BaseMovexDefinitionResourcesMap
 > {
-  create: (
+  create: <TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>,
-    data: T
+    data: GetReducerState<TResourcesMap[TResourceType]>
   ) => AsyncResult<
-    MovexStoreItem<T, TResourceType>,
+    MovexStoreItem<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      TResourceType
+    >,
     MovexStoreCreateResourceError
   >;
-  get: (
+  get: <TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>,
     fragmentGroupKey?: string
   ) => AsyncResult<
-    MovexStoreItem<T, TResourceType>,
+    MovexStoreItem<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      TResourceType
+    >,
     MovexStoreGetResourceError
   >;
-  update: (
+  update: <TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>,
     getNext:
       | ((
-          prev: MovexStoreItem<T, TResourceType>
-        ) => MovexStoreItem<T, TResourceType>)
-      | Partial<MovexStoreItem<T, TResourceType>>
+          prev: MovexStoreItem<
+            GetReducerState<TResourcesMap[TResourceType]>,
+            TResourceType
+          >
+        ) => MovexStoreItem<
+          GetReducerState<TResourcesMap[TResourceType]>,
+          TResourceType
+        >)
+      | Partial<
+          MovexStoreItem<
+            GetReducerState<TResourcesMap[TResourceType]>,
+            TResourceType
+          >
+        >
   ) => AsyncResult<
-    MovexStoreItem<T, TResourceType>,
+    MovexStoreItem<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      TResourceType
+    >,
     MovexStoreUpdateResourceError
   >;
-  updateState: (
+  updateState: <TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>,
-    getNext: ((prev: T) => T) | Partial<T>
+    getNext:
+      | ((
+          prev: GetReducerState<TResourcesMap[TResourceType]>
+        ) => GetReducerState<TResourcesMap[TResourceType]>)
+      | Partial<GetReducerState<TResourcesMap[TResourceType]>>
   ) => AsyncResult<
-    MovexStoreItem<T, TResourceType>,
+    MovexStoreItem<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      TResourceType
+    >,
     MovexStoreUpdateResourceError
   >;
-  addPrivatePatch: (
+  addPrivatePatch: <TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>,
     patchGroupKey: string,
-    patch: MovexStatePatch<T>
+    patch: MovexStatePatch<GetReducerState<TResourcesMap[TResourceType]>>
   ) => AsyncResult<
-    MovexStoreItem<T, TResourceType>,
+    MovexStoreItem<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      TResourceType
+    >,
     MovexStoreUpdateResourceError
   >;
-  remove: (
+  remove: <TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>
   ) => AsyncResult<void, MovexStoreRemoveResourceError>;
 
