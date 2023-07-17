@@ -20,16 +20,16 @@
 
 Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation without the need to write Server Specific Code.
 
-!!! Note Movex is currently in Development. Drop me a message or create an issue if you have any questions, ideas or would like to get involved.**
+!!! Note Movex is currently in Alpha. Drop me a message or create an issue if you have any questions, ideas or would like to get involved.**
 
 ## Features
 
 - [x] Real Time State Sync
 - [x] Secret State
-- [x] Redux API
+- [x] Redux/Flux API
 - [x] Authoritative Server
 - [x] No Server Specific Code
-- [ ] (WIP) No Server Hassle (_At the moment the code running on the server still needs to be manually handled._) 
+- [x] No Server Hassle/Seamless Deploys
 
 ## Documentation
 
