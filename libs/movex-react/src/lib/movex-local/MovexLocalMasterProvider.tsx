@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  ResourceIdentifierObj,
-  StringKeys,
-  invoke,
-  logsy,
-  noop,
-  toResourceIdentifierObj,
-} from 'movex-core-util';
+import { StringKeys, invoke, logsy, noop } from 'movex-core-util';
 import {
   BaseMovexDefinitionResourcesMap,
   GetReducerState,
@@ -79,10 +72,7 @@ export const MovexLocalMasterProvider: React.FC<Props<{}>> = ({
           logsy.log('All Store', localStore.all());
           logsy.groupEnd();
 
-          // onMasterResourceUpdated(s as MovexStoreItem<
-          //   ,
-          //   TResourceType
-          // >, 'update');
+          onMasterResourceUpdated(s as any, 'update');
         }),
       ];
 
