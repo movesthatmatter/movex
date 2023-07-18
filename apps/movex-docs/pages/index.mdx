@@ -39,18 +39,36 @@ import { features, faqs, community } from '../modules/home/homeVars';
 
 </div>
 {/* ?fontsize=14&hidenavigation=1&theme=dark&codemirror=1&editorsize=0&view=split&hidedevtools=1 */}
-<div id="examples" className="h-screen w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-20">
-  <iframe src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview&module=%2Fsrc%2FGame.tsx"
-     style={{
-      width: ' 100%',
-      height: '100%',      
-      borderRadius: '8px',
-      overflow: 'hidden',
-    }}
-     title="rps-demo"
-     allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-     sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-   />
+<div id="examples" className="h-screen w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-6 lg:pt-0 lg:p-20 lg:pt-0 flex flex-col">
+  <h2 className="text-4xl lg:text-7xl font-bold pt-20 pb-6">Play Rock Paper Scissors</h2>
+  <div className="flex-1">
+    <iframe src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview&module=%2Fsrc%2FGame.tsx"
+      className="hidden lg:block"
+      style={{
+        width: ' 100%',
+        height: '100%',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        borderRight: 'solid black 16px',
+      }}
+      title="rps-demo"
+      allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+      sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+    />
+    <iframe src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview"
+      className="lg:hidden"
+      style={{
+        width: ' 100%',
+        height: '100%',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        borderRight: 'solid black 16px',
+      }}
+      title="rps-demo"
+      allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+      sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+    />
+   </div>
 </div>
 
 {/* // import { Game } from '../modules/home/game/Game'; */}
