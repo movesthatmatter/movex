@@ -38,30 +38,46 @@ import { features, faqs, community } from '../modules/home/homeVars';
 </div>
 
 </div>
-{/* 
-<div id="examples" className="h-screen w-full">
-  <iframe
-    src="https://codesandbox.io/embed/movex-example-rock-paper-scissors-forked-392k4k?fontsize=14&hidenavigation=1&theme=dark"
-    style={{
-      width: ' 100%',
-      height: '100%',
-      border: '0',
-      borderRadius: '4px',
-      overflow: 'hidden',
-    }}
-    title="Movex Example – Rock Paper Scissors"
-    allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
-    sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
-  />
-</div> */}
+{/* ?fontsize=14&hidenavigation=1&theme=dark&codemirror=1&editorsize=0&view=split&hidedevtools=1 */}
+<div id="examples" className="h-screen w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-6 lg:pt-0 lg:p-20 lg:pt-0 flex flex-col">
+  <h2 className="text-4xl lg:text-7xl font-bold pt-20 pb-6">Play Rock Paper Scissors</h2>
+  <div className="flex-1">
+    <iframe src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview&module=%2Fsrc%2FGame.tsx"
+      className="hidden lg:block"
+      style={{
+        width: ' 100%',
+        height: '100%',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        borderRight: 'solid black 16px',
+      }}
+      title="rps-demo"
+      allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+      sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+    />
+    <iframe src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview"
+      className="lg:hidden"
+      style={{
+        width: ' 100%',
+        height: '100%',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        borderRight: 'solid black 16px',
+      }}
+      title="rps-demo"
+      allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+      sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+    />
+   </div>
+</div>
 
 {/* // import { Game } from '../modules/home/game/Game'; */}
 
-
-
 <div id="faqs" className="w-full">
   <div className="container mx-auto max-w-[90rem] gap-2 pl-[max(env(safe-area-inset-left),1.5rem)] pr-[max(env(safe-area-inset-right),1.5rem)] p-16 pt-20">
-    <h1 className="text-5xl font-bold mb-20 text-center text-green-500">FAQs</h1>
+    <h1 className="text-5xl font-bold mb-20 text-center text-green-500">
+      FAQs
+    </h1>
     <div className="grid grid-cols-2 gap-20">
       {faqs.map((faq) => (
         <div

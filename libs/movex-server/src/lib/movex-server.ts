@@ -11,7 +11,7 @@ import {
 import express from 'express';
 import cors from 'cors';
 
-export const movexServer = (
+export const movexServer = <TDefinition extends MovexDefinition>(
   {
     httpServer = http.createServer(),
     corsOpts,
@@ -19,9 +19,9 @@ export const movexServer = (
   }: {
     httpServer?: http.Server;
     corsOpts?: cors.CorsOptions;
-    movexStore?: 'memory' | MovexStore<any, any>; // | 'redis' once it's implemented
+    movexStore?: 'memory' | MovexStore<TDefinition['resources']>; // | 'redis' once it's implemented
   },
-  definition: MovexDefinition
+  definition: TDefinition
 ) => {
   const app = express();
 

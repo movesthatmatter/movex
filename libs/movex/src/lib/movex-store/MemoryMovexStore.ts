@@ -1,11 +1,12 @@
 import {
-  GenericResourceType,
   ResourceIdentifier,
   toResourceIdentifierStr,
   objectKeys,
   ResourceIdentifierStr,
   globalLogsy,
   toResultError,
+  StringKeys,
+  toResourceIdentifierObj,
 } from 'movex-core-util';
 import {
   AsyncErr,
@@ -17,43 +18,72 @@ import { computeCheckedState } from '../util';
 import {
   MovexStatePatch,
   MovexStore,
+  MovexStoreCreateResourceError,
   MovexStoreGetResourceError,
   MovexStoreItem,
+  MovexStoreItemsMapByType,
   MovexStoreUpdateResourceError,
 } from './MovexStore';
 import { PromiseDelegate } from 'promise-delegate';
 import { Pubsy } from 'ts-pubsy';
+import { BaseMovexDefinitionResourcesMap } from '../public-types';
+import { GetReducerState } from '../tools';
 
 const logsy = globalLogsy.withNamespace('[LocalMovexStore]');
 
 export class MemoryMovexStore<
-  TState,
-  TResourceType extends GenericResourceType = GenericResourceType
-> implements MovexStore<TState, TResourceType>
+  TResourcesMap extends BaseMovexDefinitionResourcesMap = BaseMovexDefinitionResourcesMap
+> implements MovexStore<TResourcesMap>
 {
-  private local: Record<string, MovexStoreItem<TState, TResourceType>> = {};
+  private local: MovexStoreItemsMapByType<TResourcesMap> =
+    {} as MovexStoreItemsMapByType<TResourcesMap>;
 
   private locks: Record<string, PromiseDelegate> = {};
 
   private pubsy = new Pubsy<{
-    onCreated: MovexStoreItem<TState>;
-    onUpdated: MovexStoreItem<TState>;
+    onCreated: MovexStoreItem<
+      GetReducerState<TResourcesMap[StringKeys<TResourcesMap>]>
+    >;
+    onUpdated: MovexStoreItem<
+      GetReducerState<TResourcesMap[StringKeys<TResourcesMap>]>
+    >;
   }>();
 
-  constructor(
-    initialResources?: Record<ResourceIdentifierStr<TResourceType>, TState>
-  ) {
+  constructor(initialResources?: {
+    [resourceType in StringKeys<TResourcesMap>]?: Record<
+      ResourceIdentifierStr<resourceType>,
+      GetReducerState<TResourcesMap[resourceType]>
+    >;
+  }) {
     if (initialResources) {
-      this.local = objectKeys(initialResources).reduce((accum, nextRid) => {
+      const flatten = objectKeys(initialResources).reduce(
+        (accum, nextResourceType) => {
+          return {
+            ...accum,
+            ...initialResources[nextResourceType],
+          };
+        },
+        {} as Record<
+          ResourceIdentifierStr<StringKeys<TResourcesMap>>,
+          GetReducerState<TResourcesMap[StringKeys<TResourcesMap>]>
+        >
+      );
+
+      this.local = objectKeys(flatten).reduce((accum, nextRid) => {
+        const { resourceType } = toResourceIdentifierObj(nextRid);
+
         return {
           ...accum,
-          [nextRid]: {
-            rid: nextRid,
-            state: computeCheckedState(initialResources[nextRid]),
-            subscribers: {},
+          [resourceType]: {
+            ...accum[resourceType as any],
+            [nextRid]: {
+              rid: nextRid,
+              state: computeCheckedState(flatten[nextRid]),
+              subscribers: {},
+            },
           },
         };
-      }, {} as Record<string, MovexStoreItem<TState, TResourceType>>);
+      }, {} as MovexStoreItemsMapByType<TResourcesMap>);
     }
   }
 
@@ -95,7 +125,15 @@ export class MemoryMovexStore<
     return undefined;
   }
 
-  get(rid: ResourceIdentifier<TResourceType>) {
+  get<TResourceType extends StringKeys<TResourcesMap>>(
+    rid: ResourceIdentifier<TResourceType>
+  ): AsyncResult<
+    MovexStoreItem<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      TResourceType
+    >,
+    MovexStoreGetResourceError
+  > {
     return new AsyncResultWrapper(async () => {
       await this.waitForLock(toResourceIdentifierStr(rid));
 
@@ -117,13 +155,17 @@ export class MemoryMovexStore<
    * @param rid
    * @returns
    */
-  private getWithoutLock(
+  private getWithoutLock<TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>
   ): AsyncResult<
-    MovexStoreItem<TState, TResourceType>,
+    MovexStoreItem<
+      GetReducerState<TResourcesMap[StringKeys<TResourcesMap>]>,
+      TResourceType
+    >,
     MovexStoreGetResourceError
   > {
-    const item = this.local[toResourceIdentifierStr(rid)];
+    const { resourceType } = toResourceIdentifierObj(rid);
+    const item = this.local[resourceType]?.[toResourceIdentifierStr(rid)];
 
     if (item) {
       return new AsyncOk(item);
@@ -138,7 +180,17 @@ export class MemoryMovexStore<
     });
   }
 
-  create(rid: ResourceIdentifier<TResourceType>, nextState: TState) {
+  create<TResourceType extends StringKeys<TResourcesMap>>(
+    rid: ResourceIdentifier<TResourceType>,
+    nextState: GetReducerState<TResourcesMap[TResourceType]>
+  ): AsyncResult<
+    MovexStoreItem<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      TResourceType
+    >,
+    MovexStoreCreateResourceError
+  > {
+    const { resourceType } = toResourceIdentifierObj(rid);
     const ridStr = toResourceIdentifierStr(rid);
 
     const next = {
@@ -149,7 +201,10 @@ export class MemoryMovexStore<
 
     this.local = {
       ...this.local,
-      [ridStr]: next,
+      [resourceType]: {
+        ...this.local[resourceType],
+        [ridStr]: next,
+      },
     };
 
     return new AsyncOk(next)
@@ -165,9 +220,13 @@ export class MemoryMovexStore<
       );
   }
 
-  updateState(
+  updateState<TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>,
-    getNext: ((prev: TState) => TState) | Partial<TState>
+    getNext:
+      | ((
+          prev: GetReducerState<TResourcesMap[TResourceType]>
+        ) => GetReducerState<TResourcesMap[TResourceType]>)
+      | Partial<GetReducerState<TResourcesMap[TResourceType]>>
   ) {
     return this.update(rid, (prev) => ({
       ...prev,
@@ -178,39 +237,59 @@ export class MemoryMovexStore<
     }));
   }
 
-  update(
+  update<TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>,
     getNext:
       | ((
-          prev: MovexStoreItem<TState, TResourceType>
-        ) => MovexStoreItem<TState, TResourceType>)
-      | Partial<MovexStoreItem<TState, TResourceType>>
+          prev: MovexStoreItem<
+            GetReducerState<TResourcesMap[TResourceType]>,
+            TResourceType
+          >
+        ) => MovexStoreItem<
+          GetReducerState<TResourcesMap[TResourceType]>,
+          TResourceType
+        >)
+      | Partial<
+          MovexStoreItem<
+            GetReducerState<TResourcesMap[TResourceType]>,
+            TResourceType
+          >
+        >
   ): AsyncResult<
-    MovexStoreItem<TState, TResourceType>,
+    MovexStoreItem<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      TResourceType
+    >,
     MovexStoreUpdateResourceError
   > {
-    const logId = String(Math.random()).slice(-3);
     return new AsyncResultWrapper(async () => {
       const unlock = await this.createLock(toResourceIdentifierStr(rid));
 
       return (
         this.getWithoutLock(rid)
           .map((prev) => {
-            const nextItem =
+            const nextGivenItem =
               typeof getNext === 'function' ? getNext(prev) : getNext;
+
+            const { resourceType } = toResourceIdentifierObj(rid);
+
+            const nextItem = {
+              ...prev,
+              ...nextGivenItem,
+
+              // This cannot be changed!
+              rid: prev.rid,
+            };
 
             this.local = {
               ...this.local,
-              [prev.rid]: {
-                ...prev,
-                ...nextItem,
-
-                // This cannot be changed!
-                rid: prev.rid,
+              [resourceType]: {
+                ...this.local[resourceType],
+                [prev.rid]: nextItem,
               },
             };
 
-            return this.local[prev.rid];
+            return nextItem;
           })
           // Unlock it
           .map(AsyncResult.passThrough(unlock))
@@ -229,10 +308,10 @@ export class MemoryMovexStore<
     );
   }
 
-  addPrivatePatch(
+  addPrivatePatch<TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>,
     patchGroupKey: string,
-    patch: MovexStatePatch<TState>
+    patch: MovexStatePatch<GetReducerState<TResourcesMap[TResourceType]>>
   ) {
     return this.update(rid, (prev) => ({
       ...prev,
@@ -243,10 +322,18 @@ export class MemoryMovexStore<
     }));
   }
 
-  remove(rid: ResourceIdentifier<TResourceType>) {
-    const { [toResourceIdentifierStr(rid)]: remove, ...rest } = this.local;
+  remove<TResourceType extends StringKeys<TResourcesMap>>(
+    rid: ResourceIdentifier<TResourceType>
+  ) {
+    const { resourceType } = toResourceIdentifierObj(rid);
 
-    this.local = rest;
+    const { [toResourceIdentifierStr(rid)]: remove, ...nextResourceType } =
+      this.local[resourceType];
+
+    this.local = {
+      ...this.local,
+      [resourceType]: nextResourceType,
+    };
 
     return AsyncOk.EMPTY;
   }
@@ -257,11 +344,23 @@ export class MemoryMovexStore<
     return AsyncOk.EMPTY;
   }
 
-  onCreated(fn: (p: MovexStoreItem<TState>) => void) {
+  onCreated(
+    fn: (
+      p: MovexStoreItem<
+        GetReducerState<TResourcesMap[StringKeys<TResourcesMap>]>
+      >
+    ) => void
+  ) {
     return this.pubsy.subscribe('onCreated', fn);
   }
 
-  onUpdated(fn: (p: MovexStoreItem<TState>) => void) {
+  onUpdated(
+    fn: (
+      p: MovexStoreItem<
+        GetReducerState<TResourcesMap[StringKeys<TResourcesMap>]>
+      >
+    ) => void
+  ) {
     return this.pubsy.subscribe('onUpdated', fn);
   }
 
