@@ -14,12 +14,12 @@
   "examples": {
     "title": "Examples",
     "type": "page",
-    "href": "#examples"
+    "href": "/#examples"
   },
   "faqs": {
     "title": "Faqs",
     "type": "page",
-    "href": "#faqs"
+    "href": "/#faqs"
   },
   "about": {
     "title": "About",
