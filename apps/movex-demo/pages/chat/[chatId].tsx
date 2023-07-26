@@ -20,7 +20,7 @@ const ChatSystem: React.FC<Props> = () => {
 
   // TODO: Validate the rid is correct inside useMovexBoundResouce
   const boundResource = useMovexBoundResourceFromRid(movexConfig, rid);
-  const userId = useMovexClientId();
+  const userId = useMovexClientId(movexConfig);
 
   if (!(boundResource && userId)) {
     return null;

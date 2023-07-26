@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { Context, useContext, useEffect, useMemo, useState } from 'react';
 import {
   ResourceIdentifier,
   isResourceIdentifier,
@@ -11,13 +11,21 @@ import {
   MovexDefinition,
   GetReducerAction,
   GetReducerState,
-  Movex,
 } from 'movex';
-import { MovexContext } from './MovexContext';
+import { MovexContext, MovexContextProps } from './MovexContext';
 
-export const useMovex = () => useContext(MovexContext);
+export const useMovex = <TResourcesMap extends BaseMovexDefinitionResourcesMap>(
+  movexConfig: MovexDefinition<TResourcesMap>
+) =>
+  useContext(
+    MovexContext as Context<MovexContextProps<typeof movexConfig['resources']>>
+  );
 
-export const useMovexClientId = () => useMovex().clientId;
+export const useMovexClientId = <
+  TResourcesMap extends BaseMovexDefinitionResourcesMap
+>(
+  movexConfig: MovexDefinition<TResourcesMap>
+) => useMovex(movexConfig).clientId;
 
 export type MovexResourceFromConfig<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
@@ -45,7 +53,7 @@ export const useMovexResourceType = <
   movexConfig: MovexDefinition<TResourcesMap>,
   resourceType: TResourceType
 ) => {
-  const m = useMovex();
+  const m = useMovex(movexConfig);
 
   const [resource, setResource] =
     useState<MovexResourceFromConfig<TResourcesMap, TResourceType>>();
@@ -152,6 +160,7 @@ export const useCreateMovexResourceOnDemand = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
 >(
+  movexConfig: MovexDefinition<TResourcesMap>,
   resourceInit:
     | {
         type: TResourceType;
@@ -166,7 +175,7 @@ export const useCreateMovexResourceOnDemand = <
   ) => void
   // deps: DependencyList
 ) => {
-  const m = useMovex();
+  const m = useMovex(movexConfig);
 
   useEffect(() => {
     if (resourceInit && m.connected) {
@@ -191,7 +200,7 @@ export const useMovexBindOrCreateAndBindOnDemand = <
     | ResourceIdentifier<TResourceType>
     | undefined
 ) => {
-  const m = useMovex();
+  const m = useMovex(movexConfig);
   const [boundResource, setBoundResource] =
     useState<
       MovexClient.MovexBoundResource<

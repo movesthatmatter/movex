@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Client } from 'movex';
 import { MovexContextProps, MovexContext } from './MovexContext';
 import { MovexClient, invoke, noop } from 'movex-core-util';
-import { BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
+import { Client, BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
     movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
-    socketUrl: string;
+    endpointUrl: string;
     clientId?: MovexClient['id'];
     onConnected?: (
       state: Extract<
@@ -46,7 +45,7 @@ export const MovexProvider: React.FC<Props<{}>> = ({
       const movex = await Client.initMovex(
         {
           clientId: props.clientId,
-          url: props.socketUrl,
+          url: props.endpointUrl,
           apiKey: '',
         },
         props.movexDefinition
@@ -69,7 +68,7 @@ export const MovexProvider: React.FC<Props<{}>> = ({
     });
 
     // TODO: Maye add destroyer?
-  }, [props.socketUrl, props.clientId, onConnected]);
+  }, [props.endpointUrl, props.clientId, onConnected]);
 
   // On Disconnect
   useEffect(() => {

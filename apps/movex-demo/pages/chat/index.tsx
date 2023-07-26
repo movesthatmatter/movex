@@ -1,5 +1,4 @@
 import { useMovexResourceType } from 'movex-react';
-import { DemoMovexDefinition } from 'apps/movex-demo/movex';
 import { Chat } from 'movex-examples';
 import movexConfig from 'movex-examples';
 

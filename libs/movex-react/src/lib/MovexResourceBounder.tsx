@@ -10,7 +10,7 @@ type Props = React.PropsWithChildren<{
 }>;
 
 export const MovexResourceBounder: React.FC<Props> = (props) => {
-  const clientId = useMovexClientId();
+  const clientId = useMovexClientId(props.movexDefinition);
   const boundResource = useMovexBoundResourceFromRid(
     props.movexDefinition,
     props.rid

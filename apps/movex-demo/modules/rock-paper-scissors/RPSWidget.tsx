@@ -21,11 +21,16 @@ export const RPSWidget: React.FC<Props> = (props) => {
     type: 'rps',
   } as const);
 
-  const movex = useMovex();
+  const movexService = useMovex(movexConfig);
+
+  if (movexService.connected) {
+    // TODO: Fix this
+    movexService.movex.register('rps')
+  }
 
   const b = useMovexBindOrCreateAndBindOnDemand(movexConfig, props.rid || x);
 
-  if (!movex.clientId) {
+  if (!movexService.clientId) {
     return <>no client yet</>;
   }
 
@@ -35,7 +40,7 @@ export const RPSWidget: React.FC<Props> = (props) => {
 
   return (
     <div>
-      <Rps.Main boundResource={b} userId={movex.clientId} />
+      <Rps.Main boundResource={b} userId={movexService.clientId} />
     </div>
   );
 };

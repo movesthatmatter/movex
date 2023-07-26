@@ -14,6 +14,7 @@ export type UnknownMovexDefinitionResourcesMap = Record<
 export type MovexDefinition<
   TResourcesMap extends BaseMovexDefinitionResourcesMap = BaseMovexDefinitionResourcesMap
 > = {
+  // @deprecated
   url?: string;
   resources: TResourcesMap;
 };
