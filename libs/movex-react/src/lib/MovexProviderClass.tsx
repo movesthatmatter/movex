@@ -9,7 +9,7 @@ type Props<
   TResourceType extends Extract<keyof TResourcesMap, string>
 > = React.PropsWithChildren<{
   movexDefinition: MovexDefinition<TResourcesMap>;
-  socketUrl: string;
+  endpointUrl: string;
   clientId?: MovexClient['id'];
   onConnected?: (
     state: Extract<
@@ -41,7 +41,7 @@ export class MovexProviderClass<
   override render() {
     return (
       <MovexProvider
-        socketUrl={this.props.socketUrl}
+        endpointUrl={this.props.endpointUrl}
         clientId={this.props.clientId}
         movexDefinition={this.props.movexDefinition}
         onConnected={(r) => {
