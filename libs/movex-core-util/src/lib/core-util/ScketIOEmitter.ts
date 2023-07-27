@@ -46,7 +46,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
       ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
-    logsy.debug('[SocketEmitter] subscribed to:', event);
+    // logsy.debug('[SocketEmitter] subscribed to:', event);
 
     this.socket.on(event as string, listener);
 
@@ -60,7 +60,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
       ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
-    logsy.debug('[SocketEmitter] unsubscribed to:', event);
+    // logsy.debug('[SocketEmitter] unsubscribed to:', event);
 
     this.socket.off(event as string, listener);
 
