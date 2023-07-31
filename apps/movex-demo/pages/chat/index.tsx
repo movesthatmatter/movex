@@ -1,6 +1,7 @@
 import { useMovexResourceType } from 'movex-react';
 import { Chat } from 'movex-examples';
 import movexConfig from 'movex-examples';
+import { toRidAsStr } from 'movex';
 
 type Props = {};
 
@@ -17,7 +18,7 @@ const ChatLobby: React.FC<Props> = () => {
         onClick={() => {
           chatResource.create(Chat.initialChatState).map((item) => {
             window.location.href =
-              window.location.href + `/${item.rid.resourceId}`;
+              window.location.href + `/${toRidAsStr(item.rid)}`;
           });
         }}
       >
