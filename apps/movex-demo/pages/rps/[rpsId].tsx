@@ -21,7 +21,7 @@ export function Index() {
   return (
     <>
       <MovexProvider
-        socketUrl="localhost:3333"
+        endpointUrl="localhost:3333"
         clientId={user}
         movexDefinition={movexConfig}
         onConnected={(movex) => {

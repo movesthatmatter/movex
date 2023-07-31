@@ -10,6 +10,7 @@ export class MovexBoundResource<
   TState = any,
   TAction extends AnyAction = AnyAction
 > {
+    // TODO: Add the TResourceType so it the rid can be typed correctly
   public rid = this.observable.rid;
 
   constructor(private observable: MovexResourceObservable<TState, TAction>) {}

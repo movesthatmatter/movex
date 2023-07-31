@@ -20,7 +20,7 @@ function CustomApp({ Component, pageProps }: AppProps) {
   return (
     <MovexProvider
       movexDefinition={movexConfig}
-      socketUrl={AppConfig.API_WSS_ENDPOINT}
+      endpointUrl={AppConfig.API_WSS_ENDPOINT}
       onConnected={(m) => {
         console.log('connnected to movex', m);
       }}
