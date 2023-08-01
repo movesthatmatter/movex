@@ -75,8 +75,8 @@ export const faqs = [
   //   a: "At the moment, we haven't tried it on any game engine (but will do that in the close future) but in theory it should work with any application (or game) as long as the codebase is in javascript/typescript.",
   // },
   {
-    q: 'What kind of games can I build with Movex?',
-    a: "Movex uses Deterministic Action Propagation under the hood, which means it's propagating Actions (small bits of data) from client to server and server to client(s). This works great for games (or applications) with unfrequent changes (traffic) such as a turn-based game (e.g. Age of Empires) but will most likely not be enough for a shooter or something that requires a lot of user input sent over the network. There are some ideas to make that possible in the future as well.",
+    q: 'What can I build with Movex?',
+    a: "Movex uses Deterministic Action Propagation under the hood, which means it's propagating Actions (small bits of data) from client to server and server to client(s). This works great for games (or applications) with infrequent changes (traffic) such as a turn-based game (e.g. Age of Empires) but will most likely not be enough for a shooter game or something that requires a lot of user input sent over the network. There are some ideas to make that possible in the future as well.",
     link: {
       label: "Read more about Deterministic Propagation",
       url: "http://localhost:3000/docs/features/server_authoritative#determinstic-action-propagation-method"

@@ -34,7 +34,7 @@ import { Code, Pre } from 'nextra/components';
   </div>
   <div className="hidden lg:block flex items-center">
     <div className="dark:bg-slate-800 rounded-xl pt-4 pb-4 shadow-xl border dark:border-0 bg-slate-100">
-```ts copy filename="src/caht.reducer.tsx"
+```ts copy
 // movex.config.ts
 
 import { ChatActions, ChatState, initialChatState} from './chat.types';
@@ -108,11 +108,9 @@ import { features, faqs, community } from '../modules/home/homeVars';
 </div>
 </div>
 
-{/* ?fontsize=14&hidenavigation=1&theme=dark&codemirror=1&editorsize=0&view=split&hidedevtools=1 */}
-
 <div
   id="examples"
-  className="h-screen w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-6 lg:pt-0 lg:p-20 lg:pt-0 flex flex-col"
+  className="h-screen w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-6 lg:pt-0 lg:p-20 lg:pt-0 flex flex-col text-white"
 >
   <h2 className="text-4xl lg:text-5xl font-bold pt-14 lg:pt-20 pb-4">
     Try Movex with a game of <span className="bg-green-300 text-slate-700 p-2 pt-1 rounded-lg leading-relaxed">Rock-Paper-Scissors</span>
@@ -123,7 +121,7 @@ import { features, faqs, community } from '../modules/home/homeVars';
     _No Server Code_, 
     _Secret State_, 
     _Realtime Updates_ and of course 
-    _Type-Safety_. Feel free to look over the code.
+    _Type-Safety_. Feel free to look over the code below.
   </h4>
   <div className="flex-1">
     <iframe
@@ -158,8 +156,6 @@ import { features, faqs, community } from '../modules/home/homeVars';
   <i className="text-sm">Note: A special ```MovexLocalMasterProvider``` is used here to allow the "Master Server" to run in the browser for demo purposes only.</i>
 </div>
 
-{/* // import { Game } from '../modules/home/game/Game'; */}
-
 <div id="faqs" className="w-full">
   <div className="container mx-auto max-w-[90rem] gap-2 pl-[max(env(safe-area-inset-left),1.5rem)] pr-[max(env(safe-area-inset-right),1.5rem)] p-16 pt-20">
     <h1 className="text-5xl font-bold mb-20 text-center text-green-500">
@@ -169,7 +165,7 @@ import { features, faqs, community } from '../modules/home/homeVars';
       {faqs.map((faq) => (
         <div
           key={faq.q}
-          className="relative mb-10 pb-6 border-b border-slate-700"
+          className="relative pb-6 nborder-b"
         >
           <dt className="text-lg font-semibold leading-7 text-gray-900 dark:text-gray-300">
             {faq.q}
