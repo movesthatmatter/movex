@@ -14,14 +14,12 @@ const config: DocsThemeConfig = {
     key: 'dev-version-aug-2023',
     text: () => (
       <span>
-        Movex is feature-complete yet still in Development for now.
-        Contributors and feedback are much{' '}
+        Movex is <a href="/docs/overview/introduction" style={{ textDecoration: 'underline' }}>feature-complete</a> yet still in Development for now.
+        Contributions and feedback are much{' '}
         <a
           href="https://github.com/movesthatmatter/movex/issues"
           target='_blank'
-          style={{
-            textDecoration: 'underline',
-          }}
+          style={{ textDecoration: 'underline' }}
         >
           appreciated
         </a>
