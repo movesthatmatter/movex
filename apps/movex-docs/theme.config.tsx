@@ -2,22 +2,14 @@ import { DocsThemeConfig } from 'nextra-theme-docs';
 import { Logo } from './modules/Logo';
 import { Footer } from './components/Footer';
 import { useRouter } from 'next/router';
-import { NavbarExtra } from './modules/NavbarExtra';
 
 const tags = {
   description:
     'Multiplayer State Synchronization. Server Authoritative. No Server Code. Secret State. Redux Api. Realtime',
 };
 
-// const Banner = () => <div>works</div>
-
 const config: DocsThemeConfig = {
   logo: <Logo />,
-  // banner: {
-  // content: () => <div>works</div>, // just like the "logo" option
-  // closable?: boolean,     // store the state in localStorage
-  // key?: string            // key for the localStorage item
-  // },
   banner: {
     key: 'dev-version-aug-2023',
     text: () => (
@@ -68,9 +60,6 @@ const config: DocsThemeConfig = {
       description: tags.description,
     };
   },
-  // navbar: {
-  //   extraContent: <NavbarExtra />
-  // }
 };
 
 export default config;
