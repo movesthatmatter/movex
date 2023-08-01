@@ -40,7 +40,8 @@ import { Code, Pre } from 'nextra/components';
 import { ChatActions, ChatState, initialChatState} from './chat.types';
 
 export default {
-  resources: {  
+  resources: {
+    // Register the Chat resource to Movex by assigning it a reducer
     chat: (state = initialChatState, action: ChatActions): ChatState => {
       // User Joins the Chat
       if (action.type === 'join') {
@@ -64,13 +65,10 @@ export default {
 
       return state;
     },
-
-},
+  },
 };
-
-````
+```
     </div>
-
   </div>
 </div>
 
@@ -116,11 +114,11 @@ import { features, faqs, community } from '../modules/home/homeVars';
     Try Movex with a game of <span className="bg-green-300 text-slate-700 p-2 pt-1 rounded-lg leading-relaxed">Rock-Paper-Scissors</span>
   </h2>
   <h4 className="text-xl lg:text-2xl text-slate-300 pb-6 lg:pb-16">
-    Although very basic, this example showcases all the features that makes Movex unique: 
-    _Authoritative Server_, 
-    _No Server Code_, 
-    _Secret State_, 
-    _Realtime Updates_ and of course 
+    Although very basic, this example showcases all the features that makes Movex unique:
+    _Authoritative Server_,
+    _No Server Code_,
+    _Secret State_,
+    _Realtime Updates_ and of course
     _Type-Safety_. Feel free to look over the code below.
   </h4>
   <div className="flex-1">
