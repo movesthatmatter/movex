@@ -24,7 +24,7 @@ import { Code, Pre } from 'nextra/components';
             target="_blank"
           >
             <Button type="clear" className="">
-              See Github
+              Star us on Github
             </Button>
           </Link>
         </div>
@@ -64,10 +64,11 @@ export default {
 
       return state;
     },
-  },
+
+},
 };
 
-```
+````
     </div>
 
   </div>
@@ -92,7 +93,7 @@ import { features, faqs, community } from '../modules/home/homeVars';
           {feature.name}
         </dt>
         <dd className="mt-2 pb-3 text-base leading-7 text-gray-600 dark:text-gray-400">
-          {feature.description} 
+          {feature.description}
         </dd>
         <Link
           className="hover:underline text-gray-700 dark:text-gray-300"
@@ -113,9 +114,17 @@ import { features, faqs, community } from '../modules/home/homeVars';
   id="examples"
   className="h-screen w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-6 lg:pt-0 lg:p-20 lg:pt-0 flex flex-col"
 >
-  <h2 className="text-4xl lg:text-5xl font-bold pt-20 pb-16">
-    Play a Rock-Paper-Scissors Game
+  <h2 className="text-4xl lg:text-5xl font-bold pt-14 lg:pt-20 pb-4">
+    Try Movex with a game of <span className="bg-green-300 text-slate-700 p-2 pt-1 rounded-lg leading-relaxed">Rock-Paper-Scissors</span>
   </h2>
+  <h4 className="text-xl lg:text-2xl text-slate-300 pb-6 lg:pb-16">
+    Although very basic, this example showcases all the features that makes Movex unique: 
+    _Authoritative Server_, 
+    _No Server Code_, 
+    _Secret State_, 
+    _Realtime Updates_ and of course 
+    _Type-Safety_. Feel free to look over the code.
+  </h4>
   <div className="flex-1">
     <iframe
       src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview&module=%2Fsrc%2FGame.tsx"
@@ -146,6 +155,7 @@ import { features, faqs, community } from '../modules/home/homeVars';
       sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
     />
   </div>
+  <i className="text-sm">Note: A special ```MovexLocalMasterProvider``` is used here to allow the "Master Server" to run in the browser for demo purposes only.</i>
 </div>
 
 {/* // import { Game } from '../modules/home/game/Game'; */}
@@ -201,3 +211,4 @@ import { features, faqs, community } from '../modules/home/homeVars';
 
   </div>
 </div>
+````
