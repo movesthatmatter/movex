@@ -1,30 +1,98 @@
-import { Hero } from '../modules/home/Hero.tsx';
+import { HeroText } from '../modules/home/HeroText.tsx';
+import { HeroSubText } from '../modules/home/HeroSubText.tsx';
 import Link from 'next/link';
+import { Button } from '../components/Button';
+import { Code, Pre } from 'nextra/components';
 
 <div className="container mx-auto max-w-[90rem] gap-2 pl-[max(env(safe-area-inset-left),1.5rem)] pr-[max(env(safe-area-inset-right),1.5rem)]">
 
-{/* <h1 className="text-3xl font-bold underline">Hello world!</h1> */}
+<div className="flex pt-20 pb-20 gap-24 text-center lg:text-left">
+  <div className="flex flex-col justify-center">
+    <HeroText className="text-6xl lg:text-7xl font-bold mb-4 lg:mb-10 !leading-relaxeds" />
+    <HeroSubText className="text-xl lg:text-2xl mb-20 !leading-normal text-slate-500" />
 
-{/* works */}
+    <div className="flex flex-col gap-5">
+      <div className="flex justify-center lg:justify-start">
+        <div className="flex gap-5">
+          <Link href="/docs/overview/get_started">
+            <Button className="bg-gradient-to-r from-movexBlue-400 via-indigo-500 to-purple-500 hover:to-movexBlue-500 via-indigo-500 hover:from-purple-300">
+              Get Started
+            </Button>
+          </Link>
+          <Link
+            href="https://github.com/movesthatmatter/movex"
+            target="_blank"
+          >
+            <Button type="clear" className="">
+              See Github
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
 
-<Hero />
+  </div>
+  <div className="hidden lg:block flex items-center">
+    <div className="dark:bg-slate-800 rounded-xl pt-4 pb-4 shadow-xl border dark:border-0 bg-slate-100">
+```ts copy filename="src/caht.reducer.tsx"
+// movex.config.ts
+
+import { ChatActions, ChatState, initialChatState} from './chat.types';
+
+export default {
+  resources: {  
+    chat: (state = initialChatState, action: ChatActions): ChatState => {
+      // User Joins the Chat
+      if (action.type === 'join') {
+        return {
+          ...state,
+          userSlots: {
+            ...state.userSlots,
+            [action.payload.userSlot]: false,
+          },
+        };
+      }
+      // User Submits Message
+      else if (action.type === 'submit') {
+        const nextMsg = action.payload;
+
+        return {
+          ...state,
+          messages: [...state.messages, nextMsg],
+        };
+      }
+
+      return state;
+    },
+  },
+};
+
+```
+    </div>
+
+  </div>
+</div>
+
+{/* <div className="flex items-center justify-center flex-1 pb-10">
+  <div className="border dark:border-0 rounded-2xl p-2 dark:bg-slate-800 border-slate-200 bg-slate-100">
+    ```bash
+    yarn add movex; yarn add --dev movex-service
+    ```
+  </div>
+</div> */}
 
 import { features, faqs, community } from '../modules/home/homeVars';
 
-<div className="mx-auto mt-16 max-w-2xl mt-20 lg:mt-24 lg:max-w-4xl mb-20 lg:mb-24">
-  <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
+<div className="mt-6 mb-20 lg:mb-24 bg-green-100s">
+  <dl className="mx-auto lg:flex grid smax-w-xl grid-cols-2 gap-x-5 gap-y-10 md:gap-x-20 md:gap-y-20 bg-red-100s">
     {features.map((feature) => (
-      <div key={feature.name} className="relative pl-16">
-        <dt className="text-base font-semibold leading-7 text-gray-900 dark:text-gray-300">
-          <div
-            className={`absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500`}
-          >
-            <feature.icon className="h-6 w-6 text-white" aria-hidden="true" />
-          </div>
+      <div key={feature.name} className="flex-1">
+        <dt className="text-base font-semibold leading-7 text-gray-900 dark:text-gray-300 flex gap-4">
+          <feature.icon className="h-9 w-9 text-white bg-purple-500 rounded-lg p-2" aria-hidden="true" />
           {feature.name}
         </dt>
         <dd className="mt-2 pb-3 text-base leading-7 text-gray-600 dark:text-gray-400">
-          {feature.description}
+          {feature.description} 
         </dd>
         <Link
           className="hover:underline text-gray-700 dark:text-gray-300"
@@ -34,15 +102,23 @@ import { features, faqs, community } from '../modules/home/homeVars';
         </Link>
       </div>
     ))}
+
   </dl>
 </div>
-
 </div>
+
 {/* ?fontsize=14&hidenavigation=1&theme=dark&codemirror=1&editorsize=0&view=split&hidedevtools=1 */}
-<div id="examples" className="h-screen w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-6 lg:pt-0 lg:p-20 lg:pt-0 flex flex-col">
-  <h2 className="text-4xl lg:text-7xl font-bold pt-20 pb-6">Play Rock Paper Scissors on Movex</h2>
+
+<div
+  id="examples"
+  className="h-screen w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-6 lg:pt-0 lg:p-20 lg:pt-0 flex flex-col"
+>
+  <h2 className="text-4xl lg:text-5xl font-bold pt-20 pb-16">
+    Play a Rock-Paper-Scissors Game
+  </h2>
   <div className="flex-1">
-    <iframe src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview&module=%2Fsrc%2FGame.tsx"
+    <iframe
+      src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview&module=%2Fsrc%2FGame.tsx"
       className="hidden lg:block"
       style={{
         width: ' 100%',
@@ -55,7 +131,8 @@ import { features, faqs, community } from '../modules/home/homeVars';
       allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
       sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
     />
-    <iframe src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview"
+    <iframe
+      src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview"
       className="lg:hidden"
       style={{
         width: ' 100%',
@@ -68,7 +145,7 @@ import { features, faqs, community } from '../modules/home/homeVars';
       allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
       sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
     />
-   </div>
+  </div>
 </div>
 
 {/* // import { Game } from '../modules/home/game/Game'; */}
@@ -107,7 +184,7 @@ import { features, faqs, community } from '../modules/home/homeVars';
 <div id="community" className="w-full">
   <div className="container mx-auto max-w-[90rem] gap-2 pl-[max(env(safe-area-inset-left),1.5rem)] pr-[max(env(safe-area-inset-right),1.5rem)] p-16 pt-20">
     <h1 className="text-5xl font-bold mb-6 text-center text-pink-500">Community</h1>
-    <h3 className="text-xl mb-20 text-center text-slate-300">Join our community to get help, share your projects, and even contribute to the project!</h3>
+    <h3 className="text-xl mb-20 text-center text-slate-700 dark:text-slate-300">Join our community to get help, share your projects, and even contribute to the project!</h3>
 
       <div className="flex w-full gap-20">
         <div />
