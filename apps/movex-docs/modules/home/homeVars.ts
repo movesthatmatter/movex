@@ -8,12 +8,12 @@ import themeConfig from '../../theme.config';
 
 export const features = [
   {
-    name: 'Server Authoritative. No Server Code',
+    name: 'Authoritative Server',
     description:
-      "It's important to keep the business logic outside the reach of potential bad actor clients, which is why all the state logic happens on an actual server. But there is no need for you to code, maintain or worry about the server.",
+      "It's important to keep the app logic outside the reach of potential bad actors, which is why it gets processed on a server. But there is no need for you to code, maintain or worry about that.",
     icon: FlagIcon,
     link: {
-      label: 'Learn More',
+      label: 'Learn how it works',
       url: '/docs/features/server_authoritative',
     },
     color: 'orange-500',
@@ -21,10 +21,10 @@ export const features = [
   {
     name: 'Secret State',
     description:
-      'Sometimes you need to keep state fragments secret (or private) for a while, until the time is appropriate to reveal. Movex makes this a breeze!',
+      'Sometimes you need to keep parts of the state secret from the rest of the peers until the time is appropriate to reveal, like a game of cards for example.',
     icon: LockClosedIcon,
     link: {
-      label: 'Learn More',
+      label: 'Movex makes this a breeze',
       url: '/docs/features/secret_state',
     },
     color: 'yellow-300',
@@ -32,7 +32,7 @@ export const features = [
   {
     name: 'Real-Time Sync',
     description:
-      'The State is shared in real-time with all the peers subscribed to its Resource.',
+      'A Movex Resource watches for state changes constantly and triggers updates to the UI as soon as a new change occurs by following the Observable pattern.',
     icon: ArrowPathIcon,
     link: {
       label: 'Learn More',
@@ -41,9 +41,9 @@ export const features = [
     color: 'blue-500',
   },
   {
-    name: 'Functional & Familiar',
+    name: 'Typesafe Functional Programming',
     description:
-      "If you know Redux or any flavour of Flux you'll feel right at home. If not Movex is quick to get started with.",
+      "Movex is built entirely in Typescript. If you know Redux or the `useReducer` hook you'll feel right at home. If not Movex is quick to get started with.",
     icon: HeartIcon,
     link: {
       label: 'Learn More',
