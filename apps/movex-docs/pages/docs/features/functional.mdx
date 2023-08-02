@@ -1,3 +1,23 @@
-# Functional & Familiar
+# Typesafe Functional Programming
 
-If you know Redux or any flavour of Flux you'll feel right at home. If not Movex is quick to get started with.
+Movex is built entirely in Typescript. If you know Redux or the `React.useReducer()` hook or any flavor of Flux you'll feel right at home. 
+
+{/* If not Movex is quick to [get started](/docs/overview/get_started) with. */}
+
+#### Purity
+
+The first and most important concept Movex relies on is what in Functional Programming is called "purity".
+
+What this means is that a function called with the same input multiple times must always return the same output. The function becomes pure when it doesn't rely on the context outside of itself such as the global scope, to process its response.
+
+> Note: Movex expects the [Reducers](/docs/how/reducers) to be pure functions.
+
+#### Determinstic Action Propagation
+
+Once the Resource Reducers are pure, Movex takes advantage of that under the hood to ease the network load, by using the method of _Determinstic Action Propagation_.
+
+What this fancy word means is that instead of sending the whole resource state back and forth, which can be huge, or even just the deltas of an update, which can be many, it simply sends the [Action](/docs/how/actions) itself from the originating client to the server, to process the master state, and then from the server to the rest of the clients so they can process the next state as well and sync-up.
+
+This is possible, because when the Reducer function is pure we can guarentee that the returned output, from an equivalent input (action and prev state) will be EXACTLY the same accross all the different environments (server and all clients).
+
+> You can read more about Authoritative Servers in a Multiplayer Game System [here](https://www.gabrielgambetta.com/client-server-game-architecture.html#authoritative-servers-and-dumb-clients) and about Determinstic Propagation [here](https://longwelwind.net/blog/networking-turn-based-game/).

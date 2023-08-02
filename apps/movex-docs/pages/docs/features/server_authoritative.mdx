@@ -1,21 +1,7 @@
-# Authoritative Server without Server Code
+# Authoritative Server
 
-Movex makes possible a setup where the Server is the Authority, so there are no bad actors on the client side, but without the developer having to deal with servers.
+It's important to keep the app logic outside the reach of potential bad actors, which is why it gets processed on an actual server run by movex. But there is no need for you to code, maintain or worry about that.
 
-## Determinstic Action Propagation Method
+Movex makes use of a few concepts and strategies under the hood such as ["Deterministic Action Propagation"](/docs/features/functional#determinstic-action-propagation) as well as running the [`movex.config`](/docs/how/movex_config) logic on both the front-end and the back-end, to make this possible.
 
-This works because of Determinstic Action Propagation, which simply relies on the assumption that processing the actinos of a client is determinstic - meaning if given the same input it will always return the same output. In fact this is exactly what Redux and Functional programming are excelling at, and thus we can thus take advantage of it. Instead of syncing the state (which can be huge) among all the peers with each update, or broadcasting the state chaneg deltas (which can be many), we simply share the action with everyone including the server and rely on the fact that it will always give back the same result. 
-
-Note. In case it doesn't there are some fail safe strategies in place. See the How to for more info on that.
-
-You can read more about Authoritative Servers in a Multiplayer Game System [here](https://www.gabrielgambetta.com/client-server-game-architecture.html#authoritative-servers-and-dumb-clients) and about Determinstic Propagation [here](https://longwelwind.net/blog/networking-turn-based-game/).
-
-## No Server Code
-
-Yes. No Server code and no server handling. 
-
-One of the biggest pain points for me, in building multiplayer turn based games or apps was the server part, which involves dealing with networking logic, databases, state sharing, deploying and maintaining another server and a lot of other things in between. And on top of it, after doing it a few times it becomes pretty redundant as there's quite a bit of copy and paste, and it takes away from the real fun part of building my game.
-
-So with Movex, I attempt to take all of that hassle away and let you, the game developer to do what you love most – build your game (or app):D ! 
-
-_Btw, If you do find pleasure building networking and server logic I'll always need a hand with Movex :D._
+Learn more about how Movex works [here](/docs/how).

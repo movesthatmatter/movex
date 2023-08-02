@@ -1,8 +1,21 @@
 # Reducers
 
-Each Resource, needs a Reducer to modify its state. A Movex Reducer, is almost the same as a Redux or React's useReducer' reducer. It's where the business/game logic happens. [Learn more here](https://www.tutorialspoint.com/redux/redux_reducers.htm) on what a reducer does in Redux.
+A Reducer describes the logic that modifies a Resource State via Actions. Each Resource gets assigned a Reducer in the `movex.config` file.
 
-Example of a reducer:
+It is almost the same as a [Redux](https://www.tutorialspoint.com/redux/redux_reducers.htm) or React's `useReducer` reducer, with the difference that it runs both on the front-end and the on back-end, in order to make multi-player mode possible.
+
+> Note: For this to work the Reducer must be [pure](/docs/features/functional#purity)!
+
+### The Reducer Type
+
+```typescript
+export type MovexReducer<S = any, A extends AnyAction = AnyAction> = ((
+  state: S,
+  action: A
+) => S) & { $canReconcileState?: (s: S) => boolean };
+```
+
+### Example
 
 ```ts
 // *Api might change
@@ -47,7 +60,3 @@ export default (state = initialCounterState, action: CounterActions) => {
   return state;
 };
 ```
-
-It's a simple, deterministic mechanism that when given the same input, it always returns the same output.
-
-Where it differs from Redux is that it runs both on the Client and the Server, which makes such features as **Server Authority** and **Private States** possible.
