@@ -1,7 +1,8 @@
 {
+  "movex_config": "The Movex Config",
   "resources": "Resources",
   "reducers": "Reducers",
   "actions": "Actions",
   "state": "State",
-  "secret_state": "Secret State"
+  "secret_state": "Secret State & Private Actions"
 }

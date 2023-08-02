@@ -1,8 +1,8 @@
 # Getting Started
 
-A small React example to get you up and running with Movex. 
+A small React Counter example to get you up and running with Movex.
 
-You can see the code here https://github.com/movesthatmatter/movex-counter-example.
+You can see the finished code here https://github.com/movesthatmatter/movex-counter-example.
 
 ### Pre-requisites: Create React App and Run it
 
@@ -24,7 +24,6 @@ yarn add movex movex-react; yarn add --dev movex-service
 
 ```ts copy filename="src/movex.config.ts"
 export default {
-  url: undefined,
   resources: {},
 };
 ```
@@ -44,7 +43,7 @@ import './App.css';
 import { MovexProvider } from 'movex-react';
 import movexConfig from './movex.config';
 
-function App() {
+export default function App() {
   return (
     <MovexProvider
       movexDefinition={movexConfig}
@@ -72,13 +71,11 @@ function App() {
     </MovexProvider>
   );
 }
-
-export default App;
 ```
 
 ### 4. Add a Movex Resource
 
-In this short tutorial we're going to build a Counter App that will sync in realtime with anybody who loads it out of the box.
+In this short tutorial we're going to build a Counter App that will sync in real-time with another client out of the box.
 
 ###### Add the movex file (action, state, reducer) to define the resource.
 
@@ -101,7 +98,7 @@ export type CounterActions =
   | Action<'incrementBy', number>;
 
 // Reducer
-export const reducer = (
+export default reducer = (
   state = initialCounterState,
   action: CounterActions
 ) => {
@@ -128,17 +125,14 @@ export const reducer = (
 
   return state;
 };
-
-export default reducer;
 ```
 
 ###### And Reference it in the movex.config file by a name (counter)
 
-```ts copy filename="src/movex.config.ts" {1, 5-7}
+```ts copy filename="src/movex.config.ts" {1, 4-6}
 import counterReducer from './counter.movex';
 
 export default {
-  url: undefined,
   resources: {
     counter: counterReducer,
   },
@@ -147,7 +141,7 @@ export default {
 
 ### 5. Let's add the Counter Component
 
-For this tutorial, well keep the UI very basic since it's not the main point.
+For this tutorial, we'll keep the UI very basic since it's not the main point.
 
 ```ts copy showLineNumbers filename="src/Counter.tsx"
 import { useMovexBoundResourceFromRid } from 'movex-react';
@@ -178,9 +172,9 @@ export const Counter: React.FC<Props> = (props) => {
 
 ##### What's happening here?
 
-On line 11 we're binding to the counter resource by rid. This means that now we get access to the Resource state by `counter.state` and to the Action Dispatcher by accessing `counter.dispatch()`
+On line 11 we're binding to the counter resource by rid. This means that now we get access to the Resource state by accessing `counter.state` and to the Action Dispatcher by accessing `counter.dispatch()`
 
-In the following lines we're rendering a very simple UI, which displays the Counter State at _line 20_ and adding two Buttons which will be responsible for trigger the "Increment" and "Decrement" actions.
+In the following lines we're rendering a very simple UI, which displays the Counter State at _line 20_ and adding two Buttons which will be responsible for triggering the "Increment" and "Decrement" actions.
 
 ### 5. And hook it up with our App
 
@@ -240,7 +234,6 @@ To keep things simple, we're creating a new Counter Resource as soon as posisble
 
 Once the Resource gets created (_line 27_), we add its rid (_ResourceIdentifier_) to the url param so it can be used by an outsider as well. More on this later.
 
-{/* Teh counterRid at line 10, simply reads the url */}
 Then, render the Counter Component if there is a rid set in the url params.
 
 This is how it looks like so far:

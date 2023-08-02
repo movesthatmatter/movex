@@ -18,7 +18,9 @@ counterResource.onUpdated(counterRid, (nextState) => {
 counterResource.dispatch(resourceIdentifier, { type: 'increment' });
 ```
 
-A resource can be anything from a room, a game, a chat box, to any portion of your game or application that needs it's own separated state & subscribers.
+A resource can be anything from a room, a game, a chat box, to any portion of your game or application that needs its own separated state & subscribers.
+
+#### Real-world use case
 
 For example your UI can display a Game of Chess inside a Room Page. The Room Resource contains all sort of items such as a chatbox, a leaderboard, video chat, etc., while the Game only contains the state of the game and the players.
 There is a requirement that only the Clients that have the right password can enter the Room, see the Game and have access to the chatbox and videochat, but the game will be "broadcasted" to "spectators" outside of the room as well. This is a fair requirement for a chess tournament actually, and thus there needs to be a distinction between the Game Resource and the Room Resource because each one of them has its own set of subscribers.

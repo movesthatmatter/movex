@@ -43,7 +43,7 @@ export const features = [
   {
     name: 'Typesafe Functional Programming',
     description:
-      "Movex is built entirely in Typescript. If you know Redux or the `useReducer` hook you'll feel right at home. If not Movex is quick to get started with.",
+      "Movex is built entirely in Typescript. If you know Redux or the React.useReducer() hook you'll feel right at home. If not Movex is quick to get started with.",
     icon: HeartIcon,
     link: {
       label: 'Learn More',
