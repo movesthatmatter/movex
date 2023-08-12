@@ -20,17 +20,24 @@
 
 Movex is a "predictable state container" for multiplayer apps or games, that allows the developer to focus on the front-end only, while it seamlessly takes care of the back-end.
 
-> Note Movex is currently in Alpha. Drop me a message or create an issue if you have any questions, ideas or would like to get involved.**
-
-## See How th Magic happens in the below diagram
-
 <picture width="800">
   <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/260265762-84841846-f0f3-465e-a4fd-16a63e7ae00b.png" width="800">
-  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/260265168-4f1f0254-84a5-4838-934d-407fa579ca65.png" width="400">
+  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/260265168-4f1f0254-84a5-4838-934d-407fa579ca65.png" width="800">
 </picture>
-<!-- ![image](https://user-images.githubusercontent.com/2099521/260265168-4f1f0254-84a5-4838-934d-407fa579ca65.png) -->
 
-## Features
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+
+# Movex needs your contribution! Please consider giving it a star or help with an [open issue](https://github.com/movesthatmatter/movex/issues).
+
+<br/>
+
+## Core Features
+
+All of the Core Features are code complete 🥳
 
 - [x] Real Time State Sync
 - [x] Secret State
@@ -49,4 +56,10 @@ Visit https://movex.dev to get started with Movex.
 
 ## Contributing
 
-If you're interested in contributing to Movex please feel free to Open a PR, an Issue or reach out to me on [Twitter](https://twitter.com/gctroia).
+- Want to help with the code?
+Please check out our [Good First Issue](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) section.
+
+- Don't wanna code?
+Any feedback is welcome and greatly appreciated so please don't hesitate to open an [issue](https://github.com/movesthatmatter/movex/issues).
+
+- For any other help, you can write us on our [Discord](https://discord.gg/N8k447EmBh), [Twitter](https://twitter.com/gctroia) or just [open an issue](https://github.com/movesthatmatter/movex/issues)!
