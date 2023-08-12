@@ -18,9 +18,17 @@
 
 </div>
 
-Movex is a Multiplayer (Game) State Synchronization Library using Deterministic Action Propagation without the need to write Server Specific Code.
+Movex is a "predictable state container" for multiplayer apps or games, that allows the developer to focus on the front-end only, while it seamlessly takes care of the back-end.
 
-!!! Note Movex is currently in Alpha. Drop me a message or create an issue if you have any questions, ideas or would like to get involved.**
+> Note Movex is currently in Alpha. Drop me a message or create an issue if you have any questions, ideas or would like to get involved.**
+
+## See How th Magic happens in the below diagram
+
+<picture width="800">
+  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/260265762-84841846-f0f3-465e-a4fd-16a63e7ae00b.png" width="800">
+  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/260265168-4f1f0254-84a5-4838-934d-407fa579ca65.png" width="400">
+</picture>
+<!-- ![image](https://user-images.githubusercontent.com/2099521/260265168-4f1f0254-84a5-4838-934d-407fa579ca65.png) -->
 
 ## Features
 
