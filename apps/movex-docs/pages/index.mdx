@@ -3,13 +3,14 @@ import { HeroSubText } from '../modules/home/HeroSubText.tsx';
 import Link from 'next/link';
 import { Button } from '../components/Button';
 import { Code, Pre } from 'nextra/components';
+import { MovexDiagram } from '../components/MovexDiagram';
 
 <div className="container mx-auto max-w-[90rem] gap-2 pl-[max(env(safe-area-inset-left),1.5rem)] pr-[max(env(safe-area-inset-right),1.5rem)]">
 
-<div className="flex pt-20 pb-20 gap-24 text-center lg:text-left">
-  <div className="flex flex-col justify-center">
-    <HeroText className="text-6xl lg:text-7xl font-bold mb-4 lg:mb-10 !leading-relaxeds" />
-    <HeroSubText className="text-xl lg:text-2xl mb-20 !leading-normal text-slate-500" />
+<div className="flex flex-col lg:flex-row pt-4 md:pt-10 pb-10 lg:pt-20 lg:pb-20 gap-24 text-center lg:text-left">
+  <div className="flex flex-col justify-center flex-1">
+    <HeroText className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4 lg:mb-10 !leading-normals !md:leading-[4.5rem]" />
+    <HeroSubText className="text-xl lg:text-2xl mb-10 lg:mb-20 !leading-normal text-slate-500" />
 
     <div className="flex flex-col gap-5">
       <div className="flex justify-center lg:justify-start">
@@ -32,53 +33,16 @@ import { Code, Pre } from 'nextra/components';
     </div>
 
   </div>
-  <div className="hidden lg:block flex items-center">
-    <div className="dark:bg-slate-800 rounded-xl pt-4 pb-4 shadow-xl border dark:border-0 bg-slate-100">
-```ts copy
-// movex.config.ts
+  <div className="flex items-center flex-1">
+    <a href="docs/overview/introduction">
+      <div className="dark:bg-slate-800 rounded-xl p-2 md:p-8 md:pb-4 shadow-xl border dark:border-0 bg-slate-100 text-center">
+        <MovexDiagram />
+        <i className="pt-8 block">Movex at a glance!</i>
+      </div>
+    </a>
 
-import { ChatActions, ChatState, initialChatState} from './chat.types';
-
-export default {
-  resources: {
-    // Register the Chat resource to Movex by assigning it a reducer
-    chat: (state = initialChatState, action: ChatActions): ChatState => {
-      // User Joins the Chat
-      if (action.type === 'join') {
-        return {
-          ...state,
-          userSlots: {
-            ...state.userSlots,
-            [action.payload.userSlot]: false,
-          },
-        };
-      }
-      // User Submits Message
-      else if (action.type === 'submit') {
-        const nextMsg = action.payload;
-
-        return {
-          ...state,
-          messages: [...state.messages, nextMsg],
-        };
-      }
-
-      return state;
-    },
-  },
-};
-```
-    </div>
   </div>
 </div>
-
-{/* <div className="flex items-center justify-center flex-1 pb-10">
-  <div className="border dark:border-0 rounded-2xl p-2 dark:bg-slate-800 border-slate-200 bg-slate-100">
-    ```bash
-    yarn add movex; yarn add --dev movex-service
-    ```
-  </div>
-</div> */}
 
 import { features, faqs, community } from '../modules/home/homeVars';
 
@@ -159,11 +123,11 @@ import { features, faqs, community } from '../modules/home/homeVars';
     <h1 className="text-5xl font-bold mb-20 text-center text-green-500">
       FAQs
     </h1>
-    <div className="grid grid-cols-2 gap-20">
+    <div className="grid md:grid-cols-2 md:gap-20">
       {faqs.map((faq) => (
         <div
           key={faq.q}
-          className="relative pb-6 nborder-b"
+          className="relative pb-6"
         >
           <dt className="text-lg font-semibold leading-7 text-gray-900 dark:text-gray-300">
             {faq.q}
@@ -185,19 +149,18 @@ import { features, faqs, community } from '../modules/home/homeVars';
   </div>
 </div>
 
+import { CommunityItem } from '../modules/home/CommunityItem';
+
 <div id="community" className="w-full">
   <div className="container mx-auto max-w-[90rem] gap-2 pl-[max(env(safe-area-inset-left),1.5rem)] pr-[max(env(safe-area-inset-right),1.5rem)] p-16 pt-20">
     <h1 className="text-5xl font-bold mb-6 text-center text-pink-500">Community</h1>
-    <h3 className="text-xl mb-20 text-center text-slate-700 dark:text-slate-300">Join our community to get help, share your projects, and even contribute to the project!</h3>
+    <h3 className="text-xl mb-10 md:mb-20 text-center text-slate-700 dark:text-slate-300">Join our community to get help, share your projects, and even contribute to the project!</h3>
 
-      <div className="flex w-full gap-20">
+      <div className="flex w-full gap-4 md:gap-20">
         <div />
         <div />
         {community.map((c) => (
-          <Link href={c.link} target="_blank" className="flex-1 text-center bg-opacity-10 hover:bg-opacity-20 bg-slate-500 rounded-lg p-5 border border-slate-500 border-opacity-30">
-            <h4 className="text-lg font-bold mb-2">{c.name}</h4>
-            <p>{c.desc}</p>
-          </Link>
+          <CommunityItem {...c} key={c.link} />
         ))}
         <div />
         <div />
@@ -205,4 +168,4 @@ import { features, faqs, community } from '../modules/home/homeVars';
 
   </div>
 </div>
-````
+

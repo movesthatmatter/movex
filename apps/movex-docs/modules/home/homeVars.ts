@@ -78,30 +78,30 @@ export const faqs = [
     q: 'What can I build with Movex?',
     a: "Movex uses Deterministic Action Propagation under the hood, which means it's propagating Actions (small bits of data) from client to server and server to client(s). This works great for games (or applications) with infrequent changes (traffic) such as a turn-based game (e.g. Age of Empires) but will most likely not be enough for a shooter game or something that requires a lot of user input sent over the network. There are some ideas to make that possible in the future as well.",
     link: {
-      label: "Read more about Deterministic Propagation",
-      url: "http://localhost:3000/docs/features/server_authoritative#determinstic-action-propagation-method"
-    }
+      label: 'Read more about Deterministic Propagation',
+      url: 'http://localhost:3000/docs/features/server_authoritative#determinstic-action-propagation-method',
+    },
   },
   {
     q: 'Can I use Movex with React?',
-    a: "Yes. Just use `movex-react`.",
+    a: 'Yes. Just use `movex-react`.',
     link: {
-      label: "See how",
-      url: "http://localhost:3000/docs/overview/get_started"
-    }
+      label: 'See how',
+      url: 'http://localhost:3000/docs/overview/get_started',
+    },
   },
 ];
 
 export const community = [
   {
     name: 'Discord',
-    icon: '',
+    icon: { config: 'chat' }, // from nextra.useConfig()
     desc: 'Get your questions answered right away on Discord',
     link: themeConfig.chat?.link || '',
   },
   {
     name: 'Github',
-    icon: '',
+    icon: { config: 'project' }, // from nextra.useConfig()
     desc: 'Contribute or Open Issues on our Github repo.',
     link: themeConfig.project?.link || '',
   },
@@ -111,4 +111,4 @@ export const community = [
   //   desc: 'Whatcha gonna\' say?',
   //   link: themeConfig.project?.link || '',
   // },
-]
+];

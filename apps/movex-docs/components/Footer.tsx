@@ -4,11 +4,11 @@ import { HeartIcon } from '@heroicons/react/24/solid';
 
 export const Footer: React.FC = () => {
   return (
-    <div className='flex flex-1 justify-between items-end'>
+    <div className='flex flex-1 flex-col md:flex-row items-center md:justify-between md:items-end'>
       <div>
         <Logo />
       </div>
-      <div className="pt-4 text-right">
+      <div className="pt-4 text-center md:text-right">
         <span>Movex is a Moves That Matter project.</span>
         <p>
           Made with{' '}

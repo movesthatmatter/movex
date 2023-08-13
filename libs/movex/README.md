@@ -22,7 +22,7 @@ Movex is a "predictable state container" for multiplayer apps or games, that all
 
 <picture width="800">
   <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/260265762-84841846-f0f3-465e-a4fd-16a63e7ae00b.png" width="800">
-  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/260266259-ed2118cb-543a-44de-948c-b923470b318c.png" width="800">
+  <img alt="Movex Diagram" src="https://user-images.githubusercontent.com/2099521/260266259-ed2118cb-543a-44de-948c-b923470b318c.png" width="800">
 </picture>
 
 <br/>
