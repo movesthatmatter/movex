@@ -21,8 +21,8 @@
 Movex is a "predictable state container" for multiplayer apps or games, that allows the developer to focus on the front-end only, while it seamlessly takes care of the back-end.
 
 <picture width="800">
-  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/260265762-84841846-f0f3-465e-a4fd-16a63e7ae00b.png" width="800">
-  <img alt="Movex Diagram" src="https://user-images.githubusercontent.com/2099521/260266259-ed2118cb-543a-44de-948c-b923470b318c.png" width="800">
+  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/260276752-e28e7cb4-9e2f-4185-a762-95d7ce5f65d3.png" width="800">
+  <img alt="Movex Diagram" src="https://user-images.githubusercontent.com/2099521/260276756-52c422da-6266-449b-a3e4-0fda499f947c.png" width="800">
 </picture>
 
 <br/>
