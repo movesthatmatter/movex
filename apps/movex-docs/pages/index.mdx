@@ -25,7 +25,7 @@ import { MovexDiagram } from '../components/MovexDiagram';
             target="_blank"
           >
             <Button type="clear" className="">
-              Star us on Github
+              Contribute on Github
             </Button>
           </Link>
         </div>
@@ -47,7 +47,7 @@ import { MovexDiagram } from '../components/MovexDiagram';
 import { features, faqs, community } from '../modules/home/homeVars';
 
 <div className="mt-6 mb-20 lg:mb-24 bg-green-100s">
-  <dl className="mx-auto lg:flex grid smax-w-xl grid-cols-2 gap-x-5 gap-y-10 md:gap-x-20 md:gap-y-20 bg-red-100s">
+  <dl className="mx-auto slg:flex grid smax-w-xl grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10 smd:gap-x-20 md:gap-y-20 bg-red-100s">
     {features.map((feature) => (
       <div key={feature.name} className="flex-1">
         <dt className="text-base font-semibold leading-7 text-gray-900 dark:text-gray-300 flex gap-4">
@@ -72,7 +72,7 @@ import { features, faqs, community } from '../modules/home/homeVars';
 
 <div
   id="examples"
-  className="h-screen w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-6 lg:pt-0 lg:p-20 lg:pt-0 flex flex-col text-white"
+  className="h-screen lg:h-auto w-full bg-gradient-to-tr from-movexBlue-400 via-indigo-500 to-purple-500 p-6 lg:pt-0 lg:p-20 lg:pt-0 flex flex-col text-white"
 >
   <h2 className="text-4xl lg:text-5xl font-bold pt-14 lg:pt-20 pb-4">
     Try Movex with a game of <span className="bg-green-300 text-slate-700 p-2 pt-1 rounded-lg leading-relaxed">Rock-Paper-Scissors</span>
@@ -85,13 +85,13 @@ import { features, faqs, community } from '../modules/home/homeVars';
     _Realtime Updates_ and of course
     _Type-Safety_. Feel free to look over the code below.
   </h4>
-  <div className="flex-1">
+  <div className="flex-1 lg:h-screen">
     <iframe
       src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview&module=%2Fsrc%2FGame.tsx"
       className="hidden lg:block"
       style={{
         width: ' 100%',
-        height: '100%',
+        height: 'calc(100vh - 160px)',
         borderRadius: '8px',
         overflow: 'hidden',
         borderRight: 'solid black 16px',
@@ -104,7 +104,7 @@ import { features, faqs, community } from '../modules/home/homeVars';
       src="https://codesandbox.io/embed/rps-demo-x877yl?view=preview"
       className="lg:hidden"
       style={{
-        width: ' 100%',
+        width: '100%',
         height: '100%',
         borderRadius: '8px',
         overflow: 'hidden',

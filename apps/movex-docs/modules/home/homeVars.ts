@@ -3,36 +3,50 @@ import {
   LockClosedIcon,
   HeartIcon,
   FlagIcon,
+  BookOpenIcon,
+  BoltIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import themeConfig from '../../theme.config';
 
 export const features = [
   {
+    name: 'Open Source',
+    description:
+      "Movex is completely open source. You are welcome to contribute.",
+    icon: BookOpenIcon,
+    link: {
+      label: 'Learn More',
+      url: 'https://github.com/movesthatmatter/movex',
+    },
+    color: 'orange-500',
+  },
+  {
+    name: 'Generated Backend',
+    description:
+      "Movex takes care of the networking logic, databases, state sharing strategies, deploying and maintaining the server(s) and a lot of other decisions in between.",
+    icon: BoltIcon,
+    link: {
+      label: 'Learn More',
+      url: 'docs/features/frontend_only',
+    },
+    color: 'orange-500',
+  },
+  {
     name: 'Authoritative Server',
     description:
-      "It's important to keep the app logic outside the reach of potential bad actors, which is why it gets processed on a server. But there is no need for you to code, maintain or worry about that.",
+      "It's important to keep the app logic outside the reach of potential bad actors, which is why it gets processed on the server.",
     icon: FlagIcon,
     link: {
-      label: 'Learn how it works',
+      label: 'Learn More',
       url: '/docs/features/server_authoritative',
     },
     color: 'orange-500',
   },
   {
-    name: 'Secret State',
-    description:
-      'Sometimes you need to keep parts of the state secret from the rest of the peers until the time is appropriate to reveal, like a game of cards for example.',
-    icon: LockClosedIcon,
-    link: {
-      label: 'Movex makes this a breeze',
-      url: '/docs/features/secret_state',
-    },
-    color: 'yellow-300',
-  },
-  {
     name: 'Real-Time Sync',
     description:
-      'A Movex Resource watches for state changes constantly and triggers updates to the UI as soon as a new change occurs by following the Observable pattern.',
+    'Movex uses the Observable Pattern under the hood to track state changes on the registered resources and notify the UI layer.',
     icon: ArrowPathIcon,
     link: {
       label: 'Learn More',
@@ -41,10 +55,21 @@ export const features = [
     color: 'blue-500',
   },
   {
+    name: 'Secret State',
+    description:
+      'Sometimes you need to keep parts of the state secret from the rest of the peers until the time is appropriate to reveal, like a game of cards for example.',
+    icon: LockClosedIcon,
+    link: {
+      label: 'Learn More',
+      url: '/docs/features/secret_state',
+    },
+    color: 'yellow-300',
+  },
+  {
     name: 'Typesafe Functional Programming',
     description:
       "Movex is built entirely in Typescript. If you know Redux or the React.useReducer() hook you'll feel right at home. If not Movex is quick to get started with.",
-    icon: HeartIcon,
+    icon: ShieldCheckIcon,
     link: {
       label: 'Learn More',
       url: '/docs/features/functional',
@@ -79,7 +104,7 @@ export const faqs = [
     a: "Movex uses Deterministic Action Propagation under the hood, which means it's propagating Actions (small bits of data) from client to server and server to client(s). This works great for games (or applications) with infrequent changes (traffic) such as a turn-based game (e.g. Age of Empires) but will most likely not be enough for a shooter game or something that requires a lot of user input sent over the network. There are some ideas to make that possible in the future as well.",
     link: {
       label: 'Read more about Deterministic Propagation',
-      url: 'http://localhost:3000/docs/features/server_authoritative#determinstic-action-propagation-method',
+      url: '/docs/features/server_authoritative#determinstic-action-propagation-method',
     },
   },
   {
@@ -87,7 +112,7 @@ export const faqs = [
     a: 'Yes. Just use `movex-react`.',
     link: {
       label: 'See how',
-      url: 'http://localhost:3000/docs/overview/get_started',
+      url: '/docs/overview/get_started',
     },
   },
 ];
