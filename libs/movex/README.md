@@ -25,7 +25,7 @@
 
 ## 🧐 Why Movex
 
-__Movex let's you cut the development time in half and ship 10x faster, by abstracting the backend and server-side away! 🎉__
+__Movex let's you cut the development effort in half and ship faster by abstracting the backend logic and server-side away! 🎉__
 
 With it's unique approach and set of features Movex gives you the freedom to focus only on the front-end while still maintaining all of the control over the App Logic, UI/UX and Authority over Data.
 
