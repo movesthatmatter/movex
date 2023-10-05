@@ -1,7 +1,7 @@
 <div align="center">
 <picture width="400">
-  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/221956423-bd0b1b46-a8ed-4b25-8a1c-14cdcb1de716.png" width="400">
-  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/242975504-a6faa334-a6b3-44b4-bf40-6ffcd27d9c08.png" width="400">
+  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/242976573-84d1ea96-1859-43a7-ac0c-d2f1e0f1b882.png" width="400">
+  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/242976534-60d063cd-3283-45e3-aac5-bd8ed0eb8946.png" width="400">
 </picture>
 </div>
 
