@@ -3,26 +3,14 @@
   <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/221956423-bd0b1b46-a8ed-4b25-8a1c-14cdcb1de716.png" width="400">
   <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/242975504-a6faa334-a6b3-44b4-bf40-6ffcd27d9c08.png" width="400">
 </picture>
-<div>
-
-<div align="center">
-  <h1 style="line-height: 0">The real-time data sharing infrastructure for frontend developers</h1>
-  
-Movex shares app data easily without you worrying about the server, backend logic or even the network.
 </div>
 
-<picture width="800">
-  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/260276752-e28e7cb4-9e2f-4185-a762-95d7ce5f65d3.png" width="800">
-  <img alt="Movex Diagram" src="https://user-images.githubusercontent.com/2099521/260276756-52c422da-6266-449b-a3e4-0fda499f947c.png" width="800">
-</picture>
+<div align="center">
+  <h1>The real-time data sharing infrastructure for frontend developers</h1>
+  Share app data easily without worrying about the server, backend logic or even the network!
+</div>
 
 <br/>
-<br/>
-<br/>
-<br/>
-<br/>
-
-
 <div align="center">
 
 [![NPM version][npm-image]][npm-url]
@@ -35,9 +23,14 @@ Movex shares app data easily without you worrying about the server, backend logi
 
 </div>
 
-# Movex needs your contribution! Please consider giving it a star or help with an [open issue](https://github.com/movesthatmatter/movex/issues).
+## 🧐 Why Movex
 
-<br/>
+__Movex let's you cut the development time in half and ship 10x faster, by abstracting the backend and server-side away! 🎉__
+
+With it's unique approach and set of features Movex gives you the freedom to focus only on the front-end while still maintaining all of the control over the App Logic, UI/UX and Authority over Data.
+
+In addition it comes pre-packed with the ability to keep parts of the shared state private to specific users ([See Secret State](https://www.movex.dev/docs/features/secret_state)), ensures the minimun amount of data is sent over the wire with each update ([See Deterministic Action Propagation](https://www.movex.dev/docs/features/functional)) and keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach ([See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative))!
+
 
 ## ⭐️ Features
 - 🤯 __No Backend logic to manage__ - Movex takes care of it for you! [See how](https://www.movex.dev/docs/features/frontend_only).
@@ -49,13 +42,16 @@ Movex shares app data easily without you worrying about the server, backend logi
 
 ## 🚀 Getting Started
 
-Vsiit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started with Movex.
-
-## Community
-
-[Join our Discord](https://discord.gg/N8k447EmBh)
+Visit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started with Movex.
 
 ## Contributing
+
+First off, thank you for for showing an interest in contributing to the Elixir SDK for Novu! We have created a contributing guide that will show you how to setup a development environment and how to open pull requests.
+
+<div align="center">
+<b>Movex needs your contribution! Please consider giving it a star or help with an <a href="https://github.com/movesthatmatter/movex/issues">open issue<a>.</b>
+</div>
+
 
 - Want to help with the code?
 Please check out our [Good First Issue](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) section.
@@ -64,3 +60,8 @@ Please check out our [Good First Issue](https://github.com/movesthatmatter/movex
 Any feedback is welcome and greatly appreciated so please don't hesitate to open an [issue](https://github.com/movesthatmatter/movex/issues).
 
 - For any other help, you can write us on our [Discord](https://discord.gg/N8k447EmBh), [Twitter](https://twitter.com/gctroia) or just [open an issue](https://github.com/movesthatmatter/movex/issues)!
+
+
+## Community
+
+[Join our Discord](https://discord.gg/N8k447EmBh)
