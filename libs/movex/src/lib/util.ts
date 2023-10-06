@@ -1,9 +1,9 @@
 import * as jsonpatch from 'fast-json-patch';
-import hash from 'object-hash';
+import { MD5 } from 'object-hash';
 import { isObject, JsonPatch, NotUndefined } from 'movex-core-util';
 import { CheckedState, MovexState } from './core-types';
 
-export const hashObject = (val: NotUndefined) => hash.MD5(val);
+export const hashObject = (val: NotUndefined) => MD5(val);
 
 export const computeCheckedState = <T>(state: T): CheckedState<T> => [
   state,
