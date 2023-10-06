@@ -32,6 +32,13 @@ With it's unique approach and set of features Movex gives you the freedom to foc
 In addition it comes pre-packed with the ability to keep parts of the shared state private to specific users ([See Secret State](https://www.movex.dev/docs/features/secret_state)), ensures the minimun amount of data is sent over the wire with each update ([See Deterministic Action Propagation](https://www.movex.dev/docs/features/functional)) and keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach ([See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative))!
 
 
+<br/>
+<div align="center">
+<h2>🎉🚀 Movex is participating in Hacktoberfest! 🥳😍</h2> 
+<h3>Be a part of it by contributing to our <a href="https://github.com/movesthatmatter/movex/issues">#hacktoberfest issues<a>, suggest new ones or giving us a star! Thank you 🙏</h3>
+</div>
+</br>
+
 ## ⭐️ Features
 - 🤯 __No Backend logic to manage__ - Movex takes care of it for you! [See how](https://www.movex.dev/docs/features/frontend_only).
 - 👑 __Authoritative Server__
@@ -46,12 +53,10 @@ Visit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started
 
 ## Contributing
 
-First off, thank you for for showing an interest in contributing to the Elixir SDK for Novu! We have created a contributing guide that will show you how to setup a development environment and how to open pull requests.
+First off, thank you for for showing an interest in contributing to the Movex project! We have created a [Contributing Guide](https://github.com/movesthatmatter/movex/blob/main/CONTRIBUTING.md) that will show you how to setup a development environment and how to open pull requests and submit changes.
 
-<div align="center">
-<b>Movex needs your contribution! Please consider giving it a star or help with an <a href="https://github.com/movesthatmatter/movex/issues">open issue<a>.</b>
-</div>
-
+- 🚀 Want to participate in **#hacktoberfest**?
+We have a selection of [#hactoberfest issues](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest).
 
 - Want to help with the code?
 Please check out our [Good First Issue](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) section.
