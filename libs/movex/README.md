@@ -35,7 +35,7 @@ In addition it comes pre-packed with the ability to keep parts of the shared sta
 <br/>
 <div align="center">
 <h2>🎉🚀 Movex is participating in Hacktoberfest! 🥳😍</h2> 
-<h3>Be a part of it by contributing to our <a href="https://github.com/movesthatmatter/movex/issues">#hacktoberfest issues<a>, suggest new ones or giving us a star! Thank you 🙏</h3>
+<h3>Be a part of it by contributing to our <a href="https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest">#hacktoberfest issues<a>, suggest new ones or giving us a star! Thank you 🙏</h3>
 </div>
 </br>
 
