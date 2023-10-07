@@ -27,8 +27,7 @@ export const getJSONPatchDiff = <
   b: B
 ) => jsonpatch.compare(a, b);
 
-// @rename to applyMovexPatches
-export const reconciliatePrivateFragments = <TState extends MovexState>(
+export const applyMovexStatePatches = <TState extends MovexState>(
   state: TState,
   patchesInOrder: JsonPatch<TState>[]
 ): TState => {
@@ -71,5 +70,3 @@ export const getMovexStatePatch = <A, B extends A>(
   // TODO: Empty array if the same??
   return [];
 };
-
-export const applyMovexStatePatches = reconciliatePrivateFragments;
