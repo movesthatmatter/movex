@@ -25,10 +25,6 @@
 
 ## 🧐 Why Movex
 
-
-__Movex let's you cut the development time in half and ship 10x faster, by abstracting the backend and server-side away! 🎉__
-
-
 __Movex let's you cut the development effort in half and ship faster by abstracting the backend logic and server-side away! 🎉__
 
 With it's unique approach and set of features Movex gives you the freedom to focus only on the front-end while still maintaining all of the control over the App Logic, UI/UX and Authority over Data.
@@ -36,34 +32,27 @@ With it's unique approach and set of features Movex gives you the freedom to foc
 In addition it comes pre-packed with the ability to keep parts of the shared state private to specific users ([See Secret State](https://www.movex.dev/docs/features/secret_state)), ensures the minimun amount of data is sent over the wire with each update ([See Deterministic Action Propagation](https://www.movex.dev/docs/features/functional)) and keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach ([See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative))!
 
 
-
-## ⭐️ Features
-- 🤯 __No Backend logic to manage__ - Movex takes care of it for you! [See how](https://www.movex.dev/docs/features/frontend_only).
-- 👑 __Authoritative Server__
-- 🤩 __Real-time synchronization__
-- 🤐 __Secret State__
-- 😎 __Follows the Flux API__
-- 😍 __Works with Vanilla JS or any Framework__
-
-## 🚀 Getting Started
-
-Visit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started with Movex.
-
-## Contributing
-
-First off, thank you for for showing an interest in contributing to the Elixir SDK for Novu! We have created a contributing guide that will show you how to setup a development environment and how to open pull requests.
-
-<div align="center">
-<b>Movex needs your contribution! Please consider giving it a star or help with an <a href="https://github.com/movesthatmatter/movex/issues">open issue<a>.</b>
-</div>
-
-
 <br/>
 <div align="center">
 <h2>🎉🚀 Movex is participating in Hacktoberfest! 🥳😍</h2> 
 <h3>Be a part of it by contributing to our <a href="https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest">#hacktoberfest issues<a>, suggest new ones or giving us a star! Thank you 🙏</h3>
 </div>
-</br>
+
+### Here are some ways you can contribute too:
+- Fix one of the [#hactoberfest issues](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest).
+- Give feedback.
+- **🙏 Give us a Github Star**
+- Request a new feature
+- File a bug report
+- Add tests
+- Use Movex to build your own game or application [such as below](#examples)
+
+## 🚀 Examples
+
+Movex can help you build and application real-time multiplayer application. Here are some examples
+
+- Chat App - https://github.com/GabrielCTroia/movex-next-chat
+- Rock Paper Scissors - https://codesandbox.io/s/rps-demo-x877yl
 
 ## ⭐️ Features
 - 🤯 __No Backend logic to manage__ - Movex takes care of it for you! [See how](https://www.movex.dev/docs/features/frontend_only).
@@ -73,27 +62,26 @@ First off, thank you for for showing an interest in contributing to the Elixir S
 - 😎 __Follows the Flux API__
 - 😍 __Works with Vanilla JS or any Framework__
 
-## 🚀 Getting Started
+## 👩‍💻 Getting Started
 
 Visit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started with Movex.
 
-## Contributing
+## 🙏 Contributing
 
 First off, thank you for showing an interest in contributing to the Movex project! We have created a [Contributing Guide](https://github.com/movesthatmatter/movex/blob/main/CONTRIBUTING.md) that will show you how to setup a development environment and how to open pull requests and submit changes.
 
 - 🚀 Want to participate in **#hacktoberfest**?
 We have a selection of [#hactoberfest issues](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest).
 
-
 - Want to help with the code?
 Please check out our [Good First Issue](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) section.
 
-- Don't wanna code?
+- Don't wanna' code?
 Any feedback is welcome and greatly appreciated so please don't hesitate to open an [issue](https://github.com/movesthatmatter/movex/issues).
 
 - For any other help, you can write us on our [Discord](https://discord.gg/N8k447EmBh), [Twitter](https://twitter.com/gctroia) or just [open an issue](https://github.com/movesthatmatter/movex/issues)!
 
 
-## Community
+## 👽 Community
 
 [Join our Discord](https://discord.gg/N8k447EmBh)
