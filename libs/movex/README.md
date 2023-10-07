@@ -1,7 +1,7 @@
 <div align="center">
 <picture width="400">
-  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/221956423-bd0b1b46-a8ed-4b25-8a1c-14cdcb1de716.png" width="400">
-  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/242975504-a6faa334-a6b3-44b4-bf40-6ffcd27d9c08.png" width="400">
+  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/242976573-84d1ea96-1859-43a7-ac0c-d2f1e0f1b882.png" width="400">
+  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/242976534-60d063cd-3283-45e3-aac5-bd8ed0eb8946.png" width="400">
 </picture>
 </div>
 
@@ -25,11 +25,16 @@
 
 ## 🧐 Why Movex
 
+
 __Movex let's you cut the development time in half and ship 10x faster, by abstracting the backend and server-side away! 🎉__
+
+
+__Movex let's you cut the development effort in half and ship faster by abstracting the backend logic and server-side away! 🎉__
 
 With it's unique approach and set of features Movex gives you the freedom to focus only on the front-end while still maintaining all of the control over the App Logic, UI/UX and Authority over Data.
 
 In addition it comes pre-packed with the ability to keep parts of the shared state private to specific users ([See Secret State](https://www.movex.dev/docs/features/secret_state)), ensures the minimun amount of data is sent over the wire with each update ([See Deterministic Action Propagation](https://www.movex.dev/docs/features/functional)) and keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach ([See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative))!
+
 
 
 ## ⭐️ Features
@@ -51,6 +56,33 @@ First off, thank you for for showing an interest in contributing to the Elixir S
 <div align="center">
 <b>Movex needs your contribution! Please consider giving it a star or help with an <a href="https://github.com/movesthatmatter/movex/issues">open issue<a>.</b>
 </div>
+
+
+<br/>
+<div align="center">
+<h2>🎉🚀 Movex is participating in Hacktoberfest! 🥳😍</h2> 
+<h3>Be a part of it by contributing to our <a href="https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest">#hacktoberfest issues<a>, suggest new ones or giving us a star! Thank you 🙏</h3>
+</div>
+</br>
+
+## ⭐️ Features
+- 🤯 __No Backend logic to manage__ - Movex takes care of it for you! [See how](https://www.movex.dev/docs/features/frontend_only).
+- 👑 __Authoritative Server__
+- 🤩 __Real-time synchronization__
+- 🤐 __Secret State__
+- 😎 __Follows the Flux API__
+- 😍 __Works with Vanilla JS or any Framework__
+
+## 🚀 Getting Started
+
+Visit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started with Movex.
+
+## Contributing
+
+First off, thank you for showing an interest in contributing to the Movex project! We have created a [Contributing Guide](https://github.com/movesthatmatter/movex/blob/main/CONTRIBUTING.md) that will show you how to setup a development environment and how to open pull requests and submit changes.
+
+- 🚀 Want to participate in **#hacktoberfest**?
+We have a selection of [#hactoberfest issues](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest).
 
 
 - Want to help with the code?
