@@ -53,7 +53,7 @@ Visit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started
 
 ## Contributing
 
-First off, thank you for for showing an interest in contributing to the Movex project! We have created a [Contributing Guide](https://github.com/movesthatmatter/movex/blob/main/CONTRIBUTING.md) that will show you how to setup a development environment and how to open pull requests and submit changes.
+First off, thank you for showing an interest in contributing to the Movex project! We have created a [Contributing Guide](https://github.com/movesthatmatter/movex/blob/main/CONTRIBUTING.md) that will show you how to setup a development environment and how to open pull requests and submit changes.
 
 - 🚀 Want to participate in **#hacktoberfest**?
 We have a selection of [#hactoberfest issues](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest).
