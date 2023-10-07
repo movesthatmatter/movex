@@ -119,28 +119,3 @@ export const createDispatcher = <
 
   return { dispatch, unsubscribe: unsubscribeStateUpdates };
 };
-
-export const getReducerApplicator =
-  <
-    TState extends MovexState,
-    ActionsCollectionMap extends ActionsCollectionMapBase,
-    TReducerMap extends MovexReducerMap<
-      TState,
-      ActionsCollectionMap
-    > = MovexReducerMap<TState, ActionsCollectionMap>
-  >(
-    reducerMap: TReducerMap
-  ) =>
-  <TActionType extends StringKeys<ActionsCollectionMap>>(
-    state: TState,
-    action: Action<TActionType, ActionsCollectionMap[TActionType]>
-  ) => {
-    const reducer = reducerMap[action.type];
-
-    if (!reducer) {
-      return state;
-    }
-
-    // This is actually the next state
-    return reducer(state, action);
-  };
