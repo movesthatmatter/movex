@@ -7,7 +7,7 @@
 
 <div align="center">
   <h1>Serverless real-time data sharing infrastructure for frontend developers</h1>
-  Share app data easily without worrying about the server, backend logic or even the network!
+  Build multiplayer games, chat apps or anything in between without worrying about the server side, backend logic or even the network! Works with React out of the box!
 </div>
 
 <br/>
