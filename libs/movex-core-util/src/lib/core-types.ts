@@ -212,39 +212,7 @@ export type MovexClient<Info extends UnknownRecord = {}> = {
       subscribedAt: number;
     }
   >;
-
-  // TODO: Add later on
-  // lag: number;
-  // createdAt: number;
-  // upadtedAt: number;
-  // lastPingAt: mumber;
-  // status: 'idle' | 'active' | etc..
 };
-
-// export type Topic<TUniqueName extends string> = {
-//   id: TUniqueName;
-//   subscribers: Record<MovexClient['id'], null>; // Here it could use the full Peer?
-// };
-
-// type CollectionMapBaseItem = RRStore.CollectionMapBase[any];
-
-// TODO: Rename to StoreResource and don't export
-// TOOD: Move only in SessionStore maybe
-// type SessionResource<TData extends UnknownRecord = {}> = {
-//   id: string;
-//   data: TData;
-//   subscribers: Record<
-//     MovexClient['id'],
-//     {
-//       subscribedAt: number;
-//     }
-//   >;
-// };
-
-// export type ObservableResource<TData extends UnknownRecord = {}> =
-// Resource<TData> & {
-//   topic: Topic<string>['id'];
-// };
 
 export type ResourceIdentifierObj<TResourceType extends string> = {
   resourceType: TResourceType;

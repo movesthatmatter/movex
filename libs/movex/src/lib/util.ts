@@ -1,9 +1,9 @@
 import { compare, applyReducer, deepClone } from 'fast-json-patch';
-import hash from 'object-hash';
+import { MD5 } from 'object-hash';
 import { isObject, JsonPatch, NotUndefined } from 'movex-core-util';
-import { CheckedState, MovexState } from './core-types';
+import { CheckedState } from './core-types';
 
-export const hashObject = (val: NotUndefined) => hash.MD5(val);
+export const hashObject = (val: NotUndefined) => MD5(val);
 
 export const computeCheckedState = <T>(state: T): CheckedState<T> => [
   state,
@@ -27,8 +27,7 @@ export const getJSONPatchDiff = <
   b: B
 ) => compare(a, b);
 
-// @rename to applyMovexPatches
-export const reconciliatePrivateFragments = <TState extends MovexState>(
+export const applyMovexStatePatches = <TState>(
   state: TState,
   patchesInOrder: JsonPatch<TState>[]
 ): TState => {
@@ -71,5 +70,3 @@ export const getMovexStatePatch = <A, B extends A>(
   // TODO: Empty array if the same??
   return [];
 };
-
-export const applyMovexStatePatches = reconciliatePrivateFragments;
