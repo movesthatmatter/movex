@@ -1,11 +1,10 @@
 import { StringKeys } from 'movex-core-util';
-import { MovexState } from '../core-types';
 import { Action, ActionCreatorsMapBase, createActionCreator } from './action';
 import { MovexReducerFromActionsMap } from './reducer';
 
 export type ResourceFile<
   TResourceName extends string,
-  TState extends MovexState,
+  TState,
   ActionsCreatorsMap extends ActionCreatorsMapBase, // This could be inferred from the reducer
   TReducerMap extends MovexReducerFromActionsMap<
     TState,
@@ -23,13 +22,13 @@ export type ResourceFile<
 
 export type GenericResourceFile = ResourceFile<
   string,
-  MovexState,
+  any,
   ActionCreatorsMapBase
 >;
 
 export type GenericResourceFileOfType<TType extends string> = ResourceFile<
   TType,
-  MovexState,
+  any,
   ActionCreatorsMapBase
 >;
 
@@ -42,7 +41,7 @@ export type ResourceFileCollectionMapBase = {
 // export const createResourceFile =
 //   <
 //     TName extends string,
-//     TState extends MovexState,
+//     TState,
 //     ActionCreatorsMap extends ActionCreatorsMapBase
 //   >(
 //     name: TName,
@@ -65,7 +64,7 @@ export type ResourceFileCollectionMapBase = {
 // };
 
 // export type MovexReducerFromActionsMapLocal<
-//   TState extends MovexState,
+//   TState,
 //   ActionsCollectionMap extends {
 //     [k in string]: any;
 //   }
@@ -78,7 +77,7 @@ export type ResourceFileCollectionMapBase = {
 
 // export const createResourceFile2 = <
 //   TName extends string,
-//   TState extends MovexState,
+//   TState,
 //   TReducer extends MovexReducerFromActionsMapLocal<
 //     TState,
 //     ActionCreatorsMapBase

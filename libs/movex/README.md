@@ -32,7 +32,7 @@ With it's unique approach and set of features Movex gives you the freedom to foc
 In addition it comes pre-packed with the ability to keep parts of the shared state private to specific users ([See Secret State](https://www.movex.dev/docs/features/secret_state)), ensures the minimun amount of data is sent over the wire with each update ([See Deterministic Action Propagation](https://www.movex.dev/docs/features/functional)) and keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach ([See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative))!
 
 
-<br/>
+---
 <div align="center">
 <h1>🎉🚀 Movex is participating in Hacktoberfest! 🥳😍</h1> 
 </div>
@@ -46,7 +46,7 @@ In addition it comes pre-packed with the ability to keep parts of the shared sta
 - Add tests
 - Use Movex to build your own game or application. [See examples below](#-examples)!
 
-<br/>
+---
 
 ## 🚀 Examples
 

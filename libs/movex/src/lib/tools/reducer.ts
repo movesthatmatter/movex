@@ -1,5 +1,4 @@
 import { StringKeys } from 'movex-core-util';
-import { MovexState } from '../core-types';
 import {
   Action,
   ActionCreatorsMapBase,
@@ -9,7 +8,7 @@ import {
 } from './action';
 
 export type MovexReducerFromActionsMap<
-  TState extends MovexState,
+  TState,
   ActionsCollectionMap extends ActionCreatorsMapBase
 > = {
   [k in StringKeys<ActionsCollectionMap>]: (
@@ -19,7 +18,7 @@ export type MovexReducerFromActionsMap<
 };
 
 export type MovexReducerMap<
-  TState extends MovexState,
+  TState,
   ActionsCollectionMap extends ActionsCollectionMapBase
 > = {
   [k in StringKeys<ActionsCollectionMap>]: (
@@ -29,7 +28,7 @@ export type MovexReducerMap<
 };
 
 // export type MovexReducer<
-//   TState extends MovexState = MovexState,
+//   TState,
 //   TAction extends AnyAction = AnyAction
 // > = (state: TState, action: TAction) => TState;
 

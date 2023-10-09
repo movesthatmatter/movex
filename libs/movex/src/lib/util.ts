@@ -1,7 +1,7 @@
 import * as jsonpatch from 'fast-json-patch';
 import { MD5 } from 'object-hash';
 import { isObject, JsonPatch, NotUndefined } from 'movex-core-util';
-import { CheckedState, MovexState } from './core-types';
+import { CheckedState } from './core-types';
 
 export const hashObject = (val: NotUndefined) => MD5(val);
 
@@ -27,7 +27,7 @@ export const getJSONPatchDiff = <
   b: B
 ) => jsonpatch.compare(a, b);
 
-export const applyMovexStatePatches = <TState extends MovexState>(
+export const applyMovexStatePatches = <TState>(
   state: TState,
   patchesInOrder: JsonPatch<TState>[]
 ): TState => {
