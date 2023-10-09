@@ -53,7 +53,7 @@ In addition it comes pre-packed with the ability to keep parts of the shared sta
 Movex can help you build and application real-time multiplayer application. Here are some examples
 
 - **Chat App** - https://github.com/GabrielCTroia/movex-next-chat
-- **Rock Paper Scissors Game** - https://codesandbox.io/s/rps-demo-x877yl
+- **Multiplayer Rock Paper Scissors Game** - https://codesandbox.io/s/rps-demo-x877yl
 
 ## ⭐️ Features
 - 🤯 __No Backend logic to manage__ - Movex takes care of it for you! [See how](https://www.movex.dev/docs/features/frontend_only).
