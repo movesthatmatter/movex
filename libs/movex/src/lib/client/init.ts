@@ -11,7 +11,7 @@ import { MockConnectionEmitter } from '../../specs/util/MockConnectionEmitter';
 import { MovexMasterResource, MovexMasterServer } from '../master';
 import { MemoryMovexStore } from '../movex-store';
 import { orchestrateDefinedMovex } from '../../specs/util/orchestrator';
-import { Master } from 'movex';
+import { Master } from '../../';
 
 // TODO: The ClientId ideally isn't given from here bu retrieved somehow else. hmm
 // Or no?

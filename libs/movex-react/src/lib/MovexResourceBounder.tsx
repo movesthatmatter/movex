@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMovexBoundResourceFromRid, useMovexClientId } from 'movex-react';
+import { useMovexBoundResourceFromRid, useMovexClientId } from './hooks';
 import { MovexDefinition, MovexClient } from 'movex';
 import { ResourceIdentifier } from 'movex-core-util';
 

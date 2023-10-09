@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import { MovexContext, MovexContextProps } from 'movex-react';
+import { MovexContext, MovexContextProps } from './MovexContext';
 
 type Props = React.PropsWithChildren<{
   onChange: (next: MovexContextProps<any>) => void;

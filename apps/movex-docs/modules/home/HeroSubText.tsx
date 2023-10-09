@@ -11,12 +11,15 @@ export const HeroSubText: React.FC<Props> = (props) => {
     <h3 className={props.className}>
       {/* Movex state */}
       {/* Redux inspired state container that is shared between all peers in a network. */}
-      Movex is a Redux inspired state management and synchronization tool that
-      does the heavy lifting to share state between peers in a network.
+      Movex is an <i><b>Open Source</b></i> State Management and Synchronization library that abstracts the
+      server-side and backend logic to share state between multiple users of
+      your app.
       <br />
       <br />
-      Build faster by only focusing on the App Logic & UI. Let Movex handle the
-      rest!
+      <b>
+        🚀 Build 10x faster by focusing only on the frontend – Movex handles the
+        rest!
+      </b>
       {/* <br />
       <br />
       Best part - the backend is generated automatically for you. */}

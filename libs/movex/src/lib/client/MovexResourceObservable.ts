@@ -117,19 +117,6 @@ export class MovexResourceObservable<
     this.dispatcher([privateAction, publicAction]);
   }
 
-  /**
-   * The difference between this and the dispatch is that this happens in sync and returns the next state,
-   * while dispatch() MIGHT not happen in sync and doesn't return
-   *
-   * @param actionOrActionTuple
-   * @returns
-   */
-  applyAction(action: ToPublicAction<TAction>) {
-    return this.$checkedState
-      .update(this.getNextCheckedStateFromAction(action))
-      .get();
-  }
-
   applyMultipleActions(actions: ToPublicAction<TAction>[]) {
     const nextState = actions.reduce(
       (prev, action) => this.computeNextState(prev, action),

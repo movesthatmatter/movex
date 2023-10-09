@@ -1,5 +1,5 @@
 import React from 'react';
-import { bindResource } from 'movex-react';
+import { bindResource } from './hooks';
 import {
   MovexDefinition,
   MovexClient,
