@@ -6,8 +6,8 @@
 </div>
 
 <div align="center">
-  <h1>The real-time data sharing infrastructure for frontend developers</h1>
-  Share app data easily without worrying about the server, backend logic or even the network!
+  <h1>Serverless real-time data sharing infrastructure for frontend developers</h1>
+  Build multiplayer games, chat apps or anything in between without worrying about the server side, backend logic or even the network! Works with React out of the box!
 </div>
 
 <br/>
@@ -53,7 +53,7 @@ In addition it comes pre-packed with the ability to keep parts of the shared sta
 Movex can help you build and application real-time multiplayer application. Here are some examples
 
 - **Chat App** - https://github.com/GabrielCTroia/movex-next-chat
-- **Rock Paper Scissors Game** - https://codesandbox.io/s/rps-demo-x877yl
+- **Multiplayer Rock Paper Scissors Game** - https://codesandbox.io/s/rps-demo-x877yl
 
 ## ⭐️ Features
 - 🤯 __No Backend logic to manage__ - Movex takes care of it for you! [See how](https://www.movex.dev/docs/features/frontend_only).
@@ -62,6 +62,17 @@ Movex can help you build and application real-time multiplayer application. Here
 - 🤐 __Secret State__
 - 😎 __Follows the Flux API__
 - 😍 __Works with Vanilla JS or any Framework__
+
+## 🧙🏽‍♂️ How Movex works
+
+At the client level, Movex adheres to the [Flux Pattern](https://medium.com/weekly-webtips/flux-pattern-architecture-in-react-35d0b55313f6) to react to UI changes. Additionally, it employs the ["Deterministic Action Propagation Method"](https://www.movex.dev/docs/features/functional#determinstic-action-propagation) to synchronize any state changes with the Global (Master) State which lives on the server. Consequently, this process instantly updates all other peers on the network, ensuring real-time data synchronization. [Learn More](https://www.movex.dev/docs/how).
+
+<div align="center">
+<picture width="600">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/movesthatmatter/movex/assets/2099521/6d0f8707-b5b3-49f8-aea9-e7f47d70f18f" width="600">
+  <img alt="Movex Logo" src="https://github.com/movesthatmatter/movex/assets/2099521/944a5c70-f6cf-42d3-a8b9-0b526099ca1e" width="600">
+</picture>
+</div>
 
 ## 👩‍💻 Getting Started
 
