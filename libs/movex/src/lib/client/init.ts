@@ -50,10 +50,3 @@ export const initMovex = <TResourceMap extends BaseMovexDefinitionResourcesMap>(
 
     // TODO: Add a way to disconnect on demand
   });
-
-// const masterStore = new LocalMovexStore<S>();
-
-// const masterResource = new MovexMasterResource(reducer, masterStore);
-// const masterServer = new MovexMasterServer({
-//   [resourceType]: masterResource,
-// });
