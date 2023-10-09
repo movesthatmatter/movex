@@ -63,6 +63,15 @@ Movex can help you build and application real-time multiplayer application. Here
 - 😎 __Follows the Flux API__
 - 😍 __Works with Vanilla JS or any Framework__
 
+## 🧙🏽‍♂️ How Movex works
+
+At the client level, Movex adheres to the [Flux Pattern](https://medium.com/weekly-webtips/flux-pattern-architecture-in-react-35d0b55313f6) to react to UI changes. Additionally, it employs the ["Deterministic Action Propagation Method"](https://www.movex.dev/docs/features/functional#determinstic-action-propagation) to synchronize any state changes with the Global (Master) State which lives on the server. Consequently, this process instantly updates all other peers on the network, ensuring real-time data synchronization. [Learn More](https://www.movex.dev/docs/how).
+
+<picture width="600">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/movesthatmatter/movex/assets/2099521/6d0f8707-b5b3-49f8-aea9-e7f47d70f18f" width="600">
+  <img alt="Movex Logo" src="https://github.com/movesthatmatter/movex/assets/2099521/944a5c70-f6cf-42d3-a8b9-0b526099ca1e" width="600">
+</picture>
+
 ## 👩‍💻 Getting Started
 
 Visit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started with Movex.
