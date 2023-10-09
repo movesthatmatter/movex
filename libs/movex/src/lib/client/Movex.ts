@@ -13,11 +13,9 @@ export type MovexConfig = {
 };
 
 export class Movex {
-  // private logger: typeof console;
 
   constructor(private connectionToMaster: IOConnection<any, AnyAction, any>) {
-    // private masterResourcesByType: ReducersMap // private config: MovexConfig, // private socketInstance: Socket,
-    // this.logger = config.logger || console;
+    
   }
 
   getClientId() {

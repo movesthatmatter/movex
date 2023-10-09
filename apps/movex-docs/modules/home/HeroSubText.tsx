@@ -11,8 +11,10 @@ export const HeroSubText: React.FC<Props> = (props) => {
       does the heavy lifting to share state between peers in a network.
       <br />
       <br />
-      Build faster by only focusing on the App Logic & UI. Let Movex handle the
-      rest!
+      <b>
+        🚀 Build 10x faster by focusing only on the frontend – Movex handles the
+        rest!
+      </b>
     </h3>
   );
 };

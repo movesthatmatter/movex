@@ -1,11 +1,16 @@
-<p align="center">
+<div align="center">
 <picture width="400">
-  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/221956423-bd0b1b46-a8ed-4b25-8a1c-14cdcb1de716.png" width="400">
-  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/242975504-a6faa334-a6b3-44b4-bf40-6ffcd27d9c08.png" width="400">
+  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/242976573-84d1ea96-1859-43a7-ac0c-d2f1e0f1b882.png" width="400">
+  <img alt="Movex Logo" src="https://user-images.githubusercontent.com/2099521/242976534-60d063cd-3283-45e3-aac5-bd8ed0eb8946.png" width="400">
 </picture>
-<p>
+</div>
 
+<div align="center">
+  <h1>Serverless real-time data sharing infrastructure for frontend developers</h1>
+  Build multiplayer games, chat apps or anything in between without worrying about the server side, backend logic or even the network! Works with React out of the box!
+</div>
 
+<br/>
 <div align="center">
 
 [![NPM version][npm-image]][npm-url]
@@ -18,48 +23,77 @@
 
 </div>
 
-Movex is a "predictable state container" for multiplayer apps or games, that allows the developer to focus on the front-end only, while it seamlessly takes care of the back-end.
+## 🧐 Why Movex
 
-<picture width="800">
-  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2099521/260276752-e28e7cb4-9e2f-4185-a762-95d7ce5f65d3.png" width="800">
-  <img alt="Movex Diagram" src="https://user-images.githubusercontent.com/2099521/260276756-52c422da-6266-449b-a3e4-0fda499f947c.png" width="800">
+__Movex let's you cut the development effort in half and ship faster by abstracting the backend logic and server-side away! 🎉__
+
+With it's unique approach and set of features Movex gives you the freedom to focus only on the front-end while still maintaining all of the control over the App Logic, UI/UX and Authority over Data.
+
+In addition it comes pre-packed with the ability to keep parts of the shared state private to specific users ([See Secret State](https://www.movex.dev/docs/features/secret_state)), ensures the minimun amount of data is sent over the wire with each update ([See Deterministic Action Propagation](https://www.movex.dev/docs/features/functional)) and keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach ([See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative))!
+
+
+---
+<div align="center">
+<h1>🎉🚀 Movex is participating in Hacktoberfest! 🥳😍</h1> 
+</div>
+
+### Here are some ways you can contribute too:
+- Fix one of the [#hactoberfest issues](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest).
+- Give feedback.
+- **🙏 Give us a Github Star**
+- Request a new feature
+- File a bug report
+- Add tests
+- Use Movex to build your own game or application. [See examples below](#-examples)!
+
+---
+
+## 🚀 Examples
+
+Movex can help you build and application real-time multiplayer application. Here are some examples
+
+- **Chat App** - https://github.com/GabrielCTroia/movex-next-chat
+- **Multiplayer Rock Paper Scissors Game** - https://codesandbox.io/s/rps-demo-x877yl
+
+## ⭐️ Features
+- 🤯 __No Backend logic to manage__ - Movex takes care of it for you! [See how](https://www.movex.dev/docs/features/frontend_only).
+- 👑 __Authoritative Server__
+- 🤩 __Real-time synchronization__
+- 🤐 __Secret State__
+- 😎 __Follows the Flux API__
+- 😍 __Works with Vanilla JS or any Framework__
+
+## 🧙🏽‍♂️ How Movex works
+
+At the client level, Movex adheres to the [Flux Pattern](https://medium.com/weekly-webtips/flux-pattern-architecture-in-react-35d0b55313f6) to react to UI changes. Additionally, it employs the ["Deterministic Action Propagation Method"](https://www.movex.dev/docs/features/functional#determinstic-action-propagation) to synchronize any state changes with the Global (Master) State which lives on the server. Consequently, this process instantly updates all other peers on the network, ensuring real-time data synchronization. [Learn More](https://www.movex.dev/docs/how).
+
+<div align="center">
+<picture width="600">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/movesthatmatter/movex/assets/2099521/6d0f8707-b5b3-49f8-aea9-e7f47d70f18f" width="600">
+  <img alt="Movex Logo" src="https://github.com/movesthatmatter/movex/assets/2099521/944a5c70-f6cf-42d3-a8b9-0b526099ca1e" width="600">
 </picture>
+</div>
 
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
+## 👩‍💻 Getting Started
 
-# Movex needs your contribution! Please consider giving it a star or help with an [open issue](https://github.com/movesthatmatter/movex/issues).
+Visit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started with Movex.
 
-<br/>
+## 🙏 Contributing
 
-## Core Features
+First off, thank you for showing an interest in contributing to the Movex project! We have created a [Contributing Guide](https://github.com/movesthatmatter/movex/blob/main/CONTRIBUTING.md) that will show you how to setup a development environment and how to open pull requests and submit changes.
 
-All of the Core Features are code complete 🥳
-
-- [x] Real Time State Sync
-- [x] Secret State
-- [x] Redux/Flux API
-- [x] Authoritative Server
-- [x] No Server Specific Code
-- [x] No Server Hassle/Seamless Deploys
-
-## Documentation
-
-Visit https://movex.dev to get started with Movex.
-
-## Community
-
-[Join our Discord](https://discord.gg/N8k447EmBh)
-
-## Contributing
+- 🚀 Want to participate in **#hacktoberfest**?
+We have a selection of [#hactoberfest issues](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest).
 
 - Want to help with the code?
 Please check out our [Good First Issue](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) section.
 
-- Don't wanna code?
+- Don't wanna' code?
 Any feedback is welcome and greatly appreciated so please don't hesitate to open an [issue](https://github.com/movesthatmatter/movex/issues).
 
 - For any other help, you can write us on our [Discord](https://discord.gg/N8k447EmBh), [Twitter](https://twitter.com/gctroia) or just [open an issue](https://github.com/movesthatmatter/movex/issues)!
+
+
+## 👽 Community
+
+[Join our Discord](https://discord.gg/N8k447EmBh)

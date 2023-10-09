@@ -1,5 +1,5 @@
-// rock-paper-scissorsimport { Action } from 'movex';
-import { Action } from 'movex';
+// rock-paper-scissorsimport { Action } from '../../lib/tools';
+import { Action } from '../../lib/tools';
 import { MovexClient } from 'movex-core-util';
 
 export type PlayerId = MovexClient['id'];
