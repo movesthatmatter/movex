@@ -1,4 +1,4 @@
-import * as jsonpatch from 'fast-json-patch';
+import { compare, applyReducer, deepClone } from 'fast-json-patch';
 import hash from 'object-hash';
 import { isObject, JsonPatch, NotUndefined } from 'movex-core-util';
 import { CheckedState, MovexState } from './core-types';
