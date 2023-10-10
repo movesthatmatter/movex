@@ -94,6 +94,18 @@ Any feedback is welcome and greatly appreciated so please don't hesitate to open
 - For any other help, you can write us on our [Discord](https://discord.gg/N8k447EmBh), [Twitter](https://twitter.com/gctroia) or just [open an issue](https://github.com/movesthatmatter/movex/issues)!
 
 
+## 🛡️ License
+
+Movex is licensed under the MIT License - see the [LICENSE](https://github.com/movesthatmatter/movex/blob/main/LICENSE) file for details.
+
 ## 👽 Community
 
 [Join our Discord](https://discord.gg/N8k447EmBh)
+
+## 🥷 Thanks To All Contributors
+
+Movex wouldn't grow without you, so thank you all for your amazing efforts and contribution! 
+
+<a href="https://novu.co/contributors">
+  <img src="https://contributors-img.web.app/image?repo=movesthatmatter/movex" alt="Contributors"/>
+</a>
