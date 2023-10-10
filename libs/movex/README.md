@@ -104,8 +104,6 @@ Movex is licensed under the MIT License - see the [LICENSE](https://github.com/m
 
 ## 🥷 Thanks To All Contributors
 
-Movex wouldn't grow without you, so thank you all for your amazing efforts and contribution! 
+Movex wouldn't be the same without you, so thank you all for your amazing efforts and contribution! 
 
-<a href="https://novu.co/contributors">
-  <img src="https://contributors-img.web.app/image?repo=movesthatmatter/movex" alt="Contributors"/>
-</a>
+<img src="https://contributors-img.web.app/image?repo=movesthatmatter/movex" alt="Contributors"/>
