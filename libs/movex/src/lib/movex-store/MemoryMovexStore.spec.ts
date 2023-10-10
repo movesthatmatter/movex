@@ -31,6 +31,38 @@ describe('CRUD Operations', () => {
     expect(expectedCounter.state[0].count).toBe(9);
     expect(expectedTester.state[0].val).toBe('aha');
   });
+
+  test('delete', async () => {
+    const store = new MemoryMovexStore<{
+      counter: () => { count: number };
+    }>();
+
+    await store
+      .create('counter:15', {
+        count: 15,
+      })
+      .resolveUnwrap();
+
+    await store
+      .create('counter:1', {
+        count: 1,
+      })
+      .resolveUnwrap();
+
+    store.updateState('counter:1', (prev) => ({
+      ...prev,
+      count: prev.count + 9,
+    }));  
+
+    const expectedCounter = await store.get('counter:1').resolveUnwrap();
+    expect(expectedCounter.state[0].count).toBe(10);
+
+    store.remove('counter:15');
+
+    const expectedStore = await store.all();
+    expect(expectedStore.counter?.['counter:15']).toBeUndefined();
+    expect(expectedStore.counter?.['counter:1']).toBeDefined();
+  });
 });
 
 describe('Multiple Resource Types', () => {
