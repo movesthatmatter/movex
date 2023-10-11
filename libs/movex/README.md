@@ -93,6 +93,12 @@ Any feedback is welcome and greatly appreciated so please don't hesitate to open
 
 - For any other help, you can write us on our [Discord](https://discord.gg/N8k447EmBh), [Twitter](https://twitter.com/gctroia) or just [open an issue](https://github.com/movesthatmatter/movex/issues)!
 
+<br/>
+
+> #### Before You Contribute, make sure your commits are signed using SSH, GPG os S/MIME
+> This is **very important** for #hacktoberfest so Github can trace your contribution correctly.
+> [Learn more about signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).
+
 
 ## 🛡️ License
 
