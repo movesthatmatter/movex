@@ -297,21 +297,3 @@ export class MovexMasterServer {
   }
 }
 
-// const impl = () => {
-//   // this runs on server
-//   const localStore = new LocalMovexStore<
-//     GetReducerState<typeof counterReducer>
-//   >();
-//   const localGameStore = new LocalMovexStore<
-//     GetReducerState<typeof gameReducer>
-//   >();
-
-//   const movex = new MovexMaster({
-//     // Here the store could actually be the same no? if it can be generic, and since on the server
-//     //  it will be an abstraction of redis, or even matterio api, I believe it could just be the same store with some casting or
-//     //  most likely knwoing how to get jsut the needed resource
-//     counter: new MovexMasterResource(counterReducer, localStore),
-//     game: new MovexMasterResource(gameReducer, localGameStore),
-//   });
-//   // private store: MovexStore<TState>
-// };
