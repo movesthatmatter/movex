@@ -34,7 +34,7 @@ describe('Observable', () => {
 
     expect(xResource.getUncheckedState()).toEqual({ count: 1 });
 
-    xResource.onUpdated((nextCheckedState) => {
+    xResource.onUpdate((nextCheckedState) => {
       expect(nextCheckedState).toEqual(
         computeCheckedState({
           count: 4,
@@ -93,7 +93,7 @@ describe('Observable', () => {
         );
 
         const updateSpy = jest.fn();
-        xResource.onUpdated(updateSpy);
+        xResource.onUpdate(updateSpy);
 
         const [incrementedState, incrementedStateChecksum] =
           computeCheckedState({
@@ -126,7 +126,7 @@ describe('Observable', () => {
         );
 
         const updateSpy = jest.fn();
-        xResource.onUpdated(updateSpy);
+        xResource.onUpdate(updateSpy);
 
         const actual = xResource.reconciliateAction({
           action: {
