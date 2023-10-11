@@ -93,14 +93,6 @@ export class MovexResourceObservable<
       });
     };
     this.unsubscribers.push(unsubscribeFromDispatch);
-
-    // const offFwdAction = masterResourceIO.onFwdAction<TAction>((fwd) => {
-    //   // Whatever needs to happen here more!
-
-    //   this.reconciliateAction(fwd);
-    // });
-
-    // this.unsubscribers.push(offFwdAction);
   }
 
   /**
