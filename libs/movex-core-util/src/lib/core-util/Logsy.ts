@@ -14,6 +14,7 @@ var globalDisabled: boolean = false;
 var globalLogsyConfigWrapper = {
   config: {
     disabled: false,
+    verbose: false,
   },
 };
 
@@ -35,6 +36,11 @@ class Logsy {
     ...optionalParams: any[]
   ) => {
     if (!this.ON || globalLogsyConfigWrapper.config.disabled) {
+      return;
+    }
+
+    // If verbose is false, we don't want to log, info or debug
+    if ((method === 'log' || method === 'info' || method === 'debug') && !globalLogsyConfigWrapper.config.verbose) {
       return;
     }
 

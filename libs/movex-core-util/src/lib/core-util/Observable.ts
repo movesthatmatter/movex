@@ -9,11 +9,11 @@ export const getNextStateFrom = <T>(prev: T, a: NextStateGetter<T>) => {
 
 export interface IObservable<T> {
   get: () => T;
-  onUpdated: (fn: (state: T) => void) => () => void;
+  onUpdate: (fn: (state: T) => void) => () => void;
   update: (getNextState: T | ((prev: T) => T)) => void;
 }
 
-export class Observable<T> {
+export class Observable<T> implements IObservable<T>{
   private pubsy = new Pubsy<{
     onUpdate: T;
   }>();
