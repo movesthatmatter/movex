@@ -12,7 +12,6 @@ import { ConnectionToClient } from './ConnectionToClient';
 import { AsyncResult } from 'ts-async-results';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
-
 /**
  * This lives on the server most likely, and it's where the
  * fwd and the reconciliatory action logic reside
@@ -20,6 +19,7 @@ const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
  * This is also very generic with an API to just work when run
  */
 export class MovexMasterServer {
+  
   // needs a store (redis, api, etc)
   // needs a way to send messages to the clients
   //  so a connection. when an incoming message comes, process it and send further
