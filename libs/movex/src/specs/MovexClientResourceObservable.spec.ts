@@ -159,7 +159,7 @@ describe('Observable', () => {
         xResource.dispatch({
           type: 'increment',
         });
-
+        
         expect(updateListener).not.toHaveBeenCalled();
       });
   });
