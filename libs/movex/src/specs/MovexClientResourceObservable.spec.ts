@@ -140,27 +140,27 @@ describe('Observable', () => {
     });
 
       
-      test('Destroys the observable', async () => {
-        const xResource = new MovexResourceObservable(
-          'test-client',
-          rid,
-          counterReducer
-        );
-        xResource.setMasterSyncing(false);
-        const updateListener = jest.fn();
-        xResource.onUpdated(updateListener);
+    test('Destroys the observable', async () => {
+      const xResource = new MovexResourceObservable(
+        'test-client',
+        rid,
+        counterReducer
+      );
+      xResource.setMasterSyncing(false);
+      const updateListener = jest.fn();
+      xResource.onUpdated(updateListener);
 
-        expect(updateListener).not.toHaveBeenCalled();
+      expect(updateListener).not.toHaveBeenCalled();
 
-        xResource.destroy();
+      xResource.destroy();
 
-        await tillNextTick();
+      await tillNextTick();
 
-        xResource.dispatch({
-          type: 'increment',
-        });
-
-        expect(updateListener).not.toHaveBeenCalled();
+      xResource.dispatch({
+        type: 'increment',
       });
-  });
+
+      expect(updateListener).not.toHaveBeenCalled();
+    });
+});
 });
