@@ -1,4 +1,4 @@
-import * as jsonpatch from 'fast-json-patch';
+import { compare, applyReducer, deepClone } from 'fast-json-patch';
 import { MD5 } from 'object-hash';
 import { isObject, JsonPatch, NotUndefined } from 'movex-core-util';
 import { CheckedState } from './core-types';
@@ -25,7 +25,7 @@ export const getJSONPatchDiff = <
 >(
   a: A,
   b: B
-) => jsonpatch.compare(a, b);
+) => compare(a, b);
 
 export const applyMovexStatePatches = <TState>(
   state: TState,
@@ -39,9 +39,9 @@ export const applyMovexStatePatches = <TState>(
   );
 
   return allPatchesInOrder.reduce(
-    jsonpatch.applyReducer,
+    applyReducer,
     // TODO: This is expensive but otherwise the state gets mutated. Need to look into maybe another way?
-    jsonpatch.deepClone(state)
+    deepClone(state)
   );
 };
 
