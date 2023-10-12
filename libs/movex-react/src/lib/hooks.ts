@@ -120,7 +120,7 @@ export const bindResource = <
 
   onUpdate(new MovexClient.MovexBoundResource($resource));
 
-  const unsubscribe = $resource.onUpdated(() => {
+  const unsubscribe = $resource.onUpdate(() => {
     onUpdate(new MovexClient.MovexBoundResource($resource));
   });
 
