@@ -25,6 +25,15 @@ Here are some ways you can contribute:
 * Keep feature versions as small as possible, preferably one new feature per version.
 * Be welcoming to newcomers and encourage diverse new contributors from all backgrounds.
 
+## Before You Contribute
+
+### Make sure your commits are signed using SSH, GPG os S/MIME
+
+This is **very important** so github can trace your contribution correctly, and avoid the following merging block message: 
+<img width="844" alt="Screenshot 2023-10-11 at 11 10 34 AM" src="https://github.com/movesthatmatter/movex/assets/2099521/d2d60b46-d609-4de6-a267-9bcfe63d08e6">
+
+Please follow this guide to [learn more about signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).
+
 ## Your First Contribution
 
 Unsure where to begin contributing to Movex? You can start by looking through the _good-fist-issue_ and _help-wanted_ issues:
