@@ -16,6 +16,16 @@
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
+    "tsc": {
+      "executor": "nx:run-commands",
+      "options": {
+          "commands": [
+              {
+                  "command": "tsc --noEmit -p libs/movex-server/tsconfig.lib.json"
+              }
+          ]
+      }
+    },
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],
