@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint @typescript-eslint/no-var-requires: 0 */
 
 const cwd = require('process').cwd();
 const esb = require('esbuild');
