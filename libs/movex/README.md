@@ -98,7 +98,8 @@ Any feedback is welcome and greatly appreciated so please don't hesitate to open
 > #### Before You Contribute, make sure your commits are signed using SSH, GPG os S/MIME
 > This is **very important** for #hacktoberfest so Github can trace your contribution correctly.
 > [Learn more about signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).
-
+>
+> **ALSO:** Please see our [Requirements For Opening PRs](https://github.com/movesthatmatter/movex/blob/main/CONTRIBUTING.md#opening-pull-request-requirements).
 
 ## 🛡️ License
 
