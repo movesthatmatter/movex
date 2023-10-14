@@ -43,7 +43,7 @@ export const isResultError = (
 export const isResultErrorOfKind = <
   K extends string,
   R extends string,
-  C extends unknown
+  C
 >(
   type: K,
   e: ResultError<{ type: K; reason: string; content?: unknown }>
@@ -53,7 +53,7 @@ export const isResultErrorOfKind = <
 export const isResultErrorOfKindAndReason = <
   K extends string,
   R extends string,
-  C extends unknown
+  C
 >(
   type: K,
   reason: R,
@@ -64,7 +64,7 @@ export const isResultErrorOfKindAndReason = <
 export const buildResultError = <
   K extends string,
   R extends string,
-  C extends unknown = undefined
+  C = undefined
 >(
   type: K,
   reason: R,
