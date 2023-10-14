@@ -32,6 +32,6 @@ export type JsonPatchOp<T> =
 export type JsonPatch<T> = JsonPatchOp<T>[];
 
 export type IsOfType<U, T, K> = T extends U ? K : never;
-export type OnlyKeysOfType<T, O extends {}> = {
+export type OnlyKeysOfType<T, O extends object> = {
   [K in keyof O]: IsOfType<T, O[K], K>;
 }[keyof O];

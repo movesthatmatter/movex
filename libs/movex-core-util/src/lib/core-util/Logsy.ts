@@ -9,9 +9,9 @@ type LogsyMethods =
   | 'groupEnd'
   | 'debug';
 
-var globalDisabled: boolean = false;
+const globalDisabled = false;
 
-var globalLogsyConfigWrapper = {
+const globalLogsyConfigWrapper = {
   config: {
     disabled: false,
     verbose: false,
@@ -32,15 +32,18 @@ class Logsy {
 
   private handler = (
     method: LogsyMethods,
-    message?: any,
-    ...optionalParams: any[]
+    message?: string | object,
+    ...optionalParams: unknown[]
   ) => {
     if (!this.ON || globalLogsyConfigWrapper.config.disabled) {
       return;
     }
 
     // If verbose is false, we don't want to log, info or debug
-    if ((method === 'log' || method === 'info' || method === 'debug') && !globalLogsyConfigWrapper.config.verbose) {
+    if (
+      (method === 'log' || method === 'info' || method === 'debug') &&
+      !globalLogsyConfigWrapper.config.verbose
+    ) {
       return;
     }
 

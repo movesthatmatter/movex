@@ -40,11 +40,7 @@ export const isResultError = (
   keyInObject(e, 'reason') &&
   typeof e.reason === 'string';
 
-export const isResultErrorOfKind = <
-  K extends string,
-  R extends string,
-  C extends unknown
->(
+export const isResultErrorOfKind = <K extends string, R extends string, C>(
   type: K,
   e: ResultError<{ type: K; reason: string; content?: unknown }>
 ): e is ResultError<{ type: K; reason: R; content: C }> =>
@@ -53,7 +49,7 @@ export const isResultErrorOfKind = <
 export const isResultErrorOfKindAndReason = <
   K extends string,
   R extends string,
-  C extends unknown
+  C
 >(
   type: K,
   reason: R,
@@ -64,7 +60,7 @@ export const isResultErrorOfKindAndReason = <
 export const buildResultError = <
   K extends string,
   R extends string,
-  C extends unknown = undefined
+  C = undefined
 >(
   type: K,
   reason: R,
