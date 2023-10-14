@@ -27,7 +27,9 @@ export function getRandomInt(givenMin: number, givenMax: number) {
 
 export const invoke = <T>(fn: () => T): T => fn();
 
-export const xinvoke = <T>(fn: () => T) => {};
+export const xinvoke = <T>(fn: () => T) => {
+  //nothing much
+};
 
 export const delay = (ms = 500) =>
   new Promise((resolve) => {
@@ -37,7 +39,9 @@ export const delay = (ms = 500) =>
 export const range = (length: number, startAt = 0) =>
   Array.from({ length }, (_, i) => i + startAt);
 
-export const noop = () => {};
+export const noop = () => {
+  //nothing much
+};
 
 export const orThrow = <T>(t: T) => {
   if (t === undefined || t === null) {
@@ -48,7 +52,7 @@ export const orThrow = <T>(t: T) => {
 };
 
 // Use this to get inherited keys as well
-export const keyInObject = <X extends {}, Y extends PropertyKey>(
+export const keyInObject = <X extends object, Y extends PropertyKey>(
   obj: X,
   prop: Y
 ): obj is X & Record<Y, unknown> => prop in obj;
@@ -57,7 +61,7 @@ export const isObject = (o: unknown): o is object => {
   return typeof o === 'object' && !Array.isArray(o) && o !== null;
 };
 
-export const isFunction = (x: unknown): x is Function =>
+export const isFunction = (x: unknown): x is (...args: any) => any =>
   typeof x === 'function';
 
 export const getUuid = uuidV4;
