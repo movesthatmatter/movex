@@ -38,5 +38,3 @@ export interface EventEmitter<TEventMap extends EventMap> {
     request: Parameters<TEventMap[E]>[0]
   ): Promise<ReturnType<TEventMap[E]>>;
 }
-
-export interface EmitterEventMap extends EventMap {}
