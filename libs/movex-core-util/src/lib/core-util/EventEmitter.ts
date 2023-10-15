@@ -2,6 +2,10 @@ import { EventMap } from 'typed-emitter';
 
 export type UnsubscribeFn = () => void;
 
+export type EmptyFn = () => void;
+
+export const emptyFn: EmptyFn = () => {};
+
 export interface EventEmitter<TEventMap extends EventMap> {
   on<E extends keyof TEventMap>(
     event: E,
