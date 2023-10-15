@@ -14,7 +14,11 @@
 <div align="center">
 
 [![NPM version][npm-image]][npm-url]
-[![NPM version][license-image]][license-url]
+[![License][license-image]][license-url]
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/dwyl/esta/issues)
+![CI](https://github.com/movesthatmatter/movex/actions/workflows/node.js.yml/badge.svg)
+![Type Script Compilation](https://github.com/movesthatmatter/movex/actions/workflows/tsc-compiler.yml/badge.svg)
+
 
 [npm-url]: https://npmjs.org/package/movex
 [npm-image]: https://img.shields.io/badge/dynamic/json?color=orange&label=movex&query=version&url=https%3A%2F%2Fraw.githubusercontent.com%2Fmovesthatmatter%2Fmovex%2Fmain%2Flibs%2Fmovex%2Fpackage.json
