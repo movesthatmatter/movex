@@ -33,7 +33,10 @@ __Movex let's you cut the development effort in half and ship faster by abstract
 
 With it's unique approach and set of features Movex gives you the freedom to focus only on the front-end while still maintaining all of the control over the App Logic, UI/UX and Authority over Data.
 
-In addition it comes pre-packed with the ability to keep parts of the shared state private to specific users ([See Secret State](https://www.movex.dev/docs/features/secret_state)), ensures the minimun amount of data is sent over the wire with each update ([See Deterministic Action Propagation](https://www.movex.dev/docs/features/functional)) and keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach ([See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative))!
+In addition it comes pre-packed with:
+- the ability to keep parts of the shared state private to specific users. [See Secret State](https://www.movex.dev/docs/features/secret_state)
+- ensures the minimun amount of data is sent over the wire with each update. [See Deterministic Action Propagation](https://www.movex.dev/docs/features/functional)
+- keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach. [See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative)
 
 
 ---
@@ -54,7 +57,7 @@ In addition it comes pre-packed with the ability to keep parts of the shared sta
 
 ## 🚀 Examples
 
-Movex can help you build and application real-time multiplayer application. Here are some examples
+Movex can help you build and application real-time multiplayer application. Here are some examples:
 
 - **Chat App** - https://github.com/GabrielCTroia/movex-next-chat
 - **Multiplayer Rock Paper Scissors Game** - https://codesandbox.io/s/rps-demo-x877yl
