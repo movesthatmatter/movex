@@ -95,16 +95,31 @@ Optionally, if you'd like to keep running `git commit` you can configure the git
 ## Step 5. Sending a Pull Request
 For non-trivial changes, please open an issue with a proposal for a new feature or refactoring before starting on the work. We don't want you to waste your efforts on a pull request that we won't want to accept.
 
-On the other hand, sometimes the best way to start a conversation is to send a pull request. Use your best judgement!
-
 In general, the contribution workflow looks like this:
 
-- Open a new issue in the Issue tracker.
-- Fork the repo.
-- Create a new feature branch based off the master branch.
-- Make sure all tests pass and there are no linting errors.
-- Submit a pull request, referencing any issues it addresses.
-- Please try to keep your pull request focused in scope and avoid including unrelated commits.
+1. Open a new issue in the Issue tracker.
+1. Fork the repo.
+1. Create a new feature branch based off the master branch.
+1. Make sure all tests pass and there are no linting errors.
+1. Submit a pull request, referencing any issues it addresses. [See Opening New PR Requirements](#opening-pull-request-requirements)
+1. Please try to keep your pull request focused in scope and avoid including unrelated commits.
+
+#### Opening Pull Request Requirements:
+- A Pull Request always refers to an Open Issue.
+- The Title of a Pull Request should look like '{ADD|FIX|REFACTOR|REVERT} "[{Issue Scope}]{Issue Title} #{Issue Id}"'.
+- Reference the Issue it addresses in the Description of the PR by its Id, so when the PR gets merged the Issue gets closed automatically
+
+**Example:**
+
+The PR Title for this Issue:
+
+<img width="688" alt="Screenshot 2023-10-14 at 1 24 10 PM" src="https://github.com/movesthatmatter/movex/assets/2099521/a5e90d59-ac4a-40d9-aacf-f8e27701454d">
+
+looks like:
+
+<img width="519" alt="Screenshot 2023-10-14 at 1 25 20 PM" src="https://github.com/movesthatmatter/movex/assets/2099521/d4c63a41-bd63-47d1-9f20-fd836cec8ea9">
+
+---
 
 After you have submitted your pull request, we'll try to get back to you as soon as possible. We may suggest some changes or improvements.
 
