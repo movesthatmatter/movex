@@ -57,8 +57,6 @@ In addition it comes pre-packed with:
 
 ## 🚀 Examples
 
-Movex can help you build and application real-time multiplayer application. Here are some examples:
-
 - **Chat App** - https://github.com/GabrielCTroia/movex-next-chat
 - **Multiplayer Rock Paper Scissors Game** - https://codesandbox.io/s/rps-demo-x877yl
 
