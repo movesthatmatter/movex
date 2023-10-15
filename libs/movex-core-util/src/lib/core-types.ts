@@ -1,5 +1,6 @@
 import { UnknownRecord } from './core-util';
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace NestedObjectUtil {
   // The Paths Types is taken from https://stackoverflow.com/a/58436959/2093626
 
@@ -28,7 +29,9 @@ export namespace NestedObjectUtil {
     20,
     ...0[]
   ];
-
+  
+  export type EmptyObject = Record<string, never>;
+  
   type Join<K, P> = K extends string | number
     ? P extends string | number
       ? `${K}${'' extends P ? '' : '.'}${P}`
@@ -139,7 +142,7 @@ export type UnknownIdentifiableRecord = { id: string } & Record<
 >;
 export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
-export type UnidentifiableModel<T extends {}> = Omit<T, 'id'>;
+export type UnidentifiableModel<T extends object > = Omit<T, 'id'>;
 
 // TODO: Remove all of these if not used
 
@@ -202,7 +205,7 @@ export type GenericResourceOfType<TResourceType extends string> = Resource<
 
 export type GenericResourceType = GenericResource['type'];
 
-export type MovexClient<Info extends UnknownRecord = {}> = {
+export type MovexClient<Info extends UnknownRecord = EmptyObject> = {
   id: string;
   info?: Info; // User Info or whatever
   subscriptions: Record<
@@ -289,7 +292,7 @@ export type SessionStoreCollectionMap<
 export type OnlySessionCollectionMapOfResourceKeys<
   ResourceCollectionMap extends CollectionMapBase,
   SessionCollectionMap = SessionStoreCollectionMap<ResourceCollectionMap>
-> = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<{}>>>;
+> = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<EmptyObject>>>;
 
 export type CreateMatchReq<TGame extends UnknownRecord> = {
   matcher: SessionMatch['matcher'];
