@@ -12,7 +12,6 @@ import { ConnectionToClient } from './ConnectionToClient';
 import { AsyncResult } from 'ts-async-results';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
-
 /**
  * This lives on the server most likely, and it's where the
  * fwd and the reconciliatory action logic reside
@@ -25,8 +24,10 @@ export class MovexMasterServer {
   //  so a connection. when an incoming message comes, process it and send further
   //  but of course without knowing it's socket or local, just async so it can be tested
 
+
   // TODO: This works only per one instance/machine
   // If there are multiple server instances running then we need to use redis/socket-io distribution etc..
+  
   private clientConnectionsByClientId: Record<
     MovexClient['id'],
     ConnectionToClient<any, AnyAction, any>
@@ -296,22 +297,3 @@ export class MovexMasterServer {
     );
   }
 }
-
-// const impl = () => {
-//   // this runs on server
-//   const localStore = new LocalMovexStore<
-//     GetReducerState<typeof counterReducer>
-//   >();
-//   const localGameStore = new LocalMovexStore<
-//     GetReducerState<typeof gameReducer>
-//   >();
-
-//   const movex = new MovexMaster({
-//     // Here the store could actually be the same no? if it can be generic, and since on the server
-//     //  it will be an abstraction of redis, or even matterio api, I believe it could just be the same store with some casting or
-//     //  most likely knwoing how to get jsut the needed resource
-//     counter: new MovexMasterResource(counterReducer, localStore),
-//     game: new MovexMasterResource(gameReducer, localGameStore),
-//   });
-//   // private store: MovexStore<TState>
-// };

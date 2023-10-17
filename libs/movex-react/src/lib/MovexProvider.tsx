@@ -22,7 +22,7 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
     ) => void;
   }>;
 
-export const MovexProvider: React.FC<Props<{}>> = ({
+export const MovexProvider: React.FC<Props<BaseMovexDefinitionResourcesMap>> = ({
   onConnected = noop,
   onDisconnected = noop,
   ...props

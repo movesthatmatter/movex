@@ -4,6 +4,7 @@ import {
   isResourceIdentifier,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
+  UnsubscribeFn
 } from 'movex-core-util';
 import {
   MovexClient,
@@ -60,7 +61,7 @@ export const useMovexResourceType = <
 
   useEffect(() => {
     if (m.connected) {
-      setResource(m.movex.register(resourceType) as any); // TODO: ? why any?
+      setResource(m.movex.register(resourceType) as any); 
     }
   }, [m.connected]);
 
@@ -89,7 +90,7 @@ export const useMovexBoundResourceFromRid = <
   const ridAsStr = useMemo(() => toResourceIdentifierStr(rid), [rid]);
 
   const [boundResource, setBoundResource] =
-    useState<MovexBoundResourceFromConfig<TResourcesMap, TResourceType>>(); // TODO: This could always return a dispatch that works with waiting  until the resource is created out of the box
+    useState<MovexBoundResourceFromConfig<TResourcesMap, TResourceType>>();
 
   useEffect(() => {
     if (!resource) {
@@ -116,27 +117,17 @@ export const bindResource = <
 ) => {
   const $resource = resource.bind(toResourceIdentifierStr(rid));
 
-  // This might not be the most optimal since it recreates an instance each time instead of merging but I think it's fine
   // TODO: One thing that might not work is the get state accessor with this, but that doesn't get invoked somewhere else
-  // so it should be fine
-  // const boundResource = ;
+
   onUpdate(new MovexClient.MovexBoundResource($resource));
 
-  const unsubscribe = $resource.onUpdated(() => {
+  const unsubscribe = $resource.onUpdate(() => {
     onUpdate(new MovexClient.MovexBoundResource($resource));
   });
 
   return unsubscribe;
 };
 
-// alias
-// export const useMovexBindResource = useMovexBoundResource;
-
-// export const useMovexResourceAndBind = <TMovexDefinition extends MovexDefinition>(
-//   resourceType: keyof TMovexDefinition['resources']
-// ) => {
-//   const resource = useMovexResource(resourceType);
-// }
 export const createMovexResource = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
@@ -148,14 +139,6 @@ export const createMovexResource = <
   }
 ) => registerMovexResourceType(movex, res.type).create(res.state);
 
-// const createMovexResource = () => {
-
-// }
-
-// export function useCreateMovexResourceOnDemand <
-//   TResourcesMap extends BaseMovexDefinitionResourcesMap,
-//   TResourceType extends Extract<keyof TResourcesMap, string>
-// >(resource: ): void;
 export const useCreateMovexResourceOnDemand = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
@@ -169,11 +152,8 @@ export const useCreateMovexResourceOnDemand = <
     | undefined,
   onCreated: (
     rid: ResourceIdentifier<TResourceType>
-    // boundResource: MovexBoundResource<
-    //   GetReducerState<TResourceMap[TResourceType]>
-    // >
+
   ) => void
-  // deps: DependencyList
 ) => {
   const m = useMovex(movexConfig);
 
@@ -218,7 +198,7 @@ export const useMovexBindOrCreateAndBindOnDemand = <
       return;
     }
 
-    let unsubscribers: Function[] = [];
+    let unsubscribers: UnsubscribeFn[] = [];
 
     const bind = (rid: ResourceIdentifier<TResourceType>) => {
       const resource = registerMovexResourceType(
@@ -230,10 +210,8 @@ export const useMovexBindOrCreateAndBindOnDemand = <
     };
 
     if (isResourceIdentifier(resourceInitOrRid)) {
-      // Just bind
       unsubscribers = [...unsubscribers, bind(resourceInitOrRid)];
     } else {
-      // Create and then bind
       createMovexResource<TResourcesMap, TResourceType>(
         m.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
         resourceInitOrRid

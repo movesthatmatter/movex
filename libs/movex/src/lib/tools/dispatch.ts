@@ -1,5 +1,5 @@
 import { invoke, noop, Observable, StringKeys } from 'movex-core-util';
-import { CheckedState, MovexState } from '../core-types';
+import { CheckedState } from '../core-types';
 import { checkedStateEquals, computeCheckedState } from '../util';
 import {
   Action,

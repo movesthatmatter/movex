@@ -93,14 +93,6 @@ export class MovexResourceObservable<
       });
     };
     this.unsubscribers.push(unsubscribeFromDispatch);
-
-    // const offFwdAction = masterResourceIO.onFwdAction<TAction>((fwd) => {
-    //   // Whatever needs to happen here more!
-
-    //   this.reconciliateAction(fwd);
-    // });
-
-    // this.unsubscribers.push(offFwdAction);
   }
 
   /**
@@ -167,7 +159,7 @@ export class MovexResourceObservable<
     return this.reducer(prevState, action);
   }
 
-  onUpdated(fn: (state: CheckedState<TState>) => void) {
+  onUpdate(fn: (state: CheckedState<TState>) => void) {
     // return this.$checkedState.onUpdate(([state]) => fn(state));
     return this.$checkedState.onUpdate(fn);
   }
