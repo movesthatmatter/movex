@@ -119,7 +119,7 @@ Movex is licensed under the MIT License - see the [LICENSE](https://github.com/m
 Movex wouldn't be the same without you, so thank you all for your amazing efforts and contribution! 
 
 <a href="https://github.com/movesthatmatter/movex/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=movesthatmatter/movex&v=1" alt="Contributors" />
+  <img src="https://contrib.rocks/image?repo=movesthatmatter/movex&v=2" alt="Contributors" />
 </a>
 
 Made with [contrib.rocks](https://contrib.rocks).
