@@ -1,5 +1,6 @@
 import { UnknownRecord } from './core-util';
 
+
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace NestedObjectUtil {
   // The Paths Types is taken from https://stackoverflow.com/a/58436959/2093626
@@ -29,8 +30,6 @@ export namespace NestedObjectUtil {
     20,
     ...0[]
   ];
-  
-  export type EmptyObject = Record<string, never>;
   
   type Join<K, P> = K extends string | number
     ? P extends string | number
@@ -108,6 +107,8 @@ export namespace NestedObjectUtil {
       : Fail
     : T;
 }
+
+export type EmptyObject = Record<string, never>;
 
 export interface WsResponse<T = any> {
   event: string;
