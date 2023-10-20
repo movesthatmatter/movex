@@ -124,7 +124,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
     event: E,
     request: Parameters<TEventMap[E]>[0]
   ): Promise<ReturnType<TEventMap[E]>> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const reqId = `${event as string}(${String(Math.random()).slice(-3)})`;
       logsy.debug(
         '[ServerSocketEmitter]',

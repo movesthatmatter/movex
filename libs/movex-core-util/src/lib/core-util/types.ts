@@ -17,7 +17,6 @@ export type NotUndefined =
   | NotUndefined[];
 
 export type UnknownRecord = Record<string, unknown>;
-export type AnyRecord = Record<string, any>;
 
 export type JsonPatchOp<T> =
   | AddOperation<Partial<T>>
@@ -32,6 +31,7 @@ export type JsonPatchOp<T> =
 export type JsonPatch<T> = JsonPatchOp<T>[];
 
 export type IsOfType<U, T, K> = T extends U ? K : never;
-export type OnlyKeysOfType<T, O extends {}> = {
+
+export type OnlyKeysOfType<T, O extends Record<string, unknown>> = {
   [K in keyof O]: IsOfType<T, O[K], K>;
 }[keyof O];

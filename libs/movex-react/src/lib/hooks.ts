@@ -4,6 +4,7 @@ import {
   isResourceIdentifier,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
+  UnsubscribeFn
 } from 'movex-core-util';
 import {
   MovexClient,
@@ -120,7 +121,7 @@ export const bindResource = <
 
   onUpdate(new MovexClient.MovexBoundResource($resource));
 
-  const unsubscribe = $resource.onUpdated(() => {
+  const unsubscribe = $resource.onUpdate(() => {
     onUpdate(new MovexClient.MovexBoundResource($resource));
   });
 
@@ -197,7 +198,7 @@ export const useMovexBindOrCreateAndBindOnDemand = <
       return;
     }
 
-    let unsubscribers: Function[] = [];
+    let unsubscribers: UnsubscribeFn[] = [];
 
     const bind = (rid: ResourceIdentifier<TResourceType>) => {
       const resource = registerMovexResourceType(
