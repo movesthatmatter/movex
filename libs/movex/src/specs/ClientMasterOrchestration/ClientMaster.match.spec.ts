@@ -3,7 +3,7 @@ import matchReducer, { initialMatchState } from '../resources/matchReducer';
 import { computeCheckedState } from '../../lib/util';
 import { globalLogsy } from 'movex-core-util';
 import { tillNextTick } from '../util/misc';
-require('console-group').install();
+import 'console-group';
 
 const orchestrator = movexClientMasterOrchestrator();
 
