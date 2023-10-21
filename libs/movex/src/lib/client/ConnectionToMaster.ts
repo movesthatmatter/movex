@@ -4,7 +4,7 @@ import { AnyAction } from '../tools/action';
 import { IOEvents } from '../io-connection/io-events';
 
 export class ConnectionToMaster<
-  TState extends any,
+  TState,
   TAction extends AnyAction,
   TResourceType extends string
 > implements IOConnection<TState, TAction, TResourceType>
