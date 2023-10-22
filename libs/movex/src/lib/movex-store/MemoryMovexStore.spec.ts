@@ -1,6 +1,5 @@
 import { tillNextTick } from '../../specs/util/misc';
 import { MemoryMovexStore } from './MemoryMovexStore';
-import 'console-group';
 
 describe('CRUD Operations', () => {
   test('create', async () => {
