@@ -5,7 +5,8 @@ import rpsReducer, {
 import { globalLogsy } from 'movex-core-util';
 import { computeCheckedState } from '../../lib/util';
 import { tillNextTick } from '../util/misc';
-require('console-group').install();
+import { install } from 'console-group';
+install();
 
 const orchestrator = movexClientMasterOrchestrator();
 
