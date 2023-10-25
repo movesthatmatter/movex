@@ -5,7 +5,8 @@ import { computeCheckedState } from '../lib/util';
 import { movexClientMasterOrchestrator } from './util/orchestrator';
 import { tillNextTick } from './util/misc';
 
-require('console-group').install();
+import * as consoleGroup from 'console-group';
+consoleGroup.install();
 
 const orchestrator = movexClientMasterOrchestrator();
 
