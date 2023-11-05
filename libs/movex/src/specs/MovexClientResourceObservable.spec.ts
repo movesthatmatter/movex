@@ -148,7 +148,7 @@ describe('Observable', () => {
       );
       xResource.setMasterSyncing(false);
       const updateListener = jest.fn();
-      xResource.onUpdated(updateListener);
+      xResource.onUpdate(updateListener);
 
       expect(updateListener).not.toHaveBeenCalled();
 
