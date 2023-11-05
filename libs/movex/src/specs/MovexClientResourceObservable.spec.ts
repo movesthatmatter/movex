@@ -138,7 +138,29 @@ describe('Observable', () => {
         expect(actual.val).toEqual('ChecksumMismatch');
       });
     });
-  });
 
-  // TODO: test xresource destroy which unsubscribes
+      
+    test('Destroys the observable', async () => {
+      const xResource = new MovexResourceObservable(
+        'test-client',
+        rid,
+        counterReducer
+      );
+      xResource.setMasterSyncing(false);
+      const updateListener = jest.fn();
+      xResource.onUpdate(updateListener);
+
+      expect(updateListener).not.toHaveBeenCalled();
+
+      xResource.destroy();
+
+      await tillNextTick();
+
+      xResource.dispatch({
+        type: 'increment',
+      });
+
+      expect(updateListener).not.toHaveBeenCalled();
+    });
+});
 });
