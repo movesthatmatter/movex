@@ -9,7 +9,7 @@ import {
 } from '../tools/action';
 
 export type IOEvents<
-  TState extends any = any,
+  TState = unknown,
   A extends AnyAction = AnyAction,
   TResourceType extends string = string
 > = {
