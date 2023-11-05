@@ -1,7 +1,7 @@
 import counterReducer, {
   initialCounterState,
 } from './resources/counterReducer';
-import { toResourceIdentifierStr } from '../../../movex-core-util/src';
+import { toResourceIdentifierStr } from 'movex-core-util';
 import { MovexMasterResource } from '../lib/master/MovexMasterResource';
 import { computeCheckedState } from '../lib/util';
 import { GetReducerAction } from '../lib/tools/reducer';
