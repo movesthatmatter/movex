@@ -24,7 +24,7 @@ import { ConnectionToMaster } from './ConnectionToMaster';
  * This handles the connection with Master per ResourceType
  */
 export class ConnectionToMasterResource<
-  TState extends any,
+  TState,
   TAction extends AnyAction,
   TResourceType extends string
 > {

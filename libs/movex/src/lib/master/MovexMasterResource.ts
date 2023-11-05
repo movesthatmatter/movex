@@ -31,7 +31,7 @@ import {
  * b/c it runs on the backend (most likely, but it could also be run on the client)
  */
 export class MovexMasterResource<
-  TState extends any,
+  TState,
   TAction extends AnyAction = AnyAction
 > {
   constructor(

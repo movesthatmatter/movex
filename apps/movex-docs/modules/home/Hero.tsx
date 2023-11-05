@@ -1,24 +1,12 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { Button } from '../../components/Button';
 import Link from 'next/link';
-import { useCurrentTheme } from '../../hooks/useCurrentTheme';
-import { Code, Pre } from 'nextra/components';
 
 type Props = {};
 
 const appTypes = ['Apps', 'Game', 'Chat', 'To-Do', 'Doc'];
 const lightColors = [
   'text-red-500',
-  // 'text-blue-500',
-  'text-green-500',
-  'text-yellow-500',
-  'text-orange-500',
-  'text-purple-500',
-];
-const darkColors = [
-  'text-red-500',
-  // 'text-blue-500',
   'text-green-500',
   'text-yellow-500',
   'text-orange-500',
@@ -31,7 +19,6 @@ export const Hero: React.FC<Props> = () => {
     appType: 0,
   });
 
-  const currentTheme = useCurrentTheme();
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {

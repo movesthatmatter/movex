@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 
 const tags = {
   description:
-    'Multiplayer State Synchronization. Server Authoritative. No Server Code. Secret State. Redux Api. Realtime',
+    'Serverless real-time data sharing infrastructure for front-end developers. Server Authoritative. Secret State. Real Time Multiplayer State Synchronization.',
 };
 
 const config: DocsThemeConfig = {

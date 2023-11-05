@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StringKeys, invoke, logsy, noop } from 'movex-core-util';
+import { StringKeys, invoke, logsy, noop, emptyFn } from 'movex-core-util';
 import {
   BaseMovexDefinitionResourcesMap,
   GetReducerState,
@@ -31,7 +31,7 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
  * @param param0
  * @returns
  */
-export const MovexLocalMasterProvider: React.FC<Props<{}>> = ({
+export const MovexLocalMasterProvider: React.FC<Props<BaseMovexDefinitionResourcesMap>> = ({
   onInit = noop,
   onMasterResourceUpdated = noop,
   ...props
@@ -85,7 +85,7 @@ export const MovexLocalMasterProvider: React.FC<Props<{}>> = ({
       };
     }
 
-    return () => {};
+    return emptyFn;
   }, []);
 
   useEffect(() => {

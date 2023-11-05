@@ -34,7 +34,7 @@ describe('Observable', () => {
 
     expect(xResource.getUncheckedState()).toEqual({ count: 1 });
 
-    xResource.onUpdated((nextCheckedState) => {
+    xResource.onUpdate((nextCheckedState) => {
       expect(nextCheckedState).toEqual(
         computeCheckedState({
           count: 4,
@@ -93,7 +93,7 @@ describe('Observable', () => {
         );
 
         const updateSpy = jest.fn();
-        xResource.onUpdated(updateSpy);
+        xResource.onUpdate(updateSpy);
 
         const [incrementedState, incrementedStateChecksum] =
           computeCheckedState({
@@ -126,7 +126,7 @@ describe('Observable', () => {
         );
 
         const updateSpy = jest.fn();
-        xResource.onUpdated(updateSpy);
+        xResource.onUpdate(updateSpy);
 
         const actual = xResource.reconciliateAction({
           action: {
@@ -138,7 +138,29 @@ describe('Observable', () => {
         expect(actual.val).toEqual('ChecksumMismatch');
       });
     });
-  });
 
-  // TODO: test xresource destroy which unsubscribes
+      
+    test('Destroys the observable', async () => {
+      const xResource = new MovexResourceObservable(
+        'test-client',
+        rid,
+        counterReducer
+      );
+      xResource.setMasterSyncing(false);
+      const updateListener = jest.fn();
+      xResource.onUpdate(updateListener);
+
+      expect(updateListener).not.toHaveBeenCalled();
+
+      xResource.destroy();
+
+      await tillNextTick();
+
+      xResource.dispatch({
+        type: 'increment',
+      });
+
+      expect(updateListener).not.toHaveBeenCalled();
+    });
+});
 });
