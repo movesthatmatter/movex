@@ -1,28 +1,28 @@
-import { Action, isObject, keyInObject } from 'movex-core-util';
+import { Action, isObject, keyInObject } from '@movex/movex-core-util';
 import { Move } from '../util/types';
 
-export type SubmissionDrawnItem = {
+type SubmissionDrawnItem = {
   canDraw: false;
   moves: Move[];
 };
 
-export type SubmissionNotDrawnItem = {
+type SubmissionNotDrawnItem = {
   canDraw: true;
   moves: null;
 };
 
-export type SubmissionItem = SubmissionDrawnItem | SubmissionNotDrawnItem;
+type SubmissionItem = SubmissionDrawnItem | SubmissionNotDrawnItem;
 
-export type RawSubmission = {
+type RawSubmission = {
   white: SubmissionItem;
   black: SubmissionItem;
 };
 
-export type RawGameState = {
+type RawGameState = {
   submission: RawSubmission;
 };
 
-export type GameActions =
+type GameActions =
   | Action<
       'submitMoves',
       {
@@ -45,7 +45,7 @@ export const initialRawGameStateWithDerivedState: RawGameState = {
   },
 };
 
-const gameReducerWithDerivedState = (
+export const gameReducerWithDerivedState = (
   prev = initialRawGameStateWithDerivedState,
   action: GameActions
 ): RawGameState => {

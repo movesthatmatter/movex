@@ -1,7 +1,7 @@
 import type React from 'react';
 import { useMovexBoundResourceFromRid, useMovexClientId } from './hooks';
 import type { MovexClient } from 'movex';
-import type { ResourceIdentifier, MovexDefinition } from 'movex-core-util';
+import type { ResourceIdentifier, MovexDefinition } from '@movex/movex-core-util';
 
 type Props = React.PropsWithChildren<{
   movexDefinition: MovexDefinition;

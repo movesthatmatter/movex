@@ -8,8 +8,8 @@ import {
 
 const orchestrator = movexClientMasterOrchestrator();
 
-console.log('movexClientMasterOrchestrator', movexClientMasterOrchestrator);
-console.log('orchestrator', orchestrator);
+// console.log('movexClientMasterOrchestrator', movexClientMasterOrchestrator);
+// console.log('orchestrator', orchestrator);
 
 beforeAll(() => {
   globalLogsy.disable();

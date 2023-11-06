@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-  displayName: 'movex-core-util',
+  displayName: '@movex/movex-core-util',
   preset: '../../jest.preset.js',
   globals: {
     'ts-jest': {

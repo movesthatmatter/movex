@@ -4,7 +4,7 @@ import type {
   StringKeys,
   MovexDefinition,
   BaseMovexDefinitionResourcesMap,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import type { MovexContextProps } from '../MovexContext';
 import { MovexLocalProvider } from './MovexLocalProvider';
 

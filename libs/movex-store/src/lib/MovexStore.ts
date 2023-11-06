@@ -1,5 +1,5 @@
 import { type AsyncResult } from 'ts-async-results';
-import { toResultError } from 'movex-core-util';
+import { toResultError } from '@movex/movex-core-util';
 import type {
   AnyResourceIdentifier,
   GenericResourceType,
@@ -14,7 +14,7 @@ import type {
   AnyAction,
   GetReducerState,
   BaseMovexDefinitionResourcesMap,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 
 export type MovexStatePatch<T> = {
   action: AnyAction;

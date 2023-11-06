@@ -1,10 +1,10 @@
-import { movexClientMasterOrchestrator } from '../util/orchestrator';
-import rpsReducer, {
-  initialState as rpsInitialState,
-} from '../resources/rockPaperScissors.movex';
-import { globalLogsy } from 'movex-core-util';
-import { computeCheckedState } from '../../lib/util';
-import { tillNextTick } from '../util/misc';
+import { computeCheckedState, globalLogsy } from '@movex/movex-core-util';
+import {
+  movexClientMasterOrchestrator,
+  rpsReducer,
+  rpsInitialState,
+  tillNextTick,
+} from '@movex/movex-specs-util';
 import { install } from 'console-group';
 install();
 

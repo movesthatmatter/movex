@@ -7,14 +7,14 @@ import type {
   CheckedReconciliatoryActions,
   MovexReducer,
   IOConnection,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import {
   logsy as rawLogsy,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
   isAction,
   invoke,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import { ConnectionToMasterResource } from './ConnectionToMasterResource';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import * as deepObject from 'deep-object-diff';

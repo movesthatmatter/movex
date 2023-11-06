@@ -1,14 +1,12 @@
-// rock-paper-scissorsimport { Action } from '../../lib/tools';
-import { Action } from '../../lib/tools';
-import { MovexClient } from 'movex-core-util';
+import { MovexClient, Action } from '@movex/movex-core-util';
 
-export type PlayerId = MovexClient['id'];
-export type Color = string;
+type PlayerId = MovexClient['id'];
+type Color = string;
 
-export type RPS = 'rock' | 'paper' | 'scissors';
+type RPS = 'rock' | 'paper' | 'scissors';
 
-export const playerLabels = ['playerA', 'playerB'] as const;
-export type PlayerLabel = 'playerA' | 'playerB';
+const playerLabels = ['playerA', 'playerB'] as const;
+type PlayerLabel = 'playerA' | 'playerB';
 
 export function toOppositeLabel<L extends PlayerLabel>(
   c: L
@@ -36,7 +34,7 @@ type SecretSubmission = {
 
 // const toPppositeLabel = (l: ) =>
 
-export type Submission = RevealedSubmission | SecretSubmission;
+type Submission = RevealedSubmission | SecretSubmission;
 
 type GameInProgress = {
   players: {
@@ -70,7 +68,7 @@ export type State = {
   gameHistory: Game[];
 };
 
-export const initialState: State = {
+export const rpsInitialState: State = {
   currentGame: {
     players: {
       playerA: null,
@@ -115,8 +113,8 @@ export type Actions =
     >
   | Action<'playAgain'>;
 
-export const reducer = (
-  state = initialState as State,
+export const rpsReducer = (
+  state = rpsInitialState as State,
   action: Actions
 ): State => {
   if (action.type === 'playAgain') {
@@ -286,7 +284,7 @@ export const selectAvailableLabels = (state: State): PlayerLabel[] => {
   return playerLabels.filter((l) => state.currentGame.players[l] === null);
 };
 
-reducer.$canReconcileState = (state: State) => {
+rpsReducer.$canReconcileState = (state: State) => {
   // return false;
   return (
     state.currentGame.submissions.playerA !== null &&
@@ -294,6 +292,6 @@ reducer.$canReconcileState = (state: State) => {
   );
 };
 
-export default reducer;
+export default rpsReducer;
 
 // export default chatReducer;

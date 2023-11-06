@@ -5,9 +5,9 @@
 //   matcher: string; // this is the matcher pattern: "chess" or "chess:5min" or "chess:5min:white", the more items the more limiting/accurate to match
 //   game: TGame;
 
-import { MovexClient, UnknownRecord, Action } from 'movex-core-util';
+import { MovexClient, UnknownRecord, Action } from '@movex/movex-core-util';
 
-export type PlayerId = MovexClient['id'];
+type PlayerId = MovexClient['id'];
 
 export type BaseMatchState<TGame extends UnknownRecord = UnknownRecord> = {
   maxPlayers: number;
@@ -70,7 +70,7 @@ export type MatchActions =
       }
     >;
 
-const matchReducer = (
+export const matchReducer = (
   state = initialMatchState as MatchState,
   action: MatchActions
 ): MatchState => {

@@ -6,12 +6,12 @@ import type {
   GetReducerState,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import {
   isResourceIdentifier,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import { MovexClient } from 'movex';
 import { MovexContext, MovexContextProps } from './MovexContext';
 

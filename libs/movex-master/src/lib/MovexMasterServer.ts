@@ -6,7 +6,7 @@ import {
   type AnyAction,
   type IOEvents,
   type ConnectionToClient,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { MovexMasterResource } from './MovexMasterResource';

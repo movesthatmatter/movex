@@ -2,7 +2,7 @@ import {
   computeCheckedState,
   globalLogsy,
   toResourceIdentifierObj,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import * as consoleGroup from 'console-group';
 import {
   counterReducer,

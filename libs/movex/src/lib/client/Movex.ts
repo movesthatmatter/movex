@@ -3,7 +3,7 @@ import type {
   ConnectionToMaster,
   MovexReducer,
   IOConnection,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import { MovexResource } from './MovexResource';
 
 export type MovexConfig = {
