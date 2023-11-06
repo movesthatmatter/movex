@@ -1,14 +1,19 @@
 import React from 'react';
-import { MovexClient, getUuid, invoke } from 'movex-core-util';
 import {
-  BaseMovexDefinitionResourcesMap,
-  Master,
-  MovexMasterLocal,
-  MovexDefinition,
-  MovexMasterServer,
-} from 'movex';
+  getUuid,
+  invoke,
+  ConnectionToClient,
+  type MovexClient,
+  type MovexDefinition,
+  type BaseMovexDefinitionResourcesMap,
+} from 'movex-core-util';
+import { MovexMasterServer } from '@movex/movex-master';
 import { MovexContext, MovexContextProps } from '../MovexContext';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
+import {
+  MockConnectionEmitter,
+  orchestrateDefinedMovex,
+} from '@movex/movex-specs-util';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
@@ -49,12 +54,13 @@ export class MovexLocalProvider<
 
     const clientId = this.props.clientId || getUuid();
 
-    const emitterOnMaster = new MovexMasterLocal.MockConnectionEmitter(
+    // This should be defined as real source not just as a mock
+    const emitterOnMaster = new MockConnectionEmitter(
       clientId,
       'master-emitter'
     );
 
-    const connectionToClient = new Master.ConnectionToClient(
+    const connectionToClient = new ConnectionToClient(
       clientId,
       emitterOnMaster
     );
@@ -62,7 +68,7 @@ export class MovexLocalProvider<
     const unsubscribeFromConnection =
       master.addClientConnection(connectionToClient);
 
-    const mockedMovex = MovexMasterLocal.orchestrateDefinedMovex(
+    const mockedMovex = orchestrateDefinedMovex(
       this.props.movexDefinition,
       clientId,
       emitterOnMaster

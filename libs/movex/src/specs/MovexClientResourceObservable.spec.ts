@@ -1,11 +1,15 @@
 import { Ok } from 'ts-results';
-import { computeCheckedState } from '../lib/util';
-import counterReducer, {
-  initialCounterState,
-} from './resources/counterReducer';
 import { MovexResourceObservable } from '../lib/client/MovexResourceObservable';
-import { globalLogsy, ResourceIdentifier } from 'movex-core-util';
-import { tillNextTick } from './util/misc';
+import {
+  globalLogsy,
+  ResourceIdentifier,
+  computeCheckedState,
+} from 'movex-core-util';
+import {
+  tillNextTick,
+  counterReducer,
+  initialCounterState,
+} from '@movex/movex-specs-util';
 
 const rid: ResourceIdentifier<string> = 'counter:test-id';
 
@@ -139,7 +143,6 @@ describe('Observable', () => {
       });
     });
 
-      
     test('Destroys the observable', async () => {
       const xResource = new MovexResourceObservable(
         'test-client',
@@ -162,5 +165,5 @@ describe('Observable', () => {
 
       expect(updateListener).not.toHaveBeenCalled();
     });
-});
+  });
 });

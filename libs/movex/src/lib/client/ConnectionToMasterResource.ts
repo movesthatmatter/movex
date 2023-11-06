@@ -1,24 +1,24 @@
-import {
+import type {
+  GetIOPayloadErrTypeFrom,
+  GetIOPayloadOKTypeFrom,
+  ResourceIdentifier,
+  ResourceIdentifierStr,
   ActionOrActionTupleFromAction,
   AnyAction,
   CheckedReconciliatoryActions,
   ToCheckedAction,
-} from '../tools/action';
+  UnsubscribeFn,
+  IOEvents,
+  ConnectionToMaster,
+} from 'movex-core-util';
 import {
-  GetIOPayloadErrTypeFrom,
-  GetIOPayloadOKTypeFrom,
   invoke,
-  ResourceIdentifier,
-  ResourceIdentifierStr,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
 } from 'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
-import { UnsubscribeFn } from '../core-types';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
-import { IOEvents } from '../io-connection/io-events';
-import { ConnectionToMaster } from './ConnectionToMaster';
 
 /**
  * This handles the connection with Master per ResourceType

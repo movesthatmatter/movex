@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { StringKeys, invoke, logsy, noop, emptyFn } from 'movex-core-util';
 import {
-  BaseMovexDefinitionResourcesMap,
-  GetReducerState,
-  MemoryMovexStore,
-  MovexDefinition,
-  MovexMaster,
-  MovexStoreItem,
-} from 'movex';
+  invoke,
+  logsy,
+  noop,
+  emptyFn,
+  type StringKeys,
+  type GetReducerState,
+  type BaseMovexDefinitionResourcesMap,
+  type MovexDefinition,
+} from 'movex-core-util';
+import { MemoryMovexStore, type MovexStoreItem } from '@movex/movex-store';
+import { MovexMasterServer, initMovexMaster } from '@movex/movex-master';
 import { MovexLocalContext, MovexLocalContextProps } from './MovexLocalContext';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
     movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
-    onInit?: (master: MovexMaster.MovexMasterServer) => void;
+    onInit?: (master: MovexMasterServer) => void;
     onMasterResourceUpdated?: <
       TResourceType extends StringKeys<TMovexConfigResourcesMap>
     >(
@@ -31,11 +34,9 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
  * @param param0
  * @returns
  */
-export const MovexLocalMasterProvider: React.FC<Props<BaseMovexDefinitionResourcesMap>> = ({
-  onInit = noop,
-  onMasterResourceUpdated = noop,
-  ...props
-}) => {
+export const MovexLocalMasterProvider: React.FC<
+  Props<BaseMovexDefinitionResourcesMap>
+> = ({ onInit = noop, onMasterResourceUpdated = noop, ...props }) => {
   const [contextState, setContextState] = useState<MovexLocalContextProps>();
 
   useEffect(() => {
@@ -77,7 +78,7 @@ export const MovexLocalMasterProvider: React.FC<Props<BaseMovexDefinitionResourc
       ];
 
       setContextState({
-        master: MovexMaster.initMovexMaster(props.movexDefinition, localStore),
+        master: initMovexMaster(props.movexDefinition, localStore),
       });
 
       return () => {

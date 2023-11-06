@@ -1,8 +1,10 @@
-import chatReducer, { initialChatState } from '../resources/chatReducer';
-import { computeCheckedState } from '../../lib/util';
-import { movexClientMasterOrchestrator } from '../util/orchestrator';
-import { globalLogsy } from 'movex-core-util';
-import { tillNextTick } from '../util/misc';
+import { globalLogsy, computeCheckedState } from 'movex-core-util';
+import {
+  tillNextTick,
+  movexClientMasterOrchestrator,
+  chatReducer,
+  initialChatState,
+} from '@movex/movex-specs-util';
 
 const orchestrator = movexClientMasterOrchestrator();
 

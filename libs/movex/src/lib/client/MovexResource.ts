@@ -1,24 +1,25 @@
-import {
+import type {
   ResourceIdentifier,
   ResourceIdentifierStr,
   UnsubscribeFn,
-  invoke,
-  logsy as rawLogsy,
-  toResourceIdentifierObj,
-  toResourceIdentifierStr,
-} from 'movex-core-util';
-import {
   ActionWithAnyPayload,
   AnyAction,
   CheckedReconciliatoryActions,
   MovexReducer,
+  IOConnection,
+} from 'movex-core-util';
+import {
+  logsy as rawLogsy,
+  toResourceIdentifierObj,
+  toResourceIdentifierStr,
   isAction,
-} from '../tools';
+  invoke,
+} from 'movex-core-util';
 import { ConnectionToMasterResource } from './ConnectionToMasterResource';
 import { MovexResourceObservable } from './MovexResourceObservable';
-import { IOConnection } from '../io-connection/io-connection';
 import * as deepObject from 'deep-object-diff';
 
+// TODO: Take away from here as it's adding to the size
 const logUnimportantStyle = 'color: grey;';
 const logImportantStyle = 'font-weight: bold;';
 const logIncomingStyle = 'color: #4CAF50; font-weight: bold;';

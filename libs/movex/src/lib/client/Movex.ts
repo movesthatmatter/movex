@@ -1,7 +1,9 @@
-import { AnyAction } from '../tools/action';
-import { MovexReducer } from '../tools/reducer';
-import { IOConnection } from '../io-connection/io-connection';
-import { ConnectionToMaster } from './ConnectionToMaster';
+import type {
+  AnyAction,
+  ConnectionToMaster,
+  MovexReducer,
+  IOConnection,
+} from 'movex-core-util';
 import { MovexResource } from './MovexResource';
 
 export type MovexConfig = {
@@ -13,10 +15,7 @@ export type MovexConfig = {
 };
 
 export class Movex {
-
-  constructor(private connectionToMaster: IOConnection<any, AnyAction, any>) {
-    
-  }
+  constructor(private connectionToMaster: IOConnection<any, AnyAction, any>) {}
 
   getClientId() {
     return this.connectionToMaster.clientId;

@@ -1,12 +1,13 @@
-import { AnyAction } from '../tools/action';
-import { IOConnection } from '../io-connection/io-connection';
 import { Movex } from './Movex';
-import {
+import type {
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
-} from '../public-types';
-import { StringKeys } from 'movex-core-util';
-import { GetReducerAction, GetReducerState } from '../tools';
+  AnyAction,
+  GetReducerAction,
+  GetReducerState,
+  StringKeys,
+  IOConnection,
+} from 'movex-core-util';
 
 export class MovexFromDefintion<
   TMovexDefinitionResources extends BaseMovexDefinitionResourcesMap
