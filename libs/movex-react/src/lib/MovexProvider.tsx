@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MovexContextProps, MovexContext } from './MovexContext';
 import {
-  MovexClient,
+  MovexClient as MovexClientUser,
   invoke,
   noop,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
-} from  'movex-core-util';
-import { Client } from 'movex';
+} from 'movex-core-util';
+import { MovexClient } from 'movex';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
     movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
     endpointUrl: string;
-    clientId?: MovexClient['id'];
+    clientId?: MovexClientUser['id'];
     onConnected?: (
       state: Extract<
         MovexContextProps<TMovexConfigResourcesMap>,
@@ -46,7 +46,7 @@ export const MovexProvider: React.FC<
     }
 
     invoke(async () => {
-      const movex = await Client.initMovex(
+      const movex = await MovexClient.initMovex(
         {
           clientId: props.clientId,
           url: props.endpointUrl,

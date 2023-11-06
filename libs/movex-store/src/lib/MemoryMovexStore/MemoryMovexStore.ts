@@ -2,10 +2,9 @@ import {
   toResourceIdentifierStr,
   objectKeys,
   globalLogsy,
-  toResultError,
   toResourceIdentifierObj,
   computeCheckedState,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { PromiseDelegate } from 'promise-delegate';
 import { Pubsy } from 'ts-pubsy';
 import type {
@@ -14,7 +13,7 @@ import type {
   StringKeys,
   GetReducerState,
   BaseMovexDefinitionResourcesMap,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import {
   AsyncErr,
   AsyncOk,
@@ -30,6 +29,7 @@ import type {
   MovexStoreItemsMapByType,
   MovexStoreUpdateResourceError,
 } from '../MovexStore';
+import { toResultError } from '../ResultError';
 
 const logsy = globalLogsy.withNamespace('[LocalMovexStore]');
 

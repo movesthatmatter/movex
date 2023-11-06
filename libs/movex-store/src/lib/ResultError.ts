@@ -1,4 +1,4 @@
-import { keyInObject } from './misc';
+import { keyInObject } from '../../../movex-core-util/src/lib/misc';
 
 export type ResultError<
   Of extends {

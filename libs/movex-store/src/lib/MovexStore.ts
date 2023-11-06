@@ -1,20 +1,19 @@
 import { type AsyncResult } from 'ts-async-results';
-import { toResultError } from  'movex-core-util';
+
 import type {
   AnyResourceIdentifier,
   GenericResourceType,
-  GenericResultError,
   JsonPatch,
   MovexClient,
   ResourceIdentifier,
   ResourceIdentifierStr,
-  ResultError,
   StringKeys,
   CheckedState,
   AnyAction,
   GetReducerState,
   BaseMovexDefinitionResourcesMap,
-} from  'movex-core-util';
+} from 'movex-core-util';
+import { GenericResultError, ResultError, toResultError } from './ResultError';
 
 export type MovexStatePatch<T> = {
   action: AnyAction;

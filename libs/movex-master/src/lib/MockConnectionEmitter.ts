@@ -4,9 +4,9 @@ import type {
   UnsubscribeFn,
   IOEvents,
 } from  'movex-core-util';
-import { getRandomInt } from  'movex-core-util';
+
 import { Pubsy } from 'ts-pubsy';
-import { getUuid } from './util';
+import { getRandomInt, getUuid } from './util';
 
 export class MockConnectionEmitter<
   TState extends any = any,
