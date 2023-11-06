@@ -8,7 +8,7 @@ import {
   ConnectionToClient,
   type MovexDefinition,
   type IOEvents,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import { MemoryMovexStore, MovexStore } from '@movex/movex-store';
 import { initMovexMaster } from '@movex/movex-master';
 

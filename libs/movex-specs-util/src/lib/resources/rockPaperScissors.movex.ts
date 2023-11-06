@@ -1,4 +1,4 @@
-import { MovexClient, Action } from '@movex/movex-core-util';
+import { MovexClient, Action } from  'movex-core-util';
 
 type PlayerId = MovexClient['id'];
 type Color = string;

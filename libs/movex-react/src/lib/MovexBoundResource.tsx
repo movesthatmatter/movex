@@ -9,12 +9,12 @@ import type {
   StringKeys,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import {
   invoke,
   isSameResourceIdentifier,
   toResourceIdentifierObj,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import { MovexContextStateChange } from './MovexContextStateChange';
 
 type Props<

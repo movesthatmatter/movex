@@ -9,7 +9,7 @@ import {
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
   ConnectionToClient,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import { Movex, MovexFromDefintion } from 'movex';
 import { MovexMasterResource, MovexMasterServer } from '@movex/movex-master';
 import { MemoryMovexStore } from '@movex/movex-store';

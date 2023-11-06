@@ -1,4 +1,4 @@
-import { MovexClient } from '@movex/movex-core-util';
+import { MovexClient } from  'movex-core-util';
 
 export type ParticipantId = MovexClient['id'];
 export type Color = string;

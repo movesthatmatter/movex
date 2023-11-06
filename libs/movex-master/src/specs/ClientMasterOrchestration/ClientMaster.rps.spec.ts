@@ -1,4 +1,4 @@
-import { computeCheckedState, globalLogsy } from '@movex/movex-core-util';
+import { computeCheckedState, globalLogsy } from  'movex-core-util';
 import {
   rpsReducer,
   rpsInitialState,

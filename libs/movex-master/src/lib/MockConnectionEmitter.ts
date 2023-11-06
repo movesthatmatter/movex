@@ -3,8 +3,8 @@ import type {
   EventEmitter,
   UnsubscribeFn,
   IOEvents,
-} from '@movex/movex-core-util';
-import { getRandomInt, getUuid } from '@movex/movex-core-util';
+} from  'movex-core-util';
+import { getRandomInt, getUuid } from  'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 
 export class MockConnectionEmitter<

@@ -1,4 +1,4 @@
-import type { Action, MovexClient } from '@movex/movex-core-util';
+import type { Action, MovexClient } from  'movex-core-util';
 
 type ParticipantId = MovexClient['id'];
 type Color = 'yellow' | 'orange' | 'green' | 'blue';

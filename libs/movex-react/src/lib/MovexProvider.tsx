@@ -6,7 +6,7 @@ import {
   noop,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import { Client } from 'movex';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
