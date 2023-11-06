@@ -6,3 +6,5 @@ export class ConnectionToClient<
   TAction extends AnyAction,
   TResourceType extends string
 > extends BaseConnection<TState, TAction, TResourceType> {}
+
+console.log('ConnectionToClient class', ConnectionToClient);

@@ -1,4 +1,6 @@
-import type { EventEmitter, MovexClient, AnyAction } from 'movex-core-util';
+import type { EventEmitter } from '../EventEmitter';
+import type { AnyAction } from '../action';
+import type { MovexClient } from '../core-types';
 import type { IOConnection } from './IOConnection';
 import type { IOEvents } from './IOEvents';
 
@@ -13,3 +15,5 @@ export class BaseConnection<
     public emitter: EventEmitter<IOEvents<TState, TAction, TResourceType>>
   ) {}
 }
+
+console.log('BaseConnection 3', BaseConnection);

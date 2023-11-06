@@ -11,6 +11,16 @@
         "lintFilePatterns": ["libs/movex-store/**/*.ts"]
       }
     },
+    "tsc": {
+      "executor": "nx:run-commands",
+      "options": {
+          "commands": [
+              {
+                  "command": "tsc --noEmit -p libs/movex-store/tsconfig.lib.json"
+              }
+          ]
+      }
+    },
     "test": {
       "executor": "@nrwl/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
