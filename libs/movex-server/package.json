@@ -21,6 +21,6 @@
   "main": "./src/index.js",
   "bin": "./src/bin.js",
   "engines": {
-    "node": ">= 0.14.0"
+    "node": ">= 0.16.0"
   }
 }

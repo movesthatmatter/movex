@@ -23,7 +23,7 @@
         "movex": "./src/bin.js"
     },
     "engines": {
-        "node": ">= 0.14.0"
+        "node": ">= 0.16.0"
     },
     "dependencies": {
         "vue": "^3.3.4",
