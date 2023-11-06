@@ -11,7 +11,7 @@ import {
   MockConnectionEmitter,
   orchestrateDefinedMovex,
   getUuid, // This can actually be mocked here as it's just client only!
-} from '@movex/movex-master';
+} from 'movex-master';
 import { MovexContext, MovexContextProps } from '../MovexContext';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 

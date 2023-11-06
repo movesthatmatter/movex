@@ -3,8 +3,8 @@ import {
   tillNextTick,
   chatReducer,
   initialChatState,
-} from '@movex/movex-specs-util';
-import { movexClientMasterOrchestrator } from '@movex/movex-master';
+} from 'movex-specs-util';
+import { movexClientMasterOrchestrator } from 'movex-master';
 
 const orchestrator = movexClientMasterOrchestrator();
 

@@ -9,7 +9,7 @@ import {
   tillNextTick,
   counterReducer,
   initialCounterState,
-} from '@movex/movex-specs-util';
+} from 'movex-specs-util';
 
 const rid: ResourceIdentifier<string> = 'counter:test-id';
 

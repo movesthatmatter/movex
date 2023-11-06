@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { MovexMasterServer } from '@movex/movex-master';
+import type { MovexMasterServer } from 'movex-master';
 
 export type MovexLocalContextProps = {
   master: MovexMasterServer | undefined;
