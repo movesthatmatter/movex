@@ -1,16 +1,16 @@
 import React from 'react';
 import {
-  getUuid,
   invoke,
   ConnectionToClient,
   type MovexClient,
   type MovexDefinition,
   type BaseMovexDefinitionResourcesMap,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import {
   MovexMasterServer,
   MockConnectionEmitter,
   orchestrateDefinedMovex,
+  getUuid, // This can actually be mocked here as it's just client only!
 } from '@movex/movex-master';
 import { MovexContext, MovexContextProps } from '../MovexContext';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';

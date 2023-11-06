@@ -1,13 +1,11 @@
 import { MD5 } from 'object-hash';
 import { compare, applyReducer, deepClone } from 'fast-json-patch';
-import type { CheckedState, JsonPatch, NotUndefined } from './core-types';
+import type { CheckedState, JsonPatch } from './core-types';
 import { isObject } from './misc';
-
-export const hashObject = (val: NotUndefined) => MD5(val);
 
 export const computeCheckedState = <T>(state: T): CheckedState<T> => [
   state,
-  state === undefined ? '' : hashObject(state),
+  state === undefined ? '' : MD5(state), // hashing the object
 ];
 
 export const checkedStateEquals = <
