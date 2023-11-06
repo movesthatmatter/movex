@@ -14,9 +14,7 @@ import type {
 import {
   isAction,
   toResourceIdentifierStr,
-  applyMovexStatePatches,
   computeCheckedState,
-  getMovexStatePatch,
   objectKeys,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
@@ -25,7 +23,7 @@ import type {
   MovexStore,
   MovexStoreItem,
 } from '@movex/movex-store';
-import { getUuid } from './util';
+import { applyMovexStatePatches, getMovexStatePatch, getUuid } from './util';
 
 /**
  * This Class works with a Resource Type (not Resource Identifier),
