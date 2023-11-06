@@ -6,7 +6,7 @@ import {
   type MovexClient,
   type MovexDefinition,
   type BaseMovexDefinitionResourcesMap,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import { MovexMasterServer } from '@movex/movex-master';
 import { MovexContext, MovexContextProps } from '../MovexContext';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';

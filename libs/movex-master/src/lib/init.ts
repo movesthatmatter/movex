@@ -2,7 +2,7 @@ import {
   objectKeys,
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import { MovexMasterResource } from './MovexMasterResource';
 import { MovexMasterServer } from './MovexMasterServer';
 import type { MovexStore } from '@movex/movex-store';

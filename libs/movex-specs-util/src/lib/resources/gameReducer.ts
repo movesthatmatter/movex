@@ -1,4 +1,4 @@
-import { Action } from 'movex-core-util';
+import { Action } from '@movex/movex-core-util';
 import counterReducer, { CounterActions } from './counterReducer';
 import { Move, Submission } from '../util/types';
 

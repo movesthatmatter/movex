@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import useEventListener from '@use-it/event-listener';
-import { keyInObject, objectKeys } from 'movex-core-util';
+import { keyInObject, objectKeys } from '@movex/movex-core-util';
 import { MovexBoundResourceFromConfig } from 'movex-react';
 import { getColorFromStr } from './util';
 import { DemoMovexDefinition } from '../../movex';

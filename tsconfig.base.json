@@ -33,7 +33,7 @@
       "movex-react": ["libs/movex-react/src/index.ts"],
       "movex-server": ["libs/movex-server/src/index.ts"],
       "movex-service": ["libs/movex-service/src/index.ts"],
-      "@movex/movex-core-util": ["libs/movex-core-util/src/index.ts"],
+      "@movex/movex-core-util": ["libs/movex-core-util/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

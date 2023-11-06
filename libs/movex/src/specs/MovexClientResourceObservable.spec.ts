@@ -4,7 +4,7 @@ import {
   globalLogsy,
   ResourceIdentifier,
   computeCheckedState,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import {
   tillNextTick,
   counterReducer,

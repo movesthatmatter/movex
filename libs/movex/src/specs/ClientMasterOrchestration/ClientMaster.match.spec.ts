@@ -1,8 +1,11 @@
-import { movexClientMasterOrchestrator } from '../util/orchestrator';
-import matchReducer, { initialMatchState } from '../resources/matchReducer';
-import { computeCheckedState } from '../../lib/util';
-import { globalLogsy } from 'movex-core-util';
-import { tillNextTick } from '../util/misc';
+import { computeCheckedState, globalLogsy } from '@movex/movex-core-util';
+import {
+  initialMatchState,
+  movexClientMasterOrchestrator,
+  tillNextTick,
+  matchReducer,
+} from '@movex/movex-specs-util';
+// import matchReducer from 'libs/movex-specs-util/src/lib/resources/matchReducer';
 
 const orchestrator = movexClientMasterOrchestrator();
 

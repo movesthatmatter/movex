@@ -22,4 +22,4 @@ export {
   isResourceIdentifier as isRid,
   isResourceIdentifierOfType as isRidOfType,
   isSameResourceIdentifier as isSameRid,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';

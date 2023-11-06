@@ -10,12 +10,12 @@ import type {
   UnsubscribeFn,
   IOEvents,
   ConnectionToMaster,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import {
   invoke,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';

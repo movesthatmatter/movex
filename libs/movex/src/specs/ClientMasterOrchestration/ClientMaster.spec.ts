@@ -1,11 +1,17 @@
-import { globalLogsy, toResourceIdentifierObj } from 'movex-core-util';
-import { computeCheckedState } from '../../lib/util';
-import gameReducer, { initialGameState } from '../resources/gameReducer';
-import gameReducerWithDerivedState, {
+import {
+  computeCheckedState,
+  globalLogsy,
+  toResourceIdentifierObj,
+} from '@movex/movex-core-util';
+import {
+  gameReducer,
+  gameReducerWithDerivedState,
+  initialGameState,
   initialRawGameStateWithDerivedState,
-} from '../resources/gameReducerWithDerivedState';
-import { movexClientMasterOrchestrator } from '../util/orchestrator';
-import { tillNextTick } from '../util/misc';
+  movexClientMasterOrchestrator,
+  tillNextTick,
+} from '@movex/movex-specs-util';
+
 require('console-group').install();
 
 beforeAll(() => {
