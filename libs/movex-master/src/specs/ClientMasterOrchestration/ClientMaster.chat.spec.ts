@@ -1,10 +1,10 @@
 import { globalLogsy, computeCheckedState } from '@movex/movex-core-util';
 import {
   tillNextTick,
-  movexClientMasterOrchestrator,
   chatReducer,
   initialChatState,
 } from '@movex/movex-specs-util';
+import { movexClientMasterOrchestrator } from '@movex/movex-master';
 
 const orchestrator = movexClientMasterOrchestrator();
 

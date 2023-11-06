@@ -7,13 +7,13 @@ import {
   type MovexDefinition,
   type BaseMovexDefinitionResourcesMap,
 } from '@movex/movex-core-util';
-import { MovexMasterServer } from '@movex/movex-master';
-import { MovexContext, MovexContextProps } from '../MovexContext';
-import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 import {
+  MovexMasterServer,
   MockConnectionEmitter,
   orchestrateDefinedMovex,
-} from '@movex/movex-specs-util';
+} from '@movex/movex-master';
+import { MovexContext, MovexContextProps } from '../MovexContext';
+import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{

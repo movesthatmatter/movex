@@ -41,11 +41,6 @@ export const movexClientMasterOrchestrator = () => {
         clientId
       );
 
-      console.log('ConnectionToClient', ConnectionToClient);
-      console.log('invoke', invoke);
-      console.log('logsy', logsy);
-  
-
       const masterConnectionToClient = new ConnectionToClient<
         S,
         A,
