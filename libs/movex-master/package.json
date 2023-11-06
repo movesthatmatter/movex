@@ -1,8 +1,8 @@
 {
-  "name": "movex-react",
-  "version": "0.1.3-10",
+  "name": "movex-master",
+  "version": "0.1.3-11",
   "license": "MIT",
-  "description": "Movex React is the library of React components for Movex",
+  "description": "Movex-master defines the master that wil be used on movex-server and movex-react-local-master",
   "author": {
     "name": "Gabriel C. Troia",
     "url": "https://twitter.com/gctroia"

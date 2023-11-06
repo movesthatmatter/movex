@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MovexContextProps, MovexContext } from './MovexContext';
 import {
-  MovexClient as MovexClientUser,
   invoke,
   noop,
-  BaseMovexDefinitionResourcesMap,
-  MovexDefinition,
+  type MovexClient as MovexClientUser,
+  type BaseMovexDefinitionResourcesMap,
+  type MovexDefinition,
 } from 'movex-core-util';
 import { MovexClient } from 'movex';
 
