@@ -1,7 +1,7 @@
 export * from './lib';
 
 // Aliased
-export * as MovexClient from './lib/client';
+export * as MovexClient from './lib';
 
 export {
   type ResourceIdentifier,
