@@ -23,16 +23,19 @@
     "noPropertyAccessFromIndexSignature": true,
     "baseUrl": ".",
     "paths": {
-      "movex-specs-util": ["libs/movex-specs-util/src/index.ts"],
-      "movex-vue": ["libs/movex-vue/src/index.ts"],
-      "movex-store": ["libs/movex-store/src/index.ts"],
-      "movex-master": ["libs/movex-master/src/index.ts"],
       "movex": ["libs/movex/src/index.ts"],
       "movex-core-util": ["libs/movex-core-util/src/index.ts"],
       "movex-examples": ["libs/movex-examples/src/index.ts"],
+      "movex-master": ["libs/movex-master/src/index.ts"],
       "movex-react": ["libs/movex-react/src/index.ts"],
+      "movex-react-local-master": [
+        "libs/movex-react-local-master/src/index.ts"
+      ],
       "movex-server": ["libs/movex-server/src/index.ts"],
-      "movex-service": ["libs/movex-service/src/index.ts"]
+      "movex-service": ["libs/movex-service/src/index.ts"],
+      "movex-specs-util": ["libs/movex-specs-util/src/index.ts"],
+      "movex-store": ["libs/movex-store/src/index.ts"],
+      "movex-vue": ["libs/movex-vue/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

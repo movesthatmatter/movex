@@ -5,7 +5,7 @@ import type {
   MovexDefinition,
   BaseMovexDefinitionResourcesMap,
 } from  'movex-core-util';
-import type { MovexContextProps } from '../MovexContext';
+import type { MovexContextProps } from 'movex-react';
 import { MovexLocalProvider } from './MovexLocalProvider';
 
 type Props<

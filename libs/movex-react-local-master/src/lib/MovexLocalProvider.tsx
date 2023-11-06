@@ -12,7 +12,7 @@ import {
   orchestrateDefinedMovex,
   getUuid, // This can actually be mocked here as it's just client only!
 } from 'movex-master';
-import { MovexContext, MovexContextProps } from '../MovexContext';
+import { MovexContext, MovexContextProps } from 'movex-react';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
