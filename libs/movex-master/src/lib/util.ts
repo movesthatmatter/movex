@@ -53,3 +53,10 @@ const getJSONPatchDiff = <
   a: A,
   b: B
 ) => compare(a, b);
+
+export function getRandomInt(givenMin: number, givenMax: number) {
+  const min = Math.ceil(givenMin);
+  const max = Math.floor(givenMax);
+
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
