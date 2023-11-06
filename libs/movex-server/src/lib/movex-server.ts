@@ -9,8 +9,8 @@ import {
   type MovexDefinition,
   type IOEvents,
 } from  'movex-core-util';
-import { MemoryMovexStore, MovexStore } from '@movex/movex-store';
-import { initMovexMaster } from '@movex/movex-master';
+import { MemoryMovexStore, MovexStore } from 'movex-store';
+import { initMovexMaster } from 'movex-master';
 
 export const movexServer = <TDefinition extends MovexDefinition>(
   {

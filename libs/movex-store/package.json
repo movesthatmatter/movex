@@ -1,0 +1,27 @@
+{
+  "name": "movex-store",
+  "version": "0.1.3-11",
+  "license": "MIT",
+  "description": "Movex-store defines the store interface and comes with a MemoryStore",
+  "author": {
+    "name": "Gabriel C. Troia",
+    "url": "https://twitter.com/gctroia"
+  },
+  "repository": "https://github.com/movesthatmatter/movex",
+  "homepage": "https://movex.dev",
+  "keywords": [
+    "state",
+    "redux",
+    "react",
+    "game",
+    "app",
+    "framework"
+  ],
+  "type": "commonjs",
+  "engines": {
+    "node": ">= 0.16.0"
+  },
+  "peerDependencies": {
+    "react": ">=16.0.0"
+  }
+}

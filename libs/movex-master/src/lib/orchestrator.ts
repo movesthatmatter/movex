@@ -11,8 +11,8 @@ import {
   ConnectionToClient,
 } from  'movex-core-util';
 import { Movex, MovexFromDefintion } from 'movex';
-import { MovexMasterResource, MovexMasterServer } from '@movex/movex-master';
-import { MemoryMovexStore } from '@movex/movex-store';
+import { MovexMasterResource, MovexMasterServer } from 'movex-master';
+import { MemoryMovexStore } from 'movex-store';
 import { MockConnectionEmitter } from './MockConnectionEmitter';
 
 export const movexClientMasterOrchestrator = () => {

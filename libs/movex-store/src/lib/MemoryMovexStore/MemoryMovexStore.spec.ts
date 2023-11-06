@@ -1,5 +1,5 @@
 import { MemoryMovexStore } from './MemoryMovexStore';
-import { tillNextTick } from '@movex/movex-specs-util';
+import { tillNextTick } from 'movex-specs-util';
 
 describe('CRUD Operations', () => {
   test('create', async () => {

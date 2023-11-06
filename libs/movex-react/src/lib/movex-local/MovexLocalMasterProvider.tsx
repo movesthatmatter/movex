@@ -9,8 +9,8 @@ import {
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
 } from  'movex-core-util';
-import { MemoryMovexStore, type MovexStoreItem } from '@movex/movex-store';
-import { MovexMasterServer, initMovexMaster } from '@movex/movex-master';
+import { MemoryMovexStore, type MovexStoreItem } from 'movex-store';
+import { MovexMasterServer, initMovexMaster } from 'movex-master';
 import { MovexLocalContext, MovexLocalContextProps } from './MovexLocalContext';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =

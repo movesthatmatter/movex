@@ -22,7 +22,7 @@ import type {
   MovexStatePatch,
   MovexStore,
   MovexStoreItem,
-} from '@movex/movex-store';
+} from 'movex-store';
 import { applyMovexStatePatches, getMovexStatePatch, getUuid } from './util';
 
 /**

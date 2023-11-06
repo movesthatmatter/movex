@@ -3,8 +3,8 @@ import {
   rpsReducer,
   rpsInitialState,
   tillNextTick,
-} from '@movex/movex-specs-util';
-import { movexClientMasterOrchestrator } from '@movex/movex-master';
+} from 'movex-specs-util';
+import { movexClientMasterOrchestrator } from 'movex-master';
 import { install } from 'console-group';
 install();
 
