@@ -1,2 +1,2 @@
 export * from './client/Movex';
-// export * from './tools';
+export * from './client/MovexFromDefintion';

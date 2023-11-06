@@ -1,4 +1,3 @@
-import type { MovexStoreItem } from '@movex/movex-store';
 import type {
   ActionOrActionTupleFromAction,
   AnyAction,
@@ -6,9 +5,11 @@ import type {
   ToCheckedAction,
 } from '../action';
 import type {
+  CheckedState,
   Checksum,
   IOPayloadResult,
   ResourceIdentifier,
+  ResourceIdentifierStr,
 } from '../core-types';
 
 export type IOEvents<
@@ -25,8 +26,8 @@ export type IOEvents<
     // clientId: MovexClient['id']; // Needed?
   }) => IOPayloadResult<
     {
-      rid: MovexStoreItem<TState, TResourceType>['rid'];
-      state: MovexStoreItem<TState, TResourceType>['state'];
+      rid: ResourceIdentifierStr<TResourceType>;
+      state: CheckedState<TState>;
     },
     unknown // Type this
   >;
@@ -49,7 +50,7 @@ export type IOEvents<
   getResourceState: (p: {
     rid: ResourceIdentifier<TResourceType>;
   }) => IOPayloadResult<
-    MovexStoreItem<TState, TResourceType>['state'],
+    CheckedState<TState>,
     unknown // Type this
   >;
 

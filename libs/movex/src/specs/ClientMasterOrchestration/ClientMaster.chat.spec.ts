@@ -1,4 +1,4 @@
-import { globalLogsy, computeCheckedState } from 'movex-core-util';
+import { globalLogsy, computeCheckedState } from '@movex/movex-core-util';
 import {
   tillNextTick,
   movexClientMasterOrchestrator,
@@ -7,6 +7,9 @@ import {
 } from '@movex/movex-specs-util';
 
 const orchestrator = movexClientMasterOrchestrator();
+
+console.log('movexClientMasterOrchestrator', movexClientMasterOrchestrator);
+console.log('orchestrator', orchestrator);
 
 beforeAll(() => {
   globalLogsy.disable();

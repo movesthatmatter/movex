@@ -9,12 +9,11 @@ import {
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
   ConnectionToClient,
-} from 'movex-core-util';
-import { Movex } from 'movex';
+} from '@movex/movex-core-util';
+import { Movex, MovexFromDefintion } from 'movex';
 import { MovexMasterResource, MovexMasterServer } from '@movex/movex-master';
 import { MemoryMovexStore } from '@movex/movex-store';
 import { MockConnectionEmitter } from './MockConnectionEmitter';
-import { MovexFromDefintion } from 'libs/movex/src/lib/client';
 
 export const movexClientMasterOrchestrator = () => {
   let unsubscribe = async () => {};
@@ -41,6 +40,11 @@ export const movexClientMasterOrchestrator = () => {
       const emitterOnMaster = new MockConnectionEmitter<S, A, TResourceType>(
         clientId
       );
+
+      console.log('ConnectionToClient', ConnectionToClient);
+      console.log('invoke', invoke);
+      console.log('logsy', logsy);
+  
 
       const masterConnectionToClient = new ConnectionToClient<
         S,

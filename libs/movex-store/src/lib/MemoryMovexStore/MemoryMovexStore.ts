@@ -5,14 +5,14 @@ import {
   toResultError,
   toResourceIdentifierObj,
   computeCheckedState,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import type {
   ResourceIdentifier,
   ResourceIdentifierStr,
   StringKeys,
   GetReducerState,
   BaseMovexDefinitionResourcesMap,
-} from 'movex-core-util';
+} from '@movex/movex-core-util';
 import {
   AsyncErr,
   AsyncOk,
