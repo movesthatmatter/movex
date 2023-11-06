@@ -18,6 +18,8 @@ const globalLogsyConfigWrapper = {
   },
 };
 
+// Depreacte from here! maybe make own library
+
 class Logsy {
   constructor(
     public prefix: string = '',
