@@ -5,7 +5,7 @@ import {
   toResultError,
   toResourceIdentifierObj,
   computeCheckedState,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import { PromiseDelegate } from 'promise-delegate';
 import { Pubsy } from 'ts-pubsy';
 import type {
@@ -14,7 +14,7 @@ import type {
   StringKeys,
   GetReducerState,
   BaseMovexDefinitionResourcesMap,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import {
   AsyncErr,
   AsyncOk,

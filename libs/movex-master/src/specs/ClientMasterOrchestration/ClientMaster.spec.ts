@@ -2,7 +2,7 @@ import {
   computeCheckedState,
   globalLogsy,
   toResourceIdentifierObj,
-} from 'movex-core-util';
+} from  'movex-core-util';
 import {
   gameReducer,
   gameReducerWithDerivedState,

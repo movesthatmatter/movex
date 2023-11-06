@@ -2,7 +2,7 @@ import { createContext } from 'react';
 import type {
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import type { MovexClient, Movex } from 'movex';
 
 export type MovexContextProps<

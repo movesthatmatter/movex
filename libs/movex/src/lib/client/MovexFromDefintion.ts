@@ -7,7 +7,7 @@ import type {
   GetReducerState,
   StringKeys,
   IOConnection,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 
 export class MovexFromDefintion<
   TMovexDefinitionResources extends BaseMovexDefinitionResourcesMap

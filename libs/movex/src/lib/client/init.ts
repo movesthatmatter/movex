@@ -1,10 +1,10 @@
 import io from 'socket.io-client';
-import { ConnectionToMaster, SocketIOEmitter } from '@movex/movex-core-util';
+import { ConnectionToMaster, SocketIOEmitter } from  'movex-core-util';
 import type {
   IOEvents,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import { MovexFromDefintion } from './MovexFromDefintion';
 
 // TODO: The ClientId ideally isn't given from here bu retrieved somehow else. hmm

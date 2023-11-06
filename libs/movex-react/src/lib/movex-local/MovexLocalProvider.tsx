@@ -6,7 +6,7 @@ import {
   type MovexClient,
   type MovexDefinition,
   type BaseMovexDefinitionResourcesMap,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import {
   MovexMasterServer,
   MockConnectionEmitter,

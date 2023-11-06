@@ -1,4 +1,4 @@
-import { globalLogsy, computeCheckedState } from '@movex/movex-core-util';
+import { globalLogsy, computeCheckedState } from  'movex-core-util';
 import {
   tillNextTick,
   chatReducer,

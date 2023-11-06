@@ -1,4 +1,4 @@
-import { Action, isObject, keyInObject } from '@movex/movex-core-util';
+import { Action, isObject, keyInObject } from  'movex-core-util';
 import { Move } from '../util/types';
 
 type SubmissionDrawnItem = {

@@ -10,7 +10,7 @@ import type {
   CheckedReconciliatoryActions,
   ToPublicAction,
   MovexReducer,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import {
   getUuid,
   isAction,
@@ -19,7 +19,7 @@ import {
   computeCheckedState,
   getMovexStatePatch,
   objectKeys,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import type {
   MovexStatePatch,

@@ -5,7 +5,7 @@
 //   matcher: string; // this is the matcher pattern: "chess" or "chess:5min" or "chess:5min:white", the more items the more limiting/accurate to match
 //   game: TGame;
 
-import { MovexClient, UnknownRecord, Action } from '@movex/movex-core-util';
+import { MovexClient, UnknownRecord, Action } from  'movex-core-util';
 
 type PlayerId = MovexClient['id'];
 

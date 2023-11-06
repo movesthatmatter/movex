@@ -7,7 +7,7 @@ import {
   computeCheckedState,
   isAction,
   Observable,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import type {
   IObservable,
   MovexClient,
@@ -21,7 +21,7 @@ import type {
   ToPrivateAction,
   ToPublicAction,
   MovexReducer,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import { createDispatcher, DispatchedEvent } from './dispatch';
 import { PromiseDelegate } from 'promise-delegate';
 

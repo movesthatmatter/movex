@@ -2,7 +2,7 @@ import type {
   AnyAction,
   ToPrivateAction,
   ToPublicAction,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import type { MovexResourceObservable } from './MovexResourceObservable';
 
 /**

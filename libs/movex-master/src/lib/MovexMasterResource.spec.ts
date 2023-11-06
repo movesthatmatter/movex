@@ -8,7 +8,7 @@ import {
   GetReducerAction,
   computeCheckedState,
   toResourceIdentifierStr,
-} from '@movex/movex-core-util';
+} from  'movex-core-util';
 import { MovexMasterResource } from './MovexMasterResource';
 import { MemoryMovexStore } from '@movex/movex-store';
 
