@@ -1,6 +1,3 @@
-// Don't depend on this to make it smaller
-export { v4 as getUuid } from 'uuid';
-
 export const objectKeys = <O extends object>(o: O) =>
   Object.keys(o) as (keyof O)[];
 

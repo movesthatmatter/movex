@@ -10,22 +10,22 @@ import type {
   CheckedReconciliatoryActions,
   ToPublicAction,
   MovexReducer,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import {
-  getUuid,
   isAction,
   toResourceIdentifierStr,
   applyMovexStatePatches,
   computeCheckedState,
   getMovexStatePatch,
   objectKeys,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
 import type {
   MovexStatePatch,
   MovexStore,
   MovexStoreItem,
 } from '@movex/movex-store';
+import { getUuid } from './util';
 
 /**
  * This Class works with a Resource Type (not Resource Identifier),
