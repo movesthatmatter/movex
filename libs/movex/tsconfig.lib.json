@@ -8,7 +8,7 @@
   },
   "include": [
     "**/*.ts"
-  ],
+, "../movex-core-util/src/lib/io/ConnectionToClient.ts", "../movex-master/src/lib/index.ts", "../movex-master/src/lib/init.ts", "../movex-master/src/lib/MovexMasterResource.ts", "../movex-master/src/lib/MovexMasterServer.ts", "../movex-store/src/lib/index.ts", "../movex-store/src/lib/MemoryMovexStore/MemoryMovexStore.spec.ts", "../movex-store/src/lib/MemoryMovexStore/MemoryMovexStore.ts", "../movex-store/src/lib/MovexStore.ts", "../movex-core-util/src/lib/public-types.ts", "../movex-master/src/lib/MovexMasterResource.spec.ts"  ],
   "exclude": [
     "jest.config.ts",
     "**/*.spec.ts"

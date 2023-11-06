@@ -1,7 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MovexContextProps, MovexContext } from './MovexContext';
-import { MovexClient, invoke, noop } from 'movex-core-util';
-import { Client, BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
+import {
+  MovexClient,
+  invoke,
+  noop,
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+} from 'movex-core-util';
+import { Client } from 'movex';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
@@ -22,11 +28,9 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
     ) => void;
   }>;
 
-export const MovexProvider: React.FC<Props<BaseMovexDefinitionResourcesMap>> = ({
-  onConnected = noop,
-  onDisconnected = noop,
-  ...props
-}) => {
+export const MovexProvider: React.FC<
+  Props<BaseMovexDefinitionResourcesMap>
+> = ({ onConnected = noop, onDisconnected = noop, ...props }) => {
   const [contextState, setContextState] = useState<
     MovexContextProps<typeof props['movexDefinition']['resources']>
   >({

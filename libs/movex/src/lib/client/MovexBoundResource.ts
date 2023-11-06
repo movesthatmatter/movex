@@ -1,5 +1,9 @@
-import { AnyAction, ToPrivateAction, ToPublicAction } from '../tools/action';
-import { MovexResourceObservable } from './MovexResourceObservable';
+import type {
+  AnyAction,
+  ToPrivateAction,
+  ToPublicAction,
+} from 'movex-core-util';
+import type { MovexResourceObservable } from './MovexResourceObservable';
 
 /**
  * This is the MovexResource running on the Client
@@ -10,7 +14,7 @@ export class MovexBoundResource<
   TState = any,
   TAction extends AnyAction = AnyAction
 > {
-    // TODO: Add the TResourceType so it the rid can be typed correctly
+  // TODO: Add the TResourceType so it the rid can be typed correctly
   public rid = this.observable.rid;
 
   constructor(private observable: MovexResourceObservable<TState, TAction>) {}

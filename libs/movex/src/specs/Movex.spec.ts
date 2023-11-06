@@ -1,11 +1,16 @@
-import counterReducer from './resources/counterReducer';
-import gameReducer, { initialGameState } from './resources/gameReducer';
-import { globalLogsy, toResourceIdentifierObj } from 'movex-core-util';
-import { computeCheckedState } from '../lib/util';
-import { movexClientMasterOrchestrator } from './util/orchestrator';
-import { tillNextTick } from './util/misc';
-
+import {
+  computeCheckedState,
+  globalLogsy,
+  toResourceIdentifierObj,
+} from 'movex-core-util';
 import * as consoleGroup from 'console-group';
+import {
+  counterReducer,
+  gameReducer,
+  initialGameState,
+  movexClientMasterOrchestrator,
+  tillNextTick,
+} from '@movex/movex-specs-util';
 consoleGroup.install();
 
 const orchestrator = movexClientMasterOrchestrator();

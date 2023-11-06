@@ -1,7 +1,11 @@
 import React from 'react';
-import { MovexDefinition, BaseMovexDefinitionResourcesMap } from 'movex';
-import { MovexClient, StringKeys } from 'movex-core-util';
-import { MovexContextProps } from '../MovexContext';
+import type {
+  MovexClient,
+  StringKeys,
+  MovexDefinition,
+  BaseMovexDefinitionResourcesMap,
+} from 'movex-core-util';
+import type { MovexContextProps } from '../MovexContext';
 import { MovexLocalProvider } from './MovexLocalProvider';
 
 type Props<
