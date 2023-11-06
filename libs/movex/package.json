@@ -20,6 +20,6 @@
   "type": "commonjs",
   "main": "./src/index.js",
   "engines": {
-    "node": ">= 0.16.0"
+    "node": ">= 16.0.0"
   }
 }

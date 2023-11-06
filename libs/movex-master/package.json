@@ -19,7 +19,7 @@
   ],
   "type": "commonjs",
   "engines": {
-    "node": ">= 0.16.0"
+    "node": ">= 16.0.0"
   },
   "peerDependencies": {
     "react": ">=16.0.0"
