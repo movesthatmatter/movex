@@ -1,10 +1,10 @@
 import { computeCheckedState, globalLogsy } from '@movex/movex-core-util';
 import {
-  movexClientMasterOrchestrator,
   rpsReducer,
   rpsInitialState,
   tillNextTick,
 } from '@movex/movex-specs-util';
+import { movexClientMasterOrchestrator } from '@movex/movex-master';
 import { install } from 'console-group';
 install();
 

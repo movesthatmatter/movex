@@ -8,9 +8,9 @@ import {
   gameReducerWithDerivedState,
   initialGameState,
   initialRawGameStateWithDerivedState,
-  movexClientMasterOrchestrator,
   tillNextTick,
 } from '@movex/movex-specs-util';
+import { movexClientMasterOrchestrator } from '@movex/movex-master';
 
 require('console-group').install();
 

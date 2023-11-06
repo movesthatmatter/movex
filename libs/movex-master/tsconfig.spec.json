@@ -16,5 +16,5 @@
     "**/*.test.jsx",
     "**/*.spec.jsx",
     "**/*.d.ts"
-  ]
+, "../movex/src/lib/client/MovexResourceObservable.spec.ts"  ]
 }

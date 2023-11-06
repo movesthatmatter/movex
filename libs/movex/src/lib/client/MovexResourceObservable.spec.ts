@@ -1,5 +1,5 @@
 import { Ok } from 'ts-results';
-import { MovexResourceObservable } from '../lib/client/MovexResourceObservable';
+import { MovexResourceObservable } from './MovexResourceObservable';
 import {
   globalLogsy,
   ResourceIdentifier,

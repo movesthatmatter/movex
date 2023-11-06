@@ -6,6 +6,8 @@ import {
   toResourceIdentifierObj,
   computeCheckedState,
 } from '@movex/movex-core-util';
+import { PromiseDelegate } from 'promise-delegate';
+import { Pubsy } from 'ts-pubsy';
 import type {
   ResourceIdentifier,
   ResourceIdentifierStr,
@@ -28,8 +30,6 @@ import type {
   MovexStoreItemsMapByType,
   MovexStoreUpdateResourceError,
 } from '../MovexStore';
-import { PromiseDelegate } from 'promise-delegate';
-import { Pubsy } from 'ts-pubsy';
 
 const logsy = globalLogsy.withNamespace('[LocalMovexStore]');
 

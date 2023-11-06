@@ -1479,7 +1479,7 @@
   resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-0.3.1.tgz#d0fce5d07b0620caa282b5131c297bb60f9d87e6"
   integrity sha512-EsBwpc7hBUJWAsNPBmJy4hxWx12v6bshQsldrVmjxJoc3isbxhOrF2IcCpaXxfvq03NwkI7sbsOLXbYuqF/8Ww==
 
-"@es-exec/esbuild-plugin-serve@0.0.5", "@es-exec/esbuild-plugin-serve@^0.0.5":
+"@es-exec/esbuild-plugin-serve@^0.0.5":
   version "0.0.5"
   resolved "https://registry.yarnpkg.com/@es-exec/esbuild-plugin-serve/-/esbuild-plugin-serve-0.0.5.tgz#bf3fb3123c39682cb9ed9ecf44a3e7f4160b8af3"
   integrity sha512-JsT5bV6KlzfmIMXX1X4eKYxuPQxJ6n3INfFl4gnuuB4uwP5Yk3WevVsUSpRCgYxMQorQyHRXAuD5NcDDS57/Wg==
@@ -6040,7 +6040,7 @@ deep-is@^0.1.3, deep-is@~0.1.3:
   resolved "https://registry.yarnpkg.com/deep-is/-/deep-is-0.1.4.tgz#a6f2dce612fadd2ef1f519b73551f17e85199831"
   integrity sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==
 
-deep-object-diff@1.1.9, deep-object-diff@^1.1.9:
+deep-object-diff@^1.1.9:
   version "1.1.9"
   resolved "https://registry.yarnpkg.com/deep-object-diff/-/deep-object-diff-1.1.9.tgz#6df7ef035ad6a0caa44479c536ed7b02570f4595"
   integrity sha512-Rn+RuwkmkDwCi2/oXOFS9Gsr5lJZu/yTGpK7wAaAIE75CC+LCGEZHpY6VQJa/RoJcrmaA/docWJZvYohlNkWPA==
@@ -6539,7 +6539,7 @@ es-to-primitive@^1.2.1:
     is-date-object "^1.0.1"
     is-symbol "^1.0.2"
 
-esbuild-plugin-copy@2.1.1, esbuild-plugin-copy@^2.1.1:
+esbuild-plugin-copy@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/esbuild-plugin-copy/-/esbuild-plugin-copy-2.1.1.tgz#638308ecfd679e4c7c76b71c62f7dd9a4cc7f901"
   integrity sha512-Bk66jpevTcV8KMFzZI1P7MZKZ+uDcrZm2G2egZ2jNIvVnivDpodZI+/KnpL3Jnap0PBdIHU7HwFGB8r+vV5CVw==
@@ -6549,7 +6549,7 @@ esbuild-plugin-copy@2.1.1, esbuild-plugin-copy@^2.1.1:
     fs-extra "^10.0.1"
     globby "^11.0.3"
 
-esbuild@0.18.10, esbuild@^0.18.10:
+esbuild@^0.18.10:
   version "0.18.10"
   resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.18.10.tgz#f0e99e8a957990241be04f2454d7e2cb0d78b43f"
   integrity sha512-33WKo67auOXzZHBY/9DTJRo7kIvfU12S+D4sp2wIz39N88MDIaCGyCwbW01RR70pK6Iya0I74lHEpyLfFqOHPA==
@@ -7201,7 +7201,7 @@ fast-glob@^3.0.3, fast-glob@^3.2.12, fast-glob@^3.2.7, fast-glob@^3.2.9:
     merge2 "^1.3.0"
     micromatch "^4.0.4"
 
-fast-json-patch@*, fast-json-patch@3.1.1:
+fast-json-patch@*:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/fast-json-patch/-/fast-json-patch-3.1.1.tgz#85064ea1b1ebf97a3f7ad01e23f9337e72c66947"
   integrity sha512-vf6IHUX2SBcA+5/+4883dsIjpBTqmfBjmYiWK1savxQmFk4JfBMLa7ynTYOs1Rolp/T1betJxHiGD3g1Mn8lUQ==
@@ -10908,86 +10908,6 @@ mockdate@^3.0.5:
   resolved "https://registry.yarnpkg.com/mockdate/-/mockdate-3.0.5.tgz#789be686deb3149e7df2b663d2bc4392bc3284fb"
   integrity sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==
 
-movex-core-util@0.0.6-27:
-  version "0.0.6-27"
-  resolved "https://registry.yarnpkg.com/movex-core-util/-/movex-core-util-0.0.6-27.tgz#7f561829cb1f6482df151cd7208dc849ba3154bf"
-  integrity sha512-0GgwynDTbrYO2LgdYRunQ0KAj6P/+AWuDwWG1bZhkgs0PR5h5vre87rywYu1g9ve1ZsUPM8E64pCWRKMoKphbA==
-  dependencies:
-    fast-json-patch "3.1.1"
-    socket.io "4.5.4"
-    socket.io-client "4.5.4"
-    ts-pubsy "0.2.0"
-    ts-results "3.3.0"
-    typed-emitter "2.1.0"
-    uuid "9.0.0"
-
-movex-server@0.0.6-27:
-  version "0.0.6-27"
-  resolved "https://registry.yarnpkg.com/movex-server/-/movex-server-0.0.6-27.tgz#7aff1862124ae9e97bf267cfd29b18f3f71cfb3f"
-  integrity sha512-kcRMNVWRgUwy5iYGG2wLv4iHgnq78MTrbGeGMOW1l8f0rDrSA/5A0GLYO+WcaW9TTCrXpf+KbUhfeLETMZg9nw==
-  dependencies:
-    "@es-exec/esbuild-plugin-serve" "0.0.5"
-    cors "2.8.5"
-    deep-object-diff "1.1.9"
-    esbuild "0.18.10"
-    esbuild-plugin-copy "2.1.1"
-    express "4.18.2"
-    fast-json-patch "3.1.1"
-    movex "0.0.6-27"
-    movex-core-util "0.0.6-27"
-    object-hash "3.0.0"
-    promise-delegate "1.0.1"
-    socket.io "4.5.4"
-    socket.io-client "4.5.4"
-    ts-async-results "0.7.9"
-    ts-pubsy "0.2.0"
-    ts-results "3.3.0"
-    typed-emitter "2.1.0"
-    uuid "9.0.0"
-
-movex-service@^0.0.6-27:
-  version "0.0.6-27"
-  resolved "https://registry.yarnpkg.com/movex-service/-/movex-service-0.0.6-27.tgz#70c7ac0fd1d7f28e91b4763c9798fc6178f2121a"
-  integrity sha512-o3Mr5sYTt1byWXTaMvnJ+T9qVK7lokwmzaNpBIgHVo90v6OrNR4cemhNTPl3DL3NlSWfg1JloXXQjXC64VmWzA==
-  dependencies:
-    "@es-exec/esbuild-plugin-serve" "0.0.5"
-    cors "2.8.5"
-    deep-object-diff "1.1.9"
-    esbuild "0.18.10"
-    esbuild-plugin-copy "2.1.1"
-    express "4.18.2"
-    fast-json-patch "3.1.1"
-    movex "0.0.6-27"
-    movex-core-util "0.0.6-27"
-    movex-server "0.0.6-27"
-    object-hash "3.0.0"
-    promise-delegate "1.0.1"
-    socket.io "4.5.4"
-    socket.io-client "4.5.4"
-    ts-async-results "0.7.9"
-    ts-pubsy "0.2.0"
-    ts-results "3.3.0"
-    typed-emitter "2.1.0"
-    uuid "9.0.0"
-
-movex@0.0.6-27:
-  version "0.0.6-27"
-  resolved "https://registry.yarnpkg.com/movex/-/movex-0.0.6-27.tgz#5d5bac3e89f22d1a80d490882ecd1fa35ae02757"
-  integrity sha512-yzQyImHqiGhRquz3+ggDhMPgf1HaXF5D9vPBtVltX5nxzoAKRC/XLISzT+4AuqDlwdnPyGH7k3+H0EQp+Uvi8Q==
-  dependencies:
-    deep-object-diff "1.1.9"
-    fast-json-patch "3.1.1"
-    movex-core-util "0.0.6-27"
-    object-hash "3.0.0"
-    promise-delegate "1.0.1"
-    socket.io "4.5.4"
-    socket.io-client "4.5.4"
-    ts-async-results "0.7.9"
-    ts-pubsy "0.2.0"
-    ts-results "3.3.0"
-    typed-emitter "2.1.0"
-    uuid "9.0.0"
-
 mri@^1.1.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/mri/-/mri-1.2.0.tgz#6721480fec2a11a4889861115a48b6cbe7cc8f0b"
@@ -12488,7 +12408,7 @@ promise-call-limit@^1.0.1:
   resolved "https://registry.yarnpkg.com/promise-call-limit/-/promise-call-limit-1.0.1.tgz#4bdee03aeb85674385ca934da7114e9bcd3c6e24"
   integrity sha512-3+hgaa19jzCGLuSCbieeRsu5C2joKfYn8pY6JAuXFRVfF4IO+L7UPpFWNTeWT9pM7uhskvbPPd/oEOktCn317Q==
 
-promise-delegate@1.0.1, promise-delegate@^1.0.1:
+promise-delegate@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/promise-delegate/-/promise-delegate-1.0.1.tgz#35d50fded6fbc47175e84bab9835f7097427fca4"
   integrity sha512-TXMJUoZUpP5/imX1+B1aoph/5Di/YIkPqNPNWpSwCvXiFJ80+nVInwt/4jCgL8fNwYYSlrQJxN2y7N5dm7mpkg==
@@ -13615,7 +13535,7 @@ socket.io-adapter@~2.4.0:
   resolved "https://registry.yarnpkg.com/socket.io-adapter/-/socket.io-adapter-2.4.0.tgz#b50a4a9ecdd00c34d4c8c808224daa1a786152a6"
   integrity sha512-W4N+o69rkMEGVuk2D/cvca3uYsvGlMwsySWV447y99gUPghxq42BxqLNMndb+a1mm/5/7NeXVQS7RLa2XyXvYg==
 
-socket.io-client@4.5.4, socket.io-client@^4.5.4:
+socket.io-client@^4.5.4:
   version "4.5.4"
   resolved "https://registry.yarnpkg.com/socket.io-client/-/socket.io-client-4.5.4.tgz#d3cde8a06a6250041ba7390f08d2468ccebc5ac9"
   integrity sha512-ZpKteoA06RzkD32IbqILZ+Cnst4xewU7ZYK12aS1mzHftFFjpoMz69IuhP/nL25pJfao/amoPI527KnuhFm01g==
@@ -13652,7 +13572,7 @@ socket.io@4.5.3:
     socket.io-adapter "~2.4.0"
     socket.io-parser "~4.2.0"
 
-socket.io@4.5.4, socket.io@^4.5.4:
+socket.io@^4.5.4:
   version "4.5.4"
   resolved "https://registry.yarnpkg.com/socket.io/-/socket.io-4.5.4.tgz#a4513f06e87451c17013b8d13fdfaf8da5a86a90"
   integrity sha512-m3GC94iK9MfIEeIBfbhJs5BqFibMtkRk8ZpKwG2QwxV0m/eEhPIV4ara6XCF1LWNAus7z58RodiZlAH71U3EhQ==
@@ -14568,7 +14488,7 @@ ts-node@10.9.1, ts-node@^10.8.1:
     v8-compile-cache-lib "^3.0.1"
     yn "3.1.1"
 
-ts-pubsy@0.2.0, ts-pubsy@^0.2.0:
+ts-pubsy@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/ts-pubsy/-/ts-pubsy-0.2.0.tgz#147a75d614198eb0d54b3a0c7f92f036a3be090d"
   integrity sha512-I3+/iEt6UeGmMtnSsQWof18qMLJds1jlgwBQs4LmbN7HS7Os2Lu0PepOUus5PF4VwKidhpHf09sApTMUE6yTrw==
@@ -14712,7 +14632,7 @@ typed-assert@^1.0.8:
   resolved "https://registry.yarnpkg.com/typed-assert/-/typed-assert-1.0.9.tgz#8af9d4f93432c4970ec717e3006f33f135b06213"
   integrity sha512-KNNZtayBCtmnNmbo5mG47p1XsCyrx6iVqomjcZnec/1Y5GGARaxPs6r49RnSPeUP3YjNYiU9sQHAtY4BBvnZwg==
 
-typed-emitter@2.1.0, typed-emitter@^2.1.0:
+typed-emitter@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/typed-emitter/-/typed-emitter-2.1.0.tgz#ca78e3d8ef1476f228f548d62e04e3d4d3fd77fb"
   integrity sha512-g/KzbYKbH5C2vPkaXGu8DJlHrGKHLsM25Zg9WuC9pMGfuvT+X25tZQWo5fK1BjBm8+UrVE9LDCvaY0CQk+fXDA==
