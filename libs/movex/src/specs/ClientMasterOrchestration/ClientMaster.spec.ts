@@ -6,6 +6,7 @@ import gameReducerWithDerivedState, {
 } from '../resources/gameReducerWithDerivedState';
 import { movexClientMasterOrchestrator } from '../util/orchestrator';
 import { tillNextTick } from '../util/misc';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 require('console-group').install();
 
 beforeAll(() => {
