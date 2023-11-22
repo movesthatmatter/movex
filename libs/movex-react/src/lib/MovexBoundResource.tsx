@@ -84,24 +84,25 @@ export class MovexBoundResource<
 
     const { resourceType } = toResourceIdentifierObj(this.props.rid);
 
-    if (this.props.onReady) {
-      this.props.onReady(
-        this.state as {
-          boundResource: MovexClient.MovexBoundResource<
-            GetReducerState<TResourcesMap[TResourceType]>,
-            GetReducerAction<TResourcesMap[TResourceType]>
-          >;
-          clientId: MovexClientUser['id'];
-        }
-      );
-    }
-
     this.unsubscribers = [
       ...this.unsubscribers,
       bindResource(
         movex.register(resourceType),
         this.props.rid,
-        (boundResource) => this.setState({ boundResource, clientId })
+        (boundResource) =>
+          this.setState({ boundResource, clientId }, () => {
+            if (this.props.onReady) {
+              this.props.onReady(
+                this.state as {
+                  boundResource: MovexClient.MovexBoundResource<
+                    GetReducerState<TResourcesMap[TResourceType]>,
+                    GetReducerAction<TResourcesMap[TResourceType]>
+                  >;
+                  clientId: MovexClientUser['id'];
+                }
+              );
+            }
+          })
       ),
     ];
   }
