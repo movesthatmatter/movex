@@ -3,7 +3,7 @@ import { IOEvents } from './io-events';
 import { AnyAction } from '../tools/action';
 
 export interface IOConnection<
-  TState extends any,
+  TState,
   TAction extends AnyAction,
   TResourceType extends string
 > {
