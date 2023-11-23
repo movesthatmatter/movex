@@ -367,6 +367,6 @@ export class MemoryMovexStore<
   }
 
   all() {
-    return this.local;
+    return new AsyncOk(this.local);
   }
 }

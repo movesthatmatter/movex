@@ -8,7 +8,7 @@ import {
   ConnectionToClient,
   type MovexDefinition,
   type IOEvents,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { MemoryMovexStore, MovexStore } from 'movex-store';
 import { initMovexMaster } from 'movex-master';
 
@@ -28,10 +28,6 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
   // this is specifx?
   app.use(cors(corsOpts));
-
-  app.get('/', (_, res) => {
-    res.send({ message: `Welcome to Movex!` });
-  });
 
   httpServer.on('request', app);
 
@@ -66,6 +62,15 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
       movexMaster.removeConnection(clientId);
     });
+  });
+
+  app.get('/', (_, res) => {
+    res.send({ message: `Welcome to Movex!` });
+  });
+
+  app.get('/store', async (_, res) => {
+    res.header('Content-Type', 'application/json');
+    res.send(JSON.stringify(await store.all().resolveUnwrap(), null, 4));
   });
 
   // //start our server

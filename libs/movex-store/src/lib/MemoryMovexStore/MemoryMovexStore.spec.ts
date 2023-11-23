@@ -24,7 +24,6 @@ describe('CRUD Operations', () => {
       .resolveUnwrap();
 
     const expectedTester = await store.get('tester:1').resolveUnwrap();
-
     const expectedCounter = await store.get('counter:9').resolveUnwrap();
 
     expect(expectedCounter.state[0].count).toBe(9);
@@ -58,7 +57,8 @@ describe('CRUD Operations', () => {
 
     store.remove('counter:15');
 
-    const expectedStore = await store.all();
+    const expectedStore = await store.all().resolveUnwrap();
+
     expect(expectedStore.counter?.['counter:15']).toBeUndefined();
     expect(expectedStore.counter?.['counter:1']).toBeDefined();
   });
