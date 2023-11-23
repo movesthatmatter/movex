@@ -6,12 +6,12 @@ import type {
   GetReducerState,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import {
   isResourceIdentifier,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { MovexClient } from 'movex';
 import { MovexContext, MovexContextProps } from './MovexContext';
 
@@ -113,16 +113,16 @@ export const bindResource = <
 >(
   resource: MovexClient.MovexResource<any, any, any>,
   rid: ResourceIdentifier<TResourceType>,
-  onUpdate: (p: MovexClient.MovexBoundResource) => void
+  onStateUpdate: (p: MovexClient.MovexBoundResource) => void
 ) => {
   const $resource = resource.bind(toResourceIdentifierStr(rid));
 
   // TODO: One thing that might not work is the get state accessor with this, but that doesn't get invoked somewhere else
 
-  onUpdate(new MovexClient.MovexBoundResource($resource));
+  onStateUpdate(new MovexClient.MovexBoundResource($resource));
 
   const unsubscribe = $resource.onUpdate(() => {
-    onUpdate(new MovexClient.MovexBoundResource($resource));
+    onStateUpdate(new MovexClient.MovexBoundResource($resource));
   });
 
   return unsubscribe;

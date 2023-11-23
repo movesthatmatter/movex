@@ -30,6 +30,12 @@ type Props<
     >;
     clientId: MovexClientUser['id'];
   }) => void;
+  onResourceStateUpdated?: (
+    p: MovexClient.MovexBoundResource<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      GetReducerAction<TResourcesMap[TResourceType]>
+    >['state']
+  ) => void;
   render: (p: {
     boundResource: MovexClient.MovexBoundResource<
       GetReducerState<TResourcesMap[TResourceType]>,
@@ -42,13 +48,18 @@ type Props<
 type State<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends StringKeys<TResourcesMap>
-> = {
-  boundResource?: MovexClient.MovexBoundResource<
-    GetReducerState<TResourcesMap[TResourceType]>,
-    GetReducerAction<TResourcesMap[TResourceType]>
-  >;
-  clientId?: MovexClientUser['id'];
-};
+> =
+  | {
+      init: false;
+    }
+  | {
+      init: true;
+      boundResource: MovexClient.MovexBoundResource<
+        GetReducerState<TResourcesMap[TResourceType]>,
+        GetReducerAction<TResourcesMap[TResourceType]>
+      >;
+      clientId: MovexClientUser['id'];
+    };
 
 export class MovexBoundResource<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
@@ -62,23 +73,31 @@ export class MovexBoundResource<
   constructor(props: Props<TResourcesMap, TResourceType>) {
     super(props);
 
-    this.state = {};
+    this.state = {
+      init: false,
+    };
   }
 
   override componentDidUpdate(
-    prevProps: Readonly<Props<TResourcesMap, TResourceType>>
+    prevProps: Readonly<Props<TResourcesMap, TResourceType>>,
+    prevState: Readonly<State<TResourcesMap, TResourceType>>
   ): void {
     // Reset the boundResource if the rid changed
     if (!isSameResourceIdentifier(prevProps.rid, this.props.rid)) {
-      this.setState({ boundResource: undefined });
+      this.setState({ init: false });
+    }
+
+    // If the bound resource just got set
+    if (prevState.init === false && this.state.init === true) {
+      this.props.onReady?.(this.state);
     }
   }
 
-  private registerAndBoundResourceIfNotAlready(
+  private init(
     movex: MovexClient.MovexFromDefintion<TResourcesMap>,
     clientId: MovexClientUser['id']
   ) {
-    if (this.state.boundResource) {
+    if (this.state.init) {
       return;
     }
 
@@ -89,20 +108,11 @@ export class MovexBoundResource<
       bindResource(
         movex.register(resourceType),
         this.props.rid,
-        (boundResource) =>
-          this.setState({ boundResource, clientId }, () => {
-            if (this.props.onReady) {
-              this.props.onReady(
-                this.state as {
-                  boundResource: MovexClient.MovexBoundResource<
-                    GetReducerState<TResourcesMap[TResourceType]>,
-                    GetReducerAction<TResourcesMap[TResourceType]>
-                  >;
-                  clientId: MovexClientUser['id'];
-                }
-              );
-            }
-          })
+        (boundResource) => {
+          this.setState({ init: true, boundResource, clientId }, () => {
+            this.props.onResourceStateUpdated?.(boundResource.state);
+          });
+        }
       ),
     ];
   }
@@ -112,8 +122,6 @@ export class MovexBoundResource<
   }
 
   override render() {
-    const state = this.state;
-
     return (
       <MovexContextStateChange
         onChange={(r) => {
@@ -121,15 +129,15 @@ export class MovexBoundResource<
             return;
           }
 
-          this.registerAndBoundResourceIfNotAlready(
+          this.init(
             r.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
             r.clientId
           );
         }}
       >
-        {this.state.boundResource &&
+        {this.state.init &&
           this.props.render(
-            state as {
+            this.state as {
               boundResource: MovexClient.MovexBoundResource<
                 GetReducerState<TResourcesMap[TResourceType]>,
                 GetReducerAction<TResourcesMap[TResourceType]>
