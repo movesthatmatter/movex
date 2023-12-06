@@ -91,7 +91,7 @@ export type MovexClientMasterOrchestrator =
   typeof movexClientMasterOrchestrator;
 
 export const orchestrateMovex = <
-  TState extends any,
+  TState,
   TAction extends AnyAction = AnyAction,
   TResourceType extends string = string
 >(
