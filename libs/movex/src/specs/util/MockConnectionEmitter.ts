@@ -5,7 +5,7 @@ import { AnyAction } from '../../lib/tools/action';
 import { UnsubscribeFn } from '../../lib/core-types';
 
 export class MockConnectionEmitter<
-  TState extends any = any,
+  TState = any,
   TAction extends AnyAction = AnyAction,
   TResourceType extends string = string
 > implements EventEmitter<IOEvents<TState, TAction, TResourceType>>
