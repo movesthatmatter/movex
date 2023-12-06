@@ -159,7 +159,7 @@ const gameReducer = (
   return state;
 };
 
-type ReconciledStateReturn<S extends any> = false | true | [true, S];
+type ReconciledStateReturn<S> = false | true | [true, S];
 
 // TODO: add this
 gameReducer.$canReconcileState = (state: GameState) => {
