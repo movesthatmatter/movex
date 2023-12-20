@@ -30,6 +30,7 @@ type Props<
     >;
     clientId: MovexClientUser['id'];
   }) => void;
+  onComponentWillUnmount?: (p: State<TResourcesMap, TResourceType>) => void;
   onResourceStateUpdated?: (
     p: MovexClient.MovexBoundResource<
       GetReducerState<TResourcesMap[TResourceType]>,
@@ -118,6 +119,13 @@ export class MovexBoundResource<
   }
 
   override componentWillUnmount(): void {
+    if (this.state.init) {
+      // Remove the Local Observable Listeners when the component unmounts
+      this.state.boundResource.destroy();
+    }
+
+    this.props.onComponentWillUnmount?.(this.state);
+
     this.unsubscribers.forEach(invoke);
   }
 
