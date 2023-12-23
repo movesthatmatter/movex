@@ -2,7 +2,7 @@ import type {
   AnyAction,
   ToPrivateAction,
   ToPublicAction,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import type { MovexResourceObservable } from './MovexResourceObservable';
 
 /**
@@ -40,7 +40,7 @@ export class MovexBoundResource<
 
   // TODO: Should this give access to the all the subscribers to the client movex??
   // get subscribers() {
-  //   // return 
+  //   // return
   // }
 
   // This to be called when not used anymore in order to clean the update subscriptions
