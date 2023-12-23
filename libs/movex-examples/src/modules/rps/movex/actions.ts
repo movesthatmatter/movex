@@ -1,5 +1,5 @@
-import { Action } from 'movex';
 import { PlayerId, PlayerLabel, RPS } from './types';
+import { Action } from 'movex-core-util';
 
 export type Actions =
   | Action<

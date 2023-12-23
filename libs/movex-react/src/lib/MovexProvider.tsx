@@ -7,14 +7,12 @@ import {
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
   ResourceIdentifier,
-  UnsubscribeFn,
   toResourceIdentifierStr,
   ResourceIdentifierStr,
   toResourceIdentifierObj,
   StringKeys,
 } from 'movex-core-util';
-import { MovexClient, MovexFromDefintion } from 'movex';
-import { MovexResourceObservable } from 'libs/movex/src/lib/MovexResourceObservable';
+import { MovexClient } from 'movex';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
@@ -41,11 +39,11 @@ class ResourceObservablesRegistry<
   private resourceObservablesByRid: {
     [rid in ResourceIdentifierStr<string>]: {
       _movexResource: MovexClient.MovexResource<any, any, any>;
-      $resource: MovexResourceObservable;
+      $resource: MovexClient.MovexResourceObservable;
     };
   } = {};
 
-  constructor(private movex: MovexFromDefintion<TResourcesMap>) {}
+  constructor(private movex: MovexClient.MovexFromDefintion<TResourcesMap>) {}
 
   private get<TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>

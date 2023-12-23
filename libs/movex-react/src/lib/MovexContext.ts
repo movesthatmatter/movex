@@ -6,7 +6,7 @@ import type {
   StringKeys,
   UnsubscribeFn,
 } from 'movex-core-util';
-import type { MovexClient, Movex } from 'movex';
+import type { MovexClient } from 'movex';
 
 export type MovexContextProps<
   TResourcesMap extends BaseMovexDefinitionResourcesMap
@@ -14,7 +14,7 @@ export type MovexContextProps<
   | {
       connected: false;
       clientId: undefined;
-      movex?: Movex;
+      movex?: MovexClient.Movex;
       movexConfig?: undefined;
       bindResource?: () => void;
     }
