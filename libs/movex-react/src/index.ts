@@ -1,7 +1,11 @@
 export { MovexProviderClass as MovexProvider } from './lib/MovexProviderClass';
 
-// is this needed to be exported?
-// export * from './lib/MovexContext';
+// This is only needed for movex-react-local-master
+// so something else might be done there but for now it's ok!
+export {
+  MovexContext as MovexReactContext,
+  type MovexContextProps as MovexReactContextProps,
+} from './lib/MovexContext';
 
 export * from './lib/MovexBoundResource';
 export * from './lib/MovexConnection';

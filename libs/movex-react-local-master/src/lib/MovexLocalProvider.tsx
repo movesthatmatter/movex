@@ -12,7 +12,7 @@ import {
   orchestrateDefinedMovex,
   getUuid, // This can actually be mocked here as it's just client only!
 } from 'movex-master';
-import { MovexContext, MovexContextProps } from 'movex-react';
+import { MovexReactContext, MovexReactContextProps } from 'movex-react';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
@@ -20,15 +20,18 @@ type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
     movexDefinition: MovexDefinition<TResourcesMap>;
     clientId?: MovexClient['id'];
     onConnected?: (
-      state: Extract<MovexContextProps<TResourcesMap>, { connected: true }>
+      state: Extract<MovexReactContextProps<TResourcesMap>, { connected: true }>
     ) => void;
     onDisconnected?: (
-      state: Extract<MovexContextProps<TResourcesMap>, { connected: false }>
+      state: Extract<
+        MovexReactContextProps<TResourcesMap>,
+        { connected: false }
+      >
     ) => void;
   }>;
 
 type State<TResourcesMap extends BaseMovexDefinitionResourcesMap> = {
-  contextState: MovexContextProps<TResourcesMap>;
+  contextState: MovexReactContextProps<TResourcesMap>;
 };
 
 // * TODO: This could be moved out of the refular library into a separate one only for devs who don't look for multiplayer
@@ -107,14 +110,14 @@ export class MovexLocalProvider<
     return (
       <>
         <MovexLocalContextConsumerProvider onMasterReady={this.orchestrate} />
-        <MovexContext.Provider
+        <MovexReactContext.Provider
           value={
             this.state
-              .contextState as MovexContextProps<BaseMovexDefinitionResourcesMap>
+              .contextState as MovexReactContextProps<BaseMovexDefinitionResourcesMap>
           }
         >
           {this.props.children}
-        </MovexContext.Provider>
+        </MovexReactContext.Provider>
       </>
     );
   }
