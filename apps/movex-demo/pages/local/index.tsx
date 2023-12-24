@@ -1,9 +1,10 @@
 import styled from '@emotion/styled';
-import { MovexBoundResource, MovexLocalInstance } from 'movex-react';
+import { MovexBoundResource } from 'movex-react';
 import movexConfig from 'libs/movex-examples/src/movex.config';
 import { useState } from 'react';
 import { ResourceIdentifier } from 'movex-core-util';
 import { Chat, Rps } from 'movex-examples';
+import { MovexLocalInstance } from 'movex-react-local-master';
 
 const StyledPage = styled.div`
   .page {

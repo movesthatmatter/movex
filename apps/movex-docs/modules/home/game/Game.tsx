@@ -1,4 +1,3 @@
-import { getRandomInt } from 'movex-core-util';
 import { useMemo } from 'react';
 
 const bkgColor = '#ffc300';
@@ -7,9 +6,14 @@ export const Game = () => {
   const gameId = useMemo(() => String(Math.random()).slice(-8), []);
 
   return (
-    <div className={`h-full flex w-full`} style={{
-      // backgroundColor: bkgColor,
-    }}>
+    <div
+      className={`h-full flex w-full`}
+      style={
+        {
+          // backgroundColor: bkgColor,
+        }
+      }
+    >
       <div
         className={`flex w-full`}
         style={{
@@ -19,9 +23,11 @@ export const Game = () => {
       >
         <div
           className="mx-auto max-w-[90rem] gap-2 pl-[max(env(safe-area-inset-left),1.5rem)] pr-[max(env(safe-area-inset-right),1.5rem)] pt-20 p-16"
-          style={{
-            // background: 'green',
-          }}
+          style={
+            {
+              // background: 'green',
+            }
+          }
         >
           <h1 className="text-6xl text-black font-bold">
             Try Movex with a Game of
@@ -33,9 +39,11 @@ export const Game = () => {
           </h1>
         </div>
 
-        <div style={{
-          flex: .1,
-        }} />
+        <div
+          style={{
+            flex: 0.1,
+          }}
+        />
         <div
           className="w-full flex"
           style={{
@@ -44,11 +52,15 @@ export const Game = () => {
           }}
         >
           <iframe
-            src={`http://localhost:4200/rps/${gameId}?user=a&backgroundColor=${encodeURIComponent(bkgColor)}`}
+            src={`http://localhost:4200/rps/${gameId}?user=a&backgroundColor=${encodeURIComponent(
+              bkgColor
+            )}`}
             className="w-full h-full"
           />
           <iframe
-            src={`http://localhost:4200/rps/${gameId}?user=b&backgroundColor=${encodeURIComponent(bkgColor)}`}
+            src={`http://localhost:4200/rps/${gameId}?user=b&backgroundColor=${encodeURIComponent(
+              bkgColor
+            )}`}
             className="w-full h-full"
           />
         </div>

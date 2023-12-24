@@ -1,8 +1,4 @@
-import {
-  MovexBoundResource,
-  MovexLocalInstance,
-  MovexLocalMasterProvider,
-} from 'movex-react';
+import { MovexBoundResource } from 'movex-react';
 import movexConfig from 'libs/movex-examples/src/movex.config';
 import { useState } from 'react';
 import { ResourceIdentifier } from 'movex-core-util';
@@ -10,6 +6,10 @@ import { Rps } from 'movex-examples';
 import { useRouter } from 'next/router';
 import { toRidAsStr } from 'movex';
 import { RPSUi } from 'apps/movex-demo/modules/rock-paper-scissors/RPSUi';
+import {
+  MovexLocalInstance,
+  MovexLocalMasterProvider,
+} from 'movex-react-local-master';
 
 export function Index() {
   const [rpsRid, setRpsRid] = useState<ResourceIdentifier<'rps'>>();

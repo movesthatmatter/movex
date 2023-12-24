@@ -22,7 +22,7 @@ body {
   line-height: inherit;
   margin: 0;
   background: transparent;
-  background: blue;
+  /* background: blue; */
 }
 h1,
 h2,
