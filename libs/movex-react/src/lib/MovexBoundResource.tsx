@@ -1,5 +1,4 @@
 import React from 'react';
-import { bindResource } from './hooks';
 import type { MovexClient } from 'movex';
 import type {
   GetReducerState,
@@ -9,12 +8,9 @@ import type {
   StringKeys,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
+  UnsubscribeFn,
 } from 'movex-core-util';
-import {
-  invoke,
-  isSameResourceIdentifier,
-  toResourceIdentifierObj,
-} from 'movex-core-util';
+import { invoke, isSameResourceIdentifier } from 'movex-core-util';
 import { MovexContextStateChange } from './MovexContextStateChange';
 
 type Props<
@@ -95,26 +91,24 @@ export class MovexBoundResource<
   }
 
   private init(
-    movex: MovexClient.MovexFromDefintion<TResourcesMap>,
-    clientId: MovexClientUser['id']
+    // movex: MovexClient.MovexFromDefintion<TResourcesMap>,
+    clientId: MovexClientUser['id'],
+    bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
+      rid: ResourceIdentifier<TResourceType>,
+      onStateUpdate: (p: MovexClient.MovexBoundResource) => void
+    ) => UnsubscribeFn
   ) {
     if (this.state.init) {
       return;
     }
 
-    const { resourceType } = toResourceIdentifierObj(this.props.rid);
-
     this.unsubscribers = [
       ...this.unsubscribers,
-      bindResource(
-        movex.register(resourceType),
-        this.props.rid,
-        (boundResource) => {
-          this.setState({ init: true, boundResource, clientId }, () => {
-            this.props.onResourceStateUpdated?.(boundResource.state);
-          });
-        }
-      ),
+      bindResource(this.props.rid, (boundResource) => {
+        this.setState({ init: true, boundResource, clientId }, () => {
+          this.props.onResourceStateUpdated?.(boundResource.state);
+        });
+      }),
     ];
   }
 
@@ -132,14 +126,18 @@ export class MovexBoundResource<
   override render() {
     return (
       <MovexContextStateChange
+        // onMovexConnected={() => {
+
+        // }}
         onChange={(r) => {
           if (!r.connected) {
             return;
           }
 
           this.init(
-            r.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
-            r.clientId
+            // r.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
+            r.clientId,
+            r.bindResource
           );
         }}
       >

@@ -82,6 +82,7 @@ export class MovexLocalProvider<
       movex: mockedMovex.movex,
       clientId: mockedMovex.movex.getClientId(),
       movexDefinition: this.props.movexDefinition,
+      
     } as const;
 
     this.setState({
