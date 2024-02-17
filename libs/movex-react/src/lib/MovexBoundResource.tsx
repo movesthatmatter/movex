@@ -144,16 +144,17 @@ export class MovexBoundResource<
           );
         }}
       >
-        {this.state.init &&
-          this.props.render(
-            this.state as {
-              boundResource: MovexClient.MovexBoundResource<
-                GetReducerState<TResourcesMap[TResourceType]>,
-                GetReducerAction<TResourcesMap[TResourceType]>
-              >;
-              clientId: MovexClientUser['id'];
-            }
-          )}
+        {this.state.init
+          ? this.props.render(
+              this.state as {
+                boundResource: MovexClient.MovexBoundResource<
+                  GetReducerState<TResourcesMap[TResourceType]>,
+                  GetReducerAction<TResourcesMap[TResourceType]>
+                >;
+                clientId: MovexClientUser['id'];
+              }
+            )
+          : this.props.fallback}
       </MovexContextStateChange>
     );
   }

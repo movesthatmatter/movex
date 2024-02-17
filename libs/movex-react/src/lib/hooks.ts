@@ -11,6 +11,7 @@ import {
   isResourceIdentifier,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
+  MovexClient as MovexClientUser,
 } from 'movex-core-util';
 import { MovexClient } from 'movex';
 import { MovexContext, MovexContextProps } from './MovexContext';
@@ -82,7 +83,16 @@ export const useMovexBoundResourceFromRid = <
   TResourceType extends Extract<keyof TResourcesMap, string>
 >(
   movexDefinition: MovexDefinition<TResourcesMap>,
-  rid: ResourceIdentifier<TResourceType>
+  rid: ResourceIdentifier<TResourceType>,
+  handlers?: {
+    onReady?: (p: {
+      boundResource: MovexClient.MovexBoundResource<
+        GetReducerState<TResourcesMap[TResourceType]>,
+        GetReducerAction<TResourcesMap[TResourceType]>
+      >;
+      clientId: MovexClientUser['id'];
+    }) => void;
+  }
 ) => {
   const resource = useMovexResourceType(
     movexDefinition,
@@ -108,8 +118,11 @@ export const useMovexBoundResourceFromRid = <
       return;
     }
 
-    // const unsubscribe = bindResource(resource, rid, setBoundResource);
-    const unsubscribe = movexContext.bindResource(rid, setBoundResource);
+    const unsubscribe = movexContext.bindResource(rid, (boundResource) => {
+      setBoundResource(boundResource);
+
+      handlers?.onReady?.({ boundResource, clientId: movexContext.clientId });
+    });
 
     return () => {
       unsubscribe();
