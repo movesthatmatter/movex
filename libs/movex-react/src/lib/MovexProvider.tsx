@@ -7,14 +7,16 @@ import {
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
   ResourceIdentifier,
-  UnsubscribeFn,
   toResourceIdentifierStr,
   ResourceIdentifierStr,
   toResourceIdentifierObj,
   StringKeys,
 } from 'movex-core-util';
-import { MovexClient, MovexFromDefintion } from 'movex';
-import { MovexResourceObservable } from 'libs/movex/src/lib/MovexResourceObservable';
+import {
+  MovexClient,
+  MovexFromDefintion,
+  MovexResourceObservable,
+} from 'movex';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
