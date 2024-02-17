@@ -3,14 +3,14 @@ import {
   counterReducer,
   gameReducer,
   initialGameState,
-} from '@movex/movex-specs-util';
+} from 'movex-specs-util';
 import {
   GetReducerAction,
   computeCheckedState,
   toResourceIdentifierStr,
 } from  'movex-core-util';
 import { MovexMasterResource } from './MovexMasterResource';
-import { MemoryMovexStore } from '@movex/movex-store';
+import { MemoryMovexStore } from 'movex-store';
 
 const rid = toResourceIdentifierStr({ resourceType: 'c', resourceId: '1' });
 

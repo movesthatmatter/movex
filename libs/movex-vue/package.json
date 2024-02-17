@@ -1,32 +1,32 @@
 {
-    "name": "movex-service",
-    "version": "0.1.2",
-    "license": "MIT",
-    "type": "commonjs",
-    "description": "Movex Service is the CLI for Movex",
-    "author": {
-        "name": "Gabriel C. Troia",
-        "url": "https://twitter.com/gctroia"
-    },
-    "repository": "https://github.com/movesthatmatter/movex",
-    "homepage": "https://movex.dev",
-    "keywords": [
-        "state",
-        "redux",
-        "react",
-        "game",
-        "app",
-        "framework"
-    ],
-    "main": "./src/index.js",
-    "bin": {
-        "movex": "./src/bin.js"
-    },
-    "engines": {
-        "node": ">= 0.14.0"
-    },
-    "dependencies": {
-        "vue": "^3.3.4",
-        "vue-router": "^4.2.5"
-    }
+  "name": "movex-service",
+  "version": "0.1.2",
+  "license": "MIT",
+  "type": "commonjs",
+  "description": "Movex Service is the CLI for Movex",
+  "author": {
+    "name": "Gabriel C. Troia",
+    "url": "https://twitter.com/gctroia"
+  },
+  "repository": "https://github.com/movesthatmatter/movex",
+  "homepage": "https://movex.dev",
+  "keywords": [
+    "state",
+    "redux",
+    "react",
+    "game",
+    "app",
+    "framework"
+  ],
+  "main": "./src/index.js",
+  "bin": {
+    "movex": "./src/bin.js"
+  },
+  "engines": {
+    "node": ">= 16.0.0"
+  },
+  "dependencies": {
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.5"
+  }
 }

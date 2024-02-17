@@ -9,12 +9,12 @@ import type {
   StringKeys,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import {
   invoke,
   isSameResourceIdentifier,
   toResourceIdentifierObj,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { MovexContextStateChange } from './MovexContextStateChange';
 
 type Props<
@@ -23,6 +23,13 @@ type Props<
 > = {
   movexDefinition: MovexDefinition<TResourcesMap>;
   rid: ResourceIdentifier<TResourceType>;
+  onReady?: (p: {
+    boundResource: MovexClient.MovexBoundResource<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      GetReducerAction<TResourcesMap[TResourceType]>
+    >;
+    clientId: MovexClientUser['id'];
+  }) => void;
   render: (p: {
     boundResource: MovexClient.MovexBoundResource<
       GetReducerState<TResourcesMap[TResourceType]>,
@@ -76,6 +83,18 @@ export class MovexBoundResource<
     }
 
     const { resourceType } = toResourceIdentifierObj(this.props.rid);
+
+    if (this.props.onReady) {
+      this.props.onReady(
+        this.state as {
+          boundResource: MovexClient.MovexBoundResource<
+            GetReducerState<TResourcesMap[TResourceType]>,
+            GetReducerAction<TResourcesMap[TResourceType]>
+          >;
+          clientId: MovexClientUser['id'];
+        }
+      );
+    }
 
     this.unsubscribers = [
       ...this.unsubscribers,

@@ -1,10 +1,43 @@
-import { MD5 } from 'object-hash'; // TODO: If I can get a smaller version of this would be golded
 import type { CheckedState } from './core-types';
+import { md5 } from './md5';
+import { isObject } from './misc';
+
+/**
+ * @param {object} obj Object to sort.
+ * @returns {object} Copy of object with keys sorted in all nested objects
+ */
+const deepSort = <T>(obj: T): T => {
+  if (Array.isArray(obj)) {
+    return obj.map((item) => deepSort(item)) as T;
+  }
+
+  if (obj && typeof obj === 'object') {
+    return Object.keys(obj)
+      .sort()
+      .reduce((out, key) => {
+        (out as any)[key] = deepSort((obj as any)[key]);
+        return out;
+      }, {}) as T;
+  }
+  return obj;
+};
 
 export const computeCheckedState = <T>(state: T): CheckedState<T> => [
   state,
-  state === undefined ? '' : MD5(state), // hashing the object
+  state === undefined ? '' : hashObject(state),
 ];
+
+const hashObject = (s: unknown) => {
+  if (Array.isArray(s)) {
+    return md5(JSON.stringify(s));
+  }
+
+  if (isObject(s)) {
+    return md5(JSON.stringify(deepSort(s)));
+  }
+
+  return md5(s);
+};
 
 export const checkedStateEquals = <
   A extends CheckedState<any>,

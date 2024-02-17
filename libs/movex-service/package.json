@@ -23,6 +23,6 @@
     "movex": "./src/bin.js"
   },
   "engines": {
-    "node": ">= 0.14.0"
+    "node": ">= 16.0.0"
   }
 }

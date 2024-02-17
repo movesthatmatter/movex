@@ -1,9 +1,8 @@
 {
-  "name": "movex-server",
-  "version": "0.1.3-0",
+  "name": "movex-master",
+  "version": "0.1.3-11",
   "license": "MIT",
-  "type": "commonjs",
-  "description": "Movex Server is the backend runtime for Movex",
+  "description": "Movex-master defines the master that wil be used on movex-server and movex-react-local-master",
   "author": {
     "name": "Gabriel C. Troia",
     "url": "https://twitter.com/gctroia"
@@ -18,9 +17,11 @@
     "app",
     "framework"
   ],
-  "main": "./src/index.js",
-  "bin": "./src/bin.js",
+  "type": "commonjs",
   "engines": {
     "node": ">= 16.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=16.0.0"
   }
 }

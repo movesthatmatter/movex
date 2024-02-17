@@ -5,7 +5,7 @@ import {
 } from  'movex-core-util';
 import { MovexMasterResource } from './MovexMasterResource';
 import { MovexMasterServer } from './MovexMasterServer';
-import type { MovexStore } from '@movex/movex-store';
+import type { MovexStore } from 'movex-store';
 
 export const initMovexMaster = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap
