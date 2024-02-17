@@ -37,6 +37,9 @@ type Props<
     >;
     clientId: MovexClientUser['id'];
   }) => React.ReactNode;
+
+  // Renders before Movex isReady - like Suspense
+  fallback?: React.ReactNode;
 };
 
 type State<
