@@ -171,6 +171,11 @@ export interface MovexStore<
 
   clearAll: () => AsyncResult<void, GenericMovexStoreError>;
   // Others can be set as well
+
+  all: () => AsyncResult<
+    MovexStoreItemsMapByType<TResourcesMap>,
+    GenericMovexStoreError
+  >;
 }
 
 export const toMovexStoreError = <

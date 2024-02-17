@@ -1,5 +1,4 @@
 import React from 'react';
-import { bindResource } from './hooks';
 import type { MovexClient } from 'movex';
 import type {
   GetReducerState,
@@ -9,12 +8,9 @@ import type {
   StringKeys,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
+  UnsubscribeFn,
 } from 'movex-core-util';
-import {
-  invoke,
-  isSameResourceIdentifier,
-  toResourceIdentifierObj,
-} from 'movex-core-util';
+import { invoke, isSameResourceIdentifier } from 'movex-core-util';
 import { MovexContextStateChange } from './MovexContextStateChange';
 
 type Props<
@@ -30,6 +26,13 @@ type Props<
     >;
     clientId: MovexClientUser['id'];
   }) => void;
+  onComponentWillUnmount?: (p: State<TResourcesMap, TResourceType>) => void;
+  onResourceStateUpdated?: (
+    p: MovexClient.MovexBoundResource<
+      GetReducerState<TResourcesMap[TResourceType]>,
+      GetReducerAction<TResourcesMap[TResourceType]>
+    >['state']
+  ) => void;
   render: (p: {
     boundResource: MovexClient.MovexBoundResource<
       GetReducerState<TResourcesMap[TResourceType]>,
@@ -45,13 +48,18 @@ type Props<
 type State<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends StringKeys<TResourcesMap>
-> = {
-  boundResource?: MovexClient.MovexBoundResource<
-    GetReducerState<TResourcesMap[TResourceType]>,
-    GetReducerAction<TResourcesMap[TResourceType]>
-  >;
-  clientId?: MovexClientUser['id'];
-};
+> =
+  | {
+      init: false;
+    }
+  | {
+      init: true;
+      boundResource: MovexClient.MovexBoundResource<
+        GetReducerState<TResourcesMap[TResourceType]>,
+        GetReducerAction<TResourcesMap[TResourceType]>
+      >;
+      clientId: MovexClientUser['id'];
+    };
 
 export class MovexBoundResource<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
@@ -65,73 +73,80 @@ export class MovexBoundResource<
   constructor(props: Props<TResourcesMap, TResourceType>) {
     super(props);
 
-    this.state = {};
+    this.state = {
+      init: false,
+    };
   }
 
   override componentDidUpdate(
-    prevProps: Readonly<Props<TResourcesMap, TResourceType>>
+    prevProps: Readonly<Props<TResourcesMap, TResourceType>>,
+    prevState: Readonly<State<TResourcesMap, TResourceType>>
   ): void {
     // Reset the boundResource if the rid changed
     if (!isSameResourceIdentifier(prevProps.rid, this.props.rid)) {
-      this.setState({ boundResource: undefined });
+      this.setState({ init: false });
+    }
+
+    // If the bound resource just got set
+    if (prevState.init === false && this.state.init === true) {
+      this.props.onReady?.(this.state);
     }
   }
 
-  private registerAndBoundResourceIfNotAlready(
-    movex: MovexClient.MovexFromDefintion<TResourcesMap>,
-    clientId: MovexClientUser['id']
+  private init(
+    // movex: MovexClient.MovexFromDefintion<TResourcesMap>,
+    clientId: MovexClientUser['id'],
+    bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
+      rid: ResourceIdentifier<TResourceType>,
+      onStateUpdate: (p: MovexClient.MovexBoundResource) => void
+    ) => UnsubscribeFn
   ) {
-    if (this.state.boundResource) {
+    if (this.state.init) {
       return;
-    }
-
-    const { resourceType } = toResourceIdentifierObj(this.props.rid);
-
-    if (this.props.onReady) {
-      this.props.onReady(
-        this.state as {
-          boundResource: MovexClient.MovexBoundResource<
-            GetReducerState<TResourcesMap[TResourceType]>,
-            GetReducerAction<TResourcesMap[TResourceType]>
-          >;
-          clientId: MovexClientUser['id'];
-        }
-      );
     }
 
     this.unsubscribers = [
       ...this.unsubscribers,
-      bindResource(
-        movex.register(resourceType),
-        this.props.rid,
-        (boundResource) => this.setState({ boundResource, clientId })
-      ),
+      bindResource(this.props.rid, (boundResource) => {
+        this.setState({ init: true, boundResource, clientId }, () => {
+          this.props.onResourceStateUpdated?.(boundResource.state);
+        });
+      }),
     ];
   }
 
   override componentWillUnmount(): void {
+    if (this.state.init) {
+      // Remove the Local Observable Listeners when the component unmounts
+      this.state.boundResource.destroy();
+    }
+
+    this.props.onComponentWillUnmount?.(this.state);
+
     this.unsubscribers.forEach(invoke);
   }
 
   override render() {
-    const state = this.state;
-
     return (
       <MovexContextStateChange
+        // onMovexConnected={() => {
+
+        // }}
         onChange={(r) => {
           if (!r.connected) {
             return;
           }
 
-          this.registerAndBoundResourceIfNotAlready(
-            r.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
-            r.clientId
+          this.init(
+            // r.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
+            r.clientId,
+            r.bindResource
           );
         }}
       >
-        {this.state.boundResource &&
+        {this.state.init &&
           this.props.render(
-            state as {
+            this.state as {
               boundResource: MovexClient.MovexBoundResource<
                 GetReducerState<TResourcesMap[TResourceType]>,
                 GetReducerAction<TResourcesMap[TResourceType]>

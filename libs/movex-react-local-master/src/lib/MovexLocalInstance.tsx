@@ -4,8 +4,8 @@ import type {
   StringKeys,
   MovexDefinition,
   BaseMovexDefinitionResourcesMap,
-} from  'movex-core-util';
-import type { MovexContextProps } from 'movex-react';
+} from 'movex-core-util';
+import type { MovexReactContextProps } from 'movex-react';
 import { MovexLocalProvider } from './MovexLocalProvider';
 
 type Props<
@@ -16,7 +16,7 @@ type Props<
   clientId?: string;
   onConnected?: (
     state: Extract<
-      MovexContextProps<TResourcesMap>,
+      MovexReactContextProps<TResourcesMap>,
       { connected: true }
     >['movex']
   ) => void;
