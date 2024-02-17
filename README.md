@@ -39,22 +39,6 @@ In addition it comes pre-packed with:
 - keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach. [See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative)
 
 
----
-<div align="center">
-<h1>🎉🚀 Movex is participating in Hacktoberfest! 🥳😍</h1> 
-</div>
-
-### Here are some ways you can contribute too:
-- Fix one of the [#hactoberfest issues](https://github.com/movesthatmatter/movex/issues?q=is%3Aissue+is%3Aopen+label%3Ahacktoberfest).
-- Give feedback.
-- **🙏 Give us a Github Star**
-- Request a new feature
-- File a bug report
-- Add tests
-- Use Movex to build your own game or application. [See examples below](#-examples)!
-
----
-
 ## 🚀 Examples
 
 - **Chat App** - https://github.com/GabrielCTroia/movex-next-chat

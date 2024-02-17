@@ -15,7 +15,7 @@ import {
   invoke,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
-} from 'movex-core-util';
+} from  'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
