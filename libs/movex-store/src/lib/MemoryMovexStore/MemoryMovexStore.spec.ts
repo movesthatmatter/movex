@@ -1,5 +1,6 @@
 import { MemoryMovexStore } from './MemoryMovexStore';
 import { tillNextTick } from 'movex-specs-util';
+import { AsyncOk } from 'ts-async-results';
 
 describe('CRUD Operations', () => {
   test('create', async () => {
@@ -138,7 +139,7 @@ describe('clearAll functionality', () => {
     const store = new MemoryMovexStore<{ counter: () => { count: number } }>();
     await store.clearAll().resolve();
 
-    expect(store.all()).toEqual({});
+    expect(store.all()).toEqual(new AsyncOk({}));
   });
 
   test('newly created items are not there after clearAll', async () => {
@@ -147,7 +148,7 @@ describe('clearAll functionality', () => {
     await store.create('counter:1', { count: 1 }).resolve();
     await store.clearAll().resolve();
 
-    expect(store.all()).toEqual({});
+    expect(store.all()).toEqual(new AsyncOk({}));
   });
 
   test('clearAll after items are updated', async () => {
@@ -159,7 +160,7 @@ describe('clearAll functionality', () => {
       .resolve();
     await store.clearAll().resolve();
 
-    expect(store.all()).toEqual({});
+    expect(store.all()).toEqual(new AsyncOk({}));
   });
 
   test('clearAll after items are removed', async () => {
@@ -169,7 +170,7 @@ describe('clearAll functionality', () => {
     await store.remove('counter:1').resolve();
     await store.clearAll().resolve();
 
-    expect(store.all()).toEqual({});
+    expect(store.all()).toEqual(new AsyncOk({}));
   });
 
   test('clearAll after multiple operations', async () => {
@@ -183,6 +184,6 @@ describe('clearAll functionality', () => {
     await store.create('counter:2', { count: 2 }).resolve();
     await store.clearAll().resolve();
 
-    expect(store.all()).toEqual({});
+    expect(store.all()).toEqual(new AsyncOk({}));
   });
 });
