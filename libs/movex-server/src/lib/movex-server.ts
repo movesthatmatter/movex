@@ -1,15 +1,16 @@
 import * as http from 'http';
 import { Server as SocketServer } from 'socket.io';
-import { SocketIOEmitter, logsy } from 'movex-core-util';
-import {
-  Master,
-  MovexDefinition,
-  MovexStore,
-  IOEvents,
-  MemoryMovexStore,
-} from 'movex';
 import express from 'express';
 import cors from 'cors';
+import {
+  logsy,
+  SocketIOEmitter,
+  ConnectionToClient,
+  type MovexDefinition,
+  type IOEvents,
+} from  'movex-core-util';
+import { MemoryMovexStore, MovexStore } from 'movex-store';
+import { initMovexMaster } from 'movex-master';
 
 export const movexServer = <TDefinition extends MovexDefinition>(
   {
@@ -42,7 +43,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
   const store = movexStore === 'memory' ? new MemoryMovexStore() : movexStore;
 
-  const movexMaster = Master.initMovexMaster(definition, store);
+  const movexMaster = initMovexMaster(definition, store);
 
   const getClientId = (clientId: string) =>
     clientId || String(Math.random()).slice(-5);
@@ -51,7 +52,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     const clientId = getClientId(io.handshake.query['clientId'] as string);
     logsy.log('[MovexServer] Client Connected', clientId);
 
-    const connection = new Master.ConnectionToClient(
+    const connection = new ConnectionToClient(
       clientId,
       new SocketIOEmitter<IOEvents>(io)
     );

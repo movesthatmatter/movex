@@ -7,7 +7,7 @@ import {
   toOppositeLabel,
 } from './movex';
 import movexConfig from '../../movex.config';
-import { invoke, logsy, toResourceIdentifierStr } from 'movex-core-util';
+import { invoke, logsy, toResourceIdentifierStr } from  'movex-core-util';
 
 type Props = {
   boundResource: MovexBoundResourceFromConfig<

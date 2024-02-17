@@ -1,13 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MovexContextProps, MovexContext } from './MovexContext';
-import { MovexClient, invoke, noop } from 'movex-core-util';
-import { Client, BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
+import {
+  invoke,
+  noop,
+  type MovexClient as MovexClientUser,
+  type BaseMovexDefinitionResourcesMap,
+  type MovexDefinition,
+} from 'movex-core-util';
+import { MovexClient } from 'movex';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
     movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
     endpointUrl: string;
-    clientId?: MovexClient['id'];
+    clientId?: MovexClientUser['id'];
     onConnected?: (
       state: Extract<
         MovexContextProps<TMovexConfigResourcesMap>,
@@ -22,11 +28,9 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
     ) => void;
   }>;
 
-export const MovexProvider: React.FC<Props<BaseMovexDefinitionResourcesMap>> = ({
-  onConnected = noop,
-  onDisconnected = noop,
-  ...props
-}) => {
+export const MovexProvider: React.FC<
+  Props<BaseMovexDefinitionResourcesMap>
+> = ({ onConnected = noop, onDisconnected = noop, ...props }) => {
   const [contextState, setContextState] = useState<
     MovexContextProps<typeof props['movexDefinition']['resources']>
   >({
@@ -42,7 +46,7 @@ export const MovexProvider: React.FC<Props<BaseMovexDefinitionResourcesMap>> = (
     }
 
     invoke(async () => {
-      const movex = await Client.initMovex(
+      const movex = await MovexClient.initMovex(
         {
           clientId: props.clientId,
           url: props.endpointUrl,

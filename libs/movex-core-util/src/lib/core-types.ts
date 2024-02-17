@@ -1,5 +1,12 @@
-import { UnknownRecord } from './core-util';
-
+import type {
+  AddOperation,
+  CopyOperation,
+  GetOperation,
+  MoveOperation,
+  RemoveOperation,
+  ReplaceOperation,
+  TestOperation,
+} from 'fast-json-patch';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace NestedObjectUtil {
@@ -30,7 +37,7 @@ export namespace NestedObjectUtil {
     20,
     ...0[]
   ];
-  
+
   type Join<K, P> = K extends string | number
     ? P extends string | number
       ? `${K}${'' extends P ? '' : '.'}${P}`
@@ -143,7 +150,7 @@ export type UnknownIdentifiableRecord = { id: string } & Record<
 >;
 export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
-export type UnidentifiableModel<T extends object > = Omit<T, 'id'>;
+export type UnidentifiableModel<T extends object> = Omit<T, 'id'>;
 
 // TODO: Remove all of these if not used
 
@@ -293,7 +300,9 @@ export type SessionStoreCollectionMap<
 export type OnlySessionCollectionMapOfResourceKeys<
   ResourceCollectionMap extends CollectionMapBase,
   SessionCollectionMap = SessionStoreCollectionMap<ResourceCollectionMap>
-> = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<EmptyObject>>>;
+> = StringKeys<
+  Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<EmptyObject>>
+>;
 
 export type CreateMatchReq<TGame extends UnknownRecord> = {
   matcher: SessionMatch['matcher'];
@@ -337,3 +346,41 @@ export type GetIOPayloadErrTypeFrom<R extends IOPayloadResult<any, any>> =
 // };
 
 // const x = {} as IOPayloadResultErrType<typeof xErr>;
+
+export type ValAndChecksum<T> = [T, string];
+
+export type Checksum = string;
+
+export type CheckedState<T> = [state: T, checksum: Checksum];
+
+export type UnsubscribeFn = () => void;
+
+export type EmptyFn = () => void;
+
+export type NotUndefined =
+  | object
+  | string
+  | number
+  | boolean
+  | null
+  | NotUndefined[];
+
+export type UnknownRecord = Record<string, unknown>;
+
+export type JsonPatchOp<T> =
+  | AddOperation<Partial<T>>
+  | RemoveOperation
+  | ReplaceOperation<T>
+  | MoveOperation
+  | CopyOperation
+  // TODO: Not sure these 2 are needed
+  | TestOperation<T>
+  | GetOperation<T>;
+
+export type JsonPatch<T> = JsonPatchOp<T>[];
+
+export type IsOfType<U, T, K> = T extends U ? K : never;
+
+export type OnlyKeysOfType<T, O extends Record<string, unknown>> = {
+  [K in keyof O]: IsOfType<T, O[K], K>;
+}[keyof O];

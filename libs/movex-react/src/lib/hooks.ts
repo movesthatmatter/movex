@@ -1,18 +1,18 @@
 import { Context, useContext, useEffect, useMemo, useState } from 'react';
-import {
+import type {
   ResourceIdentifier,
+  UnsubscribeFn,
+  GetReducerAction,
+  GetReducerState,
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+} from  'movex-core-util';
+import {
   isResourceIdentifier,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
-  UnsubscribeFn
-} from 'movex-core-util';
-import {
-  MovexClient,
-  BaseMovexDefinitionResourcesMap,
-  MovexDefinition,
-  GetReducerAction,
-  GetReducerState,
-} from 'movex';
+} from  'movex-core-util';
+import { MovexClient } from 'movex';
 import { MovexContext, MovexContextProps } from './MovexContext';
 
 export const useMovex = <TResourcesMap extends BaseMovexDefinitionResourcesMap>(
@@ -61,7 +61,7 @@ export const useMovexResourceType = <
 
   useEffect(() => {
     if (m.connected) {
-      setResource(m.movex.register(resourceType) as any); 
+      setResource(m.movex.register(resourceType) as any);
     }
   }, [m.connected]);
 
@@ -150,10 +150,7 @@ export const useCreateMovexResourceOnDemand = <
         state: GetReducerState<TResourcesMap[TResourceType]>;
       }
     | undefined,
-  onCreated: (
-    rid: ResourceIdentifier<TResourceType>
-
-  ) => void
+  onCreated: (rid: ResourceIdentifier<TResourceType>) => void
 ) => {
   const m = useMovex(movexConfig);
 
