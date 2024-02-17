@@ -1,0 +1,22 @@
+# How does Movex work
+
+Movex follows the [Flux Pattern](https://redux.js.org/understanding/history-and-design/prior-art#flux) locally to respond to changes in the UI, and then uses the "Deterministic Propagation Method" to sync up the state changes with the Global State as well as with all the peers in the network.
+<br/>
+<br/>
+<div className="bg-slate-100 p-8 text-center">
+<img alt="Movex Diagram" src="/static/diagram/diagram_d@1x_optimized.png" width="600px" className="mx-auto"/>
+</div>
+<br/>
+<br/>
+
+{/* Movex relies heavily on the concept of "Purity" and the "Deterministic Propagation Method", described in more detail [here](/docs/features/functional) to work under the hood. */}
+
+
+Each of following concepts plays a vital role in understanding and building with Movex:
+
+1. [Resources](/docs/how/resources)
+2. [Reducers](/docs/how/reducers)
+3. [Actions](/docs/how/actions)
+4. [State](/docs/how/state)
+5. [Secret State](/docs/how/secret_state)
+6. [State Synchronization](/docs/how/state_synchronization).

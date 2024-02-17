@@ -1,0 +1,32 @@
+# The Movex Config
+
+The `movex.config` file is where the [Resources](/docs/how/resources) are being registered and assigned a [Reducer](/docs/how/reducers).
+
+In other words, the Movex Config is the heart of you app or the part of your app that relies on Movex, because it ties everything together and provides the logic that will run seamlessly on the back-end as well.
+
+## How does it look like?
+
+```ts
+import { MovexDefinition } from 'movex';
+import counterReducer from './counter/reducer';
+import chatReducer from './chat/reducer';
+
+const config: MovexDefinition = {
+  resources: {
+    counter: counterReducer,
+    chat: chatReducer,
+    // ... Add more resources here
+  },
+};
+
+export default config;
+```
+
+Each key under the `resources` field defines the resource name, and exepcts a reducer function of the type below as value to describe its logic.
+
+```typescript
+export type MovexReducer<S = any, A extends AnyAction = AnyAction> = ((
+  state: S,
+  action: A
+) => S) & { $canReconcileState?: (s: S) => boolean };
+```

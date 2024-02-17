@@ -1,5 +1,14 @@
-import { UnknownRecord } from './core-util';
+import type {
+  AddOperation,
+  CopyOperation,
+  GetOperation,
+  MoveOperation,
+  RemoveOperation,
+  ReplaceOperation,
+  TestOperation,
+} from 'fast-json-patch';
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace NestedObjectUtil {
   // The Paths Types is taken from https://stackoverflow.com/a/58436959/2093626
 
@@ -106,6 +115,8 @@ export namespace NestedObjectUtil {
     : T;
 }
 
+export type EmptyObject = Record<string, never>;
+
 export interface WsResponse<T = any> {
   event: string;
   data: T;
@@ -139,7 +150,7 @@ export type UnknownIdentifiableRecord = { id: string } & Record<
 >;
 export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
-export type UnidentifiableModel<T extends {}> = Omit<T, 'id'>;
+export type UnidentifiableModel<T extends object> = Omit<T, 'id'>;
 
 // TODO: Remove all of these if not used
 
@@ -202,7 +213,7 @@ export type GenericResourceOfType<TResourceType extends string> = Resource<
 
 export type GenericResourceType = GenericResource['type'];
 
-export type MovexClient<Info extends UnknownRecord = {}> = {
+export type MovexClient<Info extends UnknownRecord = EmptyObject> = {
   id: string;
   info?: Info; // User Info or whatever
   subscriptions: Record<
@@ -212,39 +223,7 @@ export type MovexClient<Info extends UnknownRecord = {}> = {
       subscribedAt: number;
     }
   >;
-
-  // TODO: Add later on
-  // lag: number;
-  // createdAt: number;
-  // upadtedAt: number;
-  // lastPingAt: mumber;
-  // status: 'idle' | 'active' | etc..
 };
-
-// export type Topic<TUniqueName extends string> = {
-//   id: TUniqueName;
-//   subscribers: Record<MovexClient['id'], null>; // Here it could use the full Peer?
-// };
-
-// type CollectionMapBaseItem = RRStore.CollectionMapBase[any];
-
-// TODO: Rename to StoreResource and don't export
-// TOOD: Move only in SessionStore maybe
-// type SessionResource<TData extends UnknownRecord = {}> = {
-//   id: string;
-//   data: TData;
-//   subscribers: Record<
-//     MovexClient['id'],
-//     {
-//       subscribedAt: number;
-//     }
-//   >;
-// };
-
-// export type ObservableResource<TData extends UnknownRecord = {}> =
-// Resource<TData> & {
-//   topic: Topic<string>['id'];
-// };
 
 export type ResourceIdentifierObj<TResourceType extends string> = {
   resourceType: TResourceType;
@@ -321,7 +300,9 @@ export type SessionStoreCollectionMap<
 export type OnlySessionCollectionMapOfResourceKeys<
   ResourceCollectionMap extends CollectionMapBase,
   SessionCollectionMap = SessionStoreCollectionMap<ResourceCollectionMap>
-> = StringKeys<Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<{}>>>;
+> = StringKeys<
+  Omit<SessionCollectionMap, keyof SessionStoreCollectionMap<EmptyObject>>
+>;
 
 export type CreateMatchReq<TGame extends UnknownRecord> = {
   matcher: SessionMatch['matcher'];
@@ -365,3 +346,41 @@ export type GetIOPayloadErrTypeFrom<R extends IOPayloadResult<any, any>> =
 // };
 
 // const x = {} as IOPayloadResultErrType<typeof xErr>;
+
+export type ValAndChecksum<T> = [T, string];
+
+export type Checksum = string;
+
+export type CheckedState<T> = [state: T, checksum: Checksum];
+
+export type UnsubscribeFn = () => void;
+
+export type EmptyFn = () => void;
+
+export type NotUndefined =
+  | object
+  | string
+  | number
+  | boolean
+  | null
+  | NotUndefined[];
+
+export type UnknownRecord = Record<string, unknown>;
+
+export type JsonPatchOp<T> =
+  | AddOperation<Partial<T>>
+  | RemoveOperation
+  | ReplaceOperation<T>
+  | MoveOperation
+  | CopyOperation
+  // TODO: Not sure these 2 are needed
+  | TestOperation<T>
+  | GetOperation<T>;
+
+export type JsonPatch<T> = JsonPatchOp<T>[];
+
+export type IsOfType<U, T, K> = T extends U ? K : never;
+
+export type OnlyKeysOfType<T, O extends Record<string, unknown>> = {
+  [K in keyof O]: IsOfType<T, O[K], K>;
+}[keyof O];

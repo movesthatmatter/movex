@@ -1,14 +1,18 @@
 import * as http from 'http';
 import { Server as SocketServer } from 'socket.io';
-import { LocalMovexStore, MovexStore } from 'libs/movex/src/lib/movex-store';
-import { SocketIOEmitter, objectKeys } from 'movex-core-util';
-import { MovexMasterResource } from 'libs/movex/src/lib/master';
-import { Master, MovexDefinition } from 'movex';
-import { IOEvents } from 'libs/movex/src/lib/io-connection/io-events';
 import express from 'express';
 import cors from 'cors';
+import {
+  logsy,
+  SocketIOEmitter,
+  ConnectionToClient,
+  type MovexDefinition,
+  type IOEvents,
+} from 'movex-core-util';
+import { MemoryMovexStore, MovexStore } from 'movex-store';
+import { initMovexMaster } from 'movex-master';
 
-export const movexServer = (
+export const movexServer = <TDefinition extends MovexDefinition>(
   {
     httpServer = http.createServer(),
     corsOpts,
@@ -16,18 +20,14 @@ export const movexServer = (
   }: {
     httpServer?: http.Server;
     corsOpts?: cors.CorsOptions;
-    movexStore?: 'memory' | MovexStore<any, any>; // | 'redis' once it's implemented
+    movexStore?: 'memory' | MovexStore<TDefinition['resources']>; // | 'redis' once it's implemented
   },
-  definition: MovexDefinition
+  definition: TDefinition
 ) => {
   const app = express();
 
   // this is specifx?
   app.use(cors(corsOpts));
-
-  app.get('/', (_, res) => {
-    res.send({ message: `Welcome to Movex!` });
-  });
 
   httpServer.on('request', app);
 
@@ -37,35 +37,18 @@ export const movexServer = (
     },
   });
 
-  // TODO: This can be redis well
-  const masterStore =
-    movexStore === 'memory' ? new LocalMovexStore() : movexStore;
+  const store = movexStore === 'memory' ? new MemoryMovexStore() : movexStore;
 
-  const mapOfResouceReducers = objectKeys(definition.resources).reduce(
-    (accum, nextResoureType) => {
-      const nextReducer = definition.resources[nextResoureType];
-
-      return {
-        ...accum,
-        [nextResoureType]: new MovexMasterResource(nextReducer, masterStore),
-      };
-    },
-    {} as Record<string, MovexMasterResource<any, any>>
-  );
-
-  const movexMaster = new Master.MovexMasterServer(mapOfResouceReducers);
+  const movexMaster = initMovexMaster(definition, store);
 
   const getClientId = (clientId: string) =>
     clientId || String(Math.random()).slice(-5);
 
   socket.on('connection', (io) => {
-    console.group('Movex Connection Established');
-    console.log('Query', io.handshake.query);
-    console.groupEnd();
-
     const clientId = getClientId(io.handshake.query['clientId'] as string);
+    logsy.log('[MovexServer] Client Connected', clientId);
 
-    const connection = new Master.ConnectionToClient(
+    const connection = new ConnectionToClient(
       clientId,
       new SocketIOEmitter<IOEvents>(io)
     );
@@ -75,10 +58,19 @@ export const movexServer = (
     movexMaster.addClientConnection(connection);
 
     io.on('disconnect', () => {
-      console.log('disconnected');
+      logsy.log('[MovexServer] Client Disconnected', clientId);
 
       movexMaster.removeConnection(clientId);
     });
+  });
+
+  app.get('/', (_, res) => {
+    res.send({ message: `Welcome to Movex!` });
+  });
+
+  app.get('/store', async (_, res) => {
+    res.header('Content-Type', 'application/json');
+    res.send(JSON.stringify(await store.all().resolveUnwrap(), null, 4));
   });
 
   // //start our server
@@ -87,7 +79,10 @@ export const movexServer = (
     const address = httpServer.address();
 
     if (typeof address !== 'string') {
-      console.info(`Movex Server started on port ${address?.port}`);
+      logsy.info(
+        `Movex Server started on port ${address?.port} for definition`,
+        Object.keys(definition.resources)
+      );
     }
   });
 };

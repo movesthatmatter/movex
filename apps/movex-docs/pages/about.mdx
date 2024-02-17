@@ -1,0 +1,22 @@
+# About Movex
+
+
+## Origins 
+Movex is the legacy of [chessroulette.live](https://gabrielctroia.medium.com/meet-chessroulette-org-a-quarantine-project-e4108f05db39) (now defunct but up for a comeback built on movex soon).
+
+import Image from 'next/image';
+
+<Image src="/static/chessroulette_screenshot.png" alt="Chessroulette Screenshot" width="720" height="560" className="pt-4"/>
+
+
+## Idea iteration
+
+The idea for Movex came while attempting to port the backend code from Chessroulette (everything from the network logic & protocols, servers, redis to matchmaking), into another turn based chess-like game server to make it multiplayer (that we are launching soon), and realizing that I actually have to copy and paste most of that code with very slight changes.
+
+The initial idea was simply to take that code, wrap it in a backend service of its own, complete with an api, socket + a (redis) store, and use it for my game as well as opening it up for other game developers that don't handle all that multyplayer logc on their own.
+
+But then, while working on that version, I realized I can in fact go a few steps further, and offer a solution for the client, where the actual game or app logic happens. So the idea of combining functional code (i.e. functions), to have them run both on the client and the server (seamlessly), could be an appealing solution for other game developers who don't won't to get out of their Game bubble, where to be honest, the fun happens.
+
+Combine that with an Authoritative Server that seamlessly just works, Realtime Synchronization and Deterministic Propagation and I think we have something here.
+
+But of course, only time will tell!

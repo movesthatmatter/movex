@@ -1,0 +1,95 @@
+{
+  "name": "movex-docs",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/movex-docs",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/workspace:run-commands",
+      "outputs": ["{workspaceRoot}/dist/apps/movex-docs"],
+      "defaultConfiguration": "production",
+      "options": {
+        "root": "apps/movex-docs",
+        "outputPath": "dist/apps/movex-docs",
+        "command": "npx next build; rm -rf $NX_WORKSPACE_ROOT/dist/apps/movex-docs; mkdir -p $NX_WORKSPACE_ROOT/dist/apps/movex-docs; mv ./.next $NX_WORKSPACE_ROOT/dist/apps/movex-docs; cp -r ./public $NX_WORKSPACE_ROOT/dist/apps/movex-docs; cp ./next.config.js $NX_WORKSPACE_ROOT/dist/apps/movex-docs",
+        "cwd": "apps/movex-docs"
+      },
+      "configurations": {
+        "development": {},
+        "production": {}
+      }
+    },
+    "build_new": {
+      "executor": "@nrwl/next:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "root": "apps/movex-docs",
+        "outputPath": "dist/apps/movex-docs"
+      },
+      "configurations": {
+        "development": {},
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "command": "npx next",
+        "cwd": "apps/movex-docs",
+        "buildTarget": "movex-demo:build",
+        "dev": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "movex-docs:build:development",
+          "dev": true
+        },
+        "production": {
+          "buildTarget": "movex-docs:build:production",
+          "dev": false
+        }
+      }
+    },
+    "serve_old": {
+      "executor": "@nrwl/next:server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "movex-docs:build",
+        "dev": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "movex-docs:build:development",
+          "dev": true
+        },
+        "production": {
+          "buildTarget": "movex-docs:build:production",
+          "dev": false
+        }
+      }
+    },
+    "export": {
+      "executor": "@nrwl/next:export",
+      "options": {
+        "buildTarget": "movex-docs:build:production"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/movex-docs/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/movex-docs/**/*.{ts,tsx,js,jsx}"]
+      }
+    }
+  },
+  "tags": []
+}

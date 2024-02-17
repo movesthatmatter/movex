@@ -1,10 +1,16 @@
 export * from './lib';
-export * from './lib/master/MovexMasterServer';
 
-export * from './lib/public-types';
+// Aliased
+export * as MovexClient from './lib';
 
-export * as Client from './lib/client';
-export * as Master from './lib/master';
-
-// export * from './lib/MovexResourceold';
-// export * from './lib/types';
+export {
+  type ResourceIdentifier,
+  type ResourceIdentifierObj,
+  type ResourceIdentifierStr,
+  type AnyResourceIdentifier,
+  toResourceIdentifierObj as toRidAsObj,
+  toResourceIdentifierStr as toRidAsStr,
+  isResourceIdentifier as isRid,
+  isResourceIdentifierOfType as isRidOfType,
+  isSameResourceIdentifier as isSameRid,
+} from 'movex-core-util';

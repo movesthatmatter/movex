@@ -11,7 +11,19 @@
         "outputPath": "dist/libs/movex",
         "main": "libs/movex/src/index.ts",
         "tsConfig": "libs/movex/tsconfig.lib.json",
-        "assets": ["libs/movex/*.md"]
+        "assets": ["libs/movex/*.md"],
+        "updateBuildableProjectDepsInPackageJson": true,
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "tsc": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "tsc --noEmit -p libs/movex/tsconfig.lib.json"
+          }
+        ]
       }
     },
     "lint": {

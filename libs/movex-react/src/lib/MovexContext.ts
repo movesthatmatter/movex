@@ -1,5 +1,12 @@
 import { createContext } from 'react';
-import { Movex, BaseMovexDefinitionResourcesMap, MovexDefinition } from 'movex';
+import type {
+  BaseMovexDefinitionResourcesMap,
+  MovexDefinition,
+  ResourceIdentifier,
+  StringKeys,
+  UnsubscribeFn,
+} from 'movex-core-util';
+import type { MovexClient, Movex } from 'movex';
 
 export type MovexContextProps<
   TResourcesMap extends BaseMovexDefinitionResourcesMap
@@ -9,12 +16,17 @@ export type MovexContextProps<
       clientId: undefined;
       movex?: Movex;
       movexConfig?: undefined;
+      bindResource?: () => void;
     }
   | {
       connected: true;
       clientId: string;
-      movex: Movex;
+      movex: MovexClient.MovexFromDefintion<TResourcesMap>;
       movexDefinition: MovexDefinition<TResourcesMap>;
+      bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
+        rid: ResourceIdentifier<TResourceType>,
+        onStateUpdate: (p: MovexClient.MovexBoundResource) => void
+      ) => UnsubscribeFn;
     };
 
 export const MovexContext = createContext<

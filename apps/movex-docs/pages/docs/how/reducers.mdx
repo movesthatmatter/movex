@@ -1,0 +1,62 @@
+# Reducers
+
+A Reducer describes the logic that modifies a Resource State via Actions. Each Resource gets assigned a Reducer in the `movex.config` file.
+
+It is almost the same as a [Redux](https://www.tutorialspoint.com/redux/redux_reducers.htm) or React's `useReducer` reducer, with the difference that it runs both on the front-end and the on back-end, in order to make multi-player mode possible.
+
+> Note: For this to work the Reducer must be [pure](/docs/features/functional#purity)!
+
+### The Reducer Type
+
+```typescript
+export type MovexReducer<S = any, A extends AnyAction = AnyAction> = ((
+  state: S,
+  action: A
+) => S) & { $canReconcileState?: (s: S) => boolean };
+```
+
+### Example
+
+```ts
+// *Api might change
+
+import { Action } from 'movex';
+
+export type CounterState = {
+  count: number;
+};
+
+export const initialCounterState: CounterState = {
+  count: 0,
+};
+
+export type CounterActions =
+  | Action<'increment'>
+  | Action<'decrement'>
+  | Action<'incrementBy', number>;
+
+export default (state = initialCounterState, action: CounterActions) => {
+  if (action.type === 'increment') {
+    return {
+      ...state,
+      count: state.count + 1,
+    };
+  }
+
+  if (action.type === 'decrement') {
+    return {
+      ...state,
+      count: state.count - 1,
+    };
+  }
+
+  if (action.type === 'incrementBy') {
+    return {
+      ...state,
+      count: state.count + action.payload,
+    };
+  }
+
+  return state;
+};
+```

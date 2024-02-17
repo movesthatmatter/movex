@@ -1,0 +1,81 @@
+# Constraints
+
+##### 1. The Reducer Needs to stay Pure.
+This is actually a constraint of general functoinal programming that says: "A function returns the same output everytime it receives a given input X."
+
+This means that the reducer cannot make use of global contextt utilities such as randomness or time, since they break purity, but instead should rely on given input to calculate the next state.
+
+Note: One thing that can be a feature is to use Placeholders at action level, such as GetMovexTime, or GetMovexUUID, or GetMovexID, etc..., which can be replaceable
+on the server and they don't count towards the checksum, or... These can work by adding a temporary *value* locally (since this only needs to be part of the state until the ack comes back to the sender and it only needs to happen for the sender), which can then be picked up at server level and replaced with the real one, which will also happen on the client at ack time. The peers will always get the FWD/Reconciliation action with the Replaced Real Value and the Checksum based on it!
+
+This is in accord wth authority being on the server, not on the client, which thus means the client shouldn't really be the one deciding what the next id of a resource should be or what the timestamp really is (since that can be easily hacked), but the server. 
+
+Example of a scenario:
+
+```ts
+movex.dispatch({
+  type: 'sendMessage',
+  payload: {
+    msg: "Hey",
+    timestamp: Movex.timestamp(), // ___@mvx:timestamp___ or something like this
+    id: Movex.id(), // ___@mvx:id___ or Movex.uuid(), etc...
+  }
+})
+```
+
+Locally this is saved with some randomly randomly or current local time, etc... values, thus not having to deal with asking the server for them pre-emptively, and thus waiting for the trip back from the server.
+
+```ts
+// local state looks like this:
+
+const chatState = {
+  messages: [
+    {
+      msg: 'Hey',
+      timestamp: 131312313123, // the time now which will get replaced with the time from the server
+      id: 'some-id', // gets replaced
+    }
+  ]
+} 
+
+```
+
+And the "ack" looks something like this
+
+```ts
+
+movex.onDispatched(({ action, next: nextLocalCheckedState }) => {
+  movex.onEmitted((ack) => {
+    if (ack.placeholders) {
+      const nextLocalStateWithRealValues = Movex.replacePlaceholders(nextLocalCheckstate, ack.placeholders);
+
+      if (ack.masterChecksum !== nextLocalStateWithRealValues[1]) {
+        // If they aren't the same we have an issue, but normally they should be the same
+
+        return;
+      }
+    } 
+    
+    // Regular logic
+    else if (ack.masterChecksum !== nextChecksum) {
+      // If they aren't the same we have an issue, but normally they should be the same
+
+      return;
+    }
+  })
+})
+
+
+```
+
+But there is still an issue where the id, could be used write a way, let's say to redirect to another page or smtg like that. In which case
+when the ack comes back it it's going to be too late b/c the user already is at the wrong place in the UI.
+
+One solution for this could be a special type of dispatch, that waits for the ack to come back before affecting the local state: a delayed dispatch.
+This is a limitation of both the learning curve, and the performance of the library/game/application, as well as it breaks a bit from the "write on the client only", although the latter still is relevant as the client doesn't need to know anything ab the msater nor the developer, just to wait for a bit (the magic happens in movex), so it might not be that bad.
+
+Besides it's pretty exceptional – only when creating an id, and that id is to be used right away, otherwise the placeolder could work. In the worst case even a client generated id/time/etc is ok – just not ideal.
+
+##### 2. Don't use undefined inside a reducer state. Use null instead
+
+This has to do with how json serialized undefined, which in some cases (all?), it removes it altogether thus creating inconsistencies between the local never-serialized state. Just use null!

@@ -1,0 +1,22 @@
+# Actions
+
+Actions, like in Redux or Flux are simple commands paired with input that are sent to a reducer in order to compute the next state.
+
+```ts
+const myAction = {
+  type: 'incrementBy';
+  payload: 1;
+}
+```
+
+## Public Actions
+
+A Public Action, as its name implies is an Action that modifies the shared state (aka the public state), so everyone subscribed to it can get notified and see it.
+
+```ts
+const myPublicAction = {
+  type: 'incrementBy';
+  payload: 2;
+  isPrivate: false;
+}
+```

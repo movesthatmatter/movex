@@ -1,4 +1,4 @@
-import { PlayRPSButton } from 'apps/movex-demo/modules/rock-paper-scissors/RPSPlayButton';
+import { PlayRPSButton } from '../../modules/rock-paper-scissors/RPSPlayButton';
 
 type Props = {};
 
