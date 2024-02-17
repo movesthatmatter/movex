@@ -10,7 +10,7 @@ import type {
   UnsubscribeFn,
   IOEvents,
   ConnectionToMaster,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import {
   invoke,
   toResourceIdentifierObj,
@@ -135,20 +135,6 @@ export class ConnectionToMasterResource<
       this.connectionToMaster.emitter
         .emitAndAcknowledge('addResourceSubscriber', {
           rid,
-        })
-        .then((res) => {
-          if (!res.ok) {
-            console.log(
-              '[ConnectionToMasterResource].addResourceSubscriber rid:',
-              rid,
-              'res:',
-              res
-            );
-            console.log('Emitter', this.connectionToMaster.emitter);
-            console.trace('Trace');
-          }
-
-          return res;
         })
         .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );
