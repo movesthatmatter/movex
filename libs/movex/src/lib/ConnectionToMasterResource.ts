@@ -73,19 +73,25 @@ export class ConnectionToMasterResource<
       );
     };
 
+    const onRemoveResourceSubscriber = () => {
+
+    }
+
     connectionToMaster.emitter.on(
-      'reconciliateActions',
+      'onReconciliateActions',
       onReconciliateActionsHandler
     );
 
-    connectionToMaster.emitter.on('fwdAction', onFwdActionHandler);
+    connectionToMaster.emitter.on('onFwdAction', onFwdActionHandler);
+
+    connectionToMaster.emitter.on('onResourceSubscriberRemoved', onRemoveResourceSubscriber);
 
     // Unsubscribe from the events too
     this.unsubscribers = [
-      () => connectionToMaster.emitter.off('fwdAction', onFwdActionHandler),
+      () => connectionToMaster.emitter.off('onFwdAction', onFwdActionHandler),
       () =>
         connectionToMaster.emitter.off(
-          'reconciliateActions',
+          'onReconciliateActions',
           onReconciliateActionsHandler
         ),
     ];

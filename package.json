@@ -35,7 +35,7 @@
     "publish-movex-service": "cd dist/libs/movex-service && npm publish && cd -",
     "publish-movex-store": "cd dist/libs/movex-store && npm publish && cd -",
     "publish-all-libs": "npm run publish-movex && npm run publish-movex-server && npm run publish-movex-core-util && npm run publish-movex-react && npm run publish-movex-service && npm run publish-movex-store && npm run publish-movex-master",
-    "tsc-all-libs": "npx nx run-many --parallel --target=tsc --projects=movex-core-util,movex,movex-server,movex-service,movex-react,movex-vue,movex-store,movex-master,movex-specs-util",
+    "tsc-all-libs": "npx nx run-many --parallel --target=tsc --projects=movex-core-util,movex,movex-server,movex-service,movex-react,movex-react-local-master,movex-vue,movex-store,movex-master,movex-specs-util",
     "test-all-libs": "npx nx run-many --parallel --target=test --projects=movex,movex-core-util,movex-master,movex-react,movex-react-local-master,movex-server,movex-service,movex-store,movex-vue",
     "build-all-libs": "npx nx run-many --parallel --target=build --projects=movex,movex-core-util,movex-master,movex-react,movex-react-local-master,movex-server,movex-service,movex-store,movex-vue",
     "deploy": "git diff --exit-code HEAD && flyctl deploy -c apps/movex-demo-api/fly.toml --dockerfile apps/movex-demo-api/Dockerfile -e APP_REVISION=$(git rev-parse --short HEAD) --remote-only"

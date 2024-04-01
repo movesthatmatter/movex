@@ -8,7 +8,7 @@ import type { MovexResourceObservable } from './MovexResourceObservable';
 /**
  * This is the MovexResource running on the Client
  * It could be used extensively in the UI hence the need to "bind" the methods
- * so "this" statys correct
+ * so "this" stays correct
  */
 export class MovexBoundResource<
   TState = any,

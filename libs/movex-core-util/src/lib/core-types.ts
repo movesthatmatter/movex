@@ -238,6 +238,7 @@ export type ResourceIdentifier<TResourceType extends string> =
   | ResourceIdentifierStr<TResourceType>;
 
 export type AnyResourceIdentifier = ResourceIdentifier<string>;
+export type AnyStringResourceIdentifier = ResourceIdentifierStr<string>;
 
 export type StringKeys<TRecord extends UnknownRecord> = Extract<
   keyof TRecord,

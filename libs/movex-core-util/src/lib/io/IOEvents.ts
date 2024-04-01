@@ -8,6 +8,7 @@ import type {
   CheckedState,
   Checksum,
   IOPayloadResult,
+  MovexClient,
   ResourceIdentifier,
   ResourceIdentifierStr,
 } from '../core-types';
@@ -17,8 +18,11 @@ export type IOEvents<
   A extends AnyAction = AnyAction,
   TResourceType extends string = string
 > = {
-  ping: () => IOPayloadResult<void, unknown>;
-  pong: () => IOPayloadResult<void, unknown>;
+
+  /**
+   * The following events are directed from Client to Master 
+   * */
+
   createResource: (p: {
     resourceType: TResourceType;
     resourceState: TState;
@@ -40,12 +44,13 @@ export type IOEvents<
     void,
     unknown // Type this
   >;
-  removeResourceSubscriber: (p: {
-    rid: ResourceIdentifier<TResourceType>;
-  }) => IOPayloadResult<
-    void,
-    unknown // Type this
-  >;
+
+  // removeResourceSubscriber: (p: {
+  //   rid: ResourceIdentifier<TResourceType>;
+  // }) => IOPayloadResult<
+  //   void,
+  //   unknown // Type this
+  // >;
 
   getResourceState: (p: {
     rid: ResourceIdentifier<TResourceType>;
@@ -68,14 +73,39 @@ export type IOEvents<
     'MasterResourceInexistent' | string
   >; // Type the other errors
 
-  fwdAction: (
+  /**
+   * The following events are directed from Master to Client
+   * */
+
+  onFwdAction: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
     } & ToCheckedAction<A>
   ) => IOPayloadResult<void, unknown>;
-  reconciliateActions: (
+  onReconciliateActions: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
     } & CheckedReconciliatoryActions<A>
   ) => IOPayloadResult<void, unknown>;
+  onResourceSubscriberAdded: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+    clientId: MovexClient['id'];
+  }) => IOPayloadResult<
+    void,
+    unknown // Type this
+  >;
+  onResourceSubscriberRemoved: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+    clientId: MovexClient['id'];
+  }) => IOPayloadResult<
+    void,
+    unknown // Type this
+  >;
+
+  /**
+   * The following events are by-directional (from Client to Master and vice-versa)
+   * */
+
+  ping: () => IOPayloadResult<void, unknown>;
+  pong: () => IOPayloadResult<void, unknown>;
 };

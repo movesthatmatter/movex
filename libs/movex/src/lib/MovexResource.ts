@@ -28,7 +28,7 @@ const logOpenConnectionStyle = 'color: #EF5FA0; font-weight: bold';
 const logClosedConnectionStyle = 'color: #DF9D04; font-weight: bold';
 const logErrorStyle = 'color: red; font-weight: bold;';
 
-const logsy = rawLogsy.withNamespace('[MovexResource]');
+const logsy = rawLogsy.withNamespace('[Movex][MovexResource]');
 // const logsy = rawLogsy;
 
 export class MovexResource<
@@ -135,7 +135,7 @@ export class MovexResource<
           logUnimportantStyle,
           prevCheckedState
         );
-        logsy.log('%cNext (Master) Staet', logIncomingStyle, masterCheckState);
+        logsy.log('%cNext (Master) State', logIncomingStyle, masterCheckState);
         logsy.debug(
           'Diff',
           deepObject.detailedDiff(prevCheckedState, masterCheckState)
