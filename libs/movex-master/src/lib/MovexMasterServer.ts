@@ -8,10 +8,12 @@ import {
   type ConnectionToClient,
   AnyResourceIdentifier,
   AnyStringResourceIdentifier,
+  MovexClientResourceShape,
 } from 'movex-core-util';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { MovexMasterResource } from './MovexMasterResource';
+import { storeItemToSanitizedClientResource } from './util';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
 /**
@@ -126,6 +128,34 @@ export class MovexMasterServer {
         .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
 
+    const onGetResourceHandler = (
+      payload: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
+      acknowledge?: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['getResource']>
+      ) => void
+    ) => {
+      const { rid } = payload;
+
+      const masterResource =
+        this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
+
+      if (!masterResource) {
+        return acknowledge?.(new Err('MasterResourceInexistent'));
+      }
+
+      masterResource
+        .getClientSpecificResource(rid, clientConnection.clientId)
+        .map((r) =>
+          acknowledge?.(new Ok(storeItemToSanitizedClientResource(r)))
+        )
+        .mapErr(
+          AsyncResult.passThrough((e) => {
+            logsy.error('Get Resource Error', e);
+          })
+        )
+        .mapErr((e) => acknowledge?.(new Err(e)));
+    };
+
     const onGetResourceStateHandler = (
       payload: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
       acknowledge?: (
@@ -142,7 +172,7 @@ export class MovexMasterServer {
       }
 
       masterResource
-        .getState(rid, clientConnection.clientId)
+        .getClientSpecificState(rid, clientConnection.clientId)
         .map((checkedState) => acknowledge?.(new Ok(checkedState)))
         .mapErr(
           AsyncResult.passThrough((e) => {
@@ -151,6 +181,22 @@ export class MovexMasterServer {
         )
         .mapErr((e) => acknowledge?.(new Err(e)));
     };
+
+    const onGetResourceSubscribersHandler = (
+      payload: Parameters<
+        IOEvents<S, A, TResourceType>['getResourceSubscribers']
+      >[0],
+      acknowledge?: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['getResourceSubscribers']>
+      ) => void
+    ) =>
+      onGetResourceHandler(payload, (r) => {
+        if (r.ok) {
+          acknowledge?.(new Ok(r.val.subscribers));
+        } else {
+          acknowledge?.(r);
+        }
+      });
 
     const onCreateResourceHandler = (
       payload: Parameters<IOEvents<S, A, TResourceType>['createResource']>[0],
@@ -168,12 +214,7 @@ export class MovexMasterServer {
       masterResource
         .create(resourceType, resourceState, resourceId)
         .map((r) =>
-          acknowledge?.(
-            new Ok({
-              rid: r.rid,
-              state: r.state,
-            })
-          )
+          acknowledge?.(new Ok(storeItemToSanitizedClientResource(r)))
         )
         .mapErr(
           AsyncResult.passThrough((e) => {
@@ -212,7 +253,7 @@ export class MovexMasterServer {
           };
 
           // Send the ack to the just-added-client
-          acknowledge?.(Ok.EMPTY);
+          acknowledge?.(new Ok(storeItemToSanitizedClientResource(s)));
 
           // Let the rest of the peer-clients know as well
           objectKeys(s.subscribers)
@@ -252,6 +293,11 @@ export class MovexMasterServer {
 
     clientConnection.emitter.on('ping', onPingHandler);
     clientConnection.emitter.on('emitActionDispatch', onEmitActionHandler);
+    clientConnection.emitter.on('getResource', onGetResourceHandler);
+    clientConnection.emitter.on(
+      'getResourceSubscribers',
+      onGetResourceSubscribersHandler
+    );
     clientConnection.emitter.on('getResourceState', onGetResourceStateHandler);
     clientConnection.emitter.on('createResource', onCreateResourceHandler);
     clientConnection.emitter.on(

@@ -10,12 +10,13 @@ import type {
   UnsubscribeFn,
   IOEvents,
   ConnectionToMaster,
+  MovexClient,
 } from 'movex-core-util';
 import {
   invoke,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
@@ -28,12 +29,20 @@ export class ConnectionToMasterResource<
   TAction extends AnyAction,
   TResourceType extends string
 > {
-  private fwdActionPubsy = new Pubsy<{
+  private fwdActionEventPubsy = new Pubsy<{
     [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: ToCheckedAction<TAction>;
   }>();
 
-  private reconciliatoryActionPubsy = new Pubsy<{
+  private reconciliatoryActionEventPubsy = new Pubsy<{
     [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: CheckedReconciliatoryActions<TAction>;
+  }>();
+
+  private subscriberAddedEventPubsy = new Pubsy<{
+    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: MovexClient['id'];
+  }>();
+
+  private subscriberRemovedEventPubsy = new Pubsy<{
+    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: MovexClient['id'];
   }>();
 
   private unsubscribers: UnsubscribeFn[] = [];
@@ -55,7 +64,10 @@ export class ConnectionToMasterResource<
         return;
       }
 
-      this.fwdActionPubsy.publish(`rid:${toResourceIdentifierStr(p.rid)}`, p);
+      this.fwdActionEventPubsy.publish(
+        `rid:${toResourceIdentifierStr(p.rid)}`,
+        p
+      );
     };
 
     const onReconciliateActionsHandler = (
@@ -67,15 +79,43 @@ export class ConnectionToMasterResource<
         return;
       }
 
-      this.reconciliatoryActionPubsy.publish(
+      this.reconciliatoryActionEventPubsy.publish(
         `rid:${toResourceIdentifierStr(p.rid)}`,
         p
       );
     };
 
-    const onRemoveResourceSubscriber = () => {
+    const onRemoveResourceSubscriberHandler = (p: {
+      rid: ResourceIdentifier<TResourceType>;
+      clientId: MovexClient['id'];
+    }) => {
+      console.log('ConnectionToMaster onRemoveResourceSubscriberHandler', p);
+      if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
+        console.log('ConnectionToMaster onRemoveResourceSubscriberHandler', 'nooooope', p);
+        return;
+      }
 
-    }
+      this.subscriberRemovedEventPubsy.publish(
+        `rid:${toResourceIdentifierStr(p.rid)}`,
+        p.clientId
+      );
+    };
+    const onAddResourceSubscriberHandler = (p: {
+      rid: ResourceIdentifier<TResourceType>;
+      clientId: MovexClient['id'];
+    }) => {
+      console.log('ConnectionToMaster onAddResourceSubscriberHandler', p);
+
+      if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
+        console.log('ConnectionToMaster onAddResourceSubscriberHandler', p, 'noooope');
+        return;
+      }
+
+      this.subscriberAddedEventPubsy.publish(
+        `rid:${toResourceIdentifierStr(p.rid)}`,
+        p.clientId
+      );
+    };
 
     connectionToMaster.emitter.on(
       'onReconciliateActions',
@@ -84,7 +124,15 @@ export class ConnectionToMasterResource<
 
     connectionToMaster.emitter.on('onFwdAction', onFwdActionHandler);
 
-    connectionToMaster.emitter.on('onResourceSubscriberRemoved', onRemoveResourceSubscriber);
+    connectionToMaster.emitter.on(
+      'onResourceSubscriberRemoved',
+      onRemoveResourceSubscriberHandler
+    );
+
+    connectionToMaster.emitter.on(
+      'onResourceSubscriberAdded',
+      onAddResourceSubscriberHandler
+    );
 
     // Unsubscribe from the events too
     this.unsubscribers = [
@@ -93,6 +141,16 @@ export class ConnectionToMasterResource<
         connectionToMaster.emitter.off(
           'onReconciliateActions',
           onReconciliateActionsHandler
+        ),
+      () =>
+        connectionToMaster.emitter.off(
+          'onResourceSubscriberRemoved',
+          onRemoveResourceSubscriberHandler
+        ),
+      () =>
+        connectionToMaster.emitter.off(
+          'onResourceSubscriberAdded',
+          onAddResourceSubscriberHandler
         ),
     ];
   }
@@ -118,13 +176,15 @@ export class ConnectionToMasterResource<
         })
         .then((res) =>
           res.ok
-            ? new Ok({
-                // This sanitizes the data only allowing specific fields to get to the client
-                // TODO: This actually should come sanitized from the server, since this is on the client
-                // Probably best to where the ack is called
-                rid: res.val.rid,
-                state: res.val.state,
-              })
+            ? // ? new Ok({
+              //     // This sanitizes the data only allowing specific fields to get to the client
+              //     // TODO: This actually should come sanitized from the server, since this is on the client
+              //     // Probably best to where the ack is called
+              //     // rid: res.val.rid,
+              //     // state: res.val.state,
+              //     ...res.val,
+              //   })
+              new Ok(res.val) // TODO: Ensure the data is sanitized from the server
             : new Err(res.val)
         )
     );
@@ -146,17 +206,47 @@ export class ConnectionToMasterResource<
     );
   }
 
-  get(rid: ResourceIdentifier<TResourceType>) {
-    type GetEvent = ReturnType<
+  getState(rid: ResourceIdentifier<TResourceType>) {
+    type GetStateEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['getResourceState']
     >;
 
     return AsyncResult.toAsyncResult<
-      GetIOPayloadOKTypeFrom<GetEvent>,
-      GetIOPayloadErrTypeFrom<GetEvent>
+      GetIOPayloadOKTypeFrom<GetStateEvent>,
+      GetIOPayloadErrTypeFrom<GetStateEvent>
     >(
       this.connectionToMaster.emitter
         .emitAndAcknowledge('getResourceState', { rid })
+        .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
+    );
+  }
+
+  getSubscribers(rid: ResourceIdentifier<TResourceType>) {
+    type GetSubscribersEvent = ReturnType<
+      IOEvents<TState, TAction, TResourceType>['getResourceSubscribers']
+    >;
+
+    return AsyncResult.toAsyncResult<
+      GetIOPayloadOKTypeFrom<GetSubscribersEvent>,
+      GetIOPayloadErrTypeFrom<GetSubscribersEvent>
+    >(
+      this.connectionToMaster.emitter
+        .emitAndAcknowledge('getResourceSubscribers', { rid })
+        .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
+    );
+  }
+
+  getResource(rid: ResourceIdentifier<TResourceType>) {
+    type GetResourceEvent = ReturnType<
+      IOEvents<TState, TAction, TResourceType>['getResource']
+    >;
+
+    return AsyncResult.toAsyncResult<
+      GetIOPayloadOKTypeFrom<GetResourceEvent>,
+      GetIOPayloadErrTypeFrom<GetResourceEvent>
+    >(
+      this.connectionToMaster.emitter
+        .emitAndAcknowledge('getResource', { rid })
         .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );
   }
@@ -186,7 +276,7 @@ export class ConnectionToMasterResource<
     rid: ResourceIdentifier<TResourceType>,
     fn: (p: ToCheckedAction<TAction>) => void
   ) {
-    return this.fwdActionPubsy.subscribe(
+    return this.fwdActionEventPubsy.subscribe(
       `rid:${toResourceIdentifierStr(rid)}`,
       fn
     );
@@ -196,7 +286,27 @@ export class ConnectionToMasterResource<
     rid: ResourceIdentifier<TResourceType>,
     fn: (p: CheckedReconciliatoryActions<TAction>) => void
   ) {
-    return this.reconciliatoryActionPubsy.subscribe(
+    return this.reconciliatoryActionEventPubsy.subscribe(
+      `rid:${toResourceIdentifierStr(rid)}`,
+      fn
+    );
+  }
+
+  onSubscriberAdded(
+    rid: ResourceIdentifier<TResourceType>,
+    fn: (clientId: MovexClient['id']) => void
+  ) {
+    return this.subscriberAddedEventPubsy.subscribe(
+      `rid:${toResourceIdentifierStr(rid)}`,
+      fn
+    );
+  }
+
+  onSubscriberRemoved(
+    rid: ResourceIdentifier<TResourceType>,
+    fn: (clientId: MovexClient['id']) => void
+  ) {
+    return this.subscriberRemovedEventPubsy.subscribe(
       `rid:${toResourceIdentifierStr(rid)}`,
       fn
     );

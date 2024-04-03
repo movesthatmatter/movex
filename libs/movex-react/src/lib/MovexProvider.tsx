@@ -7,16 +7,10 @@ import {
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
   ResourceIdentifier,
-  toResourceIdentifierStr,
-  ResourceIdentifierStr,
-  toResourceIdentifierObj,
   StringKeys,
 } from 'movex-core-util';
-import {
-  MovexClient,
-  MovexFromDefintion,
-  MovexResourceObservable,
-} from 'movex';
+import { MovexClient } from 'movex';
+import { ResourceObservablesRegistry } from './ResourceObservableRegistry';
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
@@ -37,49 +31,6 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
     ) => void;
   }>;
 
-class ResourceObservablesRegistry<
-  TResourcesMap extends BaseMovexDefinitionResourcesMap
-> {
-  private resourceObservablesByRid: {
-    [rid in ResourceIdentifierStr<string>]: {
-      _movexResource: MovexClient.MovexResource<any, any, any>;
-      $resource: MovexResourceObservable;
-    };
-  } = {};
-
-  constructor(private movex: MovexFromDefintion<TResourcesMap>) {}
-
-  private get<TResourceType extends StringKeys<TResourcesMap>>(
-    rid: ResourceIdentifier<TResourceType>
-  ) {
-    return this.resourceObservablesByRid[toResourceIdentifierStr(rid)];
-  }
-
-  register<TResourceType extends StringKeys<TResourcesMap>>(
-    rid: ResourceIdentifier<TResourceType>
-  ) {
-    const existent = this.get(rid);
-
-    if (existent) {
-      return existent.$resource;
-    }
-
-    const ridAsStr = toResourceIdentifierStr(rid);
-    const { resourceType } = toResourceIdentifierObj(rid);
-
-    const movexResource = this.movex.register(resourceType);
-
-    const $resource = movexResource.bind(rid);
-
-    this.resourceObservablesByRid[ridAsStr] = {
-      _movexResource: movexResource,
-      $resource,
-    };
-
-    return $resource;
-  }
-}
-
 export const MovexProvider: React.FC<
   Props<BaseMovexDefinitionResourcesMap>
 > = ({ onConnected = noop, onDisconnected = noop, ...props }) => {
@@ -92,6 +43,8 @@ export const MovexProvider: React.FC<
     clientId: undefined,
   });
 
+  // TODO: This can all ne moved into the MovexProviderClass and rename it to MovexProviderImplementation
+  //   or this to MovexProviderContainer
   useEffect(() => {
     if (contextState.connected) {
       return;

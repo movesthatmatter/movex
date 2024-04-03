@@ -1,6 +1,14 @@
 export { v4 as getUuid } from 'uuid';
 import { applyReducer, compare, deepClone } from 'fast-json-patch';
-import { JsonPatch, isObject } from 'movex-core-util';
+import {
+  JsonPatch,
+  isObject,
+  GenericResourceType,
+  MovexClientResourceShape,
+  toResourceIdentifierStr,
+  objectKeys,
+} from 'movex-core-util';
+import { MovexStoreItem } from 'movex-store';
 
 export const applyMovexStatePatches = <TState>(
   state: TState,
@@ -60,3 +68,22 @@ export function getRandomInt(givenMin: number, givenMax: number) {
 
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+export const storeItemToSanitizedClientResource = <
+  TResourceType extends GenericResourceType,
+  TState
+>(
+  storeItem: MovexStoreItem<TState, TResourceType>
+): MovexClientResourceShape<TResourceType, TState> => {
+  return {
+    rid: toResourceIdentifierStr(storeItem.rid),
+    state: storeItem.state,
+    subscribers: objectKeys(storeItem.subscribers).reduce(
+      (prev, next) => ({
+        ...prev,
+        [next]: null,
+      }),
+      {} as MovexClientResourceShape<TResourceType, TState>['subscribers']
+    ),
+  };
+};

@@ -31,17 +31,16 @@ export class MovexBoundResource<
   };
 
   get state() {
-    return this.getState();
+    return this.observable.getUncheckedState();
   }
 
-  private getState = () => {
-    return this.observable.getUncheckedState();
-  };
+  get subscribers() {
+    return this.observable.get().subscribers;
+  }
 
-  // TODO: Should this give access to the all the subscribers to the client movex??
-  // get subscribers() {
-  //   // return
-  // }
+  get item() {
+    return this.observable.get();
+  }
 
   // This to be called when not used anymore in order to clean the update subscriptions
   destroy = () => {

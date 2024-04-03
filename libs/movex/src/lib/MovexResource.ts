@@ -7,14 +7,14 @@ import type {
   CheckedReconciliatoryActions,
   MovexReducer,
   IOConnection,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import {
   logsy as rawLogsy,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
   isAction,
   invoke,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { ConnectionToMasterResource } from './ConnectionToMasterResource';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import * as deepObject from 'deep-object-diff';
@@ -62,17 +62,20 @@ export class MovexResource<
     return this.connectionToMasterResource
       .create(this.resourceType, state, resourceId)
       .map((item) => ({
+        ...item,
         rid: toResourceIdentifierObj<TResourceType>(item.rid),
         state: item.state[0],
       }));
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
-    return this.connectionToMasterResource.get(rid).map(([state]) => ({
-      // This is rempaed in this way in order to return the same payload as "create"
-      rid,
-      state,
-    }));
+    return this.connectionToMasterResource.getResource(rid);
+    // .map(({ rid, subscribers, }) => ({
+    //   ...resource,
+    //   // This is rempaed in this way in order to return the same payload as "create"
+    //   // rid,
+    //   // state,
+    // }));
 
     // TODO: Once a client can bind multiple times this could also sync with the obsservable
     // .map((s) => {
@@ -82,12 +85,10 @@ export class MovexResource<
   }
 
   /**
-   * This returns the actual MovexClientResource. The name "use" doesn't seem to be perfect yet
-   *  but not sure what to use yet. "observe", "listenTo", "attach", "follow" ?:)
-   * I think "bind" works pretty well! :D
+   * Connect the Master to the Client resource
    *
    * @param rid
-   * @returns
+   * @returns MovexResourceObservable
    */
   bind(rid: ResourceIdentifier<TResourceType>) {
     // TODO:
@@ -101,14 +102,16 @@ export class MovexResource<
       this.reducer
     );
 
+    // resourceObservable.$subscribers.get()
+
     // TODO: Fix this!!!
     // resourceObservable.setMasterSyncing(false);
 
     const syncLocalState = () => {
       return this.connectionToMasterResource
-        .get(rid)
+        .getState(rid)
         .map((masterCheckState) => {
-          resourceObservable.sync(masterCheckState);
+          resourceObservable.syncState(masterCheckState);
 
           return masterCheckState;
         });
@@ -151,11 +154,14 @@ export class MovexResource<
 
     this.connectionToMasterResource
       .addResourceSubscriber(rid)
-      .map(() => {
-        // TODO: This is where the issue is. the master never responds
-
+      .map((res) => {
         // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
-        syncLocalState();
+        // syncLocalState();
+
+        // Added on April 1st
+        // TODO: This can be improved to update the whole resource or smtg like that, also to look at the sync and think should the subscribers also sync
+        resourceObservable.syncState(res.state);
+        resourceObservable.updateSubscribers(res.subscribers);
       })
       .mapErr((e) => {
         logsy.error('Add Resource Subscriber Error', e);
@@ -164,7 +170,7 @@ export class MovexResource<
     const onReconciliateActionsHandler = (
       p: CheckedReconciliatoryActions<A>
     ) => {
-      const prevState = resourceObservable.get();
+      const prevState = resourceObservable.getCheckedState();
 
       logsy.group(
         `%c\u{25BC} %cReconciliatory Actions Received (${p.actions.length}). FinalCheckum ${p.finalChecksum}`,
@@ -175,7 +181,9 @@ export class MovexResource<
       );
       logsy.log('%cPrev state', logUnimportantStyle, prevState[0]);
 
-      const nextState = resourceObservable.applyMultipleActions(p.actions);
+      const nextState = resourceObservable.applyMultipleActions(
+        p.actions
+      ).checkedState;
 
       p.actions.forEach((action, i) => {
         logsy.log(
@@ -226,6 +234,129 @@ export class MovexResource<
     };
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
+      resourceObservable.onDispatched(
+        ({ action, next: nextLocalCheckedState }) => {
+          const [nextLocalState, nextLocalChecksum] = nextLocalCheckedState;
+
+          this.connectionToMasterResource
+            .emitAction(rid, action)
+            .map(async (master) => {
+              if (master.reconciled) {
+                onReconciliateActionsHandler(master);
+
+                return;
+              }
+
+              // Otherwise if it's a simple ack
+
+              // And the checksums are equal stop here
+              if (master.nextChecksum === nextLocalChecksum) {
+                return;
+              }
+
+              // When the checksums are not the same, need to resync the state!
+              // this is expensive and ideally doesn't happen too much.
+
+              logsy.group(
+                `[Movex] Dispatch Ack Error: "Checksums MISMATCH"\n`,
+                `client: '${this.connectionToMaster.clientId}',\n`,
+                'action:',
+                action
+              );
+
+              await resyncLocalState()
+                .map((masterState) => {
+                  logsy.log(
+                    'Master State:',
+                    JSON.stringify(masterState[0], null, 2),
+                    masterState[1]
+                  );
+                  logsy.log(
+                    'Local State:',
+                    JSON.stringify(nextLocalCheckedState[0], null, 2),
+                    nextLocalCheckedState[1]
+                  );
+                  logsy.log(
+                    'Diff',
+                    deepObject.detailedDiff(masterState, nextLocalCheckedState)
+                  );
+                })
+                .resolve();
+
+              logsy.groupEnd();
+            });
+        }
+      ),
+      this.connectionToMasterResource.onFwdAction(rid, (p) => {
+        const prevState = resourceObservable.getCheckedState();
+
+        resourceObservable.reconciliateAction(p);
+
+        const nextState = resourceObservable.getCheckedState();
+
+        logsy.group(
+          `%c\u{25BC} %cForwarded Action Received: %c${p.action.type}`,
+          logIncomingStyle,
+          logUnimportantStyle,
+          logImportantStyle,
+          'Client:',
+          this.connectionToMaster.clientId
+        );
+        logsy.log('%cPrev State', logUnimportantStyle, prevState[0]);
+        logsy.log(
+          `%cAction: %c${p.action.type}`,
+          logOutgoingStyle,
+          logImportantStyle,
+          (p.action as ActionWithAnyPayload<string>).payload
+        );
+        logsy.log('%cNext State', logIncomingStyle, nextState[0]);
+        if (prevState[1] !== nextState[1]) {
+          logsy.log(
+            '%cchecksums',
+            logUnimportantStyle,
+            prevState[1],
+            '>',
+            nextState[1]
+          );
+        } else {
+          logsy.log('%cNo Diff', logErrorStyle, prevState[1]);
+        }
+
+        logsy.groupEnd();
+      }),
+      this.connectionToMasterResource.onReconciliatoryActions(
+        rid,
+        onReconciliateActionsHandler
+      ),
+
+      // Subscribers
+      this.connectionToMasterResource.onSubscriberAdded(rid, (clientId) => {
+        logsy.log('Subscriber Added', clientId);
+
+        resourceObservable.updateSubscribers((prev) => ({
+          ...prev,
+          [clientId]: null,
+        }));
+      }),
+      this.connectionToMasterResource.onSubscriberRemoved(rid, (clientId) => {
+        logsy.log('Subscriber Removed', clientId);
+
+        resourceObservable.updateSubscribers((prev) => {
+          const { [clientId]: removed, ...rest } = prev;
+
+          return rest;
+        });
+      }),
+
+      // Destroyers
+
+      // Add the client resource destroy to the list of unsubscribers
+      () => resourceObservable.destroy(),
+
+      // Add the master Resource Destroy as well
+      () => this.connectionToMasterResource.destroy(),
+
+      // Logger
       resourceObservable.onDispatched(
         ({
           action,
@@ -292,105 +423,10 @@ export class MovexResource<
           }
 
           logsy.groupEnd();
-
-          this.connectionToMasterResource
-            .emitAction(rid, action)
-            .map(async (master) => {
-              if (master.reconciled) {
-                onReconciliateActionsHandler(master);
-
-                return;
-              }
-
-              // Otherwise if it's a simple ack
-
-              // And the checksums are equal stop here
-              if (master.nextChecksum === nextLocalChecksum) {
-                return;
-              }
-
-              // When the checksums are not the same, need to resync the state!
-              // this is expensive and ideally doesn't happen too much.
-
-              logsy.group(
-                `[Movex] Dispatch Ack Error: "Checksums MISMATCH"\n`,
-                `client: '${this.connectionToMaster.clientId}',\n`,
-                'action:',
-                action
-              );
-
-              await resyncLocalState()
-                .map((masterState) => {
-                  logsy.log(
-                    'Master State:',
-                    JSON.stringify(masterState[0], null, 2),
-                    masterState[1]
-                  );
-                  logsy.log(
-                    'Local State:',
-                    JSON.stringify(nextLocalCheckedState[0], null, 2),
-                    nextLocalCheckedState[1]
-                  );
-                  logsy.log(
-                    'Diff',
-                    deepObject.detailedDiff(masterState, nextLocalCheckedState)
-                  );
-                })
-                .resolve();
-
-              logsy.groupEnd();
-            });
         }
       ),
-      this.connectionToMasterResource.onFwdAction(rid, (p) => {
-        const prevState = resourceObservable.get();
-
-        resourceObservable.reconciliateAction(p);
-
-        const nextState = resourceObservable.get();
-
-        logsy.group(
-          `%c\u{25BC} %cForwarded Action Received: %c${p.action.type}`,
-          logIncomingStyle,
-          logUnimportantStyle,
-          logImportantStyle,
-          'Client:',
-          this.connectionToMaster.clientId
-        );
-        logsy.log('%cPrev State', logUnimportantStyle, prevState[0]);
-        logsy.log(
-          `%cAction: %c${p.action.type}`,
-          logOutgoingStyle,
-          logImportantStyle,
-          (p.action as ActionWithAnyPayload<string>).payload
-        );
-        logsy.log('%cNext State', logIncomingStyle, nextState[0]);
-        if (prevState[1] !== nextState[1]) {
-          logsy.log(
-            '%cchecksums',
-            logUnimportantStyle,
-            prevState[1],
-            '>',
-            nextState[1]
-          );
-        } else {
-          logsy.log('%cNo Diff', logErrorStyle, prevState[1]);
-        }
-
-        logsy.groupEnd();
-      }),
-      this.connectionToMasterResource.onReconciliatoryActions(
-        rid,
-        onReconciliateActionsHandler
-      ),
-      // Add the client resource destroy to the list of unsubscribers
-      () => resourceObservable.destroy(),
-
-      // Add the master Resource Destroy as well
-      () => this.connectionToMasterResource.destroy(),
     ];
 
-    // return new MovexBoundResource(resourceObservable);
     return resourceObservable;
   }
 

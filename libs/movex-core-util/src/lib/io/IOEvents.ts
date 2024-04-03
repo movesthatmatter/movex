@@ -7,6 +7,7 @@ import type {
 import type {
   CheckedState,
   Checksum,
+  MovexClientResourceShape,
   IOPayloadResult,
   MovexClient,
   ResourceIdentifier,
@@ -18,9 +19,8 @@ export type IOEvents<
   A extends AnyAction = AnyAction,
   TResourceType extends string = string
 > = {
-
   /**
-   * The following events are directed from Client to Master 
+   * The following events are directed from Client to Master
    * */
 
   createResource: (p: {
@@ -29,10 +29,11 @@ export type IOEvents<
     resourceId?: string;
     // clientId: MovexClient['id']; // Needed?
   }) => IOPayloadResult<
-    {
-      rid: ResourceIdentifierStr<TResourceType>;
-      state: CheckedState<TState>;
-    },
+    MovexClientResourceShape<TResourceType, TState>,
+    // {
+    //   rid: ResourceIdentifierStr<TResourceType>;
+    //   state: CheckedState<TState>;
+    // },
     unknown // Type this
   >;
 
@@ -41,21 +42,28 @@ export type IOEvents<
   addResourceSubscriber: (p: {
     rid: ResourceIdentifier<TResourceType>;
   }) => IOPayloadResult<
-    void,
+    MovexClientResourceShape<TResourceType, TState>,
     unknown // Type this
   >;
-
-  // removeResourceSubscriber: (p: {
-  //   rid: ResourceIdentifier<TResourceType>;
-  // }) => IOPayloadResult<
-  //   void,
-  //   unknown // Type this
-  // >;
 
   getResourceState: (p: {
     rid: ResourceIdentifier<TResourceType>;
   }) => IOPayloadResult<
     CheckedState<TState>,
+    unknown // Type this
+  >;
+
+  getResourceSubscribers: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+  }) => IOPayloadResult<
+    MovexClientResourceShape<TResourceType, TState>['subscribers'],
+    unknown // Type this
+  >;
+
+  getResource: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+  }) => IOPayloadResult<
+    MovexClientResourceShape<TResourceType, TState>,
     unknown // Type this
   >;
 
