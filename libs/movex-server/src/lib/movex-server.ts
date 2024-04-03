@@ -8,9 +8,13 @@ import {
   ConnectionToClient,
   type MovexDefinition,
   type IOEvents,
+  isResourceIdentifier,
+  objectKeys,
+  toResourceIdentifierObj,
 } from 'movex-core-util';
 import { MemoryMovexStore, MovexStore } from 'movex-store';
 import { initMovexMaster } from 'movex-master';
+import { isOneOf } from './util';
 
 export const movexServer = <TDefinition extends MovexDefinition>(
   {
@@ -37,7 +41,10 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     },
   });
 
-  const store = movexStore === 'memory' ? new MemoryMovexStore() : movexStore;
+  const store =
+    movexStore === 'memory'
+      ? new MemoryMovexStore<TDefinition['resources']>()
+      : movexStore;
 
   const movexMaster = initMovexMaster(definition, store);
 
@@ -48,14 +55,14 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     const clientId = getClientId(io.handshake.query['clientId'] as string);
     logsy.log('[MovexServer] Client Connected', clientId);
 
-    const connection = new ConnectionToClient(
+    const connectionToClient = new ConnectionToClient(
       clientId,
       new SocketIOEmitter<IOEvents>(io)
     );
 
-    io.emit('$setClientId', clientId);
+    connectionToClient.emitClientId();
 
-    movexMaster.addClientConnection(connection);
+    movexMaster.addClientConnection(connectionToClient);
 
     io.on('disconnect', () => {
       logsy.log('[MovexServer] Client Disconnected', clientId);
@@ -69,9 +76,56 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   });
 
   app.get('/store', async (_, res) => {
-    res.header('Content-Type', 'application/json');
-    res.send(JSON.stringify(await store.all().resolveUnwrap(), null, 4));
+    store.all().map((data) => {
+      res.header('Content-Type', 'application/json');
+      res.send(JSON.stringify(data, null, 4));
+    });
   });
+
+  // Resources
+  // app.get('/api/resources', async (_, res) => {
+  //   res.header('Content-Type', 'application/json');
+  //   res.send(JSON.stringify(await store.all().resolveUnwrap(), null, 4));
+  // });
+
+  app.get('/api/resources/:rid', async (req, res) => {
+    const rawRid = req.params.rid;
+
+    if (!isResourceIdentifier(rawRid)) {
+      return res.sendStatus(400); // Bad Request
+    }
+
+    const ridObj = toResourceIdentifierObj(rawRid);
+
+    if (!isOneOf(ridObj.resourceType, objectKeys(definition.resources))) {
+      return res.sendStatus(400); // Bad Request
+    }
+
+    res.header('Content-Type', 'application/json');
+
+    return store
+      .get(rawRid as any) // TODO: Not sure why this doesn't see it and needs to be casted to any?
+      .map((data) => {
+        res.send(JSON.stringify(data, null, 4));
+      })
+      .mapErr(() => {
+        res.sendStatus(404);
+      });
+  });
+
+  // app.post('/api/resources', async (req, res) => {
+  //   // const rawRid = req.params.rid;
+  //   req
+
+  //   if (isResourceIdentifier(rawRid)) {
+  //     res.header('Content-Type', 'application/json');
+  //     res.send(
+  //       JSON.stringify(await store.get(rawRid as any).resolveUnwrap(), null, 4)
+  //     );
+  //   } else {
+  //     res.sendStatus(400);
+  //   }
+  // });
 
   // //start our server
   const port = process.env['port'] || 3333;
