@@ -3,9 +3,6 @@ import { isFunction } from '../misc';
 
 export type NextStateGetter<T> = T | ((prev: T) => T);
 
-// export const getNextStateFrom = <T>(prev: T, a: NextStateGetter<T>) =>
-//   isFunction(a) ? a(prev) : a;
-
 export interface IObservable<T> {
   get: () => T;
   onUpdate: (fn: (state: T) => void) => () => void;
@@ -37,10 +34,8 @@ export class Observable<T> implements IObservable<T> {
     return this;
   }
 
-  // TODO: Add map for transformation
-  // TODO: TEST THIS AND ENSURE IT DOESNT CREATE SOME WEIRD LOOPING OR OTHER ISSUES
   /**
-   *
+   * Ability to transform the state
    *
    * @param mapFn
    * @returns
