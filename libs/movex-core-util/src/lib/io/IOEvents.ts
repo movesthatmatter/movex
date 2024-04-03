@@ -22,6 +22,7 @@ export type IOEvents<
   /**
    * The following events are directed from Client to Master
    * */
+  setClientId: (clientId: string) => void;
 
   createResource: (p: {
     resourceType: TResourceType;

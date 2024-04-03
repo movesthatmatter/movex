@@ -1,5 +1,4 @@
 import { Err, Ok } from 'ts-results';
-import { Pubsy } from 'ts-pubsy';
 import { logsy } from './Logsy';
 import type { Socket as ServerSocket } from 'socket.io';
 import type { Socket as ClientSocket } from 'socket.io-client';
@@ -12,10 +11,6 @@ export type SocketIO = ServerSocket | ClientSocket;
 export class SocketIOEmitter<TEventMap extends EventMap>
   implements EventEmitter<TEventMap>
 {
-  private pubsy = new Pubsy<{
-    onReceivedClientId: string;
-  }>();
-
   private logger: typeof console;
   constructor(
     private socket: SocketIO,
@@ -26,17 +21,6 @@ export class SocketIOEmitter<TEventMap extends EventMap>
   ) {
     this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
-
-    // This might need to be moved from here into the master connection or somewhere client specific!
-    this.socket.onAny((ev, clientId) => {
-      if (ev === '$setClientId' && typeof clientId === 'string') {
-        this.pubsy.publish('onReceivedClientId', clientId);
-      }
-    });
-  }
-
-  onReceivedClientId(fn: (clientId: string) => void) {
-    return this.pubsy.subscribe('onReceivedClientId', fn);
   }
 
   on<E extends keyof TEventMap>(
@@ -46,8 +30,6 @@ export class SocketIOEmitter<TEventMap extends EventMap>
       ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
-    // logsy.debug('[SocketEmitter] subscribed to:', event);
-
     this.socket.on(event as string, listener);
 
     return this;
@@ -60,8 +42,6 @@ export class SocketIOEmitter<TEventMap extends EventMap>
       ack?: (r: ReturnType<TEventMap[E]>) => void
     ) => void
   ): this {
-    // logsy.debug('[SocketEmitter] unsubscribed to:', event);
-
     this.socket.off(event as string, listener);
 
     return this;

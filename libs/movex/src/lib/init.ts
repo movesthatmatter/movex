@@ -48,7 +48,8 @@ export const initMovex = <TResourceMap extends BaseMovexDefinitionResourcesMap>(
 
     const emitter = new SocketIOEmitter<IOEvents>(socket);
 
-    emitter.onReceivedClientId((clientId) => {
+    emitter.on('setClientId', (clientId) => {
+      // This might need to be moved from here into the master connection or somewhere client specific!
       const movex = new MovexFromDefintion<TResourceMap>(
         movexDefinition,
         new ConnectionToMaster(clientId, emitter)
