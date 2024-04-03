@@ -12,6 +12,9 @@ import {
   MovexResourceObservable,
 } from 'movex';
 
+/**
+ * This is where all of the resourceObservables are being kept by Rid
+ */
 export class ResourceObservablesRegistry<
   TResourcesMap extends BaseMovexDefinitionResourcesMap
 > {

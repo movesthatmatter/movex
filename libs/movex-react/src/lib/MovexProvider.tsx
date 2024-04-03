@@ -62,7 +62,7 @@ export const MovexProvider: React.FC<
 
       const clientId = movex.getClientId();
 
-      // This resets each time movex reinitiated
+      // This resets each time movex re-initiates
       const resourceRegistry = new ResourceObservablesRegistry(movex);
 
       const nextState = {
@@ -87,7 +87,7 @@ export const MovexProvider: React.FC<
       setContextState(nextState);
     });
 
-    // TODO: Maye add destroyer?
+    // TODO: Maybe add destroyer?
   }, [props.endpointUrl, props.clientId]);
 
   const didPreviouslyConnect = useRef(false);
