@@ -45,17 +45,11 @@ export class MovexResourceObservable<
    */
   private isSynchedPromiseDelegate = new PromiseDelegate();
 
-  // private $checkedState: Observable<CheckedState<TState>>;
-
   private $item: Observable<ObservedItem<TState>>;
-
-  // public $subscribers: Observable<>;
 
   private pubsy = new Pubsy<{
     onDispatched: DispatchedEvent<CheckedState<TState>, TAction>;
   }>();
-
-  // client: MovexResourceClient;
 
   private dispatcher: (
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
@@ -87,15 +81,6 @@ export class MovexResourceObservable<
 
     // TODO: Add Use case for how to deal with creation. When the get doesn't return anything?!
     // something like: if it returns record doesnt exist, use create instead of get? or io.getOrCreate()?
-
-    // const { dispatch, unsubscribe: unsubscribeFromDispatch } = createDispatcher<
-    //   TState,
-    //   TAction
-    // >(this.$checkedState, this.reducer, {
-    //   onDispatched: (p) => {
-    //     this.pubsy.publish('onDispatched', p);
-    //   },
-    // });
 
     const $checkedState = this.$item.map((s) => s.checkedState);
 
@@ -216,8 +201,6 @@ export class MovexResourceObservable<
       checkedState: CheckedState<TState>;
     }) => void
   ) {
-    // return this.$checkedState.onUpdate(([state]) => fn(state));
-    // return this.$checkedState.onUpdate(fn);
     return this.$item.onUpdate(fn);
   }
 
@@ -237,10 +220,7 @@ export class MovexResourceObservable<
   }
 
   getUncheckedState() {
-    // return this.$checkedState.get()[0];
-    // this.get().checkedState[0];
     return this.getCheckedState()[0];
-    // return this.$item.get()[0];
   }
 
   // This is the actual checked state. TODO: Not sure about the names yet

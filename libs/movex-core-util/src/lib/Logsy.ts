@@ -14,7 +14,7 @@ const globalDisabled = false;
 const globalLogsyConfigWrapper = {
   config: {
     disabled: false,
-    verbose: true, // TODO: Change this back
+    verbose: false,
   },
 };
 

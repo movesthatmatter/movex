@@ -6,9 +6,7 @@ import {
   type AnyAction,
   type IOEvents,
   type ConnectionToClient,
-  AnyResourceIdentifier,
-  AnyStringResourceIdentifier,
-  MovexClientResourceShape,
+  type AnyStringResourceIdentifier,
 } from 'movex-core-util';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
@@ -305,12 +303,6 @@ export class MovexMasterServer {
       onAddResourceSubscriber
     );
 
-    // This doesn't come from the client, but it is emitted to the clent from the server
-    // clientConnection.emitter.on(
-    //   'removeResourceSubscriber',
-    //   onRemoveResourceSubscriber
-    // );
-
     this.clientConnectionsByClientId = {
       ...this.clientConnectionsByClientId,
       [clientConnection.clientId]: clientConnection as ConnectionToClient<
@@ -340,10 +332,6 @@ export class MovexMasterServer {
         'addResourceSubscriber',
         onAddResourceSubscriber
       );
-      // clientConnection.emitter.off(
-      //   'removeResourceSubscriber',
-      //   onRemoveResourceSubscriber
-      // );
     };
   }
 

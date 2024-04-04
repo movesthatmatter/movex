@@ -91,7 +91,11 @@ export class ConnectionToMasterResource<
     }) => {
       console.log('ConnectionToMaster onRemoveResourceSubscriberHandler', p);
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
-        console.log('ConnectionToMaster onRemoveResourceSubscriberHandler', 'nooooope', p);
+        console.log(
+          'ConnectionToMaster onRemoveResourceSubscriberHandler',
+          'nooooope',
+          p
+        );
         return;
       }
 
@@ -107,7 +111,11 @@ export class ConnectionToMasterResource<
       console.log('ConnectionToMaster onAddResourceSubscriberHandler', p);
 
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
-        console.log('ConnectionToMaster onAddResourceSubscriberHandler', p, 'noooope');
+        console.log(
+          'ConnectionToMaster onAddResourceSubscriberHandler',
+          p,
+          'noooope'
+        );
         return;
       }
 
@@ -174,19 +182,7 @@ export class ConnectionToMasterResource<
           resourceType,
           resourceId,
         })
-        .then((res) =>
-          res.ok
-            ? // ? new Ok({
-              //     // This sanitizes the data only allowing specific fields to get to the client
-              //     // TODO: This actually should come sanitized from the server, since this is on the client
-              //     // Probably best to where the ack is called
-              //     // rid: res.val.rid,
-              //     // state: res.val.state,
-              //     ...res.val,
-              //   })
-              new Ok(res.val) // TODO: Ensure the data is sanitized from the server
-            : new Err(res.val)
-        )
+        .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );
   }
 

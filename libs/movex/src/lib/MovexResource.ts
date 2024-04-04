@@ -70,18 +70,6 @@ export class MovexResource<
 
   get(rid: ResourceIdentifier<TResourceType>) {
     return this.connectionToMasterResource.getResource(rid);
-    // .map(({ rid, subscribers, }) => ({
-    //   ...resource,
-    //   // This is rempaed in this way in order to return the same payload as "create"
-    //   // rid,
-    //   // state,
-    // }));
-
-    // TODO: Once a client can bind multiple times this could also sync with the obsservable
-    // .map((s) => {
-    //   // TODO: This shoou
-    //   // clientResource.sync(s);
-    // });
   }
 
   /**
