@@ -51,7 +51,7 @@ test('Adds Single Participant', async () => {
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
+  const actual = blueMovex.state.checkedState;
 
   const expected = computeCheckedState({
     ...initialChatState,
@@ -109,7 +109,7 @@ test('Single Participant Writes a Message', async () => {
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
+  const actual = blueMovex.state.checkedState;
 
   const expected = computeCheckedState({
     ...initialChatState,
@@ -189,7 +189,7 @@ test('Adding Multiple Participants', async () => {
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
+  const actual = blueMovex.state.checkedState;
 
   const expected = computeCheckedState({
     ...initialChatState,
@@ -300,7 +300,7 @@ test('Multiple Participants Write Multiple Messages', async () => {
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
+  const actual = blueMovex.state.checkedState;
 
   const expected = computeCheckedState({
     ...initialChatState,
