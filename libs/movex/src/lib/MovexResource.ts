@@ -149,7 +149,6 @@ export class MovexResource<
       });
     };
 
-    // Done/TODO: Needs a way to add a resource subscriber
     this.connectionToMasterResource
       .addResourceSubscriber(rid)
       .map(() => {

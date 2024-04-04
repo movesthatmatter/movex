@@ -7,7 +7,7 @@ import {
   computeCheckedState,
   isAction,
   Observable,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import type {
   IObservable,
   MovexClient,
@@ -21,7 +21,7 @@ import type {
   ToPrivateAction,
   ToPublicAction,
   MovexReducer,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { createDispatcher, DispatchedEvent } from './dispatch';
 import { PromiseDelegate } from 'promise-delegate';
 
@@ -160,6 +160,12 @@ export class MovexResourceObservable<
     return this.reducer(prevState, action);
   }
 
+  /**
+   * Subscribe to State updates
+   *
+   * @param fn
+   * @returns
+   */
   onUpdate(fn: (state: CheckedState<TState>) => void) {
     // return this.$checkedState.onUpdate(([state]) => fn(state));
     return this.$checkedState.onUpdate(fn);
