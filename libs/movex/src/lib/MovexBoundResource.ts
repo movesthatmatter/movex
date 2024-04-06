@@ -38,9 +38,10 @@ export class MovexBoundResource<
     return this.observable.get().subscribers;
   }
 
-  get item() {
-    return this.observable.get();
-  }
+  // This is not needed i believe, but I need to check, as it goes all the way to the client with private checked state types
+  // get item() {
+  //   return this.observable.get();
+  // }
 
   // This to be called when not used anymore in order to clean the update subscriptions
   destroy = () => {
