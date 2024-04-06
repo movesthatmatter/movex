@@ -8,7 +8,7 @@ import {
   type GetReducerState,
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { MemoryMovexStore, type MovexStoreItem } from 'movex-store';
 import { MovexMasterServer, initMovexMaster } from 'movex-master';
 import { MovexLocalContext, MovexLocalContextProps } from './MovexLocalContext';
