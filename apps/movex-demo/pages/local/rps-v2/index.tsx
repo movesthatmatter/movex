@@ -15,6 +15,12 @@ export default function App() {
     <MovexLocalMasterProvider
       movexDefinition={movexConfig}
       onMasterResourceUpdated={setMasterStore}
+      logger={{
+        onLog: ({ method, prefix, message, payload }) => {
+          // console.log('event', method, prefix, message, payload)
+          console[method](prefix + ' ' + message, payload);
+        },
+      }}
     >
       <Game masterStore={masterStore} />
     </MovexLocalMasterProvider>

@@ -1,7 +1,7 @@
 import React from "react";
 import { MovexBoundResourceFromConfig } from "movex-react";
 import { useCallback, useEffect, useMemo } from "react";
-import { logsy } from "movex-core-util";
+import { globalLogsy } from "movex-core-util";
 import movexConfig from "./movex.config";
 import {
   PlayerLabel,
@@ -68,7 +68,7 @@ export const GameUI: React.FC<Props> = ({
     }
 
     if (availableLabels.length === 0) {
-      logsy.warn("Player Slots taken");
+      globalLogsy.warn("Player Slots taken");
 
       return;
     }

@@ -8,6 +8,8 @@ import {
   type MovexDefinition,
   ResourceIdentifier,
   StringKeys,
+  LoggingEvent,
+  globalLogsy,
 } from 'movex-core-util';
 import { MovexClient } from 'movex';
 import { ResourceObservablesRegistry } from './ResourceObservableRegistry';
@@ -29,11 +31,14 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
         { connected: false }
       >
     ) => void;
+    logger?: {
+      onLog: (event: LoggingEvent) => void;
+    };
   }>;
 
 export const MovexProvider: React.FC<
   Props<BaseMovexDefinitionResourcesMap>
-> = ({ onConnected = noop, onDisconnected = noop, ...props }) => {
+> = ({ onConnected = noop, onDisconnected = noop, logger, ...props }) => {
   type TResourcesMap = typeof props['movexDefinition']['resources'];
 
   const [contextState, setContextState] = useState<
@@ -107,6 +112,14 @@ export const MovexProvider: React.FC<
       onDisconnected(contextState);
     }
   }, [contextState.connected, onDisconnected]);
+
+  useEffect(() => {
+    if (logger) {
+      return globalLogsy.onLog(logger.onLog);
+    }
+
+    return () => {};
+  }, [logger]);
 
   return (
     <MovexContext.Provider value={contextState}>
