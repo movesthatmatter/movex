@@ -1,12 +1,15 @@
-import type {
+import {
   AnyAction,
   EventEmitter,
   UnsubscribeFn,
   IOEvents,
-} from  'movex-core-util';
+  globalLogsy,
+} from 'movex-core-util';
 
 import { Pubsy } from 'ts-pubsy';
 import { getRandomInt, getUuid } from './util';
+
+const logsy = globalLogsy.withNamespace('MockConnectionEmitter');
 
 export class MockConnectionEmitter<
   TState extends any = any,
@@ -163,14 +166,12 @@ export class MockConnectionEmitter<
 
       // TODO: Need a way for this to call the unsubscriber
       this.ackPubsy.subscribe(ackId, (ackMsg) => {
-        console.log(
-          '[MockConnectionEmitter] emit',
+        logsy.log('Emit', {
           event,
           request,
-          'response:',
-          ackMsg
-        );
-        console.trace('[MockConnectionEmitter] Trace', event, request);
+          response: ackMsg,
+        });
+
         acknowledgeCb(
           ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
         );

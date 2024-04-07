@@ -1,5 +1,5 @@
 import { Err, Ok } from 'ts-results';
-import { logsy } from './Logsy';
+import { globalLogsy } from './Logsy';
 import type { Socket as ServerSocket } from 'socket.io';
 import type { Socket as ClientSocket } from 'socket.io-client';
 import type { EventMap } from 'typed-emitter';
@@ -8,18 +8,17 @@ import type { UnsubscribeFn, WsResponseResultPayload } from './core-types';
 
 export type SocketIO = ServerSocket | ClientSocket;
 
+const logsy = globalLogsy.withNamespace('[SocketIOEmitter]');
+
 export class SocketIOEmitter<TEventMap extends EventMap>
   implements EventEmitter<TEventMap>
 {
-  private logger: typeof console;
   constructor(
     private socket: SocketIO,
     private config: {
-      logger?: typeof console;
       waitForResponseMs?: number;
     } = {}
   ) {
-    this.logger = config.logger || console;
     this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
   }
 
@@ -67,7 +66,7 @@ export class SocketIOEmitter<TEventMap extends EventMap>
     acknowledgeCb?: (response: ReturnType<TEventMap[E]>) => void
   ): boolean {
     const reqId = `${event as string}(${String(Math.random()).slice(-3)})`;
-    logsy.debug('[ServerSocketEmitter]', reqId, 'Emit:', event, request);
+    logsy.debug('Emit', { reqId, event, request });
 
     this.socket.emit(
       event as string,
@@ -76,10 +75,10 @@ export class SocketIOEmitter<TEventMap extends EventMap>
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {
             if (res.ok) {
-              logsy.debug('[ServerSocketEmitter]', reqId, 'Response Ok:', res);
+              logsy.debug('Emit Response Ok', { reqId, event, res });
               acknowledgeCb(new Ok(res.val) as ReturnType<TEventMap[E]>);
             } else {
-              logsy.warn('[ServerSocketEmitter]', reqId, 'Response Err:', res);
+              logsy.debug('Emit Response Err', { reqId, event, res });
               acknowledgeCb(new Err(res.val) as ReturnType<TEventMap[E]>);
             }
           },
@@ -106,13 +105,11 @@ export class SocketIOEmitter<TEventMap extends EventMap>
   ): Promise<ReturnType<TEventMap[E]>> {
     return new Promise((resolve, reject) => {
       const reqId = `${event as string}(${String(Math.random()).slice(-3)})`;
-      logsy.debug(
-        '[ServerSocketEmitter]',
+      logsy.debug('EmitAndAcknowledge', {
         reqId,
-        'EmitAndAcknowledge:',
         event,
-        request
-      );
+        request,
+      });
 
       this.socket.emit(
         event as string,
@@ -120,20 +117,30 @@ export class SocketIOEmitter<TEventMap extends EventMap>
         withTimeout(
           (res: WsResponseResultPayload<unknown, unknown>) => {
             if (res.ok) {
-              logsy.debug('[ServerSocketEmitter]', reqId, 'Response Ok:', res);
+              logsy.debug('EmitAndAcknowledge Response Ok', {
+                reqId,
+                res,
+                request,
+                event,
+              });
               resolve(new Ok(res.val));
             } else {
-              logsy.warn('[ServerSocketEmitter]', reqId, 'Response Err:', res);
+              logsy.debug('EmitAndAcknowledge Response Err', {
+                reqId,
+                res,
+                request,
+                event,
+              });
               reject(new Err(res.val));
             }
           },
           () => {
-            logsy.warn(
-              '[ServerSocketEmitter]',
+            logsy.error('EmitAndAcknowledge Request Timeout', {
+              reqId,
+              request,
               event,
-              'Request Timeout:',
-              request
-            );
+            });
+
             // TODO This error could be typed better using a result error
             reject(new Err('RequestTimeout'));
           },

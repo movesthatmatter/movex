@@ -89,13 +89,7 @@ export class ConnectionToMasterResource<
       rid: ResourceIdentifier<TResourceType>;
       clientId: MovexClient['id'];
     }) => {
-      console.log('ConnectionToMaster onRemoveResourceSubscriberHandler', p);
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
-        console.log(
-          'ConnectionToMaster onRemoveResourceSubscriberHandler',
-          'nooooope',
-          p
-        );
         return;
       }
 
@@ -108,14 +102,7 @@ export class ConnectionToMasterResource<
       rid: ResourceIdentifier<TResourceType>;
       clientId: MovexClient['id'];
     }) => {
-      console.log('ConnectionToMaster onAddResourceSubscriberHandler', p);
-
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
-        console.log(
-          'ConnectionToMaster onAddResourceSubscriberHandler',
-          p,
-          'noooope'
-        );
         return;
       }
 

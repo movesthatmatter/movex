@@ -13,14 +13,6 @@ import {
 
 const rid: ResourceIdentifier<string> = 'counter:test-id';
 
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
-});
-
 test('Dispatch Local Actions', async () => {
   const $resource = new MovexResourceObservable(
     'test-client',

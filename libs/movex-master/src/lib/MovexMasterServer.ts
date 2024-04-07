@@ -99,7 +99,10 @@ export class MovexMasterServer {
           // Forwardable
           objectKeys(peerActions.byClientId).forEach((peerId) => {
             if (!peerActions.byClientId[peerId]) {
-              logsy.error('Inexistant Peer Connection for peerId:', peerId);
+              logsy.error('Inexistant Peer Connection for peerId:', {
+                peerId,
+                peerActionsByClientId: peerActions.byClientId,
+              });
               return;
             }
 
@@ -261,11 +264,10 @@ export class MovexMasterServer {
               const peerConnection = this.clientConnectionsByClientId[peerId];
 
               if (!peerConnection) {
-                logsy.error(
-                  'onAddResourceSubscriber: Peer Connection not found for',
+                logsy.error('OnAddResourceSubscriber PeerConnectionNotFound', {
                   peerId,
-                  this.clientConnectionsByClientId
-                );
+                  clientId: this.clientConnectionsByClientId,
+                });
                 return;
               }
 
@@ -312,12 +314,10 @@ export class MovexMasterServer {
       >,
     };
 
-    logsy.log(
-      '[MovexMasterServer] Added Connection Succesfully:',
-      clientConnection.clientId,
-      '| Connections',
-      Object.keys(this.clientConnectionsByClientId).length
-    );
+    logsy.info('Connection Added  Succesfully', {
+      clientId: clientConnection.clientId,
+      connectionsCount: Object.keys(this.clientConnectionsByClientId).length,
+    });
 
     // Unsubscribe
     return () => {
@@ -343,39 +343,34 @@ export class MovexMasterServer {
 
     this.clientConnectionsByClientId = restOfConnections;
 
-    logsy.log(
-      '[MovexMasterServer] Removed Connection Succesfully for Client:',
+    logsy.info('Connection Removed', {
       clientId,
-      '| Connections Left:',
-      Object.keys(this.clientConnectionsByClientId).length
-    );
+      connectionsLeft: Object.keys(this.clientConnectionsByClientId).length,
+    });
   }
 
   private unsubscribeClientFromResources(clientId: MovexClient['id']) {
-    const clientSubscricptions = this.subscribersToRidsMap[clientId];
+    const clientSubscriptions = this.subscribersToRidsMap[clientId];
 
-    if (!clientSubscricptions) {
-      logsy.log('No Resource Subscription');
-      return;
+    if (clientSubscriptions) {
+      const subscribedRidsList = objectKeys(clientSubscriptions);
+
+      subscribedRidsList.forEach(async (rid) => {
+        await this.removeResourceSubscriberAndNotifyPeersOfClientUnsubscription(
+          rid,
+          clientId
+        );
+
+        // TODO: should this wait for the client to ack or smtg? probably not needed
+
+        // Remove the rid from the client's record
+        const { [rid]: removed, ...rest } = this.subscribersToRidsMap[clientId];
+
+        this.subscribersToRidsMap[clientId] = rest;
+      });
     }
 
-    const subscribedRidsList = objectKeys(clientSubscricptions);
-
-    subscribedRidsList.forEach(async (rid) => {
-      await this.removeResourceSubscriberAndNotifyPeersOfClientUnsubscription(
-        rid,
-        clientId
-      );
-
-      // TODO: should this wait for the client to ack or smtg? probably not needed
-
-      // Remove the rid from the client's record
-      const { [rid]: removed, ...rest } = this.subscribersToRidsMap[clientId];
-
-      this.subscribersToRidsMap[clientId] = rest;
-    });
-
-    logsy.log('Removed client subscriptions ok');
+    logsy.info('Client Subscriptions Removed', { clientId });
   }
 
   private async removeResourceSubscriberAndNotifyPeersOfClientUnsubscription(
@@ -387,7 +382,10 @@ export class MovexMasterServer {
     const masterResource = this.masterResourcesByType[resourceType];
 
     if (!masterResource) {
-      logsy.error('MasterResourceInexistent', resourceType);
+      logsy.error(
+        'RemoveResourceSubscriberAndNotifyPeersOfClientUnsubscription MasterResourceInexistent',
+        { resourceType }
+      );
 
       return;
     }
@@ -399,13 +397,6 @@ export class MovexMasterServer {
     await masterResource
       .getSubscribers(rid)
       .map((clientIds) => {
-        console.log(
-          'notifyPeersOfClientUnsubscription resource',
-          rid,
-          'subscribers',
-          clientIds
-        );
-
         objectKeys(clientIds)
           .filter((clientId) => clientId !== subscriberClientId)
           .forEach((peerId) => {
@@ -413,9 +404,11 @@ export class MovexMasterServer {
 
             if (!peerConnection) {
               logsy.error(
-                'notifyPeersOfClientUnsubscription Peer Connection not found for',
-                peerId,
-                this.clientConnectionsByClientId
+                'RemoveResourceSubscriberAndNotifyPeersOfClientUnsubscription Peer Connection not found for',
+                {
+                  peerId,
+                  resourceType,
+                }
               );
               return;
             }
