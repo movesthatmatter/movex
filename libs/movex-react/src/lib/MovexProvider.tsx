@@ -35,7 +35,6 @@ export type MovexProviderProps<
   logger?: {
     onLog: (event: LoggingEvent) => void;
   };
-  test:number;
 }>;
 
 export const MovexProvider: React.FC<
