@@ -14,30 +14,32 @@ import {
 import { MovexClient } from 'movex';
 import { ResourceObservablesRegistry } from './ResourceObservableRegistry';
 
-type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
-  React.PropsWithChildren<{
-    movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
-    endpointUrl: string;
-    clientId?: MovexClientUser['id'];
-    onConnected?: (
-      state: Extract<
-        MovexContextProps<TMovexConfigResourcesMap>,
-        { connected: true }
-      >
-    ) => void;
-    onDisconnected?: (
-      state: Extract<
-        MovexContextProps<TMovexConfigResourcesMap>,
-        { connected: false }
-      >
-    ) => void;
-    logger?: {
-      onLog: (event: LoggingEvent) => void;
-    };
-  }>;
+export type MovexProviderProps<
+  TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap
+> = React.PropsWithChildren<{
+  movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
+  endpointUrl: string;
+  clientId?: MovexClientUser['id'];
+  onConnected?: (
+    state: Extract<
+      MovexContextProps<TMovexConfigResourcesMap>,
+      { connected: true }
+    >
+  ) => void;
+  onDisconnected?: (
+    state: Extract<
+      MovexContextProps<TMovexConfigResourcesMap>,
+      { connected: false }
+    >
+  ) => void;
+  logger?: {
+    onLog: (event: LoggingEvent) => void;
+  };
+  test:number;
+}>;
 
 export const MovexProvider: React.FC<
-  Props<BaseMovexDefinitionResourcesMap>
+  MovexProviderProps<BaseMovexDefinitionResourcesMap>
 > = ({ onConnected = noop, onDisconnected = noop, logger, ...props }) => {
   type TResourcesMap = typeof props['movexDefinition']['resources'];
 
