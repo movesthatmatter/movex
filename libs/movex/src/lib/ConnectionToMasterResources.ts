@@ -11,6 +11,7 @@ import type {
   IOEvents,
   ConnectionToMaster,
   MovexClient,
+  SanitizedMovexClient,
 } from 'movex-core-util';
 import {
   invoke,
@@ -24,7 +25,7 @@ import { Err, Ok } from 'ts-results';
 /**
  * This handles the connection with Master per ResourceType
  */
-export class ConnectionToMasterResource<
+export class ConnectionToMasterResources<
   TState,
   TAction extends AnyAction,
   TResourceType extends string
@@ -38,7 +39,10 @@ export class ConnectionToMasterResource<
   }>();
 
   private subscriberAddedEventPubsy = new Pubsy<{
-    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: MovexClient['id'];
+    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: Pick<
+      MovexClient,
+      'id' | 'info'
+    >;
   }>();
 
   private subscriberRemovedEventPubsy = new Pubsy<{
@@ -52,7 +56,8 @@ export class ConnectionToMasterResource<
     private connectionToMaster: ConnectionToMaster<
       TState,
       TAction,
-      TResourceType
+      TResourceType,
+      {} // Fix
     >
   ) {
     const onFwdActionHandler = (
@@ -100,7 +105,7 @@ export class ConnectionToMasterResource<
     };
     const onAddResourceSubscriberHandler = (p: {
       rid: ResourceIdentifier<TResourceType>;
-      clientId: MovexClient['id'];
+      client: SanitizedMovexClient;
     }) => {
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
         return;
@@ -108,7 +113,7 @@ export class ConnectionToMasterResource<
 
       this.subscriberAddedEventPubsy.publish(
         `rid:${toResourceIdentifierStr(p.rid)}`,
-        p.clientId
+        { id: p.client.id, info: p.client.info }
       );
     };
 
@@ -184,6 +189,7 @@ export class ConnectionToMasterResource<
       this.connectionToMaster.emitter
         .emitAndAcknowledge('addResourceSubscriber', {
           rid,
+          clientInfo: this.connectionToMaster.clientInfo,
         })
         .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );
@@ -277,7 +283,7 @@ export class ConnectionToMasterResource<
 
   onSubscriberAdded(
     rid: ResourceIdentifier<TResourceType>,
-    fn: (clientId: MovexClient['id']) => void
+    fn: (clientId: SanitizedMovexClient) => void
   ) {
     return this.subscriberAddedEventPubsy.subscribe(
       `rid:${toResourceIdentifierStr(rid)}`,

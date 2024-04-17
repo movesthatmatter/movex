@@ -11,7 +11,6 @@ import {
 import {
   MovexMasterServer,
   MockConnectionEmitter,
-  orchestrateDefinedMovex,
   getUuid, // This can actually be mocked here as it's just client only!
 } from 'movex-master';
 import { MovexClient } from 'movex';
@@ -19,8 +18,11 @@ import {
   MovexReactContext,
   MovexReactContextProps,
   MovexResourceObservablesRegistry,
+  MovexReactContextPropsConnected,
 } from 'movex-react';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
+import { orchestrateDefinedMovex } from './ClientMasterOrchestrator';
+// import { MovexContextPropsConnected } from 'movex-react';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
@@ -54,6 +56,7 @@ export class MovexLocalProvider<
       contextState: {
         connected: false,
         clientId: undefined,
+        clientInfo: undefined,
       },
     };
   }
@@ -89,10 +92,13 @@ export class MovexLocalProvider<
       mockedMovex.movex
     );
 
-    const nextState = {
+    const client = mockedMovex.movex.getClient();
+
+    const nextState: MovexReactContextPropsConnected<TResourcesMap> = {
       connected: true,
       movex: mockedMovex.movex,
-      clientId: mockedMovex.movex.getClientId(),
+      clientId: client.id,
+      clientInfo: client.info,
       movexDefinition: this.props.movexDefinition,
       bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
         rid: ResourceIdentifier<TResourceType>,

@@ -7,13 +7,18 @@ import {
   type IOEvents,
   type ConnectionToClient,
   type AnyStringResourceIdentifier,
+  MovexClientInfo,
+  SanitizedMovexClient,
+  GenericResourceType,
 } from 'movex-core-util';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { MovexMasterResource } from './MovexMasterResource';
-import { storeItemToSanitizedClientResource } from './util';
+import { itemToSanitizedClientResource } from './util';
+import { MovexStoreItem } from 'movex-store';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
+
 /**
  * This lives on the server most likely, and it's where the
  * fwd and the reconciliatory action logic reside
@@ -26,10 +31,10 @@ export class MovexMasterServer {
 
   private clientConnectionsByClientId: Record<
     MovexClient['id'],
-    ConnectionToClient<any, AnyAction, any>
+    ConnectionToClient<any, AnyAction, any, any>
   > = {};
 
-  // A Map of subscribers to their subsxribed resources
+  // A Map of subscribers to their subscribed resources
   private subscribersToRidsMap: Record<
     MovexClient['id'],
     Record<AnyStringResourceIdentifier, undefined>
@@ -40,14 +45,39 @@ export class MovexMasterServer {
   ) {}
 
   /**
+   * Returns the Active Client Connections
+   *
+   * @returns
+   */
+  allClients() {
+    return objectKeys(this.clientConnectionsByClientId).reduce(
+      (prev, nextClientId) => ({
+        ...prev,
+        [nextClientId]: {
+          id: this.clientConnectionsByClientId[nextClientId].clientId,
+          info: this.clientConnectionsByClientId[nextClientId].clientInfo,
+          subscriptions: {
+            ...this.subscribersToRidsMap[nextClientId],
+            subscribedAt: -1, // TODO: fix this if needed
+          },
+        },
+      }),
+      {} as Record<MovexClient['id'], MovexClient>
+    );
+  }
+
+  /**
    * Adds the Client Connection and subscribers to all the client events
    *
    * @param clientConnection
    * @returns
    */
-  addClientConnection<S, A extends AnyAction, TResourceType extends string>(
-    clientConnection: ConnectionToClient<S, A, TResourceType>
-  ) {
+  addClientConnection<
+    S,
+    A extends AnyAction,
+    TResourceType extends string,
+    TClientInfo extends MovexClientInfo
+  >(clientConnection: ConnectionToClient<S, A, TResourceType, TClientInfo>) {
     // Event Handlers
     const onEmitActionHandler = (
       payload: Parameters<
@@ -146,9 +176,15 @@ export class MovexMasterServer {
 
       masterResource
         .getClientSpecificResource(rid, clientConnection.clientId)
-        .map((r) =>
-          acknowledge?.(new Ok(storeItemToSanitizedClientResource(r)))
-        )
+        .map((r) => {
+          acknowledge?.(
+            new Ok(
+              itemToSanitizedClientResource(
+                this.populateClientInfoToSubscribers(r)
+              )
+            )
+          );
+        })
         .mapErr(
           AsyncResult.passThrough((e) => {
             logsy.error('Get Resource Error', e);
@@ -215,7 +251,13 @@ export class MovexMasterServer {
       masterResource
         .create(resourceType, resourceState, resourceId)
         .map((r) =>
-          acknowledge?.(new Ok(storeItemToSanitizedClientResource(r)))
+          acknowledge?.(
+            new Ok(
+              itemToSanitizedClientResource(
+                this.populateClientInfoToSubscribers(r)
+              )
+            )
+          )
         )
         .mapErr(
           AsyncResult.passThrough((e) => {
@@ -254,7 +296,13 @@ export class MovexMasterServer {
           };
 
           // Send the ack to the just-added-client
-          acknowledge?.(new Ok(storeItemToSanitizedClientResource(s)));
+          acknowledge?.(
+            new Ok(
+              itemToSanitizedClientResource(
+                this.populateClientInfoToSubscribers(s)
+              )
+            )
+          );
 
           // Let the rest of the peer-clients know as well
           objectKeys(s.subscribers)
@@ -271,9 +319,14 @@ export class MovexMasterServer {
                 return;
               }
 
+              const client: SanitizedMovexClient = {
+                id: clientConnection.clientId,
+                info: clientConnection.clientInfo,
+              };
+
               peerConnection.emitter.emit('onResourceSubscriberAdded', {
                 rid: payload.rid,
-                clientId: clientConnection.clientId,
+                client,
               });
             });
         })
@@ -310,6 +363,7 @@ export class MovexMasterServer {
       [clientConnection.clientId]: clientConnection as ConnectionToClient<
         any,
         AnyAction,
+        any,
         any
       >,
     };
@@ -334,6 +388,38 @@ export class MovexMasterServer {
       );
     };
   }
+
+  private populateClientInfoToSubscribers = <
+    TResourceType extends GenericResourceType,
+    TState
+  >(
+    item: MovexStoreItem<TState, TResourceType>
+  ): MovexStoreItem<TState, TResourceType> & {
+    subscribers: Record<
+      MovexClient['id'],
+      {
+        info: MovexClient['info'];
+      }
+    >;
+  } => ({
+    ...item,
+    subscribers: objectKeys(item.subscribers).reduce(
+      (prev, next) => ({
+        ...prev,
+        [next]: {
+          ...item.subscribers[next],
+          info: this.allClients()[next]?.info ?? {},
+        },
+      }),
+      {} as Record<
+        MovexClient['id'],
+        {
+          subscribedAt: number;
+          info: MovexClient['info'];
+        }
+      >
+    ),
+  });
 
   removeConnection(clientId: MovexClient['id']) {
     this.unsubscribeClientFromResources(clientId);

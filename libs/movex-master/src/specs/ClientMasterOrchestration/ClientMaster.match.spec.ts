@@ -1,20 +1,12 @@
-import { computeCheckedState, globalLogsy } from 'movex-core-util';
+import { computeCheckedState } from 'movex-core-util';
 import {
   initialMatchState,
   tillNextTick,
   matchReducer,
 } from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
+import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
-});
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();
@@ -63,8 +55,8 @@ test('works with public actions', async () => {
       },
     }),
     subscribers: {
-      'white-client': null,
-      'black-client': null,
+      'white-client': {},
+      'black-client': {},
     },
   };
 

@@ -12,6 +12,7 @@ import type {
   MovexClient,
   ResourceIdentifier,
   ResourceIdentifierStr,
+  SanitizedMovexClient,
 } from '../core-types';
 
 export type IOEvents<
@@ -22,8 +23,6 @@ export type IOEvents<
   /**
    * The following events are directed from Client to Master
    * */
-  setClientId: (clientId: string) => void;
-
   createResource: (p: {
     resourceType: TResourceType;
     resourceState: TState;
@@ -42,6 +41,7 @@ export type IOEvents<
   // But adds the client to the Resource list of subscribers
   addResourceSubscriber: (p: {
     rid: ResourceIdentifier<TResourceType>;
+    clientInfo?: MovexClient['info'];
   }) => IOPayloadResult<
     MovexClientResourceShape<TResourceType, TState>,
     unknown // Type this
@@ -85,6 +85,10 @@ export type IOEvents<
   /**
    * The following events are directed from Master to Client
    * */
+  // @deprecate in favor ofClientReady
+  setClientId: (clientId: string) => void;
+
+  onClientReady: (client: SanitizedMovexClient) => void;
 
   onFwdAction: (
     payload: {
@@ -98,7 +102,8 @@ export type IOEvents<
   ) => IOPayloadResult<void, unknown>;
   onResourceSubscriberAdded: (p: {
     rid: ResourceIdentifier<TResourceType>;
-    clientId: MovexClient['id'];
+    client: Pick<MovexClient, 'id' | 'info'>;
+    // clientId: MovexClient['id'];
   }) => IOPayloadResult<
     void,
     unknown // Type this

@@ -1,18 +1,8 @@
-import { computeCheckedState, globalLogsy } from 'movex-core-util';
+import { computeCheckedState } from 'movex-core-util';
 import { rpsReducer, rpsInitialState, tillNextTick } from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
-import { install } from 'console-group';
-install();
+import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
-});
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();
@@ -99,8 +89,8 @@ test('2 Clients. Both Submitting (White first) WITH Reconciliation and the recon
       },
     }),
     subscribers: {
-      'client-a': null,
-      'client-b': null,
+      'client-a': {},
+      'client-b': {},
     },
   };
 
@@ -162,9 +152,7 @@ test('2 Clients. Both Submitting (White first) WITH Reconciliation and the recon
   expect(aMovex.state).toEqual(bMovex.state);
 
   const masterPublicState = await master.getPublicState(rid).resolveUnwrap();
-  expect(masterPublicState).toEqual(
-    actualAfterPrivateRevelatoryAction
-  );
+  expect(masterPublicState).toEqual(actualAfterPrivateRevelatoryAction);
 });
 
 test('Same Kind Reconciliatory Actions Bug. See https://github.com/movesthatmatter/movex/issues/8', async () => {

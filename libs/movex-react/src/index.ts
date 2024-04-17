@@ -5,6 +5,8 @@ export { MovexProviderClass as MovexProvider } from './lib/MovexProviderClass';
 export {
   MovexContext as MovexReactContext,
   type MovexContextProps as MovexReactContextProps,
+  type MovexContextPropsConnected as MovexReactContextPropsConnected,
+  type MovexContextPropsNotConnected as MovexReactContextPropsNotConnected,
 } from './lib/MovexContext';
 
 export { MovexBoundResourceComponent as MovexBoundResource } from './lib/MovexBoundResourceComponent';

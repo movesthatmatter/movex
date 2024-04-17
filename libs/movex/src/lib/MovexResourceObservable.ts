@@ -6,6 +6,7 @@ import {
   computeCheckedState,
   isAction,
   Observable,
+  SanitizedMovexClient,
 } from 'movex-core-util';
 import type {
   IObservable,
@@ -27,7 +28,7 @@ import { PromiseDelegate } from 'promise-delegate';
 const logsy = globalLogsy.withNamespace('[MovexResourceObservable]');
 
 type ObservedItem<TState> = {
-  subscribers: Record<MovexClient['id'], null>;
+  subscribers: Record<MovexClient['id'], SanitizedMovexClient>;
   checkedState: CheckedState<TState>;
 };
 
@@ -64,7 +65,7 @@ export class MovexResourceObservable<
     public rid: ResourceIdentifier<string>,
     private reducer: MovexReducer<TState, TAction>,
 
-    initialSubscribers: Record<MovexClient['id'], null> = {},
+    initialSubscribers: Record<MovexClient['id'], SanitizedMovexClient> = {},
 
     // Passing undefined here in order to get the default state
     initialCheckedState = computeCheckedState(
@@ -199,7 +200,7 @@ export class MovexResourceObservable<
    */
   onUpdate(
     fn: (p: {
-      subscribers: Record<MovexClient['id'], null>;
+      subscribers: Record<MovexClient['id'], SanitizedMovexClient>;
       checkedState: CheckedState<TState>;
     }) => void
   ) {
