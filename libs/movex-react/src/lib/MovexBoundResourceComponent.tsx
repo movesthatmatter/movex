@@ -1,6 +1,6 @@
 import React from 'react';
 import type { MovexClient } from 'movex';
-import type {
+import {
   GetReducerState,
   GetReducerAction,
   ResourceIdentifier,
@@ -9,7 +9,6 @@ import type {
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
   UnsubscribeFn,
-  DistributiveOmit,
 } from 'movex-core-util';
 import { invoke, isSameResourceIdentifier } from 'movex-core-util';
 import { MovexContextStateChange } from './MovexContextStateChange';

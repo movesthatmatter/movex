@@ -2,9 +2,11 @@ import React from 'react';
 import {
   invoke,
   ConnectionToClient,
-  type MovexClient,
+  type MovexClient as MovexClientUser,
   type MovexDefinition,
   type BaseMovexDefinitionResourcesMap,
+  StringKeys,
+  ResourceIdentifier,
 } from 'movex-core-util';
 import {
   MovexMasterServer,
@@ -12,13 +14,18 @@ import {
   orchestrateDefinedMovex,
   getUuid, // This can actually be mocked here as it's just client only!
 } from 'movex-master';
-import { MovexReactContext, MovexReactContextProps } from 'movex-react';
+import { MovexClient } from 'movex';
+import {
+  MovexReactContext,
+  MovexReactContextProps,
+  MovexResourceObservablesRegistry,
+} from 'movex-react';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
     movexDefinition: MovexDefinition<TResourcesMap>;
-    clientId?: MovexClient['id'];
+    clientId?: MovexClientUser['id'];
     onConnected?: (
       state: Extract<MovexReactContextProps<TResourcesMap>, { connected: true }>
     ) => void;
@@ -77,12 +84,28 @@ export class MovexLocalProvider<
       emitterOnMaster
     );
 
+    // This resets each time movex re-initiates
+    const resourceRegistry = new MovexResourceObservablesRegistry(
+      mockedMovex.movex
+    );
+
     const nextState = {
       connected: true,
       movex: mockedMovex.movex,
       clientId: mockedMovex.movex.getClientId(),
       movexDefinition: this.props.movexDefinition,
-      bindResource: () => () => {}, // Added this on Apr 01 2024, w/o testing - not sure it doesn't create more issues but needed it for tsc
+      bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
+        rid: ResourceIdentifier<TResourceType>,
+        onStateUpdate: (p: MovexClient.MovexBoundResource) => void
+      ) => {
+        const $resource = resourceRegistry.register(rid);
+
+        onStateUpdate(new MovexClient.MovexBoundResource($resource));
+
+        return $resource.onUpdate(() => {
+          onStateUpdate(new MovexClient.MovexBoundResource($resource));
+        });
+      },
     } as const;
 
     this.setState({

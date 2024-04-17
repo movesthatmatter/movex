@@ -4,25 +4,28 @@ import type {
   StringKeys,
   MovexDefinition,
   BaseMovexDefinitionResourcesMap,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import type { MovexContextProps } from './MovexContext';
-import { MovexProvider } from './MovexProvider';
+import { MovexProvider, MovexProviderProps } from './MovexProvider';
 
 type Props<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
-> = React.PropsWithChildren<{
-  movexDefinition: MovexDefinition<TResourcesMap>;
-  endpointUrl: string;
-  clientId?: MovexClient['id'];
-  onConnected?: (
-    state: Extract<
-      MovexContextProps<TResourcesMap>,
-      { connected: true }
-    >['movex']
-  ) => void;
-  onDisconnected?: () => void;
-}>;
+> = React.PropsWithChildren<
+  Omit<
+    MovexProviderProps<TResourcesMap>,
+    'movexDefinition' | 'onConnected' | 'onDisconnected'
+  > & {
+    movexDefinition: MovexDefinition<TResourcesMap>;
+    onConnected?: (
+      state: Extract<
+        MovexContextProps<TResourcesMap>,
+        { connected: true }
+      >['movex']
+    ) => void;
+    onDisconnected?: () => void;
+  }
+>;
 
 type State = {
   clientId?: MovexClient['id'];
@@ -36,36 +39,21 @@ export class MovexProviderClass<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends StringKeys<TResourcesMap>
 > extends React.Component<Props<TResourcesMap, TResourceType>, State> {
-  constructor(props: Props<TResourcesMap, TResourceType>) {
-    super(props);
-
-    this.state = {};
-  }
-
   override render() {
+    const { onConnected, ...props } = this.props;
+
     return (
       <MovexProvider
-        endpointUrl={this.props.endpointUrl}
-        clientId={this.props.clientId}
-        movexDefinition={this.props.movexDefinition}
         onConnected={(r) => {
-          this.setState({ clientId: r.clientId });
-
-          this.props.onConnected?.(
+          onConnected?.(
             r.movex as Extract<
               MovexContextProps<TResourcesMap>,
               { connected: true }
             >['movex']
           );
         }}
-        // onDisconnected={() => {
-        //   this.setState({ clientId: undefined });
-
-        //   this.props.onDisconnected?.();
-        // }}
-      >
-        {this.props.children}
-      </MovexProvider>
+        {...props}
+      />
     );
   }
 }

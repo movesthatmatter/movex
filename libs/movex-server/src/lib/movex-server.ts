@@ -3,7 +3,7 @@ import { Server as SocketServer } from 'socket.io';
 import express from 'express';
 import cors from 'cors';
 import {
-  logsy,
+  globalLogsy,
   SocketIOEmitter,
   ConnectionToClient,
   type MovexDefinition,
@@ -15,6 +15,8 @@ import {
 import { MemoryMovexStore, MovexStore } from 'movex-store';
 import { initMovexMaster } from 'movex-master';
 import { isOneOf } from './util';
+
+const logsy = globalLogsy.withNamespace('[MovexServer]');
 
 export const movexServer = <TDefinition extends MovexDefinition>(
   {
@@ -53,7 +55,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
   socket.on('connection', (io) => {
     const clientId = getClientId(io.handshake.query['clientId'] as string);
-    logsy.log('[MovexServer] Client Connected', clientId);
+    logsy.info('Client Connected', { clientId });
 
     const connectionToClient = new ConnectionToClient(
       clientId,
@@ -65,7 +67,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     movexMaster.addClientConnection(connectionToClient);
 
     io.on('disconnect', () => {
-      logsy.log('[MovexServer] Client Disconnected', clientId);
+      logsy.info('Client Disconnected', { clientId });
 
       movexMaster.removeConnection(clientId);
     });
@@ -133,10 +135,10 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     const address = httpServer.address();
 
     if (typeof address !== 'string') {
-      logsy.info(
-        `Movex Server started on port ${address?.port} for definition`,
-        Object.keys(definition.resources)
-      );
+      logsy.info('Server started', {
+        port,
+        definitionResources: Object.keys(definition.resources),
+      });
     }
   });
 };

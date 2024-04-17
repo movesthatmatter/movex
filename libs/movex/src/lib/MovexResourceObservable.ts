@@ -2,7 +2,7 @@ import { Pubsy } from 'ts-pubsy';
 import { Err, Ok, Result } from 'ts-results';
 import {
   invoke,
-  logsy,
+  globalLogsy,
   computeCheckedState,
   isAction,
   Observable,
@@ -23,6 +23,8 @@ import type {
 } from 'movex-core-util';
 import { createDispatcher, DispatchedEvent } from './dispatch';
 import { PromiseDelegate } from 'promise-delegate';
+
+const logsy = globalLogsy.withNamespace('[MovexResourceObservable]');
 
 type ObservedItem<TState> = {
   subscribers: Record<MovexClient['id'], null>;
@@ -106,7 +108,7 @@ export class MovexResourceObservable<
 
     this.dispatcher = (...args: Parameters<typeof dispatch>) => {
       if (!this.isSynchedPromiseDelegate.settled) {
-        logsy.info('[Movex] Attempt to dispatch before sync!', ...args);
+        logsy.warn('Attempt to dispatch before sync!', { args });
       }
 
       this.isSynchedPromiseDelegate.promise.then(() => {
