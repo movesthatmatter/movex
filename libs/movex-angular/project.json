@@ -1,0 +1,41 @@
+{
+  "name": "movex-angular",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/movex-angular/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/movex-angular",
+        "main": "libs/movex-angular/src/index.ts",
+        "tsConfig": "libs/movex-angular/tsconfig.lib.json",
+        "assets": ["libs/movex-angular/*.md"]
+      }
+    },
+    "publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/publish.mjs movex-angular {args.ver} {args.tag}"
+      },
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/movex-angular/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/movex-angular/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}
