@@ -55,8 +55,14 @@ test('works with public actions', async () => {
       },
     }),
     subscribers: {
-      'white-client': {},
-      'black-client': {},
+      'white-client': {
+        id: 'white-client',
+        info: {},
+      },
+      'black-client': {
+        id: 'black-client',
+        info: {},
+      },
     },
   };
 

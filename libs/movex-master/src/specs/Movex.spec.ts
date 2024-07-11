@@ -18,7 +18,7 @@ describe('All', () => {
     const {
       clients: [counterResource],
     } = orchestrator.orchestrate({
-      clientIds: ['test'],
+      clientIds: ['test-id'],
       reducer: counterReducer,
       resourceType: 'counter',
     });
@@ -36,7 +36,7 @@ describe('All', () => {
     const {
       clients: [counterResource],
     } = orchestrator.orchestrate({
-      clientIds: ['test'],
+      clientIds: ['test-user'],
       reducer: counterReducer,
       resourceType: 'counter',
     });
@@ -54,7 +54,12 @@ describe('All', () => {
 
     const expected = {
       checkedState: computeCheckedState({ count: 2 }),
-      subscribers: { test: {} },
+      subscribers: {
+        'test-user': {
+          id: 'test-user',
+          info: {},
+        },
+      },
     };
 
     expect(actual.state).toEqual(expected);
@@ -64,7 +69,7 @@ describe('All', () => {
     const {
       clients: [counterResource],
     } = orchestrator.orchestrate({
-      clientIds: ['test'],
+      clientIds: ['test-user'],
       reducer: counterReducer,
       resourceType: 'counter',
     });
@@ -80,7 +85,12 @@ describe('All', () => {
     const actual = r.get();
     const expected = {
       checkedState: computeCheckedState({ count: 3 }),
-      subscribers: { test: {} },
+      subscribers: {
+        'test-user': {
+          id: 'test-user',
+          info: {},
+        },
+      },
     };
 
     expect(actual).toEqual(expected);
@@ -128,7 +138,10 @@ describe('All', () => {
         },
       }),
       subscribers: {
-        'test-user': {},
+        'test-user': {
+          id: 'test-user',
+          info: {},
+        },
       },
     };
 

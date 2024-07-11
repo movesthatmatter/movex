@@ -90,8 +90,14 @@ describe('Public Actions', () => {
         count: 5,
       }),
       subscribers: {
-        'white-client': {},
-        'black-client': {},
+        'white-client': {
+          id: 'white-client',
+          info: {},
+        },
+        'black-client': {
+          id: 'black-client',
+          info: {},
+        },
       },
     };
 
@@ -158,8 +164,14 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {},
-        'black-client': {},
+        'white-client': {
+          id: 'white-client',
+          info: {},
+        },
+        'black-client': {
+          id: 'black-client',
+          info: {},
+        },
       },
     };
 
@@ -187,8 +199,14 @@ describe('Private Actions', () => {
     const expectedPeerState = {
       checkedState: publicState,
       subscribers: {
-        'white-client': {},
-        'black-client': {},
+        'white-client': {
+          id: 'white-client',
+          info: {},
+        },
+        'black-client': {
+          id: 'black-client',
+          info: {},
+        },
       },
     };
     const actualPeerState = blackMovex.state;
@@ -255,8 +273,14 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {},
-        'black-client': {},
+        'white-client': {
+          id: 'white-client',
+          info: {},
+        },
+        'black-client': {
+          id: 'black-client',
+          info: {},
+        },
       },
     };
 
@@ -301,8 +325,14 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {},
-        'black-client': {},
+        'white-client': {
+          id: 'white-client',
+          info: {},
+        },
+        'black-client': {
+          id: 'black-client',
+          info: {},
+        },
       },
     };
 
@@ -326,8 +356,14 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {},
-        'black-client': {},
+        'white-client': {
+          id: 'white-client',
+          info: {},
+        },
+        'black-client': {
+          id: 'black-client',
+          info: {},
+        },
       },
     };
     // The Private Action gets set
@@ -389,8 +425,14 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {},
-        'black-client': {},
+        'white-client': {
+          id: 'white-client',
+          info: {},
+        },
+        'black-client': {
+          id: 'black-client',
+          info: {},
+        },
       },
     };
 
@@ -432,8 +474,14 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {},
-        'black-client': {},
+        'white-client': {
+          id: 'white-client',
+          info: {},
+        },
+        'black-client': {
+          id: 'black-client',
+          info: {},
+        },
       },
     };
 

@@ -89,8 +89,14 @@ test('2 Clients. Both Submitting (White first) WITH Reconciliation and the recon
       },
     }),
     subscribers: {
-      'client-a': {},
-      'client-b': {},
+      'client-a': {
+        id: 'client-a',
+        info: {},
+      },
+      'client-b': {
+        id: 'client-b',
+        info: {},
+      },
     },
   };
 
