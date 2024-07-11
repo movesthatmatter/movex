@@ -44,13 +44,14 @@ export const toWsResponseResultPayloadErr = <E>(
   val,
 });
 
-export const getResourceRId = <TResourceType extends string>(
-  r: GenericClientResourceShapeOfType<TResourceType>
-) =>
-  toResourceIdentifierStr({
-    resourceType: r.type,
-    resourceId: r.id,
-  });
+// This was removed on Apirl 1st 2024, as I'm not sure it's used anywhere
+// export const getResourceRid = <TResourceType extends string>(
+//   r: GenericClientResourceShapeOfType<TResourceType>
+// ) =>
+//   toResourceIdentifierStr({
+//     resourceType: r.type,
+//     resourceId: r.id,
+//   });
 
 export const isResourceIdentifier = (
   s: unknown

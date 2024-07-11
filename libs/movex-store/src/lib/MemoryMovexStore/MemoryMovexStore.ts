@@ -31,7 +31,7 @@ import type {
 } from '../MovexStore';
 import { toResultError } from '../ResultError';
 
-const logsy = globalLogsy.withNamespace('[LocalMovexStore]');
+const logsy = globalLogsy.withNamespace('[MemoryMovexStore]');
 
 export class MemoryMovexStore<
   TResourcesMap extends BaseMovexDefinitionResourcesMap = BaseMovexDefinitionResourcesMap
@@ -304,8 +304,8 @@ export class MemoryMovexStore<
           )
       );
     }).mapErr(
-      AsyncResult.passThrough((e) => {
-        logsy.error('Update Error', e, rid);
+      AsyncResult.passThrough((error) => {
+        logsy.error('Update Error', { error, rid });
       })
     );
   }

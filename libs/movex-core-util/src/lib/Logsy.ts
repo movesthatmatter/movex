@@ -1,5 +1,7 @@
 // const movexLogsy = Logger.get('Movex');
 
+import { Pubsy } from 'ts-pubsy';
+
 type LogsyMethods =
   | 'log'
   | 'info'
@@ -9,98 +11,70 @@ type LogsyMethods =
   | 'groupEnd'
   | 'debug';
 
-const globalDisabled = false;
-
-const globalLogsyConfigWrapper = {
-  config: {
-    disabled: false,
-    verbose: false,
-  },
+export type LoggingEvent = {
+  method: LogsyMethods;
+  prefix?: string;
+  message?: unknown;
+  payload?: LogsyPayload;
 };
 
-// Depreacte from here! maybe make own library
+export type LogsyPayload = Record<string | number, unknown>;
 
 class Logsy {
-  constructor(
-    public prefix: string = '',
-    disabled = false,
-    private globalConfig?: typeof globalLogsyConfigWrapper
-  ) {
-    // This is needed
-    if (disabled) {
-      this.disable();
-    }
-  }
+  private pubsy = new Pubsy<{
+    onLog: LoggingEvent;
+  }>();
 
-  private handler = (
-    method: LogsyMethods,
-    message?: unknown,
-    ...optionalParams: unknown[]
-  ) => {
-    if (!this.ON || globalLogsyConfigWrapper.config.disabled) {
-      return;
-    }
+  constructor(public prefix: string = '') {}
 
-    // If verbose is false, we don't want to log, info or debug
-    if (
-      (method === 'log' || method === 'info' || method === 'debug') &&
-      !globalLogsyConfigWrapper.config.verbose
-    ) {
-      return;
-    }
+  onLog = (fn: (event: LoggingEvent) => void) =>
+    this.pubsy.subscribe('onLog', fn);
 
+  // To be overriden
+  // public onLog: (event: LoggingEvent) => void = (event: LoggingEvent) => {
+  //   this.pubsy.publish('onLog', {
+  //     ...event,
+  //   });
+  // };
+
+  private handler = (event: LoggingEvent) => {
     const prefix = this.hasGroupOpen() ? '' : this.prefix;
-
-    if (typeof message === 'string') {
-      console[method](prefix + ' ' + message, ...optionalParams);
-    } else {
-      console[method](prefix, message, ...optionalParams);
-    }
+    this.pubsy.publish('onLog', {
+      ...event,
+      prefix,
+    });
+    // this.onLog({ ...event, prefix });
   };
 
-  public ON: boolean = globalDisabled || true;
+  // public ON: boolean = globalDisabled || true;
 
   private activeGroups = 0;
 
-  enable() {
-    this.ON = true;
-
-    if (this.globalConfig) {
-      this.globalConfig.config.disabled = false;
-    }
-  }
-
-  disable() {
-    this.ON = false;
-
-    if (this.globalConfig) {
-      this.globalConfig.config.disabled = true;
-    }
-  }
-
-  log = (message?: any, ...optionalParams: any[]) => {
-    this.handler('log', message, ...optionalParams);
+  log = (message?: string, payload?: LogsyPayload) => {
+    this.handler({ method: 'log', message, payload });
   };
 
-  info = (message?: any, ...optionalParams: any[]) => {
-    this.handler('info', message, ...optionalParams);
+  info = (message?: string, payload?: LogsyPayload) => {
+    this.handler({ method: 'info', message, payload });
   };
 
-  warn = (message?: any, ...optionalParams: any[]) => {
-    this.handler('warn', message, ...optionalParams);
+  warn = (message?: string, payload?: LogsyPayload) => {
+    this.handler({ method: 'warn', message, payload });
   };
-  error = (message?: any, ...optionalParams: any[]) => {
-    this.handler('error', message, ...optionalParams);
+  error = (message?: string, payload?: LogsyPayload) => {
+    this.handler({ method: 'error', message, payload });
   };
 
-  group = (message?: any, ...optionalParams: any[]) => {
-    this.handler('group', message, ...optionalParams);
+  group = (message?: string, payload?: LogsyPayload) => {
+    this.handler({ method: 'group', message, payload });
     this.openGroup();
   };
 
-  groupEnd = () => {
-    // console.groupEnd()
-    this.handler('groupEnd');
+  groupEnd = (message?: string, payload?: LogsyPayload) => {
+    if (message) {
+      this.handler({ method: 'log', message, payload });
+    }
+    this.handler({ method: 'groupEnd' });
     this.closeGroup();
   };
 
@@ -118,14 +92,25 @@ class Logsy {
 
   private hasGroupOpen = () => this.activeGroups > 0;
 
-  debug = (message?: any, ...optionalParams: any[]) => {
-    this.handler('debug', message, ...optionalParams);
+  debug = (message?: any, payload?: LogsyPayload) => {
+    this.handler({ method: 'debug', message, payload });
   };
 
   withNamespace = (s: string) => {
-    return new Logsy(this.prefix + s);
+    const next = new Logsy(this.prefix + s);
+
+    // next.onLog((...args) => this.onLog(...args));
+    // // this.onLog();
+    // this.onLog((event) => {
+    //   this.pubsy.publish('onLog', event);
+    // });
+    // next.onLog = (event) => this.pubsy.publish('onLog', event);
+    next.onLog((event) => {
+      this.pubsy.publish('onLog', event);
+    });
+
+    return next;
   };
 }
 
-export const globalLogsy = new Logsy('', false, globalLogsyConfigWrapper);
-export const logsy = globalLogsy;
+export const globalLogsy = new Logsy();

@@ -1,9 +1,4 @@
-import {
-  computeCheckedState,
-  globalLogsy,
-  toResourceIdentifierObj,
-} from  'movex-core-util';
-import * as consoleGroup from 'console-group';
+import { computeCheckedState, toResourceIdentifierObj } from 'movex-core-util';
 import {
   counterReducer,
   gameReducer,
@@ -12,20 +7,10 @@ import {
 } from 'movex-specs-util';
 import { movexClientMasterOrchestrator } from 'movex-master';
 
-consoleGroup.install();
-
 const orchestrator = movexClientMasterOrchestrator();
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();
-});
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
 });
 
 describe('All', () => {
@@ -38,15 +23,12 @@ describe('All', () => {
       resourceType: 'counter',
     });
 
-    const actual = await counterResource
-      .create({
-        count: 2,
-      })
-      .resolveUnwrap();
+    const actual = await counterResource.create({ count: 2 }).resolveUnwrap();
 
     expect(actual).toEqual({
       rid: toResourceIdentifierObj(actual.rid), // The id isn't too important here
       state: { count: 2 },
+      subscribers: {},
     });
   }, 200);
 
@@ -64,11 +46,16 @@ describe('All', () => {
     const actual = counterResource.bind(rid);
     const actualDefaultState = actual.state;
 
-    expect(actualDefaultState).toEqual(computeCheckedState({ count: 0 }));
+    expect(actualDefaultState.checkedState).toEqual(
+      computeCheckedState({ count: 0 })
+    );
 
     await tillNextTick();
 
-    const expected = computeCheckedState({ count: 2 });
+    const expected = {
+      checkedState: computeCheckedState({ count: 2 }),
+      subscribers: { test: {} },
+    };
 
     expect(actual.state).toEqual(expected);
   });
@@ -91,9 +78,10 @@ describe('All', () => {
     await tillNextTick();
 
     const actual = r.get();
-    const expected = computeCheckedState({
-      count: 3,
-    });
+    const expected = {
+      checkedState: computeCheckedState({ count: 3 }),
+      subscribers: { test: {} },
+    };
 
     expect(actual).toEqual(expected);
   });
@@ -127,20 +115,27 @@ describe('All', () => {
 
     const actual = r.state;
 
-    const expected = computeCheckedState({
-      ...initialGameState,
-      submission: {
-        ...initialGameState.submission,
-        status: 'partial',
-        white: {
-          canDraw: false,
-          moves: ['w:e2-e4', 'w:d2-d4'],
+    const expected = {
+      checkedState: computeCheckedState({
+        ...initialGameState,
+        submission: {
+          ...initialGameState.submission,
+          status: 'partial',
+          white: {
+            canDraw: false,
+            moves: ['w:e2-e4', 'w:d2-d4'],
+          },
         },
+      }),
+      subscribers: {
+        'test-user': {},
       },
-    });
+    };
 
     expect(actual).toEqual(expected);
   });
 });
+
+// TODO: Add tests for Subscribers Client Info
 
 // TODO: Add more tests

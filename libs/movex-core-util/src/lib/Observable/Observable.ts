@@ -1,11 +1,7 @@
 import { Pubsy } from 'ts-pubsy';
-import { isFunction } from './misc';
+import { isFunction } from '../misc';
 
 export type NextStateGetter<T> = T | ((prev: T) => T);
-
-export const getNextStateFrom = <T>(prev: T, a: NextStateGetter<T>) => {
-  return isFunction(a) ? a(prev) : a;
-};
 
 export interface IObservable<T> {
   get: () => T;
@@ -13,7 +9,7 @@ export interface IObservable<T> {
   update: (getNextState: T | ((prev: T) => T)) => void;
 }
 
-export class Observable<T> implements IObservable<T>{
+export class Observable<T> implements IObservable<T> {
   private pubsy = new Pubsy<{
     onUpdate: T;
   }>();
@@ -29,7 +25,7 @@ export class Observable<T> implements IObservable<T>{
   }
 
   update(nextStateGetter: NextStateGetter<T>) {
-    this._state = getNextStateFrom(this._state, nextStateGetter);
+    this._state = Observable.getNextStateFrom(this._state, nextStateGetter);
 
     // TODO: Should it only call onUpdate when there actually is an update??
     //  Or should I leave that to the implementation
@@ -38,16 +34,22 @@ export class Observable<T> implements IObservable<T>{
     return this;
   }
 
-  // TODO: Add map for transformation
+  /**
+   * Ability to transform the state
+   *
+   * @param mapFn
+   * @returns
+   */
   map<T1>(mapFn: (state: T) => T1) {
-    // Is this good enough? Or is it creating some weird issues?
     const $next = new Observable(mapFn(this.get()));
 
-    // Hook up the update
-    $next.onUpdate = (updateFn: (state: T1) => void) => {
-      return this.onUpdate((t) => updateFn(mapFn(t)));
-    };
+    this.onUpdate((nextRootState) => {
+      $next.update(mapFn(nextRootState));
+    });
 
     return $next;
   }
+
+  static getNextStateFrom = <T>(prev: T, a: NextStateGetter<T>) =>
+    isFunction(a) ? a(prev) : a;
 }

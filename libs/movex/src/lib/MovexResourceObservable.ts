@@ -1,12 +1,12 @@
 import { Pubsy } from 'ts-pubsy';
 import { Err, Ok, Result } from 'ts-results';
 import {
-  getNextStateFrom,
   invoke,
-  logsy,
+  globalLogsy,
   computeCheckedState,
   isAction,
   Observable,
+  SanitizedMovexClient,
 } from 'movex-core-util';
 import type {
   IObservable,
@@ -25,29 +25,34 @@ import type {
 import { createDispatcher, DispatchedEvent } from './dispatch';
 import { PromiseDelegate } from 'promise-delegate';
 
+const logsy = globalLogsy.withNamespace('[MovexResourceObservable]');
+
+type ObservedItem<TState> = {
+  subscribers: Record<MovexClient['id'], SanitizedMovexClient>;
+  checkedState: CheckedState<TState>;
+};
+
 /**
  * This is the MovexResource running on the Client
  */
 export class MovexResourceObservable<
   TState = any,
   TAction extends AnyAction = AnyAction
-> implements IObservable<CheckedState<TState>>
+> implements IObservable<ObservedItem<TState>>
 {
   /**
-   * This flag simply states if the resource is synched with the remote.
+   * This flag informs that the resource (client) is in sync with the master.
    * It starts as false and it waits for at least one "sync" or "update" call.
    *
    * For now it never goes from true to false but that could be a valid use case in the future.
    */
   private isSynchedPromiseDelegate = new PromiseDelegate();
 
-  private $checkedState: Observable<CheckedState<TState>>;
+  private $item: Observable<ObservedItem<TState>>;
 
   private pubsy = new Pubsy<{
     onDispatched: DispatchedEvent<CheckedState<TState>, TAction>;
   }>();
-
-  // client: MovexResourceClient;
 
   private dispatcher: (
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
@@ -60,12 +65,17 @@ export class MovexResourceObservable<
     public rid: ResourceIdentifier<string>,
     private reducer: MovexReducer<TState, TAction>,
 
+    initialSubscribers: Record<MovexClient['id'], SanitizedMovexClient> = {},
+
     // Passing undefined here in order to get the default state
     initialCheckedState = computeCheckedState(
       reducer(undefined as TState, { type: '_init' } as TAction)
     )
   ) {
-    this.$checkedState = new Observable(initialCheckedState);
+    this.$item = new Observable({
+      subscribers: initialSubscribers,
+      checkedState: initialCheckedState,
+    });
 
     // // When the master io returns the async state, update it!
     // masterConnection.getResourceState().map((state) => {
@@ -75,10 +85,23 @@ export class MovexResourceObservable<
     // TODO: Add Use case for how to deal with creation. When the get doesn't return anything?!
     // something like: if it returns record doesnt exist, use create instead of get? or io.getOrCreate()?
 
+    const $checkedState = this.$item.map((s) => s.checkedState);
+
+    // Propagate the updates up to the root $item, but ensure it doesn't get into a loop
+    $checkedState.onUpdate((nextCheckedState) => {
+      // Ensure it's not equal otherwise it goes into an infinite updating loop
+      if (nextCheckedState !== this.$item.get().checkedState) {
+        this.$item.update((prev) => ({
+          ...prev,
+          checkedState: nextCheckedState,
+        }));
+      }
+    });
+
     const { dispatch, unsubscribe: unsubscribeFromDispatch } = createDispatcher<
       TState,
       TAction
-    >(this.$checkedState, this.reducer, {
+    >($checkedState, this.reducer, {
       onDispatched: (p) => {
         this.pubsy.publish('onDispatched', p);
       },
@@ -86,7 +109,7 @@ export class MovexResourceObservable<
 
     this.dispatcher = (...args: Parameters<typeof dispatch>) => {
       if (!this.isSynchedPromiseDelegate.settled) {
-        logsy.info('[Movex] Attempt to dispatch before sync!', ...args);
+        logsy.warn('Attempt to dispatch before sync!', { args });
       }
 
       this.isSynchedPromiseDelegate.promise.then(() => {
@@ -116,7 +139,12 @@ export class MovexResourceObservable<
       this.getUncheckedState()
     );
 
-    return this.$checkedState.update(computeCheckedState(nextState)).get();
+    return this.$item
+      .update((prev) => ({
+        ...prev,
+        checkedState: computeCheckedState(nextState),
+      }))
+      .get();
   }
 
   /**
@@ -138,7 +166,11 @@ export class MovexResourceObservable<
       return new Err('ChecksumMismatch');
     }
 
-    this.$checkedState.update(nextCheckedState);
+    // this.$checkedState.update(nextCheckedState);
+    this.$item.update((prev) => ({
+      ...prev,
+      checkedState: nextCheckedState,
+    }));
 
     return new Ok(nextCheckedState);
   }
@@ -166,9 +198,13 @@ export class MovexResourceObservable<
    * @param fn
    * @returns
    */
-  onUpdate(fn: (state: CheckedState<TState>) => void) {
-    // return this.$checkedState.onUpdate(([state]) => fn(state));
-    return this.$checkedState.onUpdate(fn);
+  onUpdate(
+    fn: (p: {
+      subscribers: Record<MovexClient['id'], SanitizedMovexClient>;
+      checkedState: CheckedState<TState>;
+    }) => void
+  ) {
+    return this.$item.onUpdate(fn);
   }
 
   onDispatched(
@@ -178,11 +214,16 @@ export class MovexResourceObservable<
   }
 
   get() {
-    return this.$checkedState.get();
+    // return this.$checkedState.get();
+    return this.$item.get();
+  }
+
+  getCheckedState() {
+    return this.get().checkedState;
   }
 
   getUncheckedState() {
-    return this.$checkedState.get()[0];
+    return this.getCheckedState()[0];
   }
 
   // This is the actual checked state. TODO: Not sure about the names yet
@@ -196,15 +237,14 @@ export class MovexResourceObservable<
   }
 
   /**
-   * This needs to be called each time master has emits an updated state.
+   * This needs to be called each time master emits an updated state.
    * The dispatch won't work without it being called at least once.
    *
    * @param nextStateGetter
    * @returns
    */
-  sync(nextStateGetter: NextStateGetter<CheckedState<TState>>) {
-    const res = this.update(nextStateGetter);
-
+  syncState(nextStateGetter: NextStateGetter<CheckedState<TState>>) {
+    const res = this.updateCheckedState(nextStateGetter);
     this.isSynchedPromiseDelegate.resolve();
 
     return res;
@@ -230,18 +270,41 @@ export class MovexResourceObservable<
     }
   }
 
-  update(nextStateGetter: NextStateGetter<CheckedState<TState>>) {
-    this.$checkedState.update(getNextStateFrom(this.get(), nextStateGetter));
+  update(nextStateGetter: NextStateGetter<ObservedItem<TState>>) {
+    this.$item.update((prev) =>
+      Observable.getNextStateFrom(prev, nextStateGetter)
+    );
+  }
 
-    return this;
+  updateCheckedState(nextStateGetter: NextStateGetter<CheckedState<TState>>) {
+    return this.update((prev) => ({
+      ...prev,
+      checkedState: Observable.getNextStateFrom(
+        prev.checkedState,
+        nextStateGetter
+      ),
+    }));
   }
 
   updateUncheckedState(nextStateGetter: NextStateGetter<TState>) {
-    return this.update(
-      computeCheckedState(
-        getNextStateFrom(this.getUncheckedState(), nextStateGetter)
-      )
-    );
+    return this.update((prev) => ({
+      ...prev,
+      checkedState: computeCheckedState(
+        Observable.getNextStateFrom(prev.checkedState[0], nextStateGetter)
+      ),
+    }));
+  }
+
+  updateSubscribers(
+    nextStateGetter: NextStateGetter<ObservedItem<TState>['subscribers']>
+  ) {
+    return this.update((prev) => ({
+      ...prev,
+      subscribers: Observable.getNextStateFrom(
+        prev.subscribers,
+        nextStateGetter
+      ),
+    }));
   }
 
   // This to be called when the obervable is not used anymore in order to clean the update subscriptions

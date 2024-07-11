@@ -2,8 +2,8 @@ import type {
   AnyAction,
   ConnectionToMaster,
   MovexReducer,
-  IOConnection,
-} from  'movex-core-util';
+  SanitizedMovexClient,
+} from 'movex-core-util';
 import { MovexResource } from './MovexResource';
 
 export type MovexConfig = {
@@ -14,11 +14,21 @@ export type MovexConfig = {
   waitForResponseMs?: number;
 };
 
+// @deprecate in favor of MovexFromDEfinition to clear up redundant code
 export class Movex {
-  constructor(private connectionToMaster: IOConnection<any, AnyAction, any>) {}
+  constructor(
+    private connectionToMaster: ConnectionToMaster<any, AnyAction, any, any>
+  ) {}
 
   getClientId() {
     return this.connectionToMaster.clientId;
+  }
+
+  getClient(): SanitizedMovexClient {
+    return {
+      id: this.getClientId(),
+      info: this.connectionToMaster.clientInfo,
+    };
   }
 
   register<S, A extends AnyAction, TResourceType extends string>(
@@ -26,10 +36,11 @@ export class Movex {
     reducer: MovexReducer<S, A>
   ) {
     return new MovexResource( // This is recasted to make it specific to the ResourceType
-      this.connectionToMaster as unknown as ConnectionToMaster<
+      this.connectionToMaster as ConnectionToMaster<
         S,
         A,
-        TResourceType
+        TResourceType,
+        any // TODO: Fix this here or above?
       >,
       resourceType,
       reducer

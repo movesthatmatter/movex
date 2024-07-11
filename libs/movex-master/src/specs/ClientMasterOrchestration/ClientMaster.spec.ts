@@ -1,8 +1,4 @@
-import {
-  computeCheckedState,
-  globalLogsy,
-  toResourceIdentifierObj,
-} from  'movex-core-util';
+import { computeCheckedState, toResourceIdentifierObj } from 'movex-core-util';
 import {
   gameReducer,
   gameReducerWithDerivedState,
@@ -10,17 +6,7 @@ import {
   initialRawGameStateWithDerivedState,
   tillNextTick,
 } from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
-
-require('console-group').install();
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
-});
+import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
 
@@ -45,6 +31,7 @@ describe('Public Actions', () => {
     expect(created).toEqual({
       rid: toResourceIdentifierObj(created.rid), // The id isn't too important here
       state: initialGameState,
+      subscribers: {},
     });
 
     const movex = gameClientResource.bind(created.rid);
@@ -97,10 +84,19 @@ describe('Public Actions', () => {
 
     await tillNextTick();
 
-    const expected = computeCheckedState({
-      ...initialGameState,
-      count: 5,
-    });
+    const expected = {
+      checkedState: computeCheckedState({
+        ...initialGameState,
+        count: 5,
+      }),
+      subscribers: {
+        'white-client': {},
+        'black-client': {},
+      },
+    };
+
+    // console.log('whiteMovex', whiteMovex.state);
+    // console.log('blackMovex', blackMovex.state);
 
     expect(whiteMovex.state).toEqual(expected);
 
@@ -146,20 +142,26 @@ describe('Private Actions', () => {
 
     // This is the sender private
     // White
-    const expectedSenderState = computeCheckedState({
-      ...initialGameState,
-      submission: {
-        status: 'partial',
-        white: {
-          canDraw: false,
-          moves: ['w:E2-E4', 'w:D2-D4'],
+    const expectedSenderState = {
+      checkedState: computeCheckedState({
+        ...initialGameState,
+        submission: {
+          status: 'partial',
+          white: {
+            canDraw: false,
+            moves: ['w:E2-E4', 'w:D2-D4'],
+          },
+          black: {
+            canDraw: true,
+            moves: [],
+          },
         },
-        black: {
-          canDraw: true,
-          moves: [],
-        },
+      }),
+      subscribers: {
+        'white-client': {},
+        'black-client': {},
       },
-    });
+    };
 
     // And sender gets the new private state
     const actualSenderState = whiteMovex.state;
@@ -182,7 +184,13 @@ describe('Private Actions', () => {
 
     // In this case is the same as the public b/c no private changes has been made
     // Black
-    const expectedPeerState = publicState;
+    const expectedPeerState = {
+      checkedState: publicState,
+      subscribers: {
+        'white-client': {},
+        'black-client': {},
+      },
+    };
     const actualPeerState = blackMovex.state;
 
     // Peer gets the new public state
@@ -231,20 +239,26 @@ describe('Private Actions', () => {
 
     // This is the sender private
     // White
-    const expectedWhiteState = computeCheckedState({
-      ...initialGameState,
-      submission: {
-        status: 'partial',
-        white: {
-          canDraw: false,
-          moves: ['w:E2-E4', 'w:D2-D4'],
+    const expectedWhiteState = {
+      checkedState: computeCheckedState({
+        ...initialGameState,
+        submission: {
+          status: 'partial',
+          white: {
+            canDraw: false,
+            moves: ['w:E2-E4', 'w:D2-D4'],
+          },
+          black: {
+            canDraw: true,
+            moves: [],
+          },
         },
-        black: {
-          canDraw: true,
-          moves: [],
-        },
+      }),
+      subscribers: {
+        'white-client': {},
+        'black-client': {},
       },
-    });
+    };
 
     // And sender gets the new private state
     const actualWhiteState = whiteMovex.state;
@@ -271,39 +285,51 @@ describe('Private Actions', () => {
     await tillNextTick();
 
     // White
-    const expectedPeerState = computeCheckedState({
-      ...initialGameState,
-      submission: {
-        status: 'partial',
-        white: {
-          canDraw: false,
-          moves: ['w:E2-E4', 'w:D2-D4'],
+    const expectedPeerState = {
+      checkedState: computeCheckedState({
+        ...initialGameState,
+        submission: {
+          status: 'partial',
+          white: {
+            canDraw: false,
+            moves: ['w:E2-E4', 'w:D2-D4'],
+          },
+          black: {
+            canDraw: false,
+            moves: [],
+          },
         },
-        black: {
-          canDraw: false,
-          moves: [],
-        },
+      }),
+      subscribers: {
+        'white-client': {},
+        'black-client': {},
       },
-    });
+    };
 
     const actualPeerState = whiteMovex.state;
     expect(actualPeerState).toEqual(expectedPeerState);
 
     // Black
-    const expectedSenderState = computeCheckedState({
-      ...initialGameState,
-      submission: {
-        status: 'partial',
-        white: {
-          canDraw: false,
-          moves: [],
+    const expectedSenderState = {
+      checkedState: computeCheckedState({
+        ...initialGameState,
+        submission: {
+          status: 'partial',
+          white: {
+            canDraw: false,
+            moves: [],
+          },
+          black: {
+            canDraw: false,
+            moves: ['b:E7-E6'],
+          },
         },
-        black: {
-          canDraw: false,
-          moves: ['b:E7-E6'],
-        },
+      }),
+      subscribers: {
+        'white-client': {},
+        'black-client': {},
       },
-    });
+    };
     // The Private Action gets set
     // And sender gets the new private state
     const actualSenderState = blackMovex.state;
@@ -349,18 +375,24 @@ describe('Private Actions', () => {
 
     // This is the sender private
     // White
-    const expectedWhiteState = computeCheckedState({
-      submission: {
-        white: {
-          canDraw: false,
-          moves: ['w:E2-E4', 'w:D2-D4'],
+    const expectedWhiteState = {
+      checkedState: computeCheckedState({
+        submission: {
+          white: {
+            canDraw: false,
+            moves: ['w:E2-E4', 'w:D2-D4'],
+          },
+          black: {
+            canDraw: true,
+            moves: null,
+          },
         },
-        black: {
-          canDraw: true,
-          moves: null,
-        },
+      }),
+      subscribers: {
+        'white-client': {},
+        'black-client': {},
       },
-    });
+    };
 
     // And sender gets the new private state
     const actualWhiteState = whiteMovex.state;
@@ -386,28 +418,34 @@ describe('Private Actions', () => {
 
     await tillNextTick();
 
-    const expected = computeCheckedState({
-      submission: {
-        white: {
-          canDraw: false,
-          moves: ['w:E2-E4', 'w:D2-D4'],
+    const expectedState = {
+      checkedState: computeCheckedState({
+        submission: {
+          white: {
+            canDraw: false,
+            moves: ['w:E2-E4', 'w:D2-D4'],
+          },
+          black: {
+            canDraw: false,
+            moves: ['b:E7-E6'],
+          },
         },
-        black: {
-          canDraw: false,
-          moves: ['b:E7-E6'],
-        },
+      }),
+      subscribers: {
+        'white-client': {},
+        'black-client': {},
       },
-    });
+    };
 
     // They are bot equal now
     const actualPeerState = whiteMovex.state;
-    expect(actualPeerState).toEqual(expected);
+    expect(actualPeerState).toEqual(expectedState);
 
     const actualSenderState = blackMovex.state;
-    expect(actualSenderState).toEqual(expected);
+    expect(actualSenderState).toEqual(expectedState);
 
     const masterPublicState = await master.getPublicState(rid).resolveUnwrap();
-    expect(masterPublicState).toEqual(expected);
+    expect(masterPublicState).toEqual(expectedState.checkedState);
 
     // expect(actualPeerState[0].submission.status).toBe('reconciled');
   });

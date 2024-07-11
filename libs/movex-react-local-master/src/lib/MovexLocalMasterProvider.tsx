@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import {
   invoke,
-  logsy,
+  globalLogsy,
   noop,
   emptyFn,
   type StringKeys,
   type GetReducerState,
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
-} from  'movex-core-util';
+  LoggingEvent,
+} from 'movex-core-util';
 import { MemoryMovexStore, type MovexStoreItem } from 'movex-store';
 import { MovexMasterServer, initMovexMaster } from 'movex-master';
 import { MovexLocalContext, MovexLocalContextProps } from './MovexLocalContext';
+
+const logsy = globalLogsy.withNamespace('[MovexLocalMasterProvider]');
 
 type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
@@ -26,6 +29,9 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
       >,
       updateKind: 'create' | 'update'
     ) => void;
+    logger?: {
+      onLog: (event: LoggingEvent) => void;
+    };
   }>;
 
 /**
@@ -36,7 +42,7 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
  */
 export const MovexLocalMasterProvider: React.FC<
   Props<BaseMovexDefinitionResourcesMap>
-> = ({ onInit = noop, onMasterResourceUpdated = noop, ...props }) => {
+> = ({ onInit = noop, onMasterResourceUpdated = noop, logger, ...props }) => {
   const [contextState, setContextState] = useState<MovexLocalContextProps>();
 
   useEffect(() => {
@@ -59,21 +65,15 @@ export const MovexLocalMasterProvider: React.FC<
       >();
 
       const unsubscribers = [
-        localStore.onCreated((s) => {
-          logsy.group('[Master.LocalStore] onCreated');
-          logsy.log('Item', s);
-          logsy.log('All Store', localStore.all());
-          logsy.groupEnd();
+        localStore.onCreated((item) => {
+          logsy.info('onCreated', { item });
 
-          onMasterResourceUpdated(s as any, 'create');
+          onMasterResourceUpdated(item as any, 'create');
         }),
-        localStore.onUpdated((s) => {
-          logsy.group('[Master.LocalStore] onUpdated');
-          logsy.log('Item', s);
-          logsy.log('All Store', localStore.all());
-          logsy.groupEnd();
+        localStore.onUpdated((item) => {
+          logsy.info('onUpdated', { item });
 
-          onMasterResourceUpdated(s as any, 'update');
+          onMasterResourceUpdated(item as any, 'update');
         }),
       ];
 
@@ -94,6 +94,14 @@ export const MovexLocalMasterProvider: React.FC<
       onInit(contextState.master);
     }
   }, [contextState]);
+
+  useEffect(() => {
+    if (logger) {
+      return globalLogsy.onLog(logger.onLog);
+    }
+
+    return () => {};
+  }, [logger]);
 
   if (!contextState) {
     return null;

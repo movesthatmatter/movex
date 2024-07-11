@@ -1,6 +1,6 @@
 import React from 'react';
 import type { MovexClient } from 'movex';
-import type {
+import {
   GetReducerState,
   GetReducerAction,
   ResourceIdentifier,
@@ -13,6 +13,14 @@ import type {
 import { invoke, isSameResourceIdentifier } from 'movex-core-util';
 import { MovexContextStateChange } from './MovexContextStateChange';
 
+type ReactMovexBoundResource<
+  TResourcesMap extends BaseMovexDefinitionResourcesMap,
+  TResourceType extends StringKeys<TResourcesMap>
+> = MovexClient.MovexBoundResource<
+  GetReducerState<TResourcesMap[TResourceType]>,
+  GetReducerAction<TResourcesMap[TResourceType]>
+>;
+
 type Props<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends StringKeys<TResourcesMap>
@@ -20,24 +28,15 @@ type Props<
   movexDefinition: MovexDefinition<TResourcesMap>;
   rid: ResourceIdentifier<TResourceType>;
   onReady?: (p: {
-    boundResource: MovexClient.MovexBoundResource<
-      GetReducerState<TResourcesMap[TResourceType]>,
-      GetReducerAction<TResourcesMap[TResourceType]>
-    >;
+    boundResource: ReactMovexBoundResource<TResourcesMap, TResourceType>;
     clientId: MovexClientUser['id'];
   }) => void;
   onComponentWillUnmount?: (p: State<TResourcesMap, TResourceType>) => void;
   onResourceStateUpdated?: (
-    p: MovexClient.MovexBoundResource<
-      GetReducerState<TResourcesMap[TResourceType]>,
-      GetReducerAction<TResourcesMap[TResourceType]>
-    >['state']
+    p: ReactMovexBoundResource<TResourcesMap, TResourceType>['state']
   ) => void;
   render: (p: {
-    boundResource: MovexClient.MovexBoundResource<
-      GetReducerState<TResourcesMap[TResourceType]>,
-      GetReducerAction<TResourcesMap[TResourceType]>
-    >;
+    boundResource: ReactMovexBoundResource<TResourcesMap, TResourceType>;
     clientId: MovexClientUser['id'];
   }) => React.ReactNode;
 
@@ -54,14 +53,11 @@ type State<
     }
   | {
       init: true;
-      boundResource: MovexClient.MovexBoundResource<
-        GetReducerState<TResourcesMap[TResourceType]>,
-        GetReducerAction<TResourcesMap[TResourceType]>
-      >;
+      boundResource: ReactMovexBoundResource<TResourcesMap, TResourceType>;
       clientId: MovexClientUser['id'];
     };
 
-export class MovexBoundResource<
+export class MovexBoundResourceComponent<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends StringKeys<TResourcesMap>
 > extends React.Component<
@@ -147,9 +143,9 @@ export class MovexBoundResource<
         {this.state.init
           ? this.props.render(
               this.state as {
-                boundResource: MovexClient.MovexBoundResource<
-                  GetReducerState<TResourcesMap[TResourceType]>,
-                  GetReducerAction<TResourcesMap[TResourceType]>
+                boundResource: ReactMovexBoundResource<
+                  TResourcesMap,
+                  TResourceType
                 >;
                 clientId: MovexClientUser['id'];
               }
