@@ -38,6 +38,7 @@
     "tsc-all-libs": "npx nx run-many --parallel --target=tsc --projects=movex-core-util,movex,movex-server,movex-service,movex-react,movex-react-local-master,movex-vue,movex-store,movex-master,movex-specs-util",
     "test-all-libs": "npx nx run-many --parallel --target=test --projects=movex,movex-core-util,movex-master,movex-react,movex-react-local-master,movex-server,movex-service,movex-store,movex-vue",
     "build-all-libs": "npx nx run-many --parallel --target=build --projects=movex,movex-core-util,movex-master,movex-react,movex-react-local-master,movex-server,movex-service,movex-store,movex-vue",
+    "version-publishable-libs": "npx nx run-many --parallel --target=semver --projects=movex,movex-core-util,movex-react,movex-server,movex-master,movex-service,movex-store",
     "deploy": "git diff --exit-code HEAD && flyctl deploy -c apps/movex-demo-api/fly.toml --dockerfile apps/movex-demo-api/Dockerfile -e APP_REVISION=$(git rev-parse --short HEAD) --remote-only"
   },
   "private": false,
