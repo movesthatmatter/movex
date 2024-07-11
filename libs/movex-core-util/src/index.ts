@@ -1,6 +1,6 @@
 export * from './lib/misc';
 export * from './lib/domain';
-export * from './lib/Observable';
+export * from './lib/Observable/Observable';
 export * from './lib/EventEmitter';
 export * from './lib/ScketIOEmitter';
 export * from './lib/Logsy';

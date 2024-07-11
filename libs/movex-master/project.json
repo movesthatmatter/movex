@@ -31,6 +31,16 @@
         "updateBuildableProjectDepsInPackageJson": true,
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
+    },
+    "semver": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "cd libs/movex-master && npm --no-git-tag-version --allow-same-version version"
+          }
+        ]
+      }
     }
   },
   "tags": []

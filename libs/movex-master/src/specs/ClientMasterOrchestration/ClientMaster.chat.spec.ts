@@ -1,23 +1,8 @@
-import { globalLogsy, computeCheckedState } from  'movex-core-util';
-import {
-  tillNextTick,
-  chatReducer,
-  initialChatState,
-} from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
+import { computeCheckedState } from 'movex-core-util';
+import { tillNextTick, chatReducer, initialChatState } from 'movex-specs-util';
+import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
-
-// console.log('movexClientMasterOrchestrator', movexClientMasterOrchestrator);
-// console.log('orchestrator', orchestrator);
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
-});
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();
@@ -51,7 +36,7 @@ test('Adds Single Participant', async () => {
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
+  const actual = blueMovex.state.checkedState;
 
   const expected = computeCheckedState({
     ...initialChatState,
@@ -109,7 +94,7 @@ test('Single Participant Writes a Message', async () => {
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
+  const actual = blueMovex.state.checkedState;
 
   const expected = computeCheckedState({
     ...initialChatState,
@@ -189,7 +174,7 @@ test('Adding Multiple Participants', async () => {
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
+  const actual = blueMovex.state.checkedState;
 
   const expected = computeCheckedState({
     ...initialChatState,
@@ -300,7 +285,7 @@ test('Multiple Participants Write Multiple Messages', async () => {
 
   await tillNextTick();
 
-  const actual = blueMovex.state;
+  const actual = blueMovex.state.checkedState;
 
   const expected = computeCheckedState({
     ...initialChatState,

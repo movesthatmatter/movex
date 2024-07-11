@@ -1,22 +1,8 @@
-import { computeCheckedState, globalLogsy } from  'movex-core-util';
-import {
-  rpsReducer,
-  rpsInitialState,
-  tillNextTick,
-} from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
-import { install } from 'console-group';
-install();
+import { computeCheckedState } from 'movex-core-util';
+import { rpsReducer, rpsInitialState, tillNextTick } from 'movex-specs-util';
+import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
-});
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();
@@ -79,28 +65,40 @@ test('2 Clients. Both Submitting (White first) WITH Reconciliation and the recon
 
   await tillNextTick();
 
-  const expectedAfterPrivateAction = computeCheckedState({
-    ...rpsInitialState,
-    currentGame: {
-      ...rpsInitialState.currentGame,
-      players: {
-        playerA: {
-          id: clientAId,
-          label: 'playerA',
+  const expectedAfterPrivateAction = {
+    checkedState: computeCheckedState({
+      ...rpsInitialState,
+      currentGame: {
+        ...rpsInitialState.currentGame,
+        players: {
+          playerA: {
+            id: clientAId,
+            label: 'playerA',
+          },
+          playerB: {
+            id: clientBId,
+            label: 'playerB',
+          },
         },
-        playerB: {
-          id: clientBId,
-          label: 'playerB',
+        submissions: {
+          ...rpsInitialState.currentGame.submissions,
+          playerA: {
+            play: 'paper',
+          },
         },
       },
-      submissions: {
-        ...rpsInitialState.currentGame.submissions,
-        playerA: {
-          play: 'paper',
-        },
+    }),
+    subscribers: {
+      'client-a': {
+        id: 'client-a',
+        info: {},
+      },
+      'client-b': {
+        id: 'client-b',
+        info: {},
       },
     },
-  });
+  };
 
   const actualAfterPrivateAction = aMovex.state;
 
@@ -150,7 +148,7 @@ test('2 Clients. Both Submitting (White first) WITH Reconciliation and the recon
     },
   });
 
-  const actualAfterPrivateRevelatoryAction = bMovex.state;
+  const actualAfterPrivateRevelatoryAction = bMovex.state.checkedState;
 
   expect(actualAfterPrivateRevelatoryAction).toEqual(
     expectedAfterPrivateRevelatoryAction
@@ -262,7 +260,7 @@ test('Same Kind Reconciliatory Actions Bug. See https://github.com/movesthatmatt
     },
   });
 
-  const actualAfterPrivateAction = aMovex.state;
+  const actualAfterPrivateAction = aMovex.state.checkedState;
 
   expect(actualAfterPrivateAction).toEqual(expectedAfterPrivateAction);
 
@@ -310,7 +308,7 @@ test('Same Kind Reconciliatory Actions Bug. See https://github.com/movesthatmatt
     },
   });
 
-  const actualAfterPrivateRevelatoryAction = bMovex.state;
+  const actualAfterPrivateRevelatoryAction = bMovex.state.checkedState;
 
   expect(actualAfterPrivateRevelatoryAction).toEqual(
     expectedAfterPrivateRevelatoryAction
@@ -424,7 +422,7 @@ test('Ensure further actinos can be dispatched after a Master-Resync', async () 
 
   await tillNextTick();
 
-  expect(bMovex.state).toEqual(
+  expect(bMovex.state.checkedState).toEqual(
     computeCheckedState({
       ...rpsInitialState,
       currentGame: {
@@ -462,7 +460,7 @@ test('Ensure further actinos can be dispatched after a Master-Resync', async () 
 
   await tillNextTick();
 
-  expect(aMovex.state).toEqual(
+  expect(aMovex.state.checkedState).toEqual(
     computeCheckedState({
       ...rpsInitialState,
       currentGame: {
@@ -487,7 +485,7 @@ test('Ensure further actinos can be dispatched after a Master-Resync', async () 
     })
   );
 
-  expect(bMovex.state).toEqual(
+  expect(bMovex.state.checkedState).toEqual(
     computeCheckedState({
       ...rpsInitialState,
       currentGame: {
@@ -557,6 +555,6 @@ test('Ensure further actinos can be dispatched after a Master-Resync', async () 
     },
   });
 
-  expect(bMovex.state).toEqual(expectedSharedState);
-  expect(aMovex.state).toEqual(expectedSharedState);
+  expect(bMovex.state.checkedState).toEqual(expectedSharedState);
+  expect(aMovex.state.checkedState).toEqual(expectedSharedState);
 });

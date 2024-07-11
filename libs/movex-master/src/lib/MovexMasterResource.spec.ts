@@ -8,7 +8,7 @@ import {
   GetReducerAction,
   computeCheckedState,
   toResourceIdentifierStr,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import { MovexMasterResource } from './MovexMasterResource';
 import { MemoryMovexStore } from 'movex-store';
 
@@ -26,7 +26,7 @@ test('gets initial state', async () => {
 
   const actualPublic = await master.getPublicState(rid).resolveUnwrap();
   const actualByClient = await master
-    .getState(rid, 'testClient')
+    .getClientSpecificState(rid, 'testClient')
     .resolveUnwrap();
 
   const expectedPublic = computeCheckedState(initialCounterState);
@@ -56,7 +56,9 @@ test('applies public action', async () => {
     .resolveUnwrap();
 
   const actualPublic = await master.getPublicState(rid).resolveUnwrap();
-  const actualByClient = await master.getState(rid, clientAId).resolveUnwrap();
+  const actualByClient = await master
+    .getClientSpecificState(rid, clientAId)
+    .resolveUnwrap();
 
   const expectedPublic = computeCheckedState({
     ...initialCounterState,
@@ -106,11 +108,11 @@ test('applies only one private action w/o getting to reconciliation', async () =
 
   const actualPublicState = await master.getPublicState(rid).resolveUnwrap();
   const actualSenderState = await master
-    .getState(rid, senderClientId)
+    .getClientSpecificState(rid, senderClientId)
     .resolveUnwrap();
 
   const actualReceiverState = await master
-    .getState(rid, 'otherClient')
+    .getClientSpecificState(rid, 'otherClient')
     .resolveUnwrap();
 
   const expectedPublic = computeCheckedState({
@@ -183,11 +185,11 @@ test('applies private action UNTIL Reconciliation', async () => {
     .resolveUnwrap();
 
   const actualSenderStateBeforeReconciliation = await master
-    .getState(rid, whitePlayer)
+    .getClientSpecificState(rid, whitePlayer)
     .resolveUnwrap();
 
   const actualReceiverStateBeforeReconciliation = await master
-    .getState(rid, blackPlayer)
+    .getClientSpecificState(rid, blackPlayer)
     .resolveUnwrap();
 
   const expectedPublicStateBeforeReconciliation = computeCheckedState({
@@ -266,11 +268,11 @@ test('applies private action UNTIL Reconciliation', async () => {
     .resolveUnwrap();
 
   const actualSenderStateAfterReconciliation = await master
-    .getState(rid, blackPlayer)
+    .getClientSpecificState(rid, blackPlayer)
     .resolveUnwrap();
 
   const actualReceiverStateAfterReconciliation = await master
-    .getState(rid, whitePlayer)
+    .getClientSpecificState(rid, whitePlayer)
     .resolveUnwrap();
 
   const expectedPublicStateAfterReconciliation = computeCheckedState({

@@ -40,6 +40,16 @@
         "jestConfig": "libs/movex/jest.config.ts",
         "passWithNoTests": true
       }
+    },
+    "semver": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "cd libs/movex && npm --no-git-tag-version --allow-same-version version"
+          }
+        ]
+      }
     }
   },
   "tags": []

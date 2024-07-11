@@ -2,41 +2,29 @@ import type {
   ResourceIdentifier,
   ResourceIdentifierStr,
   UnsubscribeFn,
-  ActionWithAnyPayload,
   AnyAction,
   CheckedReconciliatoryActions,
   MovexReducer,
-  IOConnection,
-} from  'movex-core-util';
+  ConnectionToMaster,
+} from 'movex-core-util';
 import {
-  logsy as rawLogsy,
+  globalLogsy,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
-  isAction,
   invoke,
-} from  'movex-core-util';
-import { ConnectionToMasterResource } from './ConnectionToMasterResource';
+} from 'movex-core-util';
+import { ConnectionToMasterResources } from './ConnectionToMasterResources';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import * as deepObject from 'deep-object-diff';
 
-// TODO: Take away from here as it's adding to the size
-const logUnimportantStyle = 'color: grey;';
-const logImportantStyle = 'font-weight: bold;';
-const logIncomingStyle = 'color: #4CAF50; font-weight: bold;';
-const logOutgoingStyle = 'color: #1EA7FD; font-weight: bold;';
-const logOpenConnectionStyle = 'color: #EF5FA0; font-weight: bold';
-const logClosedConnectionStyle = 'color: #DF9D04; font-weight: bold';
-const logErrorStyle = 'color: red; font-weight: bold;';
-
-const logsy = rawLogsy.withNamespace('[MovexResource]');
-// const logsy = rawLogsy;
+const logsy = globalLogsy.withNamespace('[Movex][MovexResource]');
 
 export class MovexResource<
   S,
   A extends AnyAction,
   TResourceType extends string
 > {
-  private connectionToMasterResource: ConnectionToMasterResource<
+  private connectionToMasterResources: ConnectionToMasterResources<
     S,
     A,
     TResourceType
@@ -48,48 +36,37 @@ export class MovexResource<
   > = {};
 
   constructor(
-    private connectionToMaster: IOConnection<S, A, TResourceType>,
+    private connectionToMaster: ConnectionToMaster<S, A, TResourceType, any>,
     private resourceType: TResourceType,
     private reducer: MovexReducer<S, A>
   ) {
-    this.connectionToMasterResource = new ConnectionToMasterResource(
+    this.connectionToMasterResources = new ConnectionToMasterResources(
       resourceType,
       this.connectionToMaster
     );
   }
 
   create(state: S, resourceId?: string) {
-    return this.connectionToMasterResource
+    return this.connectionToMasterResources
       .create(this.resourceType, state, resourceId)
       .map((item) => ({
+        ...item,
         rid: toResourceIdentifierObj<TResourceType>(item.rid),
         state: item.state[0],
       }));
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
-    return this.connectionToMasterResource.get(rid).map(([state]) => ({
-      // This is rempaed in this way in order to return the same payload as "create"
-      rid,
-      state,
-    }));
-
-    // TODO: Once a client can bind multiple times this could also sync with the obsservable
-    // .map((s) => {
-    //   // TODO: This shoou
-    //   // clientResource.sync(s);
-    // });
+    return this.connectionToMasterResources.getResource(rid);
   }
 
   /**
-   * This returns the actual MovexClientResource. The name "use" doesn't seem to be perfect yet
-   *  but not sure what to use yet. "observe", "listenTo", "attach", "follow" ?:)
-   * I think "bind" works pretty well! :D
+   * Connect the Master to the Client resource
    *
    * @param rid
-   * @returns
+   * @returns MovexResourceObservable
    */
-  bind(rid: ResourceIdentifier<TResourceType>) {
+  bind(rid: ResourceIdentifier<TResourceType>): MovexResourceObservable<S, A> {
     // TODO:
     // What if this is used multiple times for the sameclient?
     // It should actually store it in the instance so it can be reused rather than created again, I suggest!
@@ -101,14 +78,16 @@ export class MovexResource<
       this.reducer
     );
 
+    // resourceObservable.$subscribers.get()
+
     // TODO: Fix this!!!
     // resourceObservable.setMasterSyncing(false);
 
     const syncLocalState = () => {
-      return this.connectionToMasterResource
-        .get(rid)
+      return this.connectionToMasterResources
+        .getState(rid)
         .map((masterCheckState) => {
-          resourceObservable.sync(masterCheckState);
+          resourceObservable.syncState(masterCheckState);
 
           return masterCheckState;
         });
@@ -129,92 +108,61 @@ export class MovexResource<
       const prevCheckedState = resourceObservable.state;
 
       return syncLocalState().map((masterCheckState) => {
-        logsy.group('State Resynch-ed Warning');
-        logsy.log(
-          '%cPrev (Local) State',
-          logUnimportantStyle,
-          prevCheckedState
-        );
-        logsy.log('%cNext (Master) Staet', logIncomingStyle, masterCheckState);
+        logsy.warn('State Resynch-ed', {
+          prevCheckedState,
+          masterCheckState,
+          diff: deepObject.detailedDiff(prevCheckedState, masterCheckState),
+        });
         logsy.debug(
-          'Diff',
-          deepObject.detailedDiff(prevCheckedState, masterCheckState)
-        );
-        logsy.warn(
           "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
         );
-        logsy.groupEnd();
 
         return masterCheckState;
       });
     };
 
-    this.connectionToMasterResource
+    this.connectionToMasterResources
       .addResourceSubscriber(rid)
-      .map(() => {
-        // TODO: This is where the issue is. the master never responds
-
+      .map((res) => {
         // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
-        syncLocalState();
+        // syncLocalState();
+
+        // Added on April 1st
+        // TODO: This can be improved to update the whole resource or smtg like that, also to look at the sync and think should the subscribers also sync
+        resourceObservable.syncState(res.state);
+        resourceObservable.updateSubscribers(res.subscribers);
       })
-      .mapErr((e) => {
-        logsy.error('Add Resource Subscriber Error', e);
+      .mapErr((error) => {
+        logsy.error('Add Resource Subscriber Error', { error });
       });
 
     const onReconciliateActionsHandler = (
       p: CheckedReconciliatoryActions<A>
     ) => {
-      const prevState = resourceObservable.get();
+      const prevState = resourceObservable.getCheckedState();
+      const nextState = resourceObservable.applyMultipleActions(
+        p.actions
+      ).checkedState;
 
-      logsy.group(
-        `%c\u{25BC} %cReconciliatory Actions Received (${p.actions.length}). FinalCheckum ${p.finalChecksum}`,
-        logIncomingStyle,
-        logUnimportantStyle,
-        'Client:',
-        this.connectionToMaster.clientId
-      );
-      logsy.log('%cPrev state', logUnimportantStyle, prevState[0]);
-
-      const nextState = resourceObservable.applyMultipleActions(p.actions);
-
-      p.actions.forEach((action, i) => {
-        logsy.log(
-          `%cAction(${i + 1}/${p.actions.length}): %c${action.type}`,
-          logOutgoingStyle,
-          logImportantStyle,
-          (action as ActionWithAnyPayload<string>).payload,
-          action
-        );
+      logsy.log('Reconciliatory Actions Received', {
+        ...p,
+        actionsCount: p.actions.length,
+        clientId: this.connectionToMaster.clientId,
+        nextState,
+        prevState,
       });
 
-      logsy.log('%cNextState', logIncomingStyle, nextState[0]);
-      logsy.log(
-        '%cChecksums',
-        logUnimportantStyle,
-        prevState[1],
-        '>',
-        nextState[1]
-      );
-
-      if (nextState[1] === p.finalChecksum) {
-        logsy.log(
-          '%cFinal Checksum Matches',
-          logUnimportantStyle,
-          p.finalChecksum
-        );
-      } else {
+      if (nextState[1] !== p.finalChecksum) {
         // If the checksums are different then it this case it's needed to resync.
         // See this https://github.com/movesthatmatter/movex/issues/8
         resyncLocalState();
 
         // Here is where this happens!!!
 
-        logsy.warn(
-          '%cLocal and Final Master Checksum Mismatch',
-          logErrorStyle,
-          nextState[1],
-          p.finalChecksum
-        );
+        logsy.warn('Local and Final Master Checksum Mismatch', {
+          ...p,
+          nextState: nextState[1],
+        });
       }
 
       logsy.groupEnd();
@@ -227,73 +175,10 @@ export class MovexResource<
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
       resourceObservable.onDispatched(
-        ({
-          action,
-          next: nextLocalCheckedState,
-          prev: prevLocalCheckedState,
-        }) => {
+        ({ action, next: nextLocalCheckedState }) => {
           const [nextLocalState, nextLocalChecksum] = nextLocalCheckedState;
 
-          logsy.group(
-            `%c\u{25B2} %cAction Dispatched: %c${
-              isAction(action)
-                ? action.type
-                : action[0].type + ' + ' + action[1].type
-            }`,
-            logOutgoingStyle,
-            logUnimportantStyle,
-            logImportantStyle,
-            'Client:',
-            this.connectionToMaster.clientId
-          );
-          logsy.log(
-            '%cPrev state',
-            logUnimportantStyle,
-            prevLocalCheckedState[0]
-          );
-          if (isAction(action)) {
-            logsy.log(
-              `%cPublic Action: %c${action.type}`,
-              logOutgoingStyle,
-              logImportantStyle,
-              (action as ActionWithAnyPayload<string>).payload
-            );
-          } else {
-            const [privateAction, publicAction] = action;
-            logsy.log(
-              `%cPrivate Action: %c${privateAction.type}`,
-              logOpenConnectionStyle,
-              logImportantStyle,
-              (privateAction as ActionWithAnyPayload<string>).payload
-            );
-            logsy.log(
-              `%cPublic Action payload: %c${publicAction.type}`,
-              logOutgoingStyle,
-              logImportantStyle,
-              (publicAction as ActionWithAnyPayload<string>).payload
-            );
-          }
-          logsy.log('%cNext State', logIncomingStyle, nextLocalState);
-
-          if (prevLocalCheckedState[1] !== nextLocalChecksum) {
-            logsy.log(
-              '%cChecksums',
-              logUnimportantStyle,
-              prevLocalCheckedState[1],
-              '>',
-              nextLocalChecksum
-            );
-          } else {
-            logsy.log(
-              '%cNo Diff',
-              logUnimportantStyle,
-              prevLocalCheckedState[1]
-            );
-          }
-
-          logsy.groupEnd();
-
-          this.connectionToMasterResource
+          this.connectionToMasterResources
             .emitAction(rid, action)
             .map(async (master) => {
               if (master.reconciled) {
@@ -312,85 +197,89 @@ export class MovexResource<
               // When the checksums are not the same, need to resync the state!
               // this is expensive and ideally doesn't happen too much.
 
-              logsy.group(
-                `[Movex] Dispatch Ack Error: "Checksums MISMATCH"\n`,
-                `client: '${this.connectionToMaster.clientId}',\n`,
-                'action:',
-                action
-              );
+              logsy.error(`Dispatch Ack Error: "Checksums MISMATCH"`, {
+                action,
+                clientId: this.connectionToMaster.clientId,
+              });
 
               await resyncLocalState()
                 .map((masterState) => {
-                  logsy.log(
-                    'Master State:',
-                    JSON.stringify(masterState[0], null, 2),
-                    masterState[1]
-                  );
-                  logsy.log(
-                    'Local State:',
-                    JSON.stringify(nextLocalCheckedState[0], null, 2),
-                    nextLocalCheckedState[1]
-                  );
-                  logsy.log(
-                    'Diff',
-                    deepObject.detailedDiff(masterState, nextLocalCheckedState)
-                  );
+                  logsy.info('Resynched Result', {
+                    masterState,
+                    nextLocalCheckedState,
+                    diff: deepObject.detailedDiff(
+                      masterState,
+                      nextLocalCheckedState
+                    ),
+                  });
                 })
                 .resolve();
-
-              logsy.groupEnd();
             });
         }
       ),
-      this.connectionToMasterResource.onFwdAction(rid, (p) => {
-        const prevState = resourceObservable.get();
+      this.connectionToMasterResources.onFwdAction(rid, (p) => {
+        const prevState = resourceObservable.getCheckedState();
 
         resourceObservable.reconciliateAction(p);
 
-        const nextState = resourceObservable.get();
+        const nextState = resourceObservable.getCheckedState();
 
-        logsy.group(
-          `%c\u{25BC} %cForwarded Action Received: %c${p.action.type}`,
-          logIncomingStyle,
-          logUnimportantStyle,
-          logImportantStyle,
-          'Client:',
-          this.connectionToMaster.clientId
-        );
-        logsy.log('%cPrev State', logUnimportantStyle, prevState[0]);
-        logsy.log(
-          `%cAction: %c${p.action.type}`,
-          logOutgoingStyle,
-          logImportantStyle,
-          (p.action as ActionWithAnyPayload<string>).payload
-        );
-        logsy.log('%cNext State', logIncomingStyle, nextState[0]);
-        if (prevState[1] !== nextState[1]) {
-          logsy.log(
-            '%cchecksums',
-            logUnimportantStyle,
-            prevState[1],
-            '>',
-            nextState[1]
-          );
-        } else {
-          logsy.log('%cNo Diff', logErrorStyle, prevState[1]);
-        }
-
-        logsy.groupEnd();
+        logsy.info('Forwarded Action Received', {
+          ...p,
+          clientId: this.connectionToMaster.clientId,
+          prevState,
+          nextState,
+        });
       }),
-      this.connectionToMasterResource.onReconciliatoryActions(
+      this.connectionToMasterResources.onReconciliatoryActions(
         rid,
         onReconciliateActionsHandler
       ),
+
+      // Subscribers
+      this.connectionToMasterResources.onSubscriberAdded(rid, (client) => {
+        resourceObservable.updateSubscribers((prev) => ({
+          ...prev,
+          [client.id]: client,
+        }));
+
+        logsy.info('Subscriber Added', { client });
+      }),
+      this.connectionToMasterResources.onSubscriberRemoved(rid, (clientId) => {
+        resourceObservable.updateSubscribers((prev) => {
+          const { [clientId]: removed, ...rest } = prev;
+
+          return rest;
+        });
+
+        logsy.info('Subscriber Removed', { clientId });
+      }),
+
+      // Destroyers
+
       // Add the client resource destroy to the list of unsubscribers
       () => resourceObservable.destroy(),
 
       // Add the master Resource Destroy as well
-      () => this.connectionToMasterResource.destroy(),
+      () => this.connectionToMasterResources.destroy(),
+
+      // Logger
+      resourceObservable.onDispatched(
+        ({
+          action,
+          next: nextLocalCheckedState,
+          prev: prevLocalCheckedState,
+        }) => {
+          logsy.info('Action Dispatched', {
+            action,
+            clientId: this.connectionToMaster.clientId,
+            prevState: prevLocalCheckedState,
+            nextLocalState: nextLocalCheckedState,
+          });
+        }
+      ),
     ];
 
-    // return new MovexBoundResource(resourceObservable);
     return resourceObservable;
   }
 

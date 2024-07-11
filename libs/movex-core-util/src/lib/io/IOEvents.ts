@@ -7,9 +7,12 @@ import type {
 import type {
   CheckedState,
   Checksum,
+  MovexClientResourceShape,
   IOPayloadResult,
+  MovexClient,
   ResourceIdentifier,
   ResourceIdentifierStr,
+  SanitizedMovexClient,
 } from '../core-types';
 
 export type IOEvents<
@@ -17,18 +20,20 @@ export type IOEvents<
   A extends AnyAction = AnyAction,
   TResourceType extends string = string
 > = {
-  ping: () => IOPayloadResult<void, unknown>;
-  pong: () => IOPayloadResult<void, unknown>;
+  /**
+   * The following events are directed from Client to Master
+   * */
   createResource: (p: {
     resourceType: TResourceType;
     resourceState: TState;
     resourceId?: string;
     // clientId: MovexClient['id']; // Needed?
   }) => IOPayloadResult<
-    {
-      rid: ResourceIdentifierStr<TResourceType>;
-      state: CheckedState<TState>;
-    },
+    MovexClientResourceShape<TResourceType, TState>,
+    // {
+    //   rid: ResourceIdentifierStr<TResourceType>;
+    //   state: CheckedState<TState>;
+    // },
     unknown // Type this
   >;
 
@@ -36,14 +41,9 @@ export type IOEvents<
   // But adds the client to the Resource list of subscribers
   addResourceSubscriber: (p: {
     rid: ResourceIdentifier<TResourceType>;
+    clientInfo?: MovexClient['info'];
   }) => IOPayloadResult<
-    void,
-    unknown // Type this
-  >;
-  removeResourceSubscriber: (p: {
-    rid: ResourceIdentifier<TResourceType>;
-  }) => IOPayloadResult<
-    void,
+    MovexClientResourceShape<TResourceType, TState>,
     unknown // Type this
   >;
 
@@ -51,6 +51,20 @@ export type IOEvents<
     rid: ResourceIdentifier<TResourceType>;
   }) => IOPayloadResult<
     CheckedState<TState>,
+    unknown // Type this
+  >;
+
+  getResourceSubscribers: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+  }) => IOPayloadResult<
+    MovexClientResourceShape<TResourceType, TState>['subscribers'],
+    unknown // Type this
+  >;
+
+  getResource: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+  }) => IOPayloadResult<
+    MovexClientResourceShape<TResourceType, TState>,
     unknown // Type this
   >;
 
@@ -68,14 +82,44 @@ export type IOEvents<
     'MasterResourceInexistent' | string
   >; // Type the other errors
 
-  fwdAction: (
+  /**
+   * The following events are directed from Master to Client
+   * */
+  // @deprecate in favor ofClientReady
+  setClientId: (clientId: string) => void;
+
+  onClientReady: (client: SanitizedMovexClient) => void;
+
+  onFwdAction: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
     } & ToCheckedAction<A>
   ) => IOPayloadResult<void, unknown>;
-  reconciliateActions: (
+  onReconciliateActions: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
     } & CheckedReconciliatoryActions<A>
   ) => IOPayloadResult<void, unknown>;
+  onResourceSubscriberAdded: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+    client: Pick<MovexClient, 'id' | 'info'>;
+    // clientId: MovexClient['id'];
+  }) => IOPayloadResult<
+    void,
+    unknown // Type this
+  >;
+  onResourceSubscriberRemoved: (p: {
+    rid: ResourceIdentifier<TResourceType>;
+    clientId: MovexClient['id'];
+  }) => IOPayloadResult<
+    void,
+    unknown // Type this
+  >;
+
+  /**
+   * The following events are by-directional (from Client to Master and vice-versa)
+   * */
+
+  ping: () => IOPayloadResult<void, unknown>;
+  pong: () => IOPayloadResult<void, unknown>;
 };
