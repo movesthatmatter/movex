@@ -7,6 +7,8 @@ import {
   MovexClientResourceShape,
   toResourceIdentifierStr,
   objectKeys,
+  MovexClientInfo,
+  MovexClient,
 } from 'movex-core-util';
 import { MovexStoreItem } from 'movex-store';
 
@@ -69,21 +71,29 @@ export function getRandomInt(givenMin: number, givenMax: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export const storeItemToSanitizedClientResource = <
+export const itemToSanitizedClientResource = <
   TResourceType extends GenericResourceType,
   TState
 >(
-  storeItem: MovexStoreItem<TState, TResourceType>
-): MovexClientResourceShape<TResourceType, TState> => {
-  return {
-    rid: toResourceIdentifierStr(storeItem.rid),
-    state: storeItem.state,
-    subscribers: objectKeys(storeItem.subscribers).reduce(
-      (prev, next) => ({
-        ...prev,
-        [next]: null,
-      }),
-      {} as MovexClientResourceShape<TResourceType, TState>['subscribers']
-    ),
-  };
-};
+  item: MovexStoreItem<TState, TResourceType> & {
+    subscribers: Record<
+      MovexClient['id'],
+      {
+        info: MovexClient['info'];
+      }
+    >;
+  }
+): MovexClientResourceShape<TResourceType, TState> => ({
+  rid: toResourceIdentifierStr(item.rid),
+  state: item.state,
+  subscribers: objectKeys(item.subscribers).reduce(
+    (prev, nextSubId) => ({
+      ...prev,
+      [nextSubId]: {
+        id: nextSubId,
+        info: item.subscribers[nextSubId].info || {},
+      },
+    }),
+    {} as MovexClientResourceShape<TResourceType, TState>['subscribers']
+  ),
+});

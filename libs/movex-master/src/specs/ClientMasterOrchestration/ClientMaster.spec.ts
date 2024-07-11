@@ -1,8 +1,4 @@
-import {
-  computeCheckedState,
-  globalLogsy,
-  toResourceIdentifierObj,
-} from 'movex-core-util';
+import { computeCheckedState, toResourceIdentifierObj } from 'movex-core-util';
 import {
   gameReducer,
   gameReducerWithDerivedState,
@@ -10,17 +6,7 @@ import {
   initialRawGameStateWithDerivedState,
   tillNextTick,
 } from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
-
-require('console-group').install();
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
-});
+import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
 
@@ -104,10 +90,13 @@ describe('Public Actions', () => {
         count: 5,
       }),
       subscribers: {
-        'white-client': null,
-        'black-client': null,
+        'white-client': {},
+        'black-client': {},
       },
     };
+
+    // console.log('whiteMovex', whiteMovex.state);
+    // console.log('blackMovex', blackMovex.state);
 
     expect(whiteMovex.state).toEqual(expected);
 
@@ -169,8 +158,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': null,
-        'black-client': null,
+        'white-client': {},
+        'black-client': {},
       },
     };
 
@@ -198,8 +187,8 @@ describe('Private Actions', () => {
     const expectedPeerState = {
       checkedState: publicState,
       subscribers: {
-        'white-client': null,
-        'black-client': null,
+        'white-client': {},
+        'black-client': {},
       },
     };
     const actualPeerState = blackMovex.state;
@@ -266,8 +255,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': null,
-        'black-client': null,
+        'white-client': {},
+        'black-client': {},
       },
     };
 
@@ -312,8 +301,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': null,
-        'black-client': null,
+        'white-client': {},
+        'black-client': {},
       },
     };
 
@@ -337,8 +326,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': null,
-        'black-client': null,
+        'white-client': {},
+        'black-client': {},
       },
     };
     // The Private Action gets set
@@ -400,8 +389,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': null,
-        'black-client': null,
+        'white-client': {},
+        'black-client': {},
       },
     };
 
@@ -443,8 +432,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': null,
-        'black-client': null,
+        'white-client': {},
+        'black-client': {},
       },
     };
 

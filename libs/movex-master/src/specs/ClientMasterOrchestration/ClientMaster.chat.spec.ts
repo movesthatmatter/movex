@@ -1,23 +1,8 @@
-import { globalLogsy, computeCheckedState } from  'movex-core-util';
-import {
-  tillNextTick,
-  chatReducer,
-  initialChatState,
-} from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
+import { computeCheckedState } from 'movex-core-util';
+import { tillNextTick, chatReducer, initialChatState } from 'movex-specs-util';
+import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
-
-// console.log('movexClientMasterOrchestrator', movexClientMasterOrchestrator);
-// console.log('orchestrator', orchestrator);
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
-});
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();

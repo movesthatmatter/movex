@@ -2,25 +2,32 @@ import {
   MovexClient,
   ResourceIdentifier,
   invoke,
-  globalLogsy,
   AnyAction,
   MovexReducer,
   ConnectionToMaster,
-  BaseMovexDefinitionResourcesMap,
-  MovexDefinition,
   ConnectionToClient,
+  MovexClientInfo,
 } from 'movex-core-util';
-import { Movex, MovexFromDefintion } from 'movex';
+import { Movex } from 'movex';
 import { MovexMasterResource, MovexMasterServer } from 'movex-master';
 import { MemoryMovexStore } from 'movex-store';
-import { MockConnectionEmitter } from './MockConnectionEmitter';
+import { MockConnectionEmitter } from '../../lib/MockConnectionEmitter';
 
-const logsy = globalLogsy.withNamespace('[MovexClientMasterOrchestrator]');
+// TODO: This was added on April 16th 2024, when I added the subscribers info (client info)
 
-export const movexClientMasterOrchestrator = () => {
+export const movexClientMasterOrchestrator = <
+  TClientInfo extends MovexClientInfo
+>(
+  clientInfo: TClientInfo = {} as TClientInfo
+) => {
   let unsubscribe = async () => {};
 
-  const orchestrate = <S, A extends AnyAction, TResourceType extends string>({
+  const orchestrate = <
+    S,
+    A extends AnyAction,
+    TResourceType extends string,
+    TClientInfo extends MovexClientInfo
+  >({
     clientIds,
     reducer,
     resourceType,
@@ -46,14 +53,19 @@ export const movexClientMasterOrchestrator = () => {
       const masterConnectionToClient = new ConnectionToClient<
         S,
         A,
-        TResourceType
+        TResourceType,
+        TClientInfo
       >(clientId, emitterOnMaster);
 
       const removeClientConnectionFromMaster = masterServer.addClientConnection(
         masterConnectionToClient
       );
 
-      const mockedMovex = orchestrateMovex(clientId, emitterOnMaster);
+      const mockedMovex = orchestrateMovex(
+        clientId,
+        emitterOnMaster,
+        clientInfo
+      );
 
       // TODO: This could be done better, but since the unsibscriber is async need to work iwth an sync iterator
       //  for now this should do
@@ -86,16 +98,15 @@ export const movexClientMasterOrchestrator = () => {
   };
 };
 
-export type MovexClientMasterOrchestrator =
-  typeof movexClientMasterOrchestrator;
-
-export const orchestrateMovex = <
+const orchestrateMovex = <
   TState extends any,
-  TAction extends AnyAction = AnyAction,
-  TResourceType extends string = string
+  TAction extends AnyAction,
+  TResourceType extends string,
+  TClientInfo extends MovexClientInfo
 >(
   clientId: MovexClient['id'],
-  emitterOnMaster: MockConnectionEmitter<TState, TAction, TResourceType>
+  emitterOnMaster: MockConnectionEmitter<TState, TAction, TResourceType>,
+  clientInfo: TClientInfo
 ) => {
   const emitterOnClient = new MockConnectionEmitter<
     TState,
@@ -115,44 +126,12 @@ export const orchestrateMovex = <
   ];
 
   return {
-    movex: new Movex(new ConnectionToMaster(clientId, emitterOnClient as any)),
-    emitter: emitterOnClient,
-    destroy: () => {
-      unsubscribers.forEach(invoke);
-    },
-  };
-};
-
-// TODO: this could get another name and be moved into util since it's used outside in initLocalMasterMovex
-export const orchestrateDefinedMovex = <
-  TResourceMap extends BaseMovexDefinitionResourcesMap
->(
-  movexDefinition: MovexDefinition<TResourceMap>,
-  clientId: MovexClient['id'],
-  emitterOnMaster: MockConnectionEmitter
-) => {
-  const emitterOnClient = new MockConnectionEmitter(
-    clientId,
-    clientId + '-emitter'
-  );
-
-  const unsubscribers = [
-    emitterOnClient._onEmitted((r, ackCb) => {
-      logsy.debug('EmitterOnClient _onEmitted', r);
-      // Calling the master with the given event from the client in order to process it
-      emitterOnMaster._publish(r.event, r.payload, ackCb);
-    }),
-    emitterOnMaster._onEmitted((r, ackCb) => {
-      logsy.debug('EmitterOnMaster _onEmitted', r);
-      // Calling the client with the given event from the master in order to process it
-      emitterOnClient._publish(r.event, r.payload, ackCb);
-    }),
-  ];
-
-  return {
-    movex: new MovexFromDefintion<TResourceMap>(
-      movexDefinition,
-      new ConnectionToMaster(clientId, emitterOnClient)
+    movex: new Movex(
+      new ConnectionToMaster(
+        clientId,
+        emitterOnClient as any, // TODO: Fix this type cast
+        clientInfo
+      )
     ),
     emitter: emitterOnClient,
     destroy: () => {

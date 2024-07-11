@@ -1,6 +1,6 @@
 {
   "name": "movex-store",
-  "version": "0.1.5-1",
+  "version": "0.1.5-4",
   "license": "MIT",
   "description": "Movex-store defines the store interface and comes with a MemoryStore",
   "author": {

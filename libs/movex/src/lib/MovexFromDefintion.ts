@@ -6,8 +6,8 @@ import type {
   GetReducerAction,
   GetReducerState,
   StringKeys,
-  IOConnection,
-} from  'movex-core-util';
+  ConnectionToMaster,
+} from 'movex-core-util';
 
 export class MovexFromDefintion<
   TMovexDefinitionResources extends BaseMovexDefinitionResourcesMap
@@ -16,13 +16,17 @@ export class MovexFromDefintion<
 
   constructor(
     private movexDefinition: MovexDefinition<TMovexDefinitionResources>,
-    connectionToMaster: IOConnection<any, AnyAction, any>
+    connectionToMaster: ConnectionToMaster<any, AnyAction, any, any>
   ) {
     this.movex = new Movex(connectionToMaster);
   }
 
   getClientId() {
     return this.movex.getClientId();
+  }
+
+  getClient() {
+    return this.movex.getClient();
   }
 
   register<TResourceType extends StringKeys<TMovexDefinitionResources>>(

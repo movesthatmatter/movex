@@ -11,6 +11,7 @@ import {
   isResourceIdentifier,
   objectKeys,
   toResourceIdentifierObj,
+  MovexClientInfo,
 } from 'movex-core-util';
 import { MemoryMovexStore, MovexStore } from 'movex-store';
 import { initMovexMaster } from 'movex-master';
@@ -55,14 +56,19 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
   socket.on('connection', (io) => {
     const clientId = getClientId(io.handshake.query['clientId'] as string);
-    logsy.info('Client Connected', { clientId });
+    const clientInfo = JSON.parse(
+      (io.handshake.query['clientInfo'] as string) || ''
+    ) as MovexClientInfo;
+
+    logsy.info('Client Connected', { clientId, clientInfo });
 
     const connectionToClient = new ConnectionToClient(
       clientId,
-      new SocketIOEmitter<IOEvents>(io)
+      new SocketIOEmitter<IOEvents>(io),
+      clientInfo
     );
 
-    connectionToClient.emitClientId();
+    connectionToClient.emitClientReady();
 
     movexMaster.addClientConnection(connectionToClient);
 
@@ -82,6 +88,11 @@ export const movexServer = <TDefinition extends MovexDefinition>(
       res.header('Content-Type', 'application/json');
       res.send(JSON.stringify(data, null, 4));
     });
+  });
+
+  app.get('/connections', async (_, res) => {
+    res.header('Content-Type', 'application/json');
+    res.send(JSON.stringify(movexMaster.allClients(), null, 4));
   });
 
   // Resources

@@ -158,7 +158,7 @@ export type MovexClientResourceShape<
 > = {
   state: CheckedState<TState>;
   rid: ResourceIdentifierStr<TResourceType>;
-  subscribers: Record<MovexClient['id'], null>;
+  subscribers: Record<MovexClient['id'], SanitizedMovexClient>;
 };
 
 // TODO: Remove all of these if not used
@@ -222,9 +222,11 @@ export type GenericResourceOfType<TResourceType extends string> = Resource<
 
 export type GenericResourceType = GenericResource['type'];
 
-export type MovexClient<Info extends UnknownRecord = EmptyObject> = {
+export type MovexClientInfo = UnknownRecord;
+
+export type MovexClient<Info extends MovexClientInfo = UnknownRecord> = {
   id: string;
-  info?: Info; // User Info or whatever
+  info: Info; // User Info or whatever
   subscriptions: Record<
     ResourceIdentifierStr<GenericResourceType>,
     {
@@ -233,6 +235,9 @@ export type MovexClient<Info extends UnknownRecord = EmptyObject> = {
     }
   >;
 };
+
+export type SanitizedMovexClient<Info extends UnknownRecord = UnknownRecord> =
+  Pick<MovexClient<Info>, 'id' | 'info'>;
 
 export type ResourceIdentifierObj<TResourceType extends string> = {
   resourceType: TResourceType;

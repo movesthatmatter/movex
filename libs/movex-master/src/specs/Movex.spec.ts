@@ -1,9 +1,4 @@
-import {
-  computeCheckedState,
-  globalLogsy,
-  toResourceIdentifierObj,
-} from 'movex-core-util';
-import * as consoleGroup from 'console-group';
+import { computeCheckedState, toResourceIdentifierObj } from 'movex-core-util';
 import {
   counterReducer,
   gameReducer,
@@ -12,20 +7,10 @@ import {
 } from 'movex-specs-util';
 import { movexClientMasterOrchestrator } from 'movex-master';
 
-consoleGroup.install();
-
 const orchestrator = movexClientMasterOrchestrator();
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();
-});
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
 });
 
 describe('All', () => {
@@ -38,11 +23,7 @@ describe('All', () => {
       resourceType: 'counter',
     });
 
-    const actual = await counterResource
-      .create({
-        count: 2,
-      })
-      .resolveUnwrap();
+    const actual = await counterResource.create({ count: 2 }).resolveUnwrap();
 
     expect(actual).toEqual({
       rid: toResourceIdentifierObj(actual.rid), // The id isn't too important here
@@ -73,7 +54,7 @@ describe('All', () => {
 
     const expected = {
       checkedState: computeCheckedState({ count: 2 }),
-      subscribers: { test: null },
+      subscribers: { test: {} },
     };
 
     expect(actual.state).toEqual(expected);
@@ -99,7 +80,7 @@ describe('All', () => {
     const actual = r.get();
     const expected = {
       checkedState: computeCheckedState({ count: 3 }),
-      subscribers: { test: null },
+      subscribers: { test: {} },
     };
 
     expect(actual).toEqual(expected);
@@ -147,12 +128,14 @@ describe('All', () => {
         },
       }),
       subscribers: {
-        'test-user': null,
+        'test-user': {},
       },
     };
 
     expect(actual).toEqual(expected);
   });
 });
+
+// TODO: Add tests for Subscribers Client Info
 
 // TODO: Add more tests

@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MovexContextProps, MovexContext } from './MovexContext';
 import {
-  invoke,
-  noop,
-  type MovexClient as MovexClientUser,
+  MovexContextProps,
+  MovexContext,
+  MovexContextPropsConnected,
+} from './MovexContext';
+import {
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
+  type SanitizedMovexClient,
+  invoke,
+  noop,
   ResourceIdentifier,
   StringKeys,
   LoggingEvent,
@@ -17,24 +21,58 @@ import { ResourceObservablesRegistry } from './ResourceObservableRegistry';
 export type MovexProviderProps<
   TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap
 > = React.PropsWithChildren<{
+  /**
+   * The definition or movex.config file
+   */
   movexDefinition: MovexDefinition<TMovexConfigResourcesMap>;
+
+  /**
+   * The Movex Master Instance URL
+   */
   endpointUrl: string;
-  clientId?: MovexClientUser['id'];
+
+  /**
+   * An optional Id for the client. Most often the userId in your own application userbase
+   */
+  clientId?: SanitizedMovexClient['id'];
+
+  /**
+   * This will be shared among all the peers in Movex, so make sure it's sanitized!
+   */
+  clientInfo?: SanitizedMovexClient['info'];
+
+  /**
+   * Optional Event Logger
+   */
+  logger?: {
+    onLog: (event: LoggingEvent) => void;
+  };
+
+  /**
+   * This will trigger when the connection is made
+   *
+   * @param state
+   * @returns
+   */
   onConnected?: (
     state: Extract<
       MovexContextProps<TMovexConfigResourcesMap>,
       { connected: true }
     >
   ) => void;
+
+  /**
+   * This will trigger when movex gets disconnected
+   *
+   * @param state
+   * @returns
+   */
   onDisconnected?: (
     state: Extract<
       MovexContextProps<TMovexConfigResourcesMap>,
       { connected: false }
     >
   ) => void;
-  logger?: {
-    onLog: (event: LoggingEvent) => void;
-  };
 }>;
 
 export const MovexProvider: React.FC<
@@ -47,9 +85,10 @@ export const MovexProvider: React.FC<
   >({
     connected: false,
     clientId: undefined,
+    clientInfo: undefined,
   });
 
-  // TODO: This can all ne moved into the MovexProviderClass and rename it to MovexProviderImplementation
+  // TODO: This can all be moved into the MovexProviderClass and rename it to MovexProviderImplementation
   //   or this to MovexProviderContainer
   useEffect(() => {
     if (contextState.connected) {
@@ -60,20 +99,22 @@ export const MovexProvider: React.FC<
       const movex = await MovexClient.initMovex(
         {
           clientId: props.clientId,
+          clientInfo: props.clientInfo,
           url: props.endpointUrl,
           apiKey: '',
         },
         props.movexDefinition
       );
 
-      const clientId = movex.getClientId();
+      const client = movex.getClient();
 
       // This resets each time movex re-initiates
       const resourceRegistry = new ResourceObservablesRegistry(movex);
 
-      const nextState = {
+      const nextState: MovexContextPropsConnected<TResourcesMap> = {
         connected: true,
-        clientId, // TODO: Do I really need this?
+        clientId: client.id,
+        clientInfo: client.info,
         movex,
         movexDefinition: props.movexDefinition,
         bindResource: <TResourceType extends StringKeys<TResourcesMap>>(

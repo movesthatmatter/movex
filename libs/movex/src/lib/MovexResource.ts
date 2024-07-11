@@ -5,7 +5,7 @@ import type {
   AnyAction,
   CheckedReconciliatoryActions,
   MovexReducer,
-  IOConnection,
+  ConnectionToMaster,
 } from 'movex-core-util';
 import {
   globalLogsy,
@@ -13,7 +13,7 @@ import {
   toResourceIdentifierStr,
   invoke,
 } from 'movex-core-util';
-import { ConnectionToMasterResource } from './ConnectionToMasterResource';
+import { ConnectionToMasterResources } from './ConnectionToMasterResources';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import * as deepObject from 'deep-object-diff';
 
@@ -24,7 +24,7 @@ export class MovexResource<
   A extends AnyAction,
   TResourceType extends string
 > {
-  private connectionToMasterResource: ConnectionToMasterResource<
+  private connectionToMasterResources: ConnectionToMasterResources<
     S,
     A,
     TResourceType
@@ -36,18 +36,18 @@ export class MovexResource<
   > = {};
 
   constructor(
-    private connectionToMaster: IOConnection<S, A, TResourceType>,
+    private connectionToMaster: ConnectionToMaster<S, A, TResourceType, any>,
     private resourceType: TResourceType,
     private reducer: MovexReducer<S, A>
   ) {
-    this.connectionToMasterResource = new ConnectionToMasterResource(
+    this.connectionToMasterResources = new ConnectionToMasterResources(
       resourceType,
       this.connectionToMaster
     );
   }
 
   create(state: S, resourceId?: string) {
-    return this.connectionToMasterResource
+    return this.connectionToMasterResources
       .create(this.resourceType, state, resourceId)
       .map((item) => ({
         ...item,
@@ -57,7 +57,7 @@ export class MovexResource<
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
-    return this.connectionToMasterResource.getResource(rid);
+    return this.connectionToMasterResources.getResource(rid);
   }
 
   /**
@@ -66,7 +66,7 @@ export class MovexResource<
    * @param rid
    * @returns MovexResourceObservable
    */
-  bind(rid: ResourceIdentifier<TResourceType>) {
+  bind(rid: ResourceIdentifier<TResourceType>): MovexResourceObservable<S, A> {
     // TODO:
     // What if this is used multiple times for the sameclient?
     // It should actually store it in the instance so it can be reused rather than created again, I suggest!
@@ -84,7 +84,7 @@ export class MovexResource<
     // resourceObservable.setMasterSyncing(false);
 
     const syncLocalState = () => {
-      return this.connectionToMasterResource
+      return this.connectionToMasterResources
         .getState(rid)
         .map((masterCheckState) => {
           resourceObservable.syncState(masterCheckState);
@@ -113,7 +113,7 @@ export class MovexResource<
           masterCheckState,
           diff: deepObject.detailedDiff(prevCheckedState, masterCheckState),
         });
-        console.warn(
+        logsy.debug(
           "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
         );
 
@@ -121,7 +121,7 @@ export class MovexResource<
       });
     };
 
-    this.connectionToMasterResource
+    this.connectionToMasterResources
       .addResourceSubscriber(rid)
       .map((res) => {
         // TODO: This could be optimized to be returned from the "addResourceSubscriber" directly
@@ -178,7 +178,7 @@ export class MovexResource<
         ({ action, next: nextLocalCheckedState }) => {
           const [nextLocalState, nextLocalChecksum] = nextLocalCheckedState;
 
-          this.connectionToMasterResource
+          this.connectionToMasterResources
             .emitAction(rid, action)
             .map(async (master) => {
               if (master.reconciled) {
@@ -217,7 +217,7 @@ export class MovexResource<
             });
         }
       ),
-      this.connectionToMasterResource.onFwdAction(rid, (p) => {
+      this.connectionToMasterResources.onFwdAction(rid, (p) => {
         const prevState = resourceObservable.getCheckedState();
 
         resourceObservable.reconciliateAction(p);
@@ -231,28 +231,28 @@ export class MovexResource<
           nextState,
         });
       }),
-      this.connectionToMasterResource.onReconciliatoryActions(
+      this.connectionToMasterResources.onReconciliatoryActions(
         rid,
         onReconciliateActionsHandler
       ),
 
       // Subscribers
-      this.connectionToMasterResource.onSubscriberAdded(rid, (clientId) => {
-        logsy.info('Subscriber Added', { clientId });
-
+      this.connectionToMasterResources.onSubscriberAdded(rid, (client) => {
         resourceObservable.updateSubscribers((prev) => ({
           ...prev,
-          [clientId]: null,
+          [client.id]: client,
         }));
-      }),
-      this.connectionToMasterResource.onSubscriberRemoved(rid, (clientId) => {
-        logsy.info('Subscriber Removed', { clientId });
 
+        logsy.info('Subscriber Added', { client });
+      }),
+      this.connectionToMasterResources.onSubscriberRemoved(rid, (clientId) => {
         resourceObservable.updateSubscribers((prev) => {
           const { [clientId]: removed, ...rest } = prev;
 
           return rest;
         });
+
+        logsy.info('Subscriber Removed', { clientId });
       }),
 
       // Destroyers
@@ -261,7 +261,7 @@ export class MovexResource<
       () => resourceObservable.destroy(),
 
       // Add the master Resource Destroy as well
-      () => this.connectionToMasterResource.destroy(),
+      () => this.connectionToMasterResources.destroy(),
 
       // Logger
       resourceObservable.onDispatched(
