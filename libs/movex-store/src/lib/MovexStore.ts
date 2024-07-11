@@ -30,12 +30,7 @@ export type MovexStoreItem<
   patches?: {
     [patchGroupKey in string]: MovexStatePatch<T>[];
   };
-  subscribers: Record<
-    MovexClient['id'],
-    {
-      subscribedAt: number;
-    }
-  >;
+  subscribers: Record<MovexClient['id'], { subscribedAt: number }>;
 };
 
 export type MovexStoreItemsMapByType<

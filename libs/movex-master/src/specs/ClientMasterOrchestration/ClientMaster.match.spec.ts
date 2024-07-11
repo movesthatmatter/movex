@@ -1,21 +1,12 @@
-import { computeCheckedState, globalLogsy } from  'movex-core-util';
+import { computeCheckedState } from 'movex-core-util';
 import {
   initialMatchState,
   tillNextTick,
   matchReducer,
 } from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
-// import matchReducer from 'libs/movex-specs-util/src/lib/resources/matchReducer';
+import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
-
-beforeAll(() => {
-  globalLogsy.disable();
-});
-
-afterAll(() => {
-  globalLogsy.enable();
-});
 
 beforeEach(async () => {
   await orchestrator.unsubscribe();
@@ -55,13 +46,19 @@ test('works with public actions', async () => {
 
   await tillNextTick();
 
-  const expected = computeCheckedState({
-    ...initialMatchState,
-    players: {
-      [whiteClientId]: true,
-      [blackClientId]: true,
+  const expected = {
+    checkedState: computeCheckedState({
+      ...initialMatchState,
+      players: {
+        [whiteClientId]: true,
+        [blackClientId]: true,
+      },
+    }),
+    subscribers: {
+      'white-client': {},
+      'black-client': {},
     },
-  });
+  };
 
   const actual = whiteMovex.state;
 

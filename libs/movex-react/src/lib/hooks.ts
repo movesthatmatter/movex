@@ -6,6 +6,7 @@ import type {
   GetReducerState,
   BaseMovexDefinitionResourcesMap,
   MovexDefinition,
+  SanitizedMovexClient,
 } from 'movex-core-util';
 import {
   isResourceIdentifier,
@@ -15,7 +16,6 @@ import {
 } from 'movex-core-util';
 import { MovexClient } from 'movex';
 import { MovexContext, MovexContextProps } from './MovexContext';
-import { MovexContextStateChange } from './MovexContextStateChange';
 
 export const useMovex = <TResourcesMap extends BaseMovexDefinitionResourcesMap>(
   movexConfig: MovexDefinition<TResourcesMap>
@@ -29,6 +29,23 @@ export const useMovexClientId = <
 >(
   movexConfig: MovexDefinition<TResourcesMap>
 ) => useMovex(movexConfig).clientId;
+
+export const useMovexClient = <
+  TResourcesMap extends BaseMovexDefinitionResourcesMap
+>(
+  movexConfig: MovexDefinition<TResourcesMap>
+): SanitizedMovexClient | undefined => {
+  const mc = useMovex(movexConfig);
+
+  if (!mc.connected) {
+    return undefined;
+  }
+
+  return {
+    id: mc.clientId,
+    info: mc.clientInfo,
+  };
+};
 
 export type MovexResourceFromConfig<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,

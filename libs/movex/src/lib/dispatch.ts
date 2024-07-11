@@ -4,7 +4,7 @@ import {
   checkedStateEquals,
   computeCheckedState,
   isAction,
-} from  'movex-core-util';
+} from 'movex-core-util';
 import type {
   Observable,
   CheckedState,
@@ -13,7 +13,7 @@ import type {
   AnyActionOrActionTuple,
   AnyActionTuple,
   MovexReducer,
-} from  'movex-core-util';
+} from 'movex-core-util';
 
 export type DispatchFn = (actionOrActionTuple: AnyActionOrActionTuple) => void;
 

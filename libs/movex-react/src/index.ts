@@ -5,8 +5,11 @@ export { MovexProviderClass as MovexProvider } from './lib/MovexProviderClass';
 export {
   MovexContext as MovexReactContext,
   type MovexContextProps as MovexReactContextProps,
+  type MovexContextPropsConnected as MovexReactContextPropsConnected,
+  type MovexContextPropsNotConnected as MovexReactContextPropsNotConnected,
 } from './lib/MovexContext';
 
-export * from './lib/MovexBoundResource';
+export { MovexBoundResourceComponent as MovexBoundResource } from './lib/MovexBoundResourceComponent';
+export { ResourceObservablesRegistry as MovexResourceObservablesRegistry } from './lib/ResourceObservableRegistry';
 export * from './lib/MovexConnection';
 export * from './lib/hooks';

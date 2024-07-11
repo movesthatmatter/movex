@@ -2,23 +2,32 @@ import React from 'react';
 import {
   invoke,
   ConnectionToClient,
-  type MovexClient,
+  type MovexClient as MovexClientUser,
   type MovexDefinition,
   type BaseMovexDefinitionResourcesMap,
+  StringKeys,
+  ResourceIdentifier,
 } from 'movex-core-util';
 import {
   MovexMasterServer,
   MockConnectionEmitter,
-  orchestrateDefinedMovex,
   getUuid, // This can actually be mocked here as it's just client only!
 } from 'movex-master';
-import { MovexReactContext, MovexReactContextProps } from 'movex-react';
+import { MovexClient } from 'movex';
+import {
+  MovexReactContext,
+  MovexReactContextProps,
+  MovexResourceObservablesRegistry,
+  MovexReactContextPropsConnected,
+} from 'movex-react';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
+import { orchestrateDefinedMovex } from './ClientMasterOrchestrator';
+// import { MovexContextPropsConnected } from 'movex-react';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
     movexDefinition: MovexDefinition<TResourcesMap>;
-    clientId?: MovexClient['id'];
+    clientId?: MovexClientUser['id'];
     onConnected?: (
       state: Extract<MovexReactContextProps<TResourcesMap>, { connected: true }>
     ) => void;
@@ -47,6 +56,7 @@ export class MovexLocalProvider<
       contextState: {
         connected: false,
         clientId: undefined,
+        clientInfo: undefined,
       },
     };
   }
@@ -77,12 +87,31 @@ export class MovexLocalProvider<
       emitterOnMaster
     );
 
-    const nextState = {
+    // This resets each time movex re-initiates
+    const resourceRegistry = new MovexResourceObservablesRegistry(
+      mockedMovex.movex
+    );
+
+    const client = mockedMovex.movex.getClient();
+
+    const nextState: MovexReactContextPropsConnected<TResourcesMap> = {
       connected: true,
       movex: mockedMovex.movex,
-      clientId: mockedMovex.movex.getClientId(),
+      clientId: client.id,
+      clientInfo: client.info,
       movexDefinition: this.props.movexDefinition,
-      bindResource: () => () => {}, // TODO: Added on April 4th as a quick hack but needs to be fixed!
+      bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
+        rid: ResourceIdentifier<TResourceType>,
+        onStateUpdate: (p: MovexClient.MovexBoundResource) => void
+      ) => {
+        const $resource = resourceRegistry.register(rid);
+
+        onStateUpdate(new MovexClient.MovexBoundResource($resource));
+
+        return $resource.onUpdate(() => {
+          onStateUpdate(new MovexClient.MovexBoundResource($resource));
+        });
+      },
     } as const;
 
     this.setState({

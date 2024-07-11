@@ -10,6 +10,7 @@ import type {
   CheckedReconciliatoryActions,
   ToPublicAction,
   MovexReducer,
+  MovexClientResourceShape,
 } from 'movex-core-util';
 import {
   isAction,
@@ -18,11 +19,7 @@ import {
   objectKeys,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
-import type {
-  MovexStatePatch,
-  MovexStore,
-  MovexStoreItem,
-} from 'movex-store';
+import type { MovexStatePatch, MovexStore, MovexStoreItem } from 'movex-store';
 import { applyMovexStatePatches, getMovexStatePatch, getUuid } from './util';
 
 /**
@@ -74,7 +71,13 @@ export class MovexMasterResource<
     );
   }
 
-  getItem<TResourceType extends GenericResourceType>(
+  /**
+   * Gets the Raw Item as saved in the store - NOT TO BE SENT TO THE CLIENT
+   *
+   * @param rid
+   * @returns
+   */
+  private getStoreItem<TResourceType extends GenericResourceType>(
     rid: ResourceIdentifier<TResourceType>
   ) {
     return this.store.get(rid);
@@ -92,7 +95,7 @@ export class MovexMasterResource<
     // TODO: Here probably should include the id!
     //   at this level or at the store level?
     // Sometime the state could have it's own id but not always and it should be given or not? :/
-    return this.store.get(rid).map((r) => r.state);
+    return this.getStoreItem(rid).map((r) => r.state);
   }
 
   /**
@@ -103,7 +106,7 @@ export class MovexMasterResource<
    * @param clientId
    * @returns
    */
-  getState<TResourceType extends GenericResourceType>(
+  getClientSpecificState<TResourceType extends GenericResourceType>(
     rid: ResourceIdentifier<TResourceType>,
     clientId: MovexClient['id']
   ) {
@@ -112,10 +115,26 @@ export class MovexMasterResource<
       .map((item) => this.computeClientState(clientId, item));
   }
 
-  getStateBySubscriberId<TResourceType extends GenericResourceType>(
+  /**
+   * This gets the resource with the computed state for the current connected client
+   *
+   * @param rid
+   * @param clientId
+   */
+  getClientSpecificResource<TResourceType extends GenericResourceType>(
+    rid: ResourceIdentifier<TResourceType>,
+    clientId: MovexClient['id']
+  ) {
+    return this.store.get(rid, clientId).map((item) => ({
+      ...item,
+      state: this.computeClientState(clientId, item),
+    }));
+  }
+
+  private getStateBySubscriberId<TResourceType extends GenericResourceType>(
     rid: ResourceIdentifier<TResourceType>
   ) {
-    return this.getItem(rid).map((item) =>
+    return this.getStoreItem(rid).map((item) =>
       this.computeStateForItemSubscribers(item)
     );
   }
@@ -179,7 +198,7 @@ export class MovexMasterResource<
 
     type PeerActions = ForwardablePeerActions | ReconcilablePeerActions;
 
-    return this.getItem(rid).flatMap<
+    return this.getStoreItem(rid).flatMap<
       {
         nextPublic: ToCheckedAction<TAction>;
         nextPrivate?: ToCheckedAction<TAction>;
@@ -237,7 +256,7 @@ export class MovexMasterResource<
             AsyncResult.all(
               new AsyncOk(itemWithLatestPatch),
 
-              this.getState(rid, clientId),
+              this.getClientSpecificState(rid, clientId),
 
               // Apply the Public Action
               // *Note The Public Action needs to get applied after the private one!
@@ -393,7 +412,7 @@ export class MovexMasterResource<
   //   return this.store.get(rid).map((s) => s.state[0]);
   // }
 
-  update<TResourceType extends GenericResourceType>(
+  private update<TResourceType extends GenericResourceType>(
     rid: ResourceIdentifier<TResourceType>,
     nextStateGetter: NextStateGetter<TState>
   ) {

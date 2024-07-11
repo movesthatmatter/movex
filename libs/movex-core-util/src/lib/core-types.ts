@@ -152,6 +152,15 @@ export type AnyIdentifiableRecord = { id: string } & Record<string, any>;
 
 export type UnidentifiableModel<T extends object> = Omit<T, 'id'>;
 
+export type MovexClientResourceShape<
+  TResourceType extends GenericResourceType,
+  TState
+> = {
+  state: CheckedState<TState>;
+  rid: ResourceIdentifierStr<TResourceType>;
+  subscribers: Record<MovexClient['id'], SanitizedMovexClient>;
+};
+
 // TODO: Remove all of these if not used
 
 export type ResourceShape<
@@ -169,10 +178,10 @@ export type ResourceShape<
   >;
 };
 
-export type ClientResourceShape<
-  TResourceType extends PropertyKey,
-  TData extends UnknownRecord
-> = Pick<ResourceShape<TResourceType, TData>, 'type' | 'id' | 'item'>;
+// export type ClientResourceShape<
+//   TResourceType extends PropertyKey,
+//   TData extends UnknownRecord
+// > = Pick<ResourceShape<TResourceType, TData>, 'type' | 'id' | 'item'>;
 
 export type Resource<
   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
@@ -184,22 +193,22 @@ export type ServerResource<
   TResourceType extends keyof ResourceCollectionMap
 > = Resource<ResourceCollectionMap, TResourceType>;
 
-export type ClientResource<
-  ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
-  TResourceType extends keyof ResourceCollectionMap
-> = Pick<
-  ServerResource<ResourceCollectionMap, TResourceType>,
-  'item' | 'type' | 'id'
->;
+// export type ClientResource<
+//   ResourceCollectionMap extends Record<string, UnknownIdentifiableRecord>,
+//   TResourceType extends keyof ResourceCollectionMap
+// > = Pick<
+//   ServerResource<ResourceCollectionMap, TResourceType>,
+//   'item' | 'type' | 'id'
+// >;
 
-export type GenericClientResource = ClientResource<
-  Record<string, UnknownIdentifiableRecord>,
-  keyof UnknownRecord
->;
+// export type GenericClientResource = ClientResource<
+//   Record<string, UnknownIdentifiableRecord>,
+//   keyof UnknownRecord
+// >;
 
 export type GenericClientResourceShapeOfType<
-  TResourceType extends PropertyKey
-> = ClientResourceShape<TResourceType, UnknownRecord>;
+  TResourceType extends GenericResourceType
+> = MovexClientResourceShape<TResourceType, UnknownRecord>;
 
 export type GenericResource = Resource<
   Record<string, UnknownIdentifiableRecord>,
@@ -213,9 +222,11 @@ export type GenericResourceOfType<TResourceType extends string> = Resource<
 
 export type GenericResourceType = GenericResource['type'];
 
-export type MovexClient<Info extends UnknownRecord = EmptyObject> = {
+export type MovexClientInfo = UnknownRecord;
+
+export type MovexClient<Info extends MovexClientInfo = UnknownRecord> = {
   id: string;
-  info?: Info; // User Info or whatever
+  info: Info; // User Info or whatever
   subscriptions: Record<
     ResourceIdentifierStr<GenericResourceType>,
     {
@@ -224,6 +235,9 @@ export type MovexClient<Info extends UnknownRecord = EmptyObject> = {
     }
   >;
 };
+
+export type SanitizedMovexClient<Info extends UnknownRecord = UnknownRecord> =
+  Pick<MovexClient<Info>, 'id' | 'info'>;
 
 export type ResourceIdentifierObj<TResourceType extends string> = {
   resourceType: TResourceType;
@@ -238,6 +252,7 @@ export type ResourceIdentifier<TResourceType extends string> =
   | ResourceIdentifierStr<TResourceType>;
 
 export type AnyResourceIdentifier = ResourceIdentifier<string>;
+export type AnyStringResourceIdentifier = ResourceIdentifierStr<string>;
 
 export type StringKeys<TRecord extends UnknownRecord> = Extract<
   keyof TRecord,
@@ -384,3 +399,11 @@ export type IsOfType<U, T, K> = T extends U ? K : never;
 export type OnlyKeysOfType<T, O extends Record<string, unknown>> = {
   [K in keyof O]: IsOfType<T, O[K], K>;
 }[keyof O];
+
+/**
+ * Taken from https://stackoverflow.com/a/67794430/2093626
+ * This ensures the omit doesn't break distributin uniions!
+ */
+export type DistributiveOmit<T, K extends PropertyKey> = T extends any
+  ? Omit<T, K>
+  : never;

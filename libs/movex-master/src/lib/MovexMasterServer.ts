@@ -6,12 +6,19 @@ import {
   type AnyAction,
   type IOEvents,
   type ConnectionToClient,
-} from  'movex-core-util';
+  type AnyStringResourceIdentifier,
+  MovexClientInfo,
+  SanitizedMovexClient,
+  GenericResourceType,
+} from 'movex-core-util';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { MovexMasterResource } from './MovexMasterResource';
+import { itemToSanitizedClientResource } from './util';
+import { MovexStoreItem } from 'movex-store';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
+
 /**
  * This lives on the server most likely, and it's where the
  * fwd and the reconciliatory action logic reside
@@ -19,28 +26,58 @@ const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
  * This is also very generic with an API to just work when run
  */
 export class MovexMasterServer {
-  // needs a store (redis, api, etc)
-  // needs a way to send messages to the clients
-  //  so a connection. when an incoming message comes, process it and send further
-  //  but of course without knowing it's socket or local, just async so it can be tested
-
   // TODO: This works only per one instance/machine
   // If there are multiple server instances running then we need to use redis/socket-io distribution etc..
 
   private clientConnectionsByClientId: Record<
     MovexClient['id'],
-    ConnectionToClient<any, AnyAction, any>
+    ConnectionToClient<any, AnyAction, any, any>
+  > = {};
+
+  // A Map of subscribers to their subscribed resources
+  private subscribersToRidsMap: Record<
+    MovexClient['id'],
+    Record<AnyStringResourceIdentifier, undefined>
   > = {};
 
   constructor(
     private masterResourcesByType: Record<string, MovexMasterResource<any, any>>
   ) {}
 
-  // This needs to respond back to the client
-  // it receives emitActions and responds with Ack, fwd or reconcilitary
-  addClientConnection<S, A extends AnyAction, TResourceType extends string>(
-    clientConnection: ConnectionToClient<S, A, TResourceType>
-  ) {
+  /**
+   * Returns the Active Client Connections
+   *
+   * @returns
+   */
+  allClients() {
+    return objectKeys(this.clientConnectionsByClientId).reduce(
+      (prev, nextClientId) => ({
+        ...prev,
+        [nextClientId]: {
+          id: this.clientConnectionsByClientId[nextClientId].clientId,
+          info: this.clientConnectionsByClientId[nextClientId].clientInfo,
+          subscriptions: {
+            ...this.subscribersToRidsMap[nextClientId],
+            subscribedAt: -1, // TODO: fix this if needed
+          },
+        },
+      }),
+      {} as Record<MovexClient['id'], MovexClient>
+    );
+  }
+
+  /**
+   * Adds the Client Connection and subscribers to all the client events
+   *
+   * @param clientConnection
+   * @returns
+   */
+  addClientConnection<
+    S,
+    A extends AnyAction,
+    TResourceType extends string,
+    TClientInfo extends MovexClientInfo
+  >(clientConnection: ConnectionToClient<S, A, TResourceType, TClientInfo>) {
     // Event Handlers
     const onEmitActionHandler = (
       payload: Parameters<
@@ -72,7 +109,7 @@ export class MovexMasterServer {
                   const peerConnection =
                     this.clientConnectionsByClientId[peerId];
 
-                  peerConnection.emitter.emit('reconciliateActions', {
+                  peerConnection.emitter.emit('onReconciliateActions', {
                     rid,
                     ...peerActions.byClientId[peerId],
                   });
@@ -92,7 +129,10 @@ export class MovexMasterServer {
           // Forwardable
           objectKeys(peerActions.byClientId).forEach((peerId) => {
             if (!peerActions.byClientId[peerId]) {
-              logsy.error('Inexistant Peer Connection for peerId:', peerId);
+              logsy.error('Inexistant Peer Connection for peerId:', {
+                peerId,
+                peerActionsByClientId: peerActions.byClientId,
+              });
               return;
             }
 
@@ -103,7 +143,7 @@ export class MovexMasterServer {
               return;
             }
 
-            peerConnection.emitter.emit('fwdAction', {
+            peerConnection.emitter.emit('onFwdAction', {
               rid,
               ...peerActions.byClientId[peerId],
             });
@@ -117,6 +157,40 @@ export class MovexMasterServer {
           return acknowledge?.(new Ok({ nextChecksum }));
         })
         .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+    };
+
+    const onGetResourceHandler = (
+      payload: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
+      acknowledge?: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['getResource']>
+      ) => void
+    ) => {
+      const { rid } = payload;
+
+      const masterResource =
+        this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
+
+      if (!masterResource) {
+        return acknowledge?.(new Err('MasterResourceInexistent'));
+      }
+
+      masterResource
+        .getClientSpecificResource(rid, clientConnection.clientId)
+        .map((r) => {
+          acknowledge?.(
+            new Ok(
+              itemToSanitizedClientResource(
+                this.populateClientInfoToSubscribers(r)
+              )
+            )
+          );
+        })
+        .mapErr(
+          AsyncResult.passThrough((e) => {
+            logsy.error('Get Resource Error', e);
+          })
+        )
+        .mapErr((e) => acknowledge?.(new Err(e)));
     };
 
     const onGetResourceStateHandler = (
@@ -135,7 +209,7 @@ export class MovexMasterServer {
       }
 
       masterResource
-        .getState(rid, clientConnection.clientId)
+        .getClientSpecificState(rid, clientConnection.clientId)
         .map((checkedState) => acknowledge?.(new Ok(checkedState)))
         .mapErr(
           AsyncResult.passThrough((e) => {
@@ -144,6 +218,22 @@ export class MovexMasterServer {
         )
         .mapErr((e) => acknowledge?.(new Err(e)));
     };
+
+    const onGetResourceSubscribersHandler = (
+      payload: Parameters<
+        IOEvents<S, A, TResourceType>['getResourceSubscribers']
+      >[0],
+      acknowledge?: (
+        p: ReturnType<IOEvents<S, A, TResourceType>['getResourceSubscribers']>
+      ) => void
+    ) =>
+      onGetResourceHandler(payload, (r) => {
+        if (r.ok) {
+          acknowledge?.(new Ok(r.val.subscribers));
+        } else {
+          acknowledge?.(r);
+        }
+      });
 
     const onCreateResourceHandler = (
       payload: Parameters<IOEvents<S, A, TResourceType>['createResource']>[0],
@@ -162,10 +252,11 @@ export class MovexMasterServer {
         .create(resourceType, resourceState, resourceId)
         .map((r) =>
           acknowledge?.(
-            new Ok({
-              rid: r.rid,
-              state: r.state,
-            })
+            new Ok(
+              itemToSanitizedClientResource(
+                this.populateClientInfoToSubscribers(r)
+              )
+            )
           )
         )
         .mapErr(
@@ -194,32 +285,50 @@ export class MovexMasterServer {
 
       masterResource
         .addResourceSubscriber(payload.rid, clientConnection.clientId)
-        .map(() => {
-          acknowledge?.(Ok.EMPTY);
-        })
-        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
-    };
+        .map((s) => {
+          // Keep a record of the rid it just subscribed to so it can also be unsubscribed
+          this.subscribersToRidsMap = {
+            ...this.subscribersToRidsMap,
+            [clientConnection.clientId]: {
+              ...this.subscribersToRidsMap[clientConnection.clientId],
+              [s.rid]: undefined,
+            },
+          };
 
-    const onRemoveResourceSubscriber = (
-      payload: Parameters<
-        IOEvents<S, A, TResourceType>['removeResourceSubscriber']
-      >[0],
-      acknowledge?: (
-        p: ReturnType<IOEvents<S, A, TResourceType>['removeResourceSubscriber']>
-      ) => void
-    ) => {
-      const { resourceType } = toResourceIdentifierObj(payload.rid);
+          // Send the ack to the just-added-client
+          acknowledge?.(
+            new Ok(
+              itemToSanitizedClientResource(
+                this.populateClientInfoToSubscribers(s)
+              )
+            )
+          );
 
-      const masterResource = this.masterResourcesByType[resourceType];
+          // Let the rest of the peer-clients know as well
+          objectKeys(s.subscribers)
+            // Take out just-added-client
+            .filter((clientId) => clientId !== clientConnection.clientId)
+            .forEach((peerId) => {
+              const peerConnection = this.clientConnectionsByClientId[peerId];
 
-      if (!masterResource) {
-        return acknowledge?.(new Err('MasterResourceInexistent'));
-      }
+              if (!peerConnection) {
+                logsy.error('OnAddResourceSubscriber PeerConnectionNotFound', {
+                  peerId,
+                  clientId: this.clientConnectionsByClientId,
+                });
+                return;
+              }
 
-      masterResource
-        .removeResourceSubscriber(payload.rid, clientConnection.clientId)
-        .map(() => {
-          acknowledge?.(Ok.EMPTY);
+              const client: SanitizedMovexClient = {
+                id: clientConnection.clientId,
+                info: clientConnection.clientInfo,
+              };
+
+              peerConnection.emitter.emit('onResourceSubscriberAdded', {
+                rid: payload.rid,
+                client,
+              });
+            });
         })
         .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
@@ -237,15 +346,16 @@ export class MovexMasterServer {
 
     clientConnection.emitter.on('ping', onPingHandler);
     clientConnection.emitter.on('emitActionDispatch', onEmitActionHandler);
+    clientConnection.emitter.on('getResource', onGetResourceHandler);
+    clientConnection.emitter.on(
+      'getResourceSubscribers',
+      onGetResourceSubscribersHandler
+    );
     clientConnection.emitter.on('getResourceState', onGetResourceStateHandler);
     clientConnection.emitter.on('createResource', onCreateResourceHandler);
     clientConnection.emitter.on(
       'addResourceSubscriber',
       onAddResourceSubscriber
-    );
-    clientConnection.emitter.on(
-      'removeResourceSubscriber',
-      onRemoveResourceSubscriber
     );
 
     this.clientConnectionsByClientId = {
@@ -253,16 +363,15 @@ export class MovexMasterServer {
       [clientConnection.clientId]: clientConnection as ConnectionToClient<
         any,
         AnyAction,
+        any,
         any
       >,
     };
 
-    logsy.log(
-      '[MovexMasterServer] Added Connection Succesfully:',
-      clientConnection.clientId,
-      '| Connections',
-      Object.keys(this.clientConnectionsByClientId).length
-    );
+    logsy.info('Connection Added  Succesfully', {
+      clientId: clientConnection.clientId,
+      connectionsCount: Object.keys(this.clientConnectionsByClientId).length,
+    });
 
     // Unsubscribe
     return () => {
@@ -277,24 +386,127 @@ export class MovexMasterServer {
         'addResourceSubscriber',
         onAddResourceSubscriber
       );
-      clientConnection.emitter.off(
-        'removeResourceSubscriber',
-        onRemoveResourceSubscriber
-      );
     };
   }
 
-  removeConnection(clienId: MovexClient['id']) {
-    const { [clienId]: removed, ...restOfConnections } =
+  private populateClientInfoToSubscribers = <
+    TResourceType extends GenericResourceType,
+    TState
+  >(
+    item: MovexStoreItem<TState, TResourceType>
+  ): MovexStoreItem<TState, TResourceType> & {
+    subscribers: Record<
+      MovexClient['id'],
+      {
+        info: MovexClient['info'];
+      }
+    >;
+  } => ({
+    ...item,
+    subscribers: objectKeys(item.subscribers).reduce(
+      (prev, next) => ({
+        ...prev,
+        [next]: {
+          ...item.subscribers[next],
+          info: this.allClients()[next]?.info ?? {},
+        },
+      }),
+      {} as Record<
+        MovexClient['id'],
+        {
+          subscribedAt: number;
+          info: MovexClient['info'];
+        }
+      >
+    ),
+  });
+
+  removeConnection(clientId: MovexClient['id']) {
+    this.unsubscribeClientFromResources(clientId);
+
+    const { [clientId]: removed, ...restOfConnections } =
       this.clientConnectionsByClientId;
 
     this.clientConnectionsByClientId = restOfConnections;
 
-    logsy.log(
-      '[MovexMasterServer] Removed Connection Succesfully',
-      this.clientConnectionsByClientId,
-      '| Connections:',
-      Object.keys(this.clientConnectionsByClientId).length
-    );
+    logsy.info('Connection Removed', {
+      clientId,
+      connectionsLeft: Object.keys(this.clientConnectionsByClientId).length,
+    });
+  }
+
+  private unsubscribeClientFromResources(clientId: MovexClient['id']) {
+    const clientSubscriptions = this.subscribersToRidsMap[clientId];
+
+    if (clientSubscriptions) {
+      const subscribedRidsList = objectKeys(clientSubscriptions);
+
+      subscribedRidsList.forEach(async (rid) => {
+        await this.removeResourceSubscriberAndNotifyPeersOfClientUnsubscription(
+          rid,
+          clientId
+        );
+
+        // TODO: should this wait for the client to ack or smtg? probably not needed
+
+        // Remove the rid from the client's record
+        const { [rid]: removed, ...rest } = this.subscribersToRidsMap[clientId];
+
+        this.subscribersToRidsMap[clientId] = rest;
+      });
+    }
+
+    logsy.info('Client Subscriptions Removed', { clientId });
+  }
+
+  private async removeResourceSubscriberAndNotifyPeersOfClientUnsubscription(
+    rid: AnyStringResourceIdentifier,
+    subscriberClientId: MovexClient['id']
+  ) {
+    const { resourceType } = toResourceIdentifierObj(rid);
+
+    const masterResource = this.masterResourcesByType[resourceType];
+
+    if (!masterResource) {
+      logsy.error(
+        'RemoveResourceSubscriberAndNotifyPeersOfClientUnsubscription MasterResourceInexistent',
+        { resourceType }
+      );
+
+      return;
+    }
+
+    await masterResource
+      .removeResourceSubscriber(rid, subscriberClientId)
+      .resolve();
+
+    await masterResource
+      .getSubscribers(rid)
+      .map((clientIds) => {
+        objectKeys(clientIds)
+          .filter((clientId) => clientId !== subscriberClientId)
+          .forEach((peerId) => {
+            const peerConnection = this.clientConnectionsByClientId[peerId];
+
+            if (!peerConnection) {
+              logsy.error(
+                'RemoveResourceSubscriberAndNotifyPeersOfClientUnsubscription Peer Connection not found for',
+                {
+                  peerId,
+                  resourceType,
+                }
+              );
+              return;
+            }
+
+            peerConnection.emitter.emit('onResourceSubscriberRemoved', {
+              rid,
+              clientId: subscriberClientId,
+            });
+          });
+      })
+      .resolve();
+
+    // TODO: Should this wait for the ack form each subscriber before removing it?? Probably not, right?
   }
 }
