@@ -42,12 +42,26 @@ export class MovexMasterResource<
   ) {
     const patches = item.patches?.[clientId];
     if (patches) {
-      return computeCheckedState(
-        this.mergeStatePatches(item.state[0], patches)
+      return this.applyStateTransformer(
+        computeCheckedState(this.mergeStatePatches(item.state[0], patches))
       );
     }
 
-    return item.state;
+    return this.applyStateTransformer(item.state);
+  }
+
+  private applyStateTransformer(
+    checkedState: CheckedState<TState>
+  ): CheckedState<TState> {
+    if (typeof this.reducer.$transformState === 'function') {
+      return computeCheckedState(
+        this.reducer.$transformState(checkedState[0], {
+          now: () => new Date().getTime(), // Should the context just be defined here?
+        })
+      );
+    }
+
+    return checkedState;
   }
 
   create<TResourceType extends GenericResourceType>(
@@ -95,7 +109,9 @@ export class MovexMasterResource<
     // TODO: Here probably should include the id!
     //   at this level or at the store level?
     // Sometime the state could have it's own id but not always and it should be given or not? :/
-    return this.getStoreItem(rid).map((r) => r.state);
+    return this.getStoreItem(rid)
+      .map((r) => r.state)
+      .map((s) => this.applyStateTransformer(s));
   }
 
   /**
