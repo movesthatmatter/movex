@@ -105,7 +105,7 @@ export class MovexResource<
       // This is needed in order for all the dipatches in an unsynched state get postponed until sync is back
       resourceObservable.setUnsync();
 
-      const prevCheckedState = resourceObservable.state;
+      const prevCheckedState = resourceObservable.get().checkedState;
 
       return syncLocalState().map((masterCheckState) => {
         logsy.warn('State Resynch-ed', {

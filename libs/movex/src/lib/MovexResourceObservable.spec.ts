@@ -1,10 +1,6 @@
 import { Ok } from 'ts-results';
 import { MovexResourceObservable } from './MovexResourceObservable';
-import {
-  globalLogsy,
-  ResourceIdentifier,
-  computeCheckedState,
-} from 'movex-core-util';
+import { ResourceIdentifier, computeCheckedState } from 'movex-core-util';
 import {
   tillNextTick,
   counterReducer,
@@ -27,7 +23,7 @@ test('Dispatch Local Actions', async () => {
 
   await tillNextTick();
 
-  expect($resource.getUncheckedState()).toEqual({ count: 1 });
+  expect($resource.getUnwrappedState()).toEqual({ count: 1 });
 
   $resource.onUpdate((next) => {
     expect(next.checkedState).toEqual(
@@ -44,7 +40,7 @@ test('Dispatch Local Actions', async () => {
 
   await tillNextTick();
 
-  expect($resource.getUncheckedState()).toEqual({ count: 4 });
+  expect($resource.getUnwrappedState()).toEqual({ count: 4 });
 });
 
 describe('External Updates', () => {
@@ -62,13 +58,13 @@ describe('External Updates', () => {
 
     await tillNextTick();
 
-    expect($resource.getUncheckedState()).toEqual({ count: 1 });
+    expect($resource.getUnwrappedState()).toEqual({ count: 1 });
 
-    $resource.updateUncheckedState({
+    $resource.updateUnwrappedState({
       count: 40,
     });
 
-    expect($resource.getUncheckedState()).toEqual({ count: 40 });
+    expect($resource.getUnwrappedState()).toEqual({ count: 40 });
 
     $resource.dispatch({
       type: 'decrement',
@@ -76,7 +72,7 @@ describe('External Updates', () => {
 
     await tillNextTick();
 
-    expect($resource.getUncheckedState()).toEqual({ count: 39 });
+    expect($resource.getUnwrappedState()).toEqual({ count: 39 });
   });
 
   describe('Reconciliate Action', () => {

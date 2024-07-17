@@ -66,7 +66,7 @@ test('works with public actions', async () => {
     },
   };
 
-  const actual = whiteMovex.state;
+  const actual = whiteMovex.get();
 
   expect(actual).toEqual(expected);
 });

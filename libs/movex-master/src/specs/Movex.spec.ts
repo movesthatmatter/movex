@@ -44,7 +44,7 @@ describe('All', () => {
     const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
 
     const actual = counterResource.bind(rid);
-    const actualDefaultState = actual.state;
+    const actualDefaultState = actual.get();
 
     expect(actualDefaultState.checkedState).toEqual(
       computeCheckedState({ count: 0 })
@@ -62,7 +62,7 @@ describe('All', () => {
       },
     };
 
-    expect(actual.state).toEqual(expected);
+    expect(actual.get()).toEqual(expected);
   });
 
   test('Dispatch Public Action', async () => {
@@ -123,7 +123,7 @@ describe('All', () => {
 
     await tillNextTick();
 
-    const actual = r.state;
+    const actual = r.get();
 
     const expected = {
       checkedState: computeCheckedState({

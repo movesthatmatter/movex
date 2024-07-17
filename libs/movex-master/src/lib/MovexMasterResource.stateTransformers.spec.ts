@@ -95,6 +95,8 @@ test('gets initial state transformed with PrevState and Movex Context', async ()
     .getClientSpecificState(rid, 'testClient')
     .resolveUnwrap();
 
+  MockDate.reset();
+
   const expected = computeCheckedState({ count: MOCKED_NOW });
 
   expect(actualPublic).toEqual(expected);

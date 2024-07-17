@@ -31,7 +31,7 @@ export class MovexBoundResource<
   };
 
   get state() {
-    return this.observable.getUncheckedState();
+    return this.observable.getUnwrappedState();
   }
 
   get subscribers() {

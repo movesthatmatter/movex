@@ -46,7 +46,7 @@ describe('Public Actions', () => {
 
     await tillNextTick();
 
-    const actual = movex.getUncheckedState();
+    const actual = movex.getUnwrappedState();
 
     const expected = {
       ...initialGameState,
@@ -104,10 +104,10 @@ describe('Public Actions', () => {
     // console.log('whiteMovex', whiteMovex.state);
     // console.log('blackMovex', blackMovex.state);
 
-    expect(whiteMovex.state).toEqual(expected);
+    expect(whiteMovex.get()).toEqual(expected);
 
     // The black would only be the same as white if the master works
-    expect(blackMovex.state).toEqual(expected);
+    expect(blackMovex.get()).toEqual(expected);
   });
 });
 
@@ -176,7 +176,7 @@ describe('Private Actions', () => {
     };
 
     // And sender gets the new private state
-    const actualSenderState = whiteMovex.state;
+    const actualSenderState = whiteMovex.get();
     expect(actualSenderState).toEqual(expectedSenderState);
 
     const publicState = computeCheckedState({
@@ -209,7 +209,7 @@ describe('Private Actions', () => {
         },
       },
     };
-    const actualPeerState = blackMovex.state;
+    const actualPeerState = blackMovex.get();
 
     // Peer gets the new public state
     expect(actualPeerState).toEqual(expectedPeerState);
@@ -285,7 +285,7 @@ describe('Private Actions', () => {
     };
 
     // And sender gets the new private state
-    const actualWhiteState = whiteMovex.state;
+    const actualWhiteState = whiteMovex.get();
     expect(actualWhiteState).toEqual(expectedWhiteState);
 
     // Black's Turn
@@ -336,7 +336,7 @@ describe('Private Actions', () => {
       },
     };
 
-    const actualPeerState = whiteMovex.state;
+    const actualPeerState = whiteMovex.get();
     expect(actualPeerState).toEqual(expectedPeerState);
 
     // Black
@@ -368,7 +368,7 @@ describe('Private Actions', () => {
     };
     // The Private Action gets set
     // And sender gets the new private state
-    const actualSenderState = blackMovex.state;
+    const actualSenderState = blackMovex.get();
     expect(actualSenderState).toEqual(expectedSenderState);
   });
 
@@ -437,7 +437,7 @@ describe('Private Actions', () => {
     };
 
     // And sender gets the new private state
-    const actualWhiteState = whiteMovex.state;
+    const actualWhiteState = whiteMovex.get();
     expect(actualWhiteState).toEqual(expectedWhiteState);
 
     // Black's Turn (Reconciliatory Turn)
@@ -486,10 +486,10 @@ describe('Private Actions', () => {
     };
 
     // They are bot equal now
-    const actualPeerState = whiteMovex.state;
+    const actualPeerState = whiteMovex.get();
     expect(actualPeerState).toEqual(expectedState);
 
-    const actualSenderState = blackMovex.state;
+    const actualSenderState = blackMovex.get();
     expect(actualSenderState).toEqual(expectedState);
 
     const masterPublicState = await master.getPublicState(rid).resolveUnwrap();
