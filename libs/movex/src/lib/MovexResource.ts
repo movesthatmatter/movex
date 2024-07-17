@@ -66,6 +66,7 @@ export class MovexResource<
    * @param rid
    * @returns MovexResourceObservable
    */
+  // TOOD: Should bind() expose the whole MovexResourceObservable to the consumer or only a filtered one
   bind(rid: ResourceIdentifier<TResourceType>): MovexResourceObservable<S, A> {
     // TODO:
     // What if this is used multiple times for the sameclient?
