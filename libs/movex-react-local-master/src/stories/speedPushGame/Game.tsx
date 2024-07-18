@@ -1,21 +1,29 @@
-import * as React from 'react';
 import { MovexBoundResource } from 'movex-react';
-// import movexConfig from '../rpsGame/movex.config';
-// import { initialState } from '../rpsGame/movex';
 import { useState } from 'react';
-import { ResourceIdentifier } from 'movex-core-util';
+import { GetReducerState, ResourceIdentifier } from 'movex-core-util';
 import { MovexLocalInstance } from 'movex-react-local-master';
 import { MovexStoreItem } from 'movex-store';
 import movexConfig from './movex.config';
-import { initialState } from './movex';
+import { initialState, reducer } from './movex';
+import { SimpleCountdown } from './components/SimpleCountdown';
 
 type Props = {
-  masterStore?: MovexStoreItem<any>;
+  masterStore?: MovexStoreItem<GetReducerState<typeof reducer>>;
+};
+
+const calculateTimeLeftToPush = (state: GetReducerState<typeof reducer>) => {
+  if (state.status !== 'ongoing') {
+    return 0;
+  }
+
+  return state.lastPushAt + state.timeToNextPushMs - new Date().getTime();
 };
 
 export function Game(props: Props) {
   const [rid, setRid] = useState<ResourceIdentifier<'speedPushGame'>>();
   const [masterStateUpdated, setMasterStateUpdated] = useState(false);
+
+  // console.log('masterStore', props.masterStore);
 
   return (
     <div className="h-screen flex flex-1 flex-col md:flex-row bg-gradient-to-bl from-blue-400 via-indigo-500 to-purple-500">
@@ -43,7 +51,19 @@ export function Game(props: Props) {
             rid={rid}
             movexDefinition={movexConfig}
             render={({ boundResource, clientId }) => (
-              <div className="w-full flex-1 flex items-center justify-center">
+              <div className="w-full flex-1 flex flex-col items-center justify-center">
+                {boundResource.state.lastPushBy !== 'red' && (
+                  <SimpleCountdown
+                    msLeft={calculateTimeLeftToPush(boundResource.state)}
+                    onFinished={() => {
+                      // Dispatch any action to get the new state (via $stateTranmsformer)
+                      boundResource.dispatch({
+                        type: 'unrelatedAction',
+                      });
+                    }}
+                  />
+                )}
+
                 <button
                   className="bg-red-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                   onClick={() =>
@@ -61,7 +81,16 @@ export function Game(props: Props) {
         )}
       </MovexLocalInstance>
       <div className="flex-1 flex flex-col h-full">
-        <div className="flex-1 flex justify-center items-center">
+        <div className="flex-1 flex justify-center items-center flex-col">
+          {/* {props.masterStore &&
+            props.masterStore.state[0].status === 'ongoing' && (
+              <SimpleCountdown
+                msLeft={calculateTimeLeftToPush(props.masterStore.state[0])}
+                onFinished={() => {
+                  console.log('finisheeed');
+                }}
+              />
+            )} */}
           <span role="img" aria-label="versus" className="text-5xl">
             🆚
           </span>
@@ -82,14 +111,7 @@ export function Game(props: Props) {
                 lang="json"
               >
                 <code>
-                  {JSON.stringify(
-                    {
-                      submissions: props.masterStore.state[0].submissions,
-                      winner: props.masterStore.state[0].winner,
-                    },
-                    null,
-                    1
-                  )}
+                  {JSON.stringify(props.masterStore.state[0], null, 1)}
                 </code>
               </pre>
             </div>
@@ -102,7 +124,18 @@ export function Game(props: Props) {
             rid={rid}
             movexDefinition={movexConfig}
             render={({ boundResource, clientId }) => (
-              <div className="w-full flex-1 flex items-center justify-center ">
+              <div className="w-full flex-1 flex flex-col items-center justify-center ">
+                {boundResource.state.lastPushBy !== 'blu' && (
+                  <SimpleCountdown
+                    msLeft={calculateTimeLeftToPush(boundResource.state)}
+                    onFinished={() => {
+                      // Dispatch any action to get the new state (via $stateTranmsformer)
+                      boundResource.dispatch({
+                        type: 'unrelatedAction',
+                      });
+                    }}
+                  />
+                )}
                 <button
                   onClick={() =>
                     boundResource.dispatch({

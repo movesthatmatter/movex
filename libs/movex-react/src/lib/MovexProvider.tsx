@@ -12,8 +12,8 @@ import {
   noop,
   ResourceIdentifier,
   StringKeys,
-  LoggingEvent,
   globalLogsy,
+  MovexLogger,
 } from 'movex-core-util';
 import { MovexClient } from 'movex';
 import { ResourceObservablesRegistry } from './ResourceObservableRegistry';
@@ -44,9 +44,7 @@ export type MovexProviderProps<
   /**
    * Optional Event Logger
    */
-  logger?: {
-    onLog: (event: LoggingEvent) => void;
-  };
+  logger?: MovexLogger;
 
   /**
    * This will trigger when the connection is made
@@ -156,7 +154,7 @@ export const MovexProvider: React.FC<
   }, [contextState.connected, onDisconnected]);
 
   useEffect(() => {
-    if (logger) {
+    if (logger?.onLog) {
       return globalLogsy.onLog(logger.onLog);
     }
 
