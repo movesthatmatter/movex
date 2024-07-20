@@ -3,8 +3,9 @@ import React from 'react';
 import '../styles.css';
 import '../globals.css';
 import { SpeedPushGame } from './SpeedPushGame';
-import { MovexLogger } from 'movex-core-util';
+// import { MovexLogger } from ;
 import { action } from '@storybook/addon-actions';
+import { MovexLogger } from 'movex-core-util';
 
 export default {
   component: SpeedPushGame,
@@ -13,8 +14,11 @@ export default {
 
 const logger: MovexLogger = {
   onLog: ({ method, prefix, message, payload }) => {
-    // console.log('event', method, prefix, message, payload)
-    if (typeof message === 'string' && message.indexOf('Action Dispatched') > -1) {
+    console[method](prefix, message, payload);
+    if (
+      typeof message === 'string' &&
+      message.indexOf('Action Dispatched') > -1
+    ) {
       action(prefix + ' ' + message)(payload);
     }
   },

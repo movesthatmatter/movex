@@ -33,17 +33,22 @@ export function Game(props: Props) {
         onConnected={(movex) => {
           const reg = movex.register('speedPushGame');
 
-          reg.create(initialState).map(({ rid }) => {
-            setRid(rid);
+          reg
+            .create({
+              ...initialState,
+              timeToNextPushMs: 2 * 1000,
+            })
+            .map(({ rid }) => {
+              setRid(rid);
 
-            setTimeout(() => {
-              // HACK. Fake the Maser State Update in order to fix a current issue with working with
-              // master state values, instead of local ones.
-              // See https://github.com/movesthatmatter/movex/issues/9 for more info.
-              // This feature witll be added in the close future
-              setMasterStateUpdated(true);
-            }, 10);
-          });
+              setTimeout(() => {
+                // HACK. Fake the Maser State Update in order to fix a current issue with working with
+                // master state values, instead of local ones.
+                // See https://github.com/movesthatmatter/movex/issues/9 for more info.
+                // This feature witll be added in the close future
+                setMasterStateUpdated(true);
+              }, 10);
+            });
         }}
       >
         {rid && (

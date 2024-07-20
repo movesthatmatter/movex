@@ -115,6 +115,3 @@ class Logsy {
 
 export const globalLogsy = new Logsy();
 
-export type MovexLogger = {
-  onLog: (event: LoggingEvent) => void;
-};
