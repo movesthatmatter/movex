@@ -389,6 +389,55 @@ export class MovexMasterServer {
     };
   }
 
+  public getPublicResourceState = <
+    S,
+    A extends AnyAction,
+    TResourceType extends string,
+    TClientInfo extends MovexClientInfo
+  >({
+    rid,
+  }: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0]) =>
+    // clientId:
+    {
+      // : ReturnType<IOEvents<S, A, TResourceType>['getResource']> => {
+      // const onGetResourceHandler = (
+      //   payload: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
+      //   acknowledge?: (
+      //     p:
+      //   ) => void
+      // ) => {
+      // const { rid } = payload;
+
+      const masterResource =
+        this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
+
+      if (!masterResource) {
+        return new Err('MasterResourceInexistent');
+        // return acknowledge?.(new Err('MasterResourceInexistent'));
+      }
+
+      return masterResource
+        // .getClientSpecificResource(rid, clientConnection.clientId)
+        .getPublicState(rid)
+        .map((r) => {
+          // acknowledge?.(
+          return new Ok(
+            r
+            // itemToSanitizedClientResource(
+            //   this.populateClientInfoToSubscribers(r)
+            // )
+          );
+          // );
+        })
+        .mapErr(
+          AsyncResult.passThrough((e) => {
+            logsy.error('Get Resource Error', e);
+          })
+        );
+      // .mapErr((e) => acknowledge?.(new Err(e)));
+      // };
+    };
+
   private populateClientInfoToSubscribers = <
     TResourceType extends GenericResourceType,
     TState

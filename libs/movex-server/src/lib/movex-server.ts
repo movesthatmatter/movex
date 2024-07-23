@@ -126,6 +126,31 @@ export const movexServer = <TDefinition extends MovexDefinition>(
       });
   });
 
+  app.get('/api/resources-v2/:rid', async (req, res) => {
+    const rawRid = req.params.rid;
+
+    if (!isResourceIdentifier(rawRid)) {
+      return res.sendStatus(400); // Bad Request
+    }
+
+    const ridObj = toResourceIdentifierObj(rawRid);
+
+    if (!isOneOf(ridObj.resourceType, objectKeys(definition.resources))) {
+      return res.sendStatus(400); // Bad Request
+    }
+
+    res.header('Content-Type', 'application/json');
+
+    return movexMaster
+      .getPublicResourceState({ rid: ridObj })
+      .map((data) => {
+        res.send(JSON.stringify(data, null, 4));
+      })
+      .mapErr(() => {
+        res.sendStatus(404);
+      });
+  });
+
   // app.post('/api/resources', async (req, res) => {
   //   // const rawRid = req.params.rid;
   //   req
