@@ -53,13 +53,40 @@ export class MovexMasterResource<
   private applyStateTransformer(
     checkedState: CheckedState<TState>
   ): CheckedState<TState> {
+    console.log('[movex-master] intending applying the state transformer');
     if (typeof this.reducer.$transformState === 'function') {
-      return computeCheckedState(
-        this.reducer.$transformState(checkedState[0], {
-          now: () => new Date().getTime(), // Should the context just be defined here?
-        })
+      const masterContext = {
+        now: () => new Date().getTime(), // Should the context just be defined here?
+      };
+
+      console.log(
+        '[movex-master] intending applying the state transformer: true',
+        JSON.stringify({ masterContext }, null, 4)
       );
+
+      const x = computeCheckedState(
+        this.reducer.$transformState(checkedState[0], masterContext)
+      );
+
+      console.log(
+        '[movex-master] intending applying the state transformer next: state',
+        x
+      );
+      return x;
     }
+
+    console.log(
+      '[movex-master] intending applying the state transformer: false',
+      JSON.stringify(
+        {
+          reducer: this.reducer.toString(),
+          $stateTransformType: typeof this.reducer.$transformState,
+          checkedState,
+        },
+        null,
+        4
+      )
+    );
 
     return checkedState;
   }
