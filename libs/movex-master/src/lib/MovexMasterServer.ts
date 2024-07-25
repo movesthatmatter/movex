@@ -11,11 +11,12 @@ import {
   SanitizedMovexClient,
   GenericResourceType,
 } from 'movex-core-util';
-import { AsyncResult } from 'ts-async-results';
+import { AsyncErr, AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { MovexMasterResource } from './MovexMasterResource';
 import { itemToSanitizedClientResource } from './util';
 import { MovexStoreItem } from 'movex-store';
+import { resultError } from 'movex-store';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
 
@@ -389,54 +390,22 @@ export class MovexMasterServer {
     };
   }
 
-  public getPublicResourceState = <
+  public getPublicResourceCheckedState<
     S,
     A extends AnyAction,
-    TResourceType extends string,
-    TClientInfo extends MovexClientInfo
-  >({
-    rid,
-  }: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0]) =>
-    // clientId:
-    {
-      // : ReturnType<IOEvents<S, A, TResourceType>['getResource']> => {
-      // const onGetResourceHandler = (
-      //   payload: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
-      //   acknowledge?: (
-      //     p:
-      //   ) => void
-      // ) => {
-      // const { rid } = payload;
+    TResourceType extends string
+  >({ rid }: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0]) {
+    const masterResource =
+      this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
 
-      const masterResource =
-        this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
+    if (!masterResource) {
+      return new AsyncErr(
+        resultError('MovexMaster', 'MasterResourceInexistent')
+      );
+    }
 
-      if (!masterResource) {
-        return new Err('MasterResourceInexistent');
-        // return acknowledge?.(new Err('MasterResourceInexistent'));
-      }
-
-      return masterResource
-        // .getClientSpecificResource(rid, clientConnection.clientId)
-        .getPublicState(rid)
-        .map((r) => {
-          // acknowledge?.(
-          return new Ok(
-            r
-            // itemToSanitizedClientResource(
-            //   this.populateClientInfoToSubscribers(r)
-            // )
-          );
-          // );
-        })
-        .mapErr(
-          AsyncResult.passThrough((e) => {
-            logsy.error('Get Resource Error', e);
-          })
-        );
-      // .mapErr((e) => acknowledge?.(new Err(e)));
-      // };
-    };
+    return masterResource.getPublicState(rid);
+  }
 
   private populateClientInfoToSubscribers = <
     TResourceType extends GenericResourceType,

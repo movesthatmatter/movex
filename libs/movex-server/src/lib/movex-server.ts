@@ -126,7 +126,8 @@ export const movexServer = <TDefinition extends MovexDefinition>(
       });
   });
 
-  app.get('/api/resources-v2/:rid', async (req, res) => {
+  // Public State
+  app.get('/api/resources/:rid/state', async (req, res) => {
     const rawRid = req.params.rid;
 
     if (!isResourceIdentifier(rawRid)) {
@@ -142,12 +143,16 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     res.header('Content-Type', 'application/json');
 
     return movexMaster
-      .getPublicResourceState({ rid: ridObj })
-      .map((data) => {
-        res.send(JSON.stringify(data, null, 4));
-      })
-      .mapErr(() => {
-        res.sendStatus(404);
+      .getPublicResourceCheckedState({ rid: ridObj })
+      .map((checkedState) => res.json(checkedState))
+      .mapErr((e) => {
+        if (
+          isOneOf(e.reason, ['ResourceInexistent', 'MasterResourceInexistent'])
+        ) {
+          return res.status(404).json(e);
+        }
+
+        return res.status(500).json(e);
       });
   });
 
