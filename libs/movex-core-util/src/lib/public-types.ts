@@ -1,3 +1,4 @@
+import { AnyAction, ToPublicAction } from './action';
 import { LoggingEvent } from './Logsy';
 import { type MovexReducer } from './reducer';
 
@@ -27,6 +28,10 @@ export type MovexResourceTypesFromMovexDefinition<
 export type MovexLogger = {
   onLog?: (event: LoggingEvent) => void;
 };
+
+export type MovexDispatchOf<A extends AnyAction> = (
+  action: ToPublicAction<A> // TODO: Should this be ToPublic??
+) => void;
 
 // This one doesn't make any sense
 // export type MovexResourceMapFromMovexDefinition<
