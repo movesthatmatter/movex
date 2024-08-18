@@ -10,7 +10,6 @@ import type {
   CheckedReconciliatoryActions,
   ToPublicAction,
   MovexReducer,
-  MovexClientResourceShape,
 } from 'movex-core-util';
 import {
   isAction,
@@ -54,10 +53,12 @@ export class MovexMasterResource<
     checkedState: CheckedState<TState>
   ): CheckedState<TState> {
     if (typeof this.reducer.$transformState === 'function') {
+      const masterContext = {
+        now: () => new Date().getTime(), // Should the context just be defined here?
+      };
+
       return computeCheckedState(
-        this.reducer.$transformState(checkedState[0], {
-          now: () => new Date().getTime(), // Should the context just be defined here?
-        })
+        this.reducer.$transformState(checkedState[0], masterContext)
       );
     }
 

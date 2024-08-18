@@ -7,6 +7,7 @@ import type {
   ReplaceOperation,
   TestOperation,
 } from 'fast-json-patch';
+import { AsyncResultWrapper } from 'ts-async-results';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace NestedObjectUtil {
@@ -354,6 +355,12 @@ export type GetIOPayloadOKTypeFrom<R extends IOPayloadResult<any, any>> =
 export type GetIOPayloadErrTypeFrom<R extends IOPayloadResult<any, any>> =
   Extract<R, { ok: false }>['val'];
 
+export type IOPayloadResultToAsyncResult<
+  TIOPayloadResult extends IOPayloadResult<any, any>
+> = AsyncResultWrapper<
+  GetIOPayloadOKTypeFrom<TIOPayloadResult>,
+  GetIOPayloadErrTypeFrom<TIOPayloadResult>
+>;
 // const xErr: IOPayloadResultErr<'asda'> = {
 //   ok: false,
 //   err: true,

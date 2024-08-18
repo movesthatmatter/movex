@@ -3,7 +3,6 @@ import {
   initialSpeedPushGameState,
   SpeedGameState,
   speedPushGameReducer,
-  SPEED_GAME_TIME_TO_PUSH_MS,
   tillNextTick,
 } from 'movex-specs-util';
 import { movexClientMasterOrchestrator } from 'movex-master';
@@ -50,6 +49,7 @@ test('State is changed (to status="completed") when a related ACTION DISPATCH tr
       winner: undefined,
       lastPushAt: FIRST_PUSH_AT,
       lastPushBy: 'red',
+      timeToNextPushMs: initialSpeedPushGameState.timeToNextPushMs,
     }),
     subscribers: {
       'test-user': {
@@ -67,7 +67,7 @@ test('State is changed (to status="completed") when a related ACTION DISPATCH tr
     type: 'push',
     payload: {
       by: 'blu',
-      at: FIRST_PUSH_AT + SPEED_GAME_TIME_TO_PUSH_MS + 1,
+      at: FIRST_PUSH_AT + initialSpeedPushGameState.timeToNextPushMs + 1,
     },
   });
 
@@ -80,6 +80,7 @@ test('State is changed (to status="completed") when a related ACTION DISPATCH tr
     winner: 'red',
     lastPushAt: FIRST_PUSH_AT,
     lastPushBy: 'red',
+    timeToNextPushMs: initialSpeedPushGameState.timeToNextPushMs,
   });
 
   expect(actual).toEqual(expected);
@@ -119,11 +120,12 @@ test('State is changed (to status="completed") when state is READ directly (w/o 
     winner: undefined,
     lastPushAt: FIRST_PUSH_AT,
     lastPushBy: 'red',
+    timeToNextPushMs: initialSpeedPushGameState.timeToNextPushMs,
   });
 
   expect(actualAfterWhiteMove).toEqual(expectedAfterWhiteMove);
 
-  MockDate.set(new Date(FIRST_PUSH_AT + SPEED_GAME_TIME_TO_PUSH_MS + 1));
+  MockDate.set(new Date(FIRST_PUSH_AT + initialSpeedPushGameState.timeToNextPushMs + 1));
 
   const actual = (await speedGameResource.get(rid).resolveUnwrap()).state;
 
@@ -132,6 +134,7 @@ test('State is changed (to status="completed") when state is READ directly (w/o 
     winner: 'red',
     lastPushAt: FIRST_PUSH_AT,
     lastPushBy: 'red',
+    timeToNextPushMs: initialSpeedPushGameState.timeToNextPushMs,
   });
 
   expect(actual).toEqual(expected);
@@ -171,11 +174,12 @@ test('State is changed (to status="completed") when ANY UNRELATED ACTION gets di
     winner: undefined,
     lastPushAt: FIRST_PUSH_AT,
     lastPushBy: 'red',
+    timeToNextPushMs: initialSpeedPushGameState.timeToNextPushMs,
   });
 
   expect(actualAfterWhiteMove).toEqual(expectedAfterWhiteMove);
 
-  MockDate.set(new Date(FIRST_PUSH_AT + SPEED_GAME_TIME_TO_PUSH_MS + 1));
+  MockDate.set(new Date(FIRST_PUSH_AT + initialSpeedPushGameState.timeToNextPushMs + 1));
 
   r.dispatch({ type: 'unrelatedAction' });
 
@@ -188,6 +192,7 @@ test('State is changed (to status="completed") when ANY UNRELATED ACTION gets di
     winner: 'red',
     lastPushAt: FIRST_PUSH_AT,
     lastPushBy: 'red',
+    timeToNextPushMs: initialSpeedPushGameState.timeToNextPushMs,
   });
 
   expect(actual).toEqual(expected);

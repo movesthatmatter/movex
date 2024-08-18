@@ -1,6 +1,6 @@
 import { Action, MovexReducer } from 'movex-core-util';
 
-export const SPEED_GAME_TIME_TO_PUSH_MS = 50;
+// export const SPEED_GAME_TIME_TO_PUSH_MS = 50;
 
 type Players = 'red' | 'blu';
 
@@ -10,18 +10,21 @@ export type SpeedGameState =
       winner: undefined;
       lastPushBy: undefined;
       lastPushAt: undefined;
+      timeToNextPushMs: number;
     }
   | {
       status: 'ongoing';
       winner: undefined;
       lastPushBy: Players;
       lastPushAt: number;
+      timeToNextPushMs: number;
     }
   | {
       status: 'completed';
       winner: Players;
       lastPushBy: Players;
       lastPushAt: number;
+      timeToNextPushMs: number;
     };
 
 type SpeedPushGameActions =
@@ -33,6 +36,7 @@ export const initialSpeedPushGameState: SpeedGameState = {
   winner: undefined,
   lastPushBy: undefined,
   lastPushAt: undefined,
+  timeToNextPushMs: 10 * 1000, //
 };
 
 export const speedPushGameReducer: MovexReducer<
@@ -54,13 +58,14 @@ export const speedPushGameReducer: MovexReducer<
 
     if (
       state.status === 'ongoing' &&
-      action.payload.at > state.lastPushAt + SPEED_GAME_TIME_TO_PUSH_MS
+      action.payload.at > state.lastPushAt + state.timeToNextPushMs
     ) {
       return {
         status: 'completed',
         winner: state.lastPushBy,
         lastPushAt: state.lastPushAt,
         lastPushBy: state.lastPushBy,
+        timeToNextPushMs: state.timeToNextPushMs,
       };
     }
 
@@ -69,6 +74,7 @@ export const speedPushGameReducer: MovexReducer<
       winner: undefined,
       lastPushAt: action.payload.at,
       lastPushBy: action.payload.by,
+      timeToNextPushMs: state.timeToNextPushMs,
     };
   }
 
@@ -82,13 +88,14 @@ speedPushGameReducer.$transformState = (state, context) => {
 
   if (
     state.status === 'ongoing' &&
-    NOW > state.lastPushAt + SPEED_GAME_TIME_TO_PUSH_MS
+    NOW > state.lastPushAt + state.timeToNextPushMs
   ) {
     return {
       status: 'completed',
       winner: state.lastPushBy,
       lastPushAt: state.lastPushAt,
       lastPushBy: state.lastPushBy,
+      timeToNextPushMs: state.timeToNextPushMs,
     };
   }
 

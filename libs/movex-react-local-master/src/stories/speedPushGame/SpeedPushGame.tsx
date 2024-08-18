@@ -1,11 +1,15 @@
+import { MovexLogger } from 'movex-core-util';
 import { MovexStoreItem } from 'movex-store';
 import { useState } from 'react';
 import { MovexLocalMasterProvider } from '../../lib/MovexLocalMasterProvider';
 import { Game } from './Game';
-import { initialState } from './movex';
 import movexConfig from './movex.config';
 
-export const SpeedPushGame = () => {
+type Props = {
+  logger?: MovexLogger;
+};
+
+export const SpeedPushGame = (props: Props) => {
   const [masterStore, setMasterStore] = useState<MovexStoreItem<any>>();
 
   return (
@@ -15,13 +19,11 @@ export const SpeedPushGame = () => {
      */
     <MovexLocalMasterProvider
       movexDefinition={movexConfig}
-      onMasterResourceUpdated={setMasterStore}
-      logger={{
-        onLog: ({ method, prefix, message, payload }) => {
-          // console.log('event', method, prefix, message, payload)
-          console[method](prefix + ' ' + message, payload);
-        },
+      onMasterResourceUpdated={(s) => {
+        console.log('master resource updated', s);
+        setMasterStore(s);
       }}
+      logger={props.logger}
     >
       <Game masterStore={masterStore} />
     </MovexLocalMasterProvider>
