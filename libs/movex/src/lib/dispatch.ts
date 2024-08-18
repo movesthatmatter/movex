@@ -6,12 +6,12 @@ import {
   isAction,
   MovexMasterQueries,
   isFunction,
-  MasterQueries,
   ToPublicAction,
   ToCheckedAction,
   toMasterActionFromActionOrTuple,
   ToMasterAction,
   masterMovexQueries,
+  localMovexQueries,
 } from 'movex-core-util';
 import type {
   Observable,
@@ -135,19 +135,17 @@ export const createDispatcher = <
 
     const localActionOrActionTuple = invoke(() => {
       if (isFunction(actionOrActionTupleOrFn)) {
-        const localMovexQueries = {
+        const localQueries = {
           now: () => {
             // Now it becomes a masterAction
             isMasterAction = true;
 
-            const now = new Date().getTime();
-
-            return now;
+            return localMovexQueries.now();
           },
         };
 
         return actionOrActionTupleOrFn({
-          $queries: localMovexQueries,
+          $queries: localQueries,
         });
       }
 

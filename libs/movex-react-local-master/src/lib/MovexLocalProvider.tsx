@@ -28,6 +28,7 @@ type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
     movexDefinition: MovexDefinition<TResourcesMap>;
     clientId?: MovexClientUser['id'];
+    masterEmitDelayMs?: number;
     onConnected?: (
       state: Extract<MovexReactContextProps<TResourcesMap>, { connected: true }>
     ) => void;
@@ -72,6 +73,11 @@ export class MovexLocalProvider<
       clientId,
       'master-emitter'
     );
+
+    // TODO: This isn't reactive to changes in the props!
+    if (this.props.masterEmitDelayMs) {
+      emitterOnMaster.setEmitDelay(this.props.masterEmitDelayMs);
+    }
 
     const connectionToClient = new ConnectionToClient(
       clientId,

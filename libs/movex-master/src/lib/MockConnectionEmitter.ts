@@ -11,6 +11,13 @@ import { getRandomInt, getUuid } from './util';
 
 const logsy = globalLogsy.withNamespace('MockConnectionEmitter');
 
+const delay = (ms: number) =>
+  new Promise((resolve) => {
+    logsy.debug(`Emit() delayed for ${ms} ms!`);
+
+    setTimeout(resolve, ms);
+  });
+
 export class MockConnectionEmitter<
   TState extends any = any,
   TAction extends AnyAction = AnyAction,
@@ -51,6 +58,8 @@ export class MockConnectionEmitter<
   private _id = getRandomInt(0, 99999);
 
   private canEmit = new PromiseDelegate<string>();
+
+  private emitDelay = 0;
 
   constructor(
     private clientId: string,
@@ -168,35 +177,37 @@ export class MockConnectionEmitter<
       response: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
     ) => void
   ) {
-    this.canEmit.promise.then(() => {
-      if (acknowledgeCb) {
-        const ackId = getUuid();
+    this.canEmit.promise
+      .then(() => (this.emitDelay > 0 ? delay(this.emitDelay) : undefined))
+      .then(() => {
+        if (acknowledgeCb) {
+          const ackId = getUuid();
 
-        // TODO: Need a way for this to call the unsubscriber
-        this.ackPubsy.subscribe(ackId, (ackMsg) => {
-          logsy.log('Emit', {
-            event,
-            request,
-            response: ackMsg,
+          // TODO: Need a way for this to call the unsubscriber
+          this.ackPubsy.subscribe(ackId, (ackMsg) => {
+            logsy.log('Emit', {
+              event,
+              request,
+              response: ackMsg,
+            });
+
+            acknowledgeCb(
+              ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
+            );
           });
 
-          acknowledgeCb(
-            ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
-          );
-        });
-
-        this.onEmittedPubsy.publish('onEmitted', {
-          event,
-          payload: request,
-          ackCb: acknowledgeCb as any,
-        });
-      } else {
-        this.onEmittedPubsy.publish('onEmitted', {
-          event,
-          payload: request,
-        });
-      }
-    });
+          this.onEmittedPubsy.publish('onEmitted', {
+            event,
+            payload: request,
+            ackCb: acknowledgeCb as any,
+          });
+        } else {
+          this.onEmittedPubsy.publish('onEmitted', {
+            event,
+            payload: request,
+          });
+        }
+      });
 
     return true;
   }
@@ -225,5 +236,11 @@ export class MockConnectionEmitter<
     logsy.warn(
       '[MovexConnectionEmitter] canEmit PromiseDelegate is already settled!'
     );
+  }
+
+  setEmitDelay(ms: number) {
+    if (ms >= 0) {
+      this.emitDelay = ms;
+    }
   }
 }

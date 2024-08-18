@@ -11,3 +11,7 @@ export type MovexMasterQueries = {
 export const masterMovexQueries = {
   now: () => MasterQueries['now'] as unknown as number,
 };
+
+export const localMovexQueries = {
+  now: () => new Date().getTime(),
+};

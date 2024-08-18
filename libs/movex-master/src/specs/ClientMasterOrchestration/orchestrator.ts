@@ -69,11 +69,6 @@ export const movexClientMasterOrchestrator = <
         clientInfo
       );
 
-      
-
-      // console.log('mocked movex in orchestrate', mockedMovex);
-
-
       clientEmitters.push(mockedMovex.emitter);
 
       // TODO: This could be done better, but since the unsibscriber is async need to work iwth an sync iterator
@@ -104,6 +99,9 @@ export const movexClientMasterOrchestrator = <
         },
         resumeEmit: () => {
           clientEmitters.forEach((c) => c.resumeEmit());
+        },
+        setEmitDelay: (ms: number) => {
+          clientEmitters.forEach((c) => c.setEmitDelay(ms));
         },
       },
     };

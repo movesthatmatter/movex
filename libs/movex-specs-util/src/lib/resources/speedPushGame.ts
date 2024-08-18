@@ -74,7 +74,11 @@ export const speedPushGameReducer: MovexReducer<
       winner: undefined,
       lastPushAt: action.payload.at,
       lastPushBy: action.payload.by,
-      timeToNextPushMs: state.timeToNextPushMs,
+      // timeToNextPushMs: state.timeToNextPushMs,
+      timeToNextPushMs:
+        (state.lastPushAt || action.payload.at) +
+        state.timeToNextPushMs -
+        action.payload.at,
     };
   }
 
