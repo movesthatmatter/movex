@@ -114,3 +114,4 @@ class Logsy {
 }
 
 export const globalLogsy = new Logsy();
+

@@ -4,6 +4,16 @@
   "sourceRoot": "libs/movex-master/src",
   "projectType": "library",
   "targets": {
+    "tsc": {
+      "executor": "nx:run-commands",
+      "options": {
+          "commands": [
+              {
+                  "command": "tsc --noEmit -p libs/movex-master/tsconfig.lib.json"
+              }
+          ]
+      }
+    },
     "lint": {
       "executor": "@nrwl/linter:eslint",
       "outputs": ["{options.outputFile}"],

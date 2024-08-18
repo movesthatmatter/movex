@@ -8,7 +8,7 @@ import {
   type GetReducerState,
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
-  LoggingEvent,
+  MovexLogger,
 } from 'movex-core-util';
 import { MemoryMovexStore, type MovexStoreItem } from 'movex-store';
 import { MovexMasterServer, initMovexMaster } from 'movex-master';
@@ -29,9 +29,7 @@ type Props<TMovexConfigResourcesMap extends BaseMovexDefinitionResourcesMap> =
       >,
       updateKind: 'create' | 'update'
     ) => void;
-    logger?: {
-      onLog: (event: LoggingEvent) => void;
-    };
+    logger?: MovexLogger;
   }>;
 
 /**
@@ -96,7 +94,7 @@ export const MovexLocalMasterProvider: React.FC<
   }, [contextState]);
 
   useEffect(() => {
-    if (logger) {
+    if (logger?.onLog) {
       return globalLogsy.onLog(logger.onLog);
     }
 

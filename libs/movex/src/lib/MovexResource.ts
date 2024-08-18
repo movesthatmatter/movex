@@ -66,6 +66,7 @@ export class MovexResource<
    * @param rid
    * @returns MovexResourceObservable
    */
+  // TOOD: Should bind() expose the whole MovexResourceObservable to the consumer or only a filtered one
   bind(rid: ResourceIdentifier<TResourceType>): MovexResourceObservable<S, A> {
     // TODO:
     // What if this is used multiple times for the sameclient?
@@ -105,7 +106,7 @@ export class MovexResource<
       // This is needed in order for all the dipatches in an unsynched state get postponed until sync is back
       resourceObservable.setUnsync();
 
-      const prevCheckedState = resourceObservable.state;
+      const prevCheckedState = resourceObservable.get().checkedState;
 
       return syncLocalState().map((masterCheckState) => {
         logsy.warn('State Resynch-ed', {

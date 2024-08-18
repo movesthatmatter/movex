@@ -5,6 +5,16 @@
   "projectType": "library",
   "tags": [],
   "targets": {
+    "tsc": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          {
+            "command": "tsc --noEmit -p libs/movex-react-local-master/tsconfig.lib.json"
+          }
+        ]
+      }
+    },
     "build": {
       "executor": "@nrwl/web:rollup",
       "outputs": ["{options.outputPath}"],
@@ -40,6 +50,37 @@
       "options": {
         "jestConfig": "libs/movex-react-local-master/jest.config.ts",
         "passWithNoTests": true
+      }
+    },
+    "storybook": {
+      "executor": "@nrwl/storybook:storybook",
+      "options": {
+        "uiFramework": "@storybook/react",
+        "port": 4400,
+        "config": {
+          "configFolder": "libs/movex-react-local-master/.storybook"
+        }
+      },
+      "configurations": {
+        "ci": {
+          "quiet": true
+        }
+      }
+    },
+    "build-storybook": {
+      "executor": "@nrwl/storybook:build",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "uiFramework": "@storybook/react",
+        "outputPath": "dist/storybook/movex-react-local-master",
+        "config": {
+          "configFolder": "libs/movex-react-local-master/.storybook"
+        }
+      },
+      "configurations": {
+        "ci": {
+          "quiet": true
+        }
       }
     }
   }

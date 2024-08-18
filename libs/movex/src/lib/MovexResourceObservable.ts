@@ -136,7 +136,7 @@ export class MovexResourceObservable<
   applyMultipleActions(actions: ToPublicAction<TAction>[]) {
     const nextState = actions.reduce(
       (prev, action) => this.computeNextState(prev, action),
-      this.getUncheckedState()
+      this.getUnwrappedState()
     );
 
     return this.$item
@@ -184,7 +184,7 @@ export class MovexResourceObservable<
       : actionOrActionTuple[0];
 
     return computeCheckedState(
-      this.computeNextState(this.getUncheckedState(), localAction)
+      this.computeNextState(this.getUnwrappedState(), localAction)
     );
   }
 
@@ -222,19 +222,19 @@ export class MovexResourceObservable<
     return this.get().checkedState;
   }
 
-  getUncheckedState() {
+  getUnwrappedState() {
     return this.getCheckedState()[0];
   }
 
   // This is the actual checked state. TODO: Not sure about the names yet
-  get state() {
-    return this.get();
-  }
+  // get state() {
+  //   return this.get();
+  // }
 
   // This is the actual unchecked state. TODO: Not sure about the names yet
-  get unckeckedState() {
-    return this.getUncheckedState();
-  }
+  // get unwrappedState() {
+  //   return this.getUnwrappedState();
+  // }
 
   /**
    * This needs to be called each time master emits an updated state.
@@ -276,7 +276,9 @@ export class MovexResourceObservable<
     );
   }
 
-  updateCheckedState(nextStateGetter: NextStateGetter<CheckedState<TState>>) {
+  private updateCheckedState(
+    nextStateGetter: NextStateGetter<CheckedState<TState>>
+  ) {
     return this.update((prev) => ({
       ...prev,
       checkedState: Observable.getNextStateFrom(
@@ -286,7 +288,7 @@ export class MovexResourceObservable<
     }));
   }
 
-  updateUncheckedState(nextStateGetter: NextStateGetter<TState>) {
+  updateUnwrappedState(nextStateGetter: NextStateGetter<TState>) {
     return this.update((prev) => ({
       ...prev,
       checkedState: computeCheckedState(

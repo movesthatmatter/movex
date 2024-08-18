@@ -32,10 +32,17 @@ export type MovexReducerMap<
 //   TAction extends AnyAction = AnyAction
 // > = (state: TState, action: TAction) => TState;
 
+export type MovexRemoteContext = {
+  now: () => number; // timestamp
+};
+
 export type MovexReducer<S = any, A extends AnyAction = AnyAction> = ((
   state: S,
   action: A
-) => S) & { $canReconcileState?: (s: S) => boolean };
+) => S) & {
+  $canReconcileState?: (s: S) => boolean;
+  $transformState?: (s: S, remoteContext: MovexRemoteContext) => S;
+};
 
 export type GetReducerState<
   TReducer extends (...args: any[]) => S,
