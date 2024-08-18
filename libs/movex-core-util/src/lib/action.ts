@@ -267,6 +267,10 @@ export function createActionCreator<
   });
 }
 
-export const isAction = (a: unknown): a is AnyAction => {
+export const isAction = (
+  a: ActionOrActionTupleFromAction<AnyAction> | AnyAction
+): a is AnyAction => {
+  // TODO: This isn't a super thorough check, but if the input is limited
+  //  to only action or ActionTuple should be enough
   return isObject(a) && keyInObject(a, 'type');
 };
