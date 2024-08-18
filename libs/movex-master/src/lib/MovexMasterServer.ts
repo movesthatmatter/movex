@@ -10,11 +10,15 @@ import {
   MovexClientInfo,
   SanitizedMovexClient,
   GenericResourceType,
+  isAction,
+  isMasterAction,
+  GenericAction,
+  GenericMasterAction,
 } from 'movex-core-util';
 import { AsyncErr, AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
 import { MovexMasterResource } from './MovexMasterResource';
-import { itemToSanitizedClientResource } from './util';
+import { itemToSanitizedClientResource, parseMasterAction } from './util';
 import { MovexStoreItem } from 'movex-store';
 import { resultError } from 'movex-store';
 
@@ -121,7 +125,7 @@ export class MovexMasterServer {
 
             return acknowledge?.(
               new Ok({
-                reconciled: true,
+                type: 'reconciliation',
                 ...peerActions.byClientId[clientConnection.clientId],
               } as const)
             );
@@ -155,7 +159,16 @@ export class MovexMasterServer {
             ? nextPrivate.checksum
             : nextPublic.checksum;
 
-          return acknowledge?.(new Ok({ nextChecksum }));
+          return acknowledge?.(
+            new Ok(
+              nextPublic.wasMasterAction
+                ? ({
+                    type: 'masterActionAck',
+                    nextCheckedAction: nextPublic,
+                  } as const)
+                : ({ type: 'ack', nextChecksum } as const)
+            )
+          );
         })
         .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
     };
@@ -345,6 +358,7 @@ export class MovexMasterServer {
       acknowledge?.(new Ok(undefined));
     };
 
+    // TODO: This can be optimized to have a function that subscribes to them all and returns an unsubsciber as well
     clientConnection.emitter.on('ping', onPingHandler);
     clientConnection.emitter.on('emitActionDispatch', onEmitActionHandler);
     clientConnection.emitter.on('getResource', onGetResourceHandler);
@@ -369,7 +383,7 @@ export class MovexMasterServer {
       >,
     };
 
-    logsy.info('Connection Added  Succesfully', {
+    logsy.info('Connection Added Succesfully', {
       clientId: clientConnection.clientId,
       connectionsCount: Object.keys(this.clientConnectionsByClientId).length,
     });

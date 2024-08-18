@@ -4,24 +4,69 @@ import {
   checkedStateEquals,
   computeCheckedState,
   isAction,
+  MovexMasterQueries,
+  isFunction,
+  MasterQueries,
+  ToPublicAction,
+  ToCheckedAction,
+  toMasterActionFromActionOrTuple,
+  ToMasterAction,
+  masterMovexQueries,
 } from 'movex-core-util';
 import type {
   Observable,
   CheckedState,
   ActionOrActionTupleFromAction,
   AnyAction,
-  AnyActionOrActionTuple,
   AnyActionTuple,
   MovexReducer,
+  Checksum,
 } from 'movex-core-util';
 
-export type DispatchFn = (actionOrActionTuple: AnyActionOrActionTuple) => void;
+export type DispatchFn<TAction extends AnyAction = AnyAction> = (
+  actionOrActionTupleOrFn:
+    | ActionOrActionTupleFromAction<TAction>
+    | ((m: {
+        $queries: MovexMasterQueries;
+      }) => ActionOrActionTupleFromAction<TAction>)
+) => void;
+
+export type DispatchPublicFn<TAction extends AnyAction = AnyAction> = (
+  actionOrFn:
+    | ToPublicAction<TAction>
+    | ((m: { $queries: MovexMasterQueries }) => ToPublicAction<TAction>)
+) => void;
+
+// export type DispatchPrivateFn = <TAction extends AnyAction = AnyAction>(
+//   actionOrFn:
+//     | ToPublicAction<TAction>
+//     | ((m: { $queries: MovexMasterQueries }) => ToPublicAction<TAction>)
+// ) => void;
 
 export type DispatchedEvent<TState, TAction extends AnyAction> = {
   next: TState;
   prev: TState;
   action: ActionOrActionTupleFromAction<TAction>;
+
+  masterAction?: ActionOrActionTupleFromAction<ToMasterAction<TAction>>;
+  onEmitMasterActionAck: (
+    checkedMasterAction: ToCheckedAction<TAction>
+  ) => Checksum;
+  // masterAction?: {
+  //   // action: ActionOrActionTupleFromAction<TAction>;
+  // };
 };
+
+// const x = {} as DispatchedEvent<number, AnyAction>;
+
+// if (x.masterAction && isAction(x.masterAction)) {
+//   x.masterAction._isMaster === true;
+// }
+
+const getLocalAction = <TAction extends AnyAction>(
+  actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
+) =>
+  isAction(actionOrActionTuple) ? actionOrActionTuple : actionOrActionTuple[0];
 
 // Here - it needs to handle the private action one as well
 // NEXT - Implement this on the backend and check public/private
@@ -41,7 +86,10 @@ export const createDispatcher = <
       event: DispatchedEvent<CheckedState<TState>, TAction>
     ) => void;
     onStateUpdated?: (
-      event: DispatchedEvent<CheckedState<TState>, TAction>
+      event: Pick<
+        DispatchedEvent<CheckedState<TState>, TAction>,
+        'action' | 'next' | 'prev'
+      >
     ) => void;
   }
 ) => {
@@ -75,45 +123,100 @@ export const createDispatcher = <
   onStateReceived($checkedState.get());
 
   const dispatch = (
-    actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
+    actionOrActionTupleOrFn:
+      | ActionOrActionTupleFromAction<TAction>
+      | ((m: {
+          $queries: MovexMasterQueries;
+        }) => ActionOrActionTupleFromAction<TAction>)
   ) => {
-    const [localAction] = invoke(() => {
-      if (isAction(actionOrActionTuple)) {
-        return [actionOrActionTuple];
+    // Flag to determine if the action is MasterAction
+    //  it gets automatically detected when using the MovexQueries
+    let isMasterAction = false as boolean;
+
+    const localActionOrActionTuple = invoke(() => {
+      if (isFunction(actionOrActionTupleOrFn)) {
+        const localMovexQueries = {
+          now: () => {
+            // Now it becomes a masterAction
+            isMasterAction = true;
+
+            const now = new Date().getTime();
+
+            return now;
+          },
+        };
+
+        return actionOrActionTupleOrFn({
+          $queries: localMovexQueries,
+        });
       }
 
-      return actionOrActionTuple;
+      return actionOrActionTupleOrFn;
     });
 
+    const localAction = getLocalAction(localActionOrActionTuple);
+
     if (!initiated) {
-      prebatchedActions.push(actionOrActionTuple);
+      prebatchedActions.push(localActionOrActionTuple);
 
       return;
     }
 
+    const prevState = currentCheckedState[0];
+
     const nextCheckedState = computeCheckedState(
-      reducer(currentCheckedState[0], localAction as TAction)
+      reducer(prevState, localAction)
     );
 
     onDispatched({
       next: nextCheckedState,
       prev: currentCheckedState,
-      action: actionOrActionTuple,
+      action: localActionOrActionTuple,
+      ...(isMasterAction &&
+        isFunction(actionOrActionTupleOrFn) && {
+          masterAction: toMasterActionFromActionOrTuple(
+            actionOrActionTupleOrFn({
+              $queries: masterMovexQueries,
+            })
+          ),
+        }),
+      onEmitMasterActionAck: (checkedMasterAction) => {
+        if (checkedMasterAction.checksum === currentCheckedState[1]) {
+          // Do nothing if the current state is the same as the received master checksum
+          //  This can happen when the emitted masterAction didn't actualy need to be processed
+          return checkedMasterAction.checksum;
+        }
+
+        // Recompute the checked state based on the new master action
+        const masterFreshState = computeCheckedState(
+          reducer(prevState, checkedMasterAction.action)
+        );
+
+        // TODO: Should I call onStateUpdated as well?
+
+        if (!checkedStateEquals(currentCheckedState, masterFreshState)) {
+          $checkedState.update(masterFreshState);
+        }
+
+        return masterFreshState[1];
+      },
     });
 
     if (!checkedStateEquals(currentCheckedState, nextCheckedState)) {
       onStateUpdated({
         next: nextCheckedState,
         prev: currentCheckedState,
-        action: actionOrActionTuple,
+        action: localActionOrActionTuple,
       });
 
-      $checkedState.update(nextCheckedState);
+      console.log('finally $checked state update to', nextCheckedState);
 
       // Only if different update them
-      // currentCheckedState = nextCheckedState;
+      $checkedState.update(nextCheckedState);
     }
   };
+
+  // dispatch.$queries = localMovexQueries;
 
   return { dispatch, unsubscribe: unsubscribeStateUpdates };
 };

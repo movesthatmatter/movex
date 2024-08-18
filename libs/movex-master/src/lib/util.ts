@@ -1,5 +1,10 @@
 export { v4 as getUuid } from 'uuid';
-import { applyReducer, compare, deepClone } from 'fast-json-patch';
+import s, {
+  applyReducer,
+  compare,
+  deepClone,
+  applyPatch,
+} from 'fast-json-patch';
 import {
   JsonPatch,
   isObject,
@@ -7,8 +12,12 @@ import {
   MovexClientResourceShape,
   toResourceIdentifierStr,
   objectKeys,
-  MovexClientInfo,
   MovexClient,
+  GenericAction,
+  GenericMasterAction,
+  MasterQueries,
+  AnyAction,
+  ToPublicAction,
 } from 'movex-core-util';
 import { MovexStoreItem } from 'movex-store';
 
@@ -97,3 +106,67 @@ export const itemToSanitizedClientResource = <
     {} as MovexClientResourceShape<TResourceType, TState>['subscribers']
   ),
 });
+
+const findFirstKeyPathForVal = (
+  obj: object | unknown,
+  val: unknown,
+  currentPath = ''
+): string | undefined => {
+  let matchingPath;
+
+  if (!obj || typeof obj !== 'object') {
+    return undefined;
+  }
+
+  for (const k of objectKeys(obj)) {
+    const nextPath = currentPath ? `${currentPath}/${k}` : `/${k}`;
+
+    matchingPath =
+      obj[k] === val ? nextPath : findFirstKeyPathForVal(obj[k], val, nextPath);
+
+    if (matchingPath) break;
+  }
+
+  return matchingPath;
+};
+
+const findAllKeyPathsForVal = (obj: object, val: unknown): string[] => {
+  let lookingObj = obj;
+  const res: string[] = [];
+
+  while (objectKeys(lookingObj).length > 0) {
+    const found = findFirstKeyPathForVal(lookingObj, val);
+
+    if (!found) {
+      break;
+    }
+
+    res.push(found);
+
+    lookingObj = applyPatch(lookingObj, [{ op: 'remove', path: found }])[0]
+      .newDocument;
+  }
+
+  return res;
+};
+
+export const parseMasterAction = <TMasterAction extends GenericMasterAction>(
+  action: GenericMasterAction
+): ToPublicAction<TMasterAction> => {
+  const allNowPaths = findAllKeyPathsForVal(
+    { action: { payload: action.payload } },
+    MasterQueries.now
+  );
+
+  const { action: nextAction } = applyPatch({ action }, [
+    ...allNowPaths.map(
+      (path) => ({ op: 'replace', path, value: new Date().getTime() } as const)
+    ),
+  ])[0].newDocument;
+
+  return {
+    type: action.type,
+    ...(action.isPrivate && { isPrivate: true }),
+    payload: nextAction.payload,
+  } as ToPublicAction<TMasterAction>;
+};

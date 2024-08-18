@@ -5,6 +5,7 @@ import {
   IOEvents,
   globalLogsy,
 } from 'movex-core-util';
+import { PromiseDelegate } from 'promise-delegate';
 import { Pubsy } from 'ts-pubsy';
 import { getRandomInt, getUuid } from './util';
 
@@ -47,10 +48,17 @@ export class MockConnectionEmitter<
     };
   }>();
 
+  private _id = getRandomInt(0, 99999);
+
+  private canEmit = new PromiseDelegate<string>();
+
   constructor(
     private clientId: string,
     public emitterLabel: string = String(getRandomInt(10000, 99999))
-  ) {}
+  ) {
+    // Resolve by default
+    this.canEmit.resolve(`c:${this._id}`);
+  }
 
   on<E extends keyof IOEvents<TState, TAction, TResourceType>>(
     event: E,
@@ -160,33 +168,35 @@ export class MockConnectionEmitter<
       response: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
     ) => void
   ) {
-    if (acknowledgeCb) {
-      const ackId = getUuid();
+    this.canEmit.promise.then(() => {
+      if (acknowledgeCb) {
+        const ackId = getUuid();
 
-      // TODO: Need a way for this to call the unsubscriber
-      this.ackPubsy.subscribe(ackId, (ackMsg) => {
-        logsy.log('Emit', {
-          event,
-          request,
-          response: ackMsg,
+        // TODO: Need a way for this to call the unsubscriber
+        this.ackPubsy.subscribe(ackId, (ackMsg) => {
+          logsy.log('Emit', {
+            event,
+            request,
+            response: ackMsg,
+          });
+
+          acknowledgeCb(
+            ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
+          );
         });
 
-        acknowledgeCb(
-          ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
-        );
-      });
-
-      this.onEmittedPubsy.publish('onEmitted', {
-        event,
-        payload: request,
-        ackCb: acknowledgeCb as any,
-      });
-    } else {
-      this.onEmittedPubsy.publish('onEmitted', {
-        event,
-        payload: request,
-      });
-    }
+        this.onEmittedPubsy.publish('onEmitted', {
+          event,
+          payload: request,
+          ackCb: acknowledgeCb as any,
+        });
+      } else {
+        this.onEmittedPubsy.publish('onEmitted', {
+          event,
+          payload: request,
+        });
+      }
+    });
 
     return true;
   }
@@ -199,6 +209,21 @@ export class MockConnectionEmitter<
       (resolve) => {
         this.emit(event, request, resolve);
       }
+    );
+  }
+
+  // A way to pause the client-master connection so I can test the intermediary(pending) states
+  pauseEmit() {
+    this.canEmit = new PromiseDelegate();
+  }
+
+  resumeEmit() {
+    if (!this.canEmit.settled) {
+      this.canEmit.resolve(`p:${this._id}`);
+    }
+
+    logsy.warn(
+      '[MovexConnectionEmitter] canEmit PromiseDelegate is already settled!'
     );
   }
 }

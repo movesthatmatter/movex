@@ -43,6 +43,8 @@ export const movexClientMasterOrchestrator = <
       [resourceType]: masterResource,
     });
 
+    const clientEmitters: MockConnectionEmitter<S, A, TResourceType>[] = [];
+
     const clients = clientIds.map((clientId) => {
       // Would this be the only one for both client and master or seperate?
       // I believe it should be the same in order for it to work between the 2 no?
@@ -67,6 +69,13 @@ export const movexClientMasterOrchestrator = <
         clientInfo
       );
 
+      
+
+      // console.log('mocked movex in orchestrate', mockedMovex);
+
+
+      clientEmitters.push(mockedMovex.emitter);
+
       // TODO: This could be done better, but since the unsibscriber is async need to work iwth an sync iterator
       //  for now this should do
       const oldUnsubscribe = unsubscribe;
@@ -89,6 +98,14 @@ export const movexClientMasterOrchestrator = <
           masterResource.getPublicState(rid),
       },
       clients,
+      $util: {
+        pauseEmit: () => {
+          clientEmitters.forEach((c) => c.pauseEmit());
+        },
+        resumeEmit: () => {
+          clientEmitters.forEach((c) => c.resumeEmit());
+        },
+      },
     };
   };
 

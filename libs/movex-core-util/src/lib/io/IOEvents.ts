@@ -11,7 +11,6 @@ import type {
   IOPayloadResult,
   MovexClient,
   ResourceIdentifier,
-  ResourceIdentifierStr,
   SanitizedMovexClient,
 } from '../core-types';
 
@@ -73,11 +72,16 @@ export type IOEvents<
     action: ActionOrActionTupleFromAction<A>;
   }) => IOPayloadResult<
     | {
-        reconciled?: false;
+        type: 'ack';
         nextChecksum: Checksum;
       }
+    | {
+        type: 'masterActionAck';
+        // nextChecksum: Checksum;
+        nextCheckedAction: ToCheckedAction<A>;
+      }
     | ({
-        reconciled: true;
+        type: 'reconciliation';
       } & CheckedReconciliatoryActions<A>),
     'MasterResourceInexistent' | string
   >; // Type the other errors

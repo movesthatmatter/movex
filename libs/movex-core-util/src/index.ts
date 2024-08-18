@@ -10,3 +10,4 @@ export * from './lib/core-types';
 export * from './lib/public-types';
 export * from './lib/checkedState';
 export * from './lib/io';
+export * from './lib/masterQueries';

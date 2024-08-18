@@ -5,6 +5,13 @@ import { isObject, keyInObject } from './misc';
 
 // TODO: ith the new Reducer Refactoring, all of the action with collection map and generic actions can be removed I believe
 
+/**
+ * TODO: 18.08.2024 - This file needs a restructuring:
+ * - there are too many types, many of them aren't used or are intersecting with others
+ * - others are just confusing and create more issues in understanding (AnyAction vs GenericAction - which one is what???)
+ * - others are remnants of long past times (e..g all of the action with collection map and generic actions can be removed I believe)
+ */
+
 export type BaseAction<
   TType extends string,
   TPayload = undefined
@@ -27,9 +34,20 @@ export type PublicAction<
   isPrivate?: false;
 };
 
+export type MasterAction<TType extends string, TPayload = undefined> =
+  | (PrivateAction<TType, TPayload> & {
+      _isMaster: true; // Note: This is only meant for internal useage
+    })
+  | (PublicAction<TType, TPayload> & {
+      _isMaster: true; // Note: This is only meant for internal useage
+    });
+
 export type Action<TType extends string, TPayload = undefined> =
   | PublicAction<TType, TPayload>
-  | PrivateAction<TType, TPayload>;
+  | PrivateAction<TType, TPayload>
+  | MasterAction<TType, TPayload>;
+
+export type AnyMasterAction = MasterAction<string>;
 
 export type ActionWithAnyPayload<TType extends string> = Action<TType, unknown>;
 
@@ -56,10 +74,14 @@ export type AnyPublicActionOf<
 
 export type GenericPrivateAction = PrivateAction<string, unknown>;
 export type GenericPublicAction = PublicAction<string, unknown>;
+export type GenericMasterAction = MasterAction<string, unknown>;
 
-export type GenericAction = GenericPrivateAction | GenericPublicAction;
+export type GenericAction =
+  | GenericPrivateAction
+  | GenericPublicAction
+  | GenericMasterAction;
 
-export type AnyAction = Action<string>;
+export type AnyAction = Action<string> | GenericAction;
 
 export type UnknownAction = Action<string, unknown>;
 
@@ -97,6 +119,10 @@ export type ToPrivateAction<A extends AnyAction> = A & {
 };
 export type ToPublicAction<A extends AnyAction> = A & {
   isPrivate?: false;
+};
+
+export type ToMasterAction<A extends AnyAction> = A & {
+  _isMaster: true;
 };
 
 export type CheckedReconciliatoryActions<A extends AnyAction> = {
@@ -144,7 +170,7 @@ export type ActionCreatorsMapBase = {
   [k in string]: ReturnType<typeof createActionCreator>;
 };
 
-export type ActionTupleFrom<TAction extends AnyAction> = [
+export type ActionTupleFrom<TAction extends AnyAction | AnyMasterAction> = [
   ToPrivateAction<TAction>,
   ToPublicAction<TAction>
 ];
@@ -273,4 +299,36 @@ export const isAction = (
   // TODO: This isn't a super thorough check, but if the input is limited
   //  to only action or ActionTuple should be enough
   return isObject(a) && keyInObject(a, 'type');
+};
+
+export const isMasterAction = (
+  a: ActionOrActionTupleFromAction<AnyAction> | AnyAction
+): a is AnyMasterAction => {
+  // TODO: This isn't a super thorough check, but if the input is limited
+  //  to only action or ActionTuple should be enough
+  return isAction(a) && keyInObject(a, '_isMaster') && a._isMaster === true;
+};
+
+export const toMasterAction = <TAction extends AnyAction>(
+  action: TAction
+): ToMasterAction<TAction> => ({
+  ...action,
+  _isMaster: true,
+});
+
+export const toMasterActionFromActionOrTuple = <TAction extends AnyAction>(
+  actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
+) => {
+  return (
+    isAction(actionOrActionTuple)
+      ? toMasterAction(actionOrActionTuple)
+      : // TODO: In the case of a tuple, there is not enough information
+        //  so I'm just making them both a masterAction, but I should only make the one that is needed actually
+        // - this isn't the worst possible thing as if there's nothing to parse nothing will parse
+        // and the client will simply attempt to run again with the same
+        [
+          toMasterAction(actionOrActionTuple[0]),
+          toMasterAction(actionOrActionTuple[1]),
+        ]
+  ) as ActionOrActionTupleFromAction<ToMasterAction<TAction>>;
 };
