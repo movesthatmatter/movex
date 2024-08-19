@@ -76,7 +76,7 @@ export class MovexLocalProvider<
 
     // TODO: This isn't reactive to changes in the props!
     if (this.props.masterEmitDelayMs) {
-      emitterOnMaster.setEmitDelay(this.props.masterEmitDelayMs);
+      emitterOnMaster._setEmitDelay(this.props.masterEmitDelayMs);
     }
 
     const connectionToClient = new ConnectionToClient(

@@ -24,7 +24,7 @@ import type {
 } from 'movex-core-util';
 import {
   createDispatcher,
-  DispatchedEvent,
+  DispatchedEventPayload,
   DispatchFn,
   DispatchPublicFn,
 } from './dispatch';
@@ -56,7 +56,7 @@ export class MovexResourceObservable<
   private $item: Observable<ObservedItem<TState>>;
 
   private pubsy = new Pubsy<{
-    onDispatched: DispatchedEvent<CheckedState<TState>, TAction>;
+    onDispatched: DispatchedEventPayload<CheckedState<TState>, TAction>;
   }>();
 
   private dispatcher: DispatchFn<TAction>;
@@ -212,7 +212,7 @@ export class MovexResourceObservable<
   }
 
   onDispatched(
-    fn: (event: DispatchedEvent<CheckedState<TState>, TAction>) => void
+    fn: (event: DispatchedEventPayload<CheckedState<TState>, TAction>) => void
   ) {
     return this.pubsy.subscribe('onDispatched', fn);
   }

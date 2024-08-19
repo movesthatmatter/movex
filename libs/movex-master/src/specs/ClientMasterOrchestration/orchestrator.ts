@@ -95,14 +95,15 @@ export const movexClientMasterOrchestrator = <
       clients,
       $util: {
         pauseEmit: () => {
-          clientEmitters.forEach((c) => c.pauseEmit());
+          clientEmitters.forEach((c) => c._pauseEmit());
         },
         resumeEmit: () => {
-          clientEmitters.forEach((c) => c.resumeEmit());
+          clientEmitters.forEach((c) => c._resumeEmit());
         },
         setEmitDelay: (ms: number) => {
-          clientEmitters.forEach((c) => c.setEmitDelay(ms));
+          clientEmitters.forEach((c) => c._setEmitDelay(ms));
         },
+        clientEmitters,
       },
     };
   };

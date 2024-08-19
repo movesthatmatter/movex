@@ -1,5 +1,5 @@
 export { v4 as getUuid } from 'uuid';
-import s, {
+import {
   applyReducer,
   compare,
   deepClone,

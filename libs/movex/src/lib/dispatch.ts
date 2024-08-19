@@ -12,6 +12,7 @@ import {
   ToMasterAction,
   masterMovexQueries,
   localMovexQueries,
+  objectPick,
 } from 'movex-core-util';
 import type {
   Observable,
@@ -43,7 +44,7 @@ export type DispatchPublicFn<TAction extends AnyAction = AnyAction> = (
 //     | ((m: { $queries: MovexMasterQueries }) => ToPublicAction<TAction>)
 // ) => void;
 
-export type DispatchedEvent<TState, TAction extends AnyAction> = {
+export type DispatchedEventPayload<TState, TAction extends AnyAction> = {
   next: TState;
   prev: TState;
   action: ActionOrActionTupleFromAction<TAction>;
@@ -83,11 +84,11 @@ export const createDispatcher = <
     // This is in order to have more control at the client's end. where they can easily check the checksum's or even instance
     //  if there was any update
     onDispatched?: (
-      event: DispatchedEvent<CheckedState<TState>, TAction>
+      event: DispatchedEventPayload<CheckedState<TState>, TAction>
     ) => void;
     onStateUpdated?: (
       event: Pick<
-        DispatchedEvent<CheckedState<TState>, TAction>,
+        DispatchedEventPayload<CheckedState<TState>, TAction>,
         'action' | 'next' | 'prev'
       >
     ) => void;
@@ -166,7 +167,7 @@ export const createDispatcher = <
       reducer(prevState, localAction)
     );
 
-    onDispatched({
+    const res: DispatchedEventPayload<CheckedState<TState>, TAction> = {
       next: nextCheckedState,
       prev: currentCheckedState,
       action: localActionOrActionTuple,
@@ -198,23 +199,19 @@ export const createDispatcher = <
 
         return masterFreshState[1];
       },
-    });
+    };
+
+    onDispatched(res);
 
     if (!checkedStateEquals(currentCheckedState, nextCheckedState)) {
-      onStateUpdated({
-        next: nextCheckedState,
-        prev: currentCheckedState,
-        action: localActionOrActionTuple,
-      });
-
-      console.log('finally $checked state update to', nextCheckedState);
+      onStateUpdated(objectPick(res, ['next', 'prev', 'action']));
 
       // Only if different update them
       $checkedState.update(nextCheckedState);
     }
-  };
 
-  // dispatch.$queries = localMovexQueries;
+    return res;
+  };
 
   return { dispatch, unsubscribe: unsubscribeStateUpdates };
 };

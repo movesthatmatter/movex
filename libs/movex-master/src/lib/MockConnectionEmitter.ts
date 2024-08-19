@@ -53,6 +53,12 @@ export class MockConnectionEmitter<
         >
       ) => void;
     };
+    onEmitAck: {
+      event: keyof IOEvents;
+      payload: Parameters<
+        IOEvents<TState, TAction, TResourceType>[keyof IOEvents]
+      >[0];
+    };
   }>();
 
   private _id = getRandomInt(0, 99999);
@@ -131,7 +137,7 @@ export class MockConnectionEmitter<
       ) => void
     ) => void
   ) {
-    const unsub = this.onEmittedPubsy.subscribe('onEmitted', (r) => {
+    return this.onEmittedPubsy.subscribe('onEmitted', (r) => {
       fn(
         {
           event: r.event as E,
@@ -142,10 +148,22 @@ export class MockConnectionEmitter<
         r.ackCb
       );
     });
+  }
 
-    return () => {
-      unsub();
-    };
+  _onEmitAck<E extends keyof IOEvents>(
+    fn: (p: {
+      event: E;
+      payload: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0];
+    }) => void
+  ) {
+    return this.onEmittedPubsy.subscribe('onEmitAck', (r) => {
+      fn({
+        event: r.event as E,
+        payload: r.payload as Parameters<
+          IOEvents<TState, TAction, TResourceType>[E]
+        >[0],
+      });
+    });
   }
 
   _publish<E extends keyof IOEvents>(
@@ -161,9 +179,7 @@ export class MockConnectionEmitter<
     this.mainPubsy.publish(event, {
       content: payload as any,
       ...(ackCb && {
-        ackCb: (res: any) => {
-          ackCb(res);
-        },
+        ackCb: (res: any) => ackCb(res),
       }),
       // ackId,
       // what ab the ack?
@@ -180,33 +196,20 @@ export class MockConnectionEmitter<
     this.canEmit.promise
       .then(() => (this.emitDelay > 0 ? delay(this.emitDelay) : undefined))
       .then(() => {
-        if (acknowledgeCb) {
-          const ackId = getUuid();
+        this.onEmittedPubsy.publish('onEmitted', {
+          event,
+          payload: request,
+          ...(acknowledgeCb && {
+            ackCb: (r: any) => {
+              this.onEmittedPubsy.publish('onEmitAck', {
+                event,
+                payload: r,
+              });
 
-          // TODO: Need a way for this to call the unsubscriber
-          this.ackPubsy.subscribe(ackId, (ackMsg) => {
-            logsy.log('Emit', {
-              event,
-              request,
-              response: ackMsg,
-            });
-
-            acknowledgeCb(
-              ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
-            );
-          });
-
-          this.onEmittedPubsy.publish('onEmitted', {
-            event,
-            payload: request,
-            ackCb: acknowledgeCb as any,
-          });
-        } else {
-          this.onEmittedPubsy.publish('onEmitted', {
-            event,
-            payload: request,
-          });
-        }
+              return acknowledgeCb(r);
+            },
+          }),
+        });
       });
 
     return true;
@@ -224,11 +227,11 @@ export class MockConnectionEmitter<
   }
 
   // A way to pause the client-master connection so I can test the intermediary(pending) states
-  pauseEmit() {
+  _pauseEmit() {
     this.canEmit = new PromiseDelegate();
   }
 
-  resumeEmit() {
+  _resumeEmit() {
     if (!this.canEmit.settled) {
       this.canEmit.resolve(`p:${this._id}`);
     }
@@ -238,7 +241,7 @@ export class MockConnectionEmitter<
     );
   }
 
-  setEmitDelay(ms: number) {
+  _setEmitDelay(ms: number) {
     if (ms >= 0) {
       this.emitDelay = ms;
     }

@@ -16,6 +16,7 @@ import {
 import { ConnectionToMasterResources } from './ConnectionToMasterResources';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import * as deepObject from 'deep-object-diff';
+import { DispatchFn } from './dispatch';
 
 const logsy = globalLogsy.withNamespace('[Movex][MovexResource]');
 
@@ -325,6 +326,15 @@ export class MovexResource<
         }
       ),
     ];
+
+    // I like this idea of decorating the disaptch, and look at its return instead of subscribing to onDispatched
+    // this way, if the dispatcher needs to wait for the master it can do that somehow easier
+    // it needs to wait for master with the new $movexQueries like generateId or randomInt or stuff like that
+    // const nextDispatch = (...args: Parameters<DispatchFn>) => {
+    //   resourceObservable.dispatch(...args);
+    // }
+
+    // resourceObservable.dispatch()
 
     return resourceObservable;
   }

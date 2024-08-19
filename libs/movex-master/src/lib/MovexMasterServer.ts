@@ -14,6 +14,7 @@ import {
   isMasterAction,
   GenericAction,
   GenericMasterAction,
+  objectOmit,
 } from 'movex-core-util';
 import { AsyncErr, AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
@@ -164,7 +165,9 @@ export class MovexMasterServer {
               nextPublic.wasMasterAction
                 ? ({
                     type: 'masterActionAck',
-                    nextCheckedAction: nextPublic,
+                    nextCheckedAction: objectOmit(nextPublic, [
+                      'wasMasterAction',
+                    ]),
                   } as const)
                 : ({ type: 'ack', nextChecksum } as const)
             )

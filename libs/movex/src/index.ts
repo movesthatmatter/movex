@@ -14,3 +14,5 @@ export {
   isResourceIdentifierOfType as isRidOfType,
   isSameResourceIdentifier as isSameRid,
 } from 'movex-core-util';
+
+export { DispatchPublicFn as MovexDispatchAction } from './lib/dispatch';
