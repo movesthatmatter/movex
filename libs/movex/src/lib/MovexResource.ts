@@ -16,7 +16,6 @@ import {
 import { ConnectionToMasterResources } from './ConnectionToMasterResources';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import * as deepObject from 'deep-object-diff';
-import { DispatchFn } from './dispatch';
 
 const logsy = globalLogsy.withNamespace('[Movex][MovexResource]');
 
@@ -58,7 +57,11 @@ export class MovexResource<
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
-    return this.connectionToMasterResources.getResource(rid);
+    return this.connectionToMasterResources.getResource(rid).map((item) => ({
+      ...item,
+      rid: toResourceIdentifierObj<TResourceType>(item.rid),
+      state: item.state[0],
+    }));
   }
 
   /**
@@ -177,7 +180,12 @@ export class MovexResource<
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
       resourceObservable.onDispatched(
-        ({ action, next: nextLocalCheckedState, masterAction, onEmitMasterActionAck }) => {
+        ({
+          action,
+          next: nextLocalCheckedState,
+          masterAction,
+          onEmitMasterActionAck,
+        }) => {
           // const [_, nextLocalChecksumPreAck] = nextLocalCheckedState;
 
           // console.log('comes here sf???');
