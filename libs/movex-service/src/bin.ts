@@ -4,6 +4,7 @@ const cwd = require('process').cwd();
 const esb = require('esbuild');
 const serve = require('@es-exec/esbuild-plugin-serve').default;
 const copy = require('esbuild-plugin-copy').default;
+const pkgJson = require('./package.json');
 
 const { dependencies, peerDependencies } = require(`${cwd}/package.json`);
 
@@ -84,6 +85,8 @@ const go = (args: string[]) => {
   });
 
   const servePlugin = serve({ main: './.movex/runner.js' });
+
+  console.log(`movex-service v${pkgJson.version}`);
 
   if (hasCommand('dev')) {
     (async () => {
