@@ -16,4 +16,8 @@ export class BaseConnection<
     public emitter: EventEmitter<IOEvents<TState, TAction, TResourceType>>,
     public clientInfo: TClientInfo = {} as TClientInfo
   ) {}
+
+  disconnect() {
+    this.emitter.disconnect();
+  }
 }

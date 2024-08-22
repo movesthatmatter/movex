@@ -226,6 +226,11 @@ export class MockConnectionEmitter<
     );
   }
 
+  disconnect(): void {
+    // TODO: What should this do here??
+    // Implement
+  }
+
   // A way to pause the client-master connection so I can test the intermediary(pending) states
   _pauseEmit() {
     this.canEmit = new PromiseDelegate();

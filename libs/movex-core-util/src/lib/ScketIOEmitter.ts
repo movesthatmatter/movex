@@ -149,6 +149,10 @@ export class SocketIOEmitter<TEventMap extends EventMap>
       );
     }).catch((e) => e) as any;
   }
+
+  disconnect(): void {
+    this.socket.disconnect();
+  }
 }
 
 const withTimeout = (

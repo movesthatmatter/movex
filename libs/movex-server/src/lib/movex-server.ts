@@ -16,6 +16,7 @@ import {
 import { MemoryMovexStore, MovexStore } from 'movex-store';
 import { initMovexMaster } from 'movex-master';
 import { isOneOf } from './util';
+const pkgJson = require('../../package.json');
 
 const logsy = globalLogsy.withNamespace('[MovexServer]');
 
@@ -56,6 +57,22 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
   socket.on('connection', (io) => {
     const clientId = getClientId(io.handshake.query['clientId'] as string);
+
+    const oldClientConnection = movexMaster.getConnection(clientId);
+
+    console.log('presentConnection', oldClientConnection);
+    if (oldClientConnection) {
+      /**
+       * Disconnects the old client if a connection is already present, in order to support the new connection
+       *  This normally happens when the same user opens a new tab with the same resource present
+       *
+       * Note - this is the simplest approach for now, but in the future this can include more advanced use-cases
+       */
+      oldClientConnection.disconnect();
+
+      movexMaster.removeConnection(clientId);
+    }
+
     const clientInfo = JSON.parse(
       (io.handshake.query['clientInfo'] as string) || ''
     ) as MovexClientInfo;
@@ -174,6 +191,8 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   const port = process.env['port'] || 3333;
   httpServer.listen(port, () => {
     const address = httpServer.address();
+
+    console.log(`[movex-server] v${pkgJson.version} started at ${port}.`);
 
     if (typeof address !== 'string') {
       logsy.info('Server started', {

@@ -34,4 +34,6 @@ export interface EventEmitter<TEventMap extends EventMap> {
     event: E,
     request: Parameters<TEventMap[E]>[0]
   ): Promise<ReturnType<TEventMap[E]>>;
+
+  disconnect(): void;
 }

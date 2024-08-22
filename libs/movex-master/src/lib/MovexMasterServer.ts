@@ -10,10 +10,6 @@ import {
   MovexClientInfo,
   SanitizedMovexClient,
   GenericResourceType,
-  isAction,
-  isMasterAction,
-  GenericAction,
-  GenericMasterAction,
   objectOmit,
 } from 'movex-core-util';
 import { AsyncErr, AsyncResult } from 'ts-async-results';
@@ -468,6 +464,10 @@ export class MovexMasterServer {
       clientId,
       connectionsLeft: Object.keys(this.clientConnectionsByClientId).length,
     });
+  }
+
+  getConnection(clientId: MovexClient['id']) {
+    return this.clientConnectionsByClientId[clientId];
   }
 
   private unsubscribeClientFromResources(clientId: MovexClient['id']) {
