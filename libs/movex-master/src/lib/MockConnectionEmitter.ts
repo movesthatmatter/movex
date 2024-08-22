@@ -4,6 +4,7 @@ import {
   UnsubscribeFn,
   IOEvents,
   globalLogsy,
+  EmptyFn,
 } from 'movex-core-util';
 import { PromiseDelegate } from 'promise-delegate';
 import { Pubsy } from 'ts-pubsy';
@@ -35,8 +36,9 @@ export class MockConnectionEmitter<
     };
   }>();
 
-  private ackPubsy = new Pubsy<{
-    [ackId in string]: undefined;
+  private connectionPubsy = new Pubsy<{
+    onConnect: undefined;
+    onDisconnect: undefined;
   }>();
 
   private onEmittedPubsy = new Pubsy<{
@@ -73,6 +75,11 @@ export class MockConnectionEmitter<
   ) {
     // Resolve by default
     this.canEmit.resolve(`c:${this._id}`);
+
+    setTimeout(() => {
+      // Connect right away
+      this.connectionPubsy.publish('onConnect', undefined);
+    }, 0);
   }
 
   on<E extends keyof IOEvents<TState, TAction, TResourceType>>(
@@ -229,6 +236,14 @@ export class MockConnectionEmitter<
   disconnect(): void {
     // TODO: What should this do here??
     // Implement
+  }
+
+  onConnect(fn: () => void) {
+    return this.connectionPubsy.subscribe('onConnect', fn);
+  }
+
+  onDisconnect(fn: () => void) {
+    return this.connectionPubsy.subscribe('onDisconnect', fn);
   }
 
   // A way to pause the client-master connection so I can test the intermediary(pending) states

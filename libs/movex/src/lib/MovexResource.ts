@@ -5,7 +5,6 @@ import type {
   AnyAction,
   CheckedReconciliatoryActions,
   MovexReducer,
-  ConnectionToMaster,
 } from 'movex-core-util';
 import {
   globalLogsy,
@@ -16,6 +15,7 @@ import {
 import { ConnectionToMasterResources } from './ConnectionToMasterResources';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import * as deepObject from 'deep-object-diff';
+import { ConnectionToMaster } from './ConnectionToMaster';
 
 const logsy = globalLogsy.withNamespace('[Movex][MovexResource]');
 
@@ -78,7 +78,7 @@ export class MovexResource<
     // This also willl allow the get to craete the observable and sync it
 
     const resourceObservable = new MovexResourceObservable(
-      this.connectionToMaster.clientId,
+      this.connectionToMaster.client.id,
       rid,
       this.reducer
     );
@@ -152,7 +152,7 @@ export class MovexResource<
       logsy.log('Reconciliatory Actions Received', {
         ...p,
         actionsCount: p.actions.length,
-        clientId: this.connectionToMaster.clientId,
+        clientId: this.connectionToMaster.client.id,
         nextState,
         prevState,
       });
@@ -251,7 +251,7 @@ export class MovexResource<
               // this is expensive and ideally doesn't happen too much.
 
               logsy.error(`Dispatch Ack Error: "Checksums MISMATCH"`, {
-                clientId: this.connectionToMaster.clientId,
+                clientId: this.connectionToMaster.client.id,
                 action,
                 response,
                 nextLocalCheckedState,
@@ -281,7 +281,7 @@ export class MovexResource<
 
         logsy.info('Forwarded Action Received', {
           ...p,
-          clientId: this.connectionToMaster.clientId,
+          clientId: this.connectionToMaster.client.id,
           prevState,
           nextState,
         });
@@ -327,7 +327,7 @@ export class MovexResource<
         }) => {
           logsy.info('Action Dispatched', {
             action,
-            clientId: this.connectionToMaster.clientId,
+            clientId: this.connectionToMaster.client.id,
             prevState: prevLocalCheckedState,
             nextLocalState: nextLocalCheckedState,
           });

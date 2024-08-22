@@ -4,7 +4,11 @@ import type { Socket as ServerSocket } from 'socket.io';
 import type { Socket as ClientSocket } from 'socket.io-client';
 import type { EventMap } from 'typed-emitter';
 import type { EventEmitter } from './EventEmitter';
-import type { UnsubscribeFn, WsResponseResultPayload } from './core-types';
+import type {
+  EmptyFn,
+  UnsubscribeFn,
+  WsResponseResultPayload,
+} from './core-types';
 
 export type SocketIO = ServerSocket | ClientSocket;
 
@@ -148,6 +152,22 @@ export class SocketIOEmitter<TEventMap extends EventMap>
         )
       );
     }).catch((e) => e) as any;
+  }
+
+  onConnect(fn: () => void) {
+    this.socket.on('connect', fn);
+
+    return () => {
+      this.socket.off('connect', fn);
+    };
+  }
+
+  onDisconnect(fn: () => void) {
+    this.socket.on('disconnect', fn);
+
+    return () => {
+      this.socket.off('disconnect', fn);
+    };
   }
 
   disconnect(): void {

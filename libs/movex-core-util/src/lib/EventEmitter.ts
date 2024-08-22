@@ -36,4 +36,7 @@ export interface EventEmitter<TEventMap extends EventMap> {
   ): Promise<ReturnType<TEventMap[E]>>;
 
   disconnect(): void;
+
+  onConnect(fn: () => void): EmptyFn;
+  onDisconnect(fn: () => void): EmptyFn;
 }

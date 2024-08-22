@@ -125,17 +125,19 @@ test('State is changed (to status="completed") when state is READ directly (w/o 
 
   expect(actualAfterWhiteMove).toEqual(expectedAfterWhiteMove);
 
-  MockDate.set(new Date(FIRST_PUSH_AT + initialSpeedPushGameState.timeToNextPushMs + 1));
+  MockDate.set(
+    new Date(FIRST_PUSH_AT + initialSpeedPushGameState.timeToNextPushMs + 1)
+  );
 
   const actual = (await speedGameResource.get(rid).resolveUnwrap()).state;
 
-  const expected = computeCheckedState<SpeedGameState>({
+  const expected = {
     status: 'completed',
     winner: 'red',
     lastPushAt: FIRST_PUSH_AT,
     lastPushBy: 'red',
     timeToNextPushMs: initialSpeedPushGameState.timeToNextPushMs,
-  });
+  };
 
   expect(actual).toEqual(expected);
 });
@@ -179,7 +181,9 @@ test('State is changed (to status="completed") when ANY UNRELATED ACTION gets di
 
   expect(actualAfterWhiteMove).toEqual(expectedAfterWhiteMove);
 
-  MockDate.set(new Date(FIRST_PUSH_AT + initialSpeedPushGameState.timeToNextPushMs + 1));
+  MockDate.set(
+    new Date(FIRST_PUSH_AT + initialSpeedPushGameState.timeToNextPushMs + 1)
+  );
 
   r.dispatch({ type: 'unrelatedAction' });
 

@@ -3,7 +3,7 @@ import type {
   AnyAction,
   CheckedReconciliatoryActions,
   ToCheckedAction,
-} from '../action';
+} from './action';
 import type {
   CheckedState,
   Checksum,
@@ -12,7 +12,7 @@ import type {
   MovexClient,
   ResourceIdentifier,
   SanitizedMovexClient,
-} from '../core-types';
+} from './core-types';
 
 export type IOEvents<
   TState = unknown,

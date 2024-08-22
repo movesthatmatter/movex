@@ -1,17 +1,16 @@
 import {
-  MovexClient,
   ResourceIdentifier,
   invoke,
   AnyAction,
   MovexReducer,
-  ConnectionToMaster,
-  ConnectionToClient,
   MovexClientInfo,
+  SanitizedMovexClient,
 } from 'movex-core-util';
-import { Movex } from 'movex';
+import { Movex, ConnectionToMaster } from 'movex';
 import { MovexMasterResource, MovexMasterServer } from 'movex-master';
 import { MemoryMovexStore } from 'movex-store';
 import { MockConnectionEmitter } from '../../lib/MockConnectionEmitter';
+import { ConnectionToClient } from '../../lib/ConnectionToClient';
 
 // TODO: This was added on April 16th 2024, when I added the subscribers info (client info)
 
@@ -46,6 +45,12 @@ export const movexClientMasterOrchestrator = <
     const clientEmitters: MockConnectionEmitter<S, A, TResourceType>[] = [];
 
     const clients = clientIds.map((clientId) => {
+      const client = {
+        id: clientId,
+        // TODO: If this needs to be given here is where it can be
+        info: {} as TClientInfo,
+      };
+
       // Would this be the only one for both client and master or seperate?
       // I believe it should be the same in order for it to work between the 2 no?
       const emitterOnMaster = new MockConnectionEmitter<S, A, TResourceType>(
@@ -57,17 +62,13 @@ export const movexClientMasterOrchestrator = <
         A,
         TResourceType,
         TClientInfo
-      >(clientId, emitterOnMaster);
+      >(emitterOnMaster, client);
 
       const removeClientConnectionFromMaster = masterServer.addClientConnection(
         masterConnectionToClient
       );
 
-      const mockedMovex = orchestrateMovex(
-        clientId,
-        emitterOnMaster,
-        clientInfo
-      );
+      const mockedMovex = orchestrateMovex(emitterOnMaster, client);
 
       clientEmitters.push(mockedMovex.emitter);
 
@@ -120,15 +121,14 @@ const orchestrateMovex = <
   TResourceType extends string,
   TClientInfo extends MovexClientInfo
 >(
-  clientId: MovexClient['id'],
   emitterOnMaster: MockConnectionEmitter<TState, TAction, TResourceType>,
-  clientInfo: TClientInfo
+  client: SanitizedMovexClient<TClientInfo>
 ) => {
   const emitterOnClient = new MockConnectionEmitter<
     TState,
     TAction,
     TResourceType
-  >(clientId);
+  >(client.id);
 
   const unsubscribers = [
     emitterOnClient._onEmitted((r, ackCb) => {
@@ -144,9 +144,8 @@ const orchestrateMovex = <
   return {
     movex: new Movex(
       new ConnectionToMaster(
-        clientId,
         emitterOnClient as any, // TODO: Fix this type cast
-        clientInfo
+        client
       )
     ),
     emitter: emitterOnClient,
