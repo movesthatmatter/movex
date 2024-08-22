@@ -1,3 +1,7 @@
+import { Err, Ok } from 'ts-results';
+import { AsyncErr, AsyncResult } from 'ts-async-results';
+import { MovexMasterResource } from './MovexMasterResource';
+import { MovexStoreItem, resultError } from 'movex-store';
 import {
   type AnyAction,
   type IOEvents,
@@ -11,13 +15,8 @@ import {
   GenericResourceType,
   objectOmit,
 } from 'movex-core-util';
-import { AsyncErr, AsyncResult } from 'ts-async-results';
-import { Err, Ok } from 'ts-results';
-import { MovexMasterResource } from './MovexMasterResource';
-import { itemToSanitizedClientResource, parseMasterAction } from './util';
-import { MovexStoreItem } from 'movex-store';
-import { resultError } from 'movex-store';
-import { ConnectionToClient } from './ConnectionToClient';
+import { itemToSanitizedClientResource } from './util';
+import { type ConnectionToClient } from './ConnectionToClient';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
 

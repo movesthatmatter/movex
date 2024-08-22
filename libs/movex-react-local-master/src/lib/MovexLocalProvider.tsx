@@ -20,6 +20,8 @@ import {
   MovexReactContextProps,
   MovexResourceObservablesRegistry,
   MovexReactContextPropsConnected,
+  MovexReactContextPropsNotConnected,
+  initialReactMovexContext,
 } from 'movex-react';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 import { orchestrateDefinedMovex } from './ClientMasterOrchestrator';
@@ -30,14 +32,9 @@ type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
     clientId?: MovexClientUser['id'];
     masterEmitDelayMs?: number;
     onConnected?: (
-      state: Extract<MovexReactContextProps<TResourcesMap>, { connected: true }>
+      state: MovexReactContextPropsConnected<TResourcesMap>
     ) => void;
-    onDisconnected?: (
-      state: Extract<
-        MovexReactContextProps<TResourcesMap>,
-        { connected: false }
-      >
-    ) => void;
+    onDisconnected?: (state: MovexReactContextPropsNotConnected) => void;
   }>;
 
 type State<TResourcesMap extends BaseMovexDefinitionResourcesMap> = {
@@ -54,11 +51,7 @@ export class MovexLocalProvider<
     super(props);
 
     this.state = {
-      contextState: {
-        connected: false,
-        clientId: undefined,
-        clientInfo: undefined,
-      },
+      contextState: initialReactMovexContext,
     };
   }
 
@@ -104,7 +97,7 @@ export class MovexLocalProvider<
     const client = mockedMovex.movex.getClient();
 
     const nextState: MovexReactContextPropsConnected<TResourcesMap> = {
-      connected: true,
+      status: 'connected',
       movex: mockedMovex.movex,
       clientId: client.id,
       clientInfo: client.info,

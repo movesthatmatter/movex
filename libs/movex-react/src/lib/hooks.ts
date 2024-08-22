@@ -37,7 +37,7 @@ export const useMovexClient = <
 ): SanitizedMovexClient | undefined => {
   const mc = useMovex(movexConfig);
 
-  if (!mc.connected) {
+  if (mc.status !== 'connected') {
     return undefined;
   }
 
@@ -79,10 +79,10 @@ export const useMovexResourceType = <
     useState<MovexResourceFromConfig<TResourcesMap, TResourceType>>();
 
   useEffect(() => {
-    if (m.connected) {
+    if (m.status === 'connected') {
       setResource(m.movex.register(resourceType) as any);
     }
-  }, [m.connected]);
+  }, [m.status]);
 
   return resource;
 };
@@ -91,7 +91,7 @@ const registerMovexResourceType = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
 >(
-  movex: MovexClient.MovexFromDefintion<TResourcesMap>,
+  movex: MovexClient.MovexFromDefinition<TResourcesMap>,
   resourceType: TResourceType
 ) => movex.register(resourceType);
 
@@ -131,7 +131,7 @@ export const useMovexBoundResourceFromRid = <
       return;
     }
 
-    if (!movexContext.connected) {
+    if (movexContext.status !== 'connected') {
       return;
     }
 
@@ -144,7 +144,7 @@ export const useMovexBoundResourceFromRid = <
     return () => {
       unsubscribe();
     };
-  }, [resource, ridAsStr, movexContext.connected]);
+  }, [resource, ridAsStr, movexContext.status]);
 
   return boundResource;
 };
@@ -174,7 +174,7 @@ export const createMovexResource = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
 >(
-  movex: MovexClient.MovexFromDefintion<TResourcesMap>,
+  movex: MovexClient.MovexFromDefinition<TResourcesMap>,
   res: {
     type: TResourceType;
     state: GetReducerState<TResourcesMap[TResourceType]>;
@@ -197,13 +197,13 @@ export const useCreateMovexResourceOnDemand = <
   const m = useMovex(movexConfig);
 
   useEffect(() => {
-    if (resourceInit && m.connected) {
+    if (resourceInit && m.status === 'connected') {
       createMovexResource<TResourcesMap, TResourceType>(
-        m.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
+        m.movex as MovexClient.MovexFromDefinition<TResourcesMap>,
         resourceInit
       ).map((s) => onCreated(s.rid as ResourceIdentifier<TResourceType>));
     }
-  }, [m.connected, resourceInit?.type, resourceInit?.state]);
+  }, [m.status, resourceInit?.type, resourceInit?.state]);
 };
 
 export const useMovexBindOrCreateAndBindOnDemand = <
@@ -229,7 +229,7 @@ export const useMovexBindOrCreateAndBindOnDemand = <
     >();
 
   useEffect(() => {
-    if (!m.connected) {
+    if (m.status !== 'connected') {
       return;
     }
 
@@ -252,7 +252,7 @@ export const useMovexBindOrCreateAndBindOnDemand = <
       unsubscribers = [...unsubscribers, bind(resourceInitOrRid)];
     } else {
       createMovexResource<TResourcesMap, TResourceType>(
-        m.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
+        m.movex as MovexClient.MovexFromDefinition<TResourcesMap>,
         resourceInitOrRid
       ).map(({ rid }) => {
         unsubscribers = [
@@ -261,7 +261,7 @@ export const useMovexBindOrCreateAndBindOnDemand = <
         ];
       });
     }
-  }, [m.connected, resourceInitOrRid]);
+  }, [m.status, resourceInitOrRid]);
 
   return boundResource;
 };

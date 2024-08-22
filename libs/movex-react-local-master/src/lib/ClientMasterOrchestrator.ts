@@ -1,4 +1,4 @@
-import { ConnectionToMaster, MovexFromDefintion } from 'movex';
+import { ConnectionToMaster, MovexFromDefinition } from 'movex';
 import {
   BaseMovexDefinitionResourcesMap,
   globalLogsy as logsy,
@@ -34,7 +34,7 @@ export const orchestrateDefinedMovex = <
   ];
 
   return {
-    movex: new MovexFromDefintion<TResourceMap>(
+    movex: new MovexFromDefinition<TResourceMap>(
       movexDefinition,
       new ConnectionToMaster(emitterOnClient, {
         id: clientId,

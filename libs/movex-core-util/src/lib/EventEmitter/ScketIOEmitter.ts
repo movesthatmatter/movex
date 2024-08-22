@@ -10,12 +10,14 @@ export type SocketIO = ServerSocket | ClientSocket;
 
 const logsy = globalLogsy.withNamespace('[SocketIOEmitter]');
 
-export class SocketIOEmitter<TEventMap extends EventMap>
-  implements EventEmitter<TEventMap>
+export class SocketIOEmitter<
+  TEventMap extends EventMap,
+  TSocketIO extends SocketIO = ServerSocket | ClientSocket
+> implements EventEmitter<TEventMap>
 {
   constructor(
-    private socket: SocketIO,
-    private config: {
+    protected socket: TSocketIO,
+    protected config: {
       waitForResponseMs?: number;
     } = {}
   ) {

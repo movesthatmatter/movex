@@ -9,7 +9,7 @@ import type {
 } from 'movex-core-util';
 import { ConnectionToMaster } from './ConnectionToMaster';
 
-export class MovexFromDefintion<
+export class MovexFromDefinition<
   TMovexDefinitionResources extends BaseMovexDefinitionResourcesMap
 > {
   private movex: Movex;
