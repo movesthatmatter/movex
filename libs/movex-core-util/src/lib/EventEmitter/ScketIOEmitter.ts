@@ -1,14 +1,10 @@
 import { Err, Ok } from 'ts-results';
-import { globalLogsy } from './Logsy';
+import { globalLogsy } from '../Logsy';
 import type { Socket as ServerSocket } from 'socket.io';
 import type { Socket as ClientSocket } from 'socket.io-client';
 import type { EventMap } from 'typed-emitter';
 import type { EventEmitter } from './EventEmitter';
-import type {
-  EmptyFn,
-  UnsubscribeFn,
-  WsResponseResultPayload,
-} from './core-types';
+import type { UnsubscribeFn, WsResponseResultPayload } from '../core-types';
 
 export type SocketIO = ServerSocket | ClientSocket;
 
