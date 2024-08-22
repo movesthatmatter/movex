@@ -39,7 +39,7 @@
         "main": "libs/movex-service/src/index.ts",
         "assets": ["libs/movex-service/*.md"],
         "updateBuildableProjectDepsInPackageJson": true,
-        "buildableProjectDepsInPackageJsonType": "peerDependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "semver": {
