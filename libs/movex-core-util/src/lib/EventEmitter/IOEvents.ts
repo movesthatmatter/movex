@@ -12,6 +12,7 @@ import type {
   MovexClient,
   ResourceIdentifier,
   SanitizedMovexClient,
+  MovexClientMasterClockOffset,
 } from '../core-types';
 
 export type IOEvents<
@@ -89,10 +90,9 @@ export type IOEvents<
   /**
    * The following events are directed from Master to Client
    * */
-  // @deprecate in favor ofClientReady
-  setClientId: (clientId: string) => void;
+  onReady: (p: SanitizedMovexClient) => void;
 
-  onClientReady: (client: SanitizedMovexClient) => void;
+  onClockSync: (p: undefined) => IOPayloadResult<number, unknown>; // acknowledges the client timestamp
 
   onFwdAction: (
     payload: {
@@ -106,7 +106,7 @@ export type IOEvents<
   ) => IOPayloadResult<void, unknown>;
   onResourceSubscriberAdded: (p: {
     rid: ResourceIdentifier<TResourceType>;
-    client: Pick<MovexClient, 'id' | 'info'>;
+    client: SanitizedMovexClient;
     // clientId: MovexClient['id'];
   }) => IOPayloadResult<
     void,
@@ -124,6 +124,7 @@ export type IOEvents<
    * The following events are by-directional (from Client to Master and vice-versa)
    * */
 
+  // They need to be different than ping/pong because those are native to socket.io
   ping: () => IOPayloadResult<void, unknown>;
   pong: () => IOPayloadResult<void, unknown>;
 };

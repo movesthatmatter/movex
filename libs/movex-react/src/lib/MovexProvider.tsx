@@ -76,8 +76,9 @@ export const MovexProvider: React.FC<
 
           const nextState: MovexContextPropsConnected<TResourcesMap> = {
             status: 'connected',
-            clientId: client.id,
-            clientInfo: client.info,
+            // clientId: client.id,
+            // clientInfo: client.info,
+            client,
             movex,
             movexDefinition: props.movexDefinition,
             bindResource: <TResourceType extends StringKeys<TResourcesMap>>(

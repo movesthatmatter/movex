@@ -17,9 +17,25 @@ import { ConnectionToClient, initMovexMaster } from 'movex-master';
 import { delay, isOneOf } from './util';
 
 const pkgVersion = require('../../package.json').version;
-const pkgBuild = 3;
 
 const logsy = globalLogsy.withNamespace('[MovexServer]');
+
+logsy.onLog((event) => {
+  // if (config.DEBUG_MODE) {
+  console[event.method](event.prefix, event.message, event.payload);
+  // }
+
+  // if (isOneOf(event.method, ['error', 'warn'])) {
+  //   captureEvent({
+  //     level: event.method === 'warn' ? 'warning' : event.method,
+  //     message: event.prefix + ' | ' + String(event.message),
+  //     environment: config.ENV,
+  //     // TODO: add more info if needed, like the resource id at least so it can be checked in the store
+  //     //  if not more relevant, timely stuff
+  //     // extra: {}
+  //   });
+  // }
+});
 
 export const movexServer = <TDefinition extends MovexDefinition>(
   {
@@ -44,6 +60,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     cors: {
       origin: corsOpts?.origin || '*',
     },
+    // pingInterval: 5000,
   });
 
   const store =
@@ -86,17 +103,32 @@ export const movexServer = <TDefinition extends MovexDefinition>(
       {
         id: clientId,
         info: clientInfo,
+        clockOffset: 0, // start it at 0
       }
     );
 
-    connectionToClient.emitClientReady();
+    await connectionToClient.setReady();
 
     movexMaster.addClientConnection(connectionToClient);
+
+    // socket.on('pong', (p) => {
+    //   console.log('on pong', p);
+    // });
+
+    // io.on('pong', (p) => {
+    //   console.log('on pong', p);
+    // });
+
+    // const pingIntervalId = setInterval(() => {
+    //   io.emit('ping', { clientId });
+    // }, 10 * 1000);
 
     io.on('disconnect', () => {
       logsy.info('Client Disconnected', { clientId });
 
       movexMaster.removeConnection(clientId);
+
+      // clearInterval(pingIntervalId);
     });
   });
 
@@ -196,17 +228,13 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   httpServer.listen(port, () => {
     const address = httpServer.address();
 
-    console.log(
-      `[movex-server] v${pkgVersion}${
-        pkgBuild ? ` (build:${pkgBuild})` : ''
-      } started at port ${port}.`
-    );
+    // console.log(`[movex-server] v${pkgVersion} started at port ${port}.`);
 
-    if (typeof address !== 'string') {
-      logsy.info('Server started', {
-        port,
-        definitionResources: Object.keys(definition.resources),
-      });
-    }
+    // if (typeof address !== 'string') {
+    logsy.info(`v${pkgVersion} started`, {
+      port,
+      definitionResources: Object.keys(definition.resources),
+    });
+    // }
   });
 };

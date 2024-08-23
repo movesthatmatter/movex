@@ -1,10 +1,5 @@
 export { v4 as getUuid } from 'uuid';
-import {
-  applyReducer,
-  compare,
-  deepClone,
-  applyPatch,
-} from 'fast-json-patch';
+import { applyReducer, compare, deepClone, applyPatch } from 'fast-json-patch';
 import {
   JsonPatch,
   isObject,
@@ -89,7 +84,8 @@ export const itemToSanitizedClientResource = <
         info: MovexClient['info'];
       }
     >;
-  }
+  },
+  clockOffset: number
 ): MovexClientResourceShape<TResourceType, TState> => ({
   rid: toResourceIdentifierStr(item.rid),
   state: item.state,
@@ -99,6 +95,7 @@ export const itemToSanitizedClientResource = <
       [nextSubId]: {
         id: nextSubId,
         info: item.subscribers[nextSubId].info || {},
+        clockOffset,
       },
     }),
     {} as MovexClientResourceShape<TResourceType, TState>['subscribers']

@@ -191,7 +191,8 @@ export class MovexMasterServer {
           acknowledge?.(
             new Ok(
               itemToSanitizedClientResource(
-                this.populateClientInfoToSubscribers(r)
+                this.populateClientInfoToSubscribers(r),
+                clientConnection.client.clockOffset
               )
             )
           );
@@ -265,14 +266,15 @@ export class MovexMasterServer {
           acknowledge?.(
             new Ok(
               itemToSanitizedClientResource(
-                this.populateClientInfoToSubscribers(r)
+                this.populateClientInfoToSubscribers(r),
+                clientConnection.client.clockOffset
               )
             )
           )
         )
         .mapErr(
           AsyncResult.passThrough((e) => {
-            logsy.error('');
+            logsy.error('OnCreateResourceHandler', e);
           })
         )
         .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
@@ -310,7 +312,8 @@ export class MovexMasterServer {
           acknowledge?.(
             new Ok(
               itemToSanitizedClientResource(
-                this.populateClientInfoToSubscribers(s)
+                this.populateClientInfoToSubscribers(s),
+                clientConnection.client.clockOffset
               )
             )
           );
@@ -330,14 +333,15 @@ export class MovexMasterServer {
                 return;
               }
 
-              const client: SanitizedMovexClient = {
-                id: clientConnection.client.id,
-                info: clientConnection.client.info,
-              };
+              // const client: SanitizedMovexClient = {
+              //   id: clientConnection.client.id,
+              //   info: clientConnection.client.info,
+              //   clockOffset: clientConnection.client.clockOffset,
+              // };
 
               peerConnection.emitter.emit('onResourceSubscriberAdded', {
                 rid: payload.rid,
-                client,
+                client: clientConnection.client, // TODO: Ensure this doesn't add more props than needed
               });
             });
         })

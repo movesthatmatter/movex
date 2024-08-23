@@ -62,6 +62,7 @@ export class MovexLocalProvider<
     const clientWithInfo: SanitizedMovexClient<{}> = {
       id: this.props.clientId || getUuid(),
       info: {},
+      clockOffset: 0,
     };
 
     // This should be defined as real source not just as a mock
@@ -99,8 +100,7 @@ export class MovexLocalProvider<
     const nextState: MovexReactContextPropsConnected<TResourcesMap> = {
       status: 'connected',
       movex: mockedMovex.movex,
-      clientId: client.id,
-      clientInfo: client.info,
+      client,
       movexDefinition: this.props.movexDefinition,
       bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
         rid: ResourceIdentifier<TResourceType>,

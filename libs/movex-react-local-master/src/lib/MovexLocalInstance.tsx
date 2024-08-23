@@ -46,7 +46,7 @@ export class MovexLocalInstance<
         clientId={this.props.clientId}
         movexDefinition={this.props.movexDefinition}
         onConnected={(r) => {
-          this.setState({ clientId: r.clientId });
+          this.setState({ clientId: r.client.id });
 
           this.props.onConnected?.(r.movex);
         }}
