@@ -149,33 +149,27 @@ export class MovexResource<
         p.actions
       ).checkedState;
 
-      logsy.log('Reconciliatory Actions Received', {
+      logsy.log('ReconciliatoryActions Received', {
         ...p,
-        actionsCount: p.actions.length,
         clientId: this.connectionToMaster.client.id,
         nextState,
         prevState,
       });
 
       if (nextState[1] !== p.finalChecksum) {
-        // If the checksums are different then it this case it's needed to resync.
-        // See this https://github.com/movesthatmatter/movex/issues/8
+        // When the checksums are different then re-sync.
+        // See https://github.com/movesthatmatter/movex/issues/8
         resyncLocalState();
 
-        // Here is where this happens!!!
-
-        logsy.warn('Local and Final Master Checksum Mismatch', {
+        logsy.warn('ReconciliatoryActions Checksums Mismatch', {
           ...p,
-          nextState: nextState[1],
+          clientId: this.connectionToMaster.client.id,
+          prevState,
+          nextState,
         });
       }
 
       logsy.groupEnd();
-
-      // p.actions.map(())
-      // TODO: What should the reconciliatry actions do? Apply them all together and check at the end right?
-      // If the end result don't match the checkusm this is the place where it can reask the master for the new state!
-      // This is where that amazing logic lives :D
     };
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
@@ -186,39 +180,14 @@ export class MovexResource<
           masterAction,
           onEmitMasterActionAck,
         }) => {
-          // const [_, nextLocalChecksumPreAck] = nextLocalCheckedState;
-
-          // console.log('comes here sf???');
-
           this.connectionToMasterResources
-            // TODO: Left it here
-            // here's what needs to be added
-            //  This emitter needs to get an extra flag saying that it is a masterAction
-            //  A masterAction is a special type of action that gets set with values computed locally
-            //   but the dispatcher waits for an ack with the master processed action and the next checksum to be applied locally!
-            // if the checksums don't match, it will do a state re-sync just like usually
-            // TODO: need to also check what's happening with private actions
             .emitAction(rid, masterAction || action)
-            .map(async (response) => {
-              console.log('response', response);
-
+            .map((response) => {
               if (response.type === 'reconciliation') {
                 onReconciliateActionsHandler(response);
 
                 return;
               }
-
-              // Otherwise if it's type === 'ack'
-
-              // const nextLocalChecksum =
-              //   response.type === 'masterActionAck'
-              //     ? onEmitMasterActionAck(response.nextCheckedAction)
-              //     : nextLocalCheckedState[1];
-
-              // const masterChecksum =
-              //   response.type === 'masterActionAck'
-              //     ? response.nextCheckedAction.checksum
-              //     : response.nextChecksum;
 
               const nextChecksums = invoke(() => {
                 if (response.type === 'masterActionAck') {
@@ -236,18 +205,10 @@ export class MovexResource<
 
               // And the checksums are equal stop here
               if (nextChecksums.master === nextChecksums.local) {
-                console.log(
-                  'Movex REsource checksums are the same not going to resync'
-                );
-
                 return;
               }
 
-              console.log(
-                'Movex REsource checksums are not the same so I am going to resync'
-              );
-
-              // When the checksums are not the same, need to resync the state!
+              // When the checksums aren't the same, need to resync the state!
               // this is expensive and ideally doesn't happen too much.
 
               logsy.error(`Dispatch Ack Error: "Checksums MISMATCH"`, {
@@ -257,34 +218,30 @@ export class MovexResource<
                 nextLocalCheckedState,
               });
 
-              await resyncLocalState()
-                .map((masterState) => {
-                  logsy.info('Re-synched Response', {
-                    masterState,
-                    nextLocalCheckedState,
-                    diff: deepObject.detailedDiff(
-                      masterState,
-                      nextLocalCheckedState
-                    ),
-                  });
-                })
-                .resolve();
+              resyncLocalState();
             });
         }
       ),
       this.connectionToMasterResources.onFwdAction(rid, (p) => {
-        const prevState = resourceObservable.getCheckedState();
-
-        resourceObservable.reconciliateAction(p);
-
-        const nextState = resourceObservable.getCheckedState();
-
-        logsy.info('Forwarded Action Received', {
+        logsy.group('FwdAction Received', {
           ...p,
           clientId: this.connectionToMaster.client.id,
-          prevState,
-          nextState,
         });
+
+        const result = resourceObservable.reconciliateAction(p);
+
+        if (result.err) {
+          logsy.warn('FwdAction Checksums Mismatch', {
+            ...p,
+            clientId: this.connectionToMaster.client.id,
+            prevState: resourceObservable.getCheckedState(),
+            error: result.val,
+          });
+
+          resyncLocalState();
+        }
+
+        logsy.groupEnd();
       }),
       this.connectionToMasterResources.onReconciliatoryActions(
         rid,
