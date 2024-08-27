@@ -1,6 +1,6 @@
 {
   "name": "movex-server",
-  "version": "0.1.6-36",
+  "version": "0.1.6-37",
   "license": "MIT",
   "type": "commonjs",
   "description": "Movex Server is the backend runtime for Movex",
