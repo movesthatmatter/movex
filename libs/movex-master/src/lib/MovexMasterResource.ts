@@ -8,26 +8,29 @@ import {
   AnyAction,
   ToCheckedAction,
   CheckedReconciliatoryActions,
+  SanitizedMovexClient,
   ToPublicAction,
   MovexReducer,
   isMasterAction,
   GenericMasterAction,
-  toMasterAction,
-  ToMasterAction,
   invoke,
-} from 'movex-core-util';
-import {
   isAction,
   toResourceIdentifierStr,
   computeCheckedState,
   objectKeys,
 } from 'movex-core-util';
 import { AsyncOk, AsyncResult } from 'ts-async-results';
-import type { MovexStatePatch, MovexStore, MovexStoreItem } from 'movex-store';
+import type {
+  MovexStatePatch,
+  MovexStore,
+  MovexStoreItem,
+  MovexStoreUpdateResourceError,
+} from 'movex-store';
 import {
   applyMovexStatePatches,
   getMovexStatePatch,
   getUuid,
+  itemToSanitizedClientResource,
   parseMasterAction,
 } from './util';
 
@@ -137,9 +140,7 @@ export class MovexMasterResource<
     rid: ResourceIdentifier<TResourceType>,
     clientId: MovexClient['id']
   ) {
-    return this.store
-      .get(rid, clientId)
-      .map((item) => this.computeClientState(clientId, item));
+    return this.getClientSpecificResource(rid, clientId).map((s) => s.state);
   }
 
   /**
@@ -148,7 +149,7 @@ export class MovexMasterResource<
    * @param rid
    * @param clientId
    */
-  getClientSpecificResource<TResourceType extends GenericResourceType>(
+  public getClientSpecificResource<TResourceType extends GenericResourceType>(
     rid: ResourceIdentifier<TResourceType>,
     clientId: MovexClient['id']
   ) {
@@ -470,8 +471,8 @@ export class MovexMasterResource<
     subcriberId: MovexClient['id']
   ) {
     // TODO Optimization: The store could have the append/remove implemented so it doesn't do a round trip looking for prev
-    return this.store.update(rid, (prev) => {
-      return {
+    return this.store
+      .update(rid, (prev) => ({
         ...prev,
         subscribers: {
           ...prev.subscribers,
@@ -479,8 +480,8 @@ export class MovexMasterResource<
             subscribedAt: new Date().getTime(),
           },
         },
-      };
-    });
+      }))
+      .map((s) => s.subscribers);
   }
 
   removeResourceSubscriber<TResourceType extends GenericResourceType>(
@@ -488,14 +489,16 @@ export class MovexMasterResource<
     subcriberId: MovexClient['id']
   ) {
     // TODO Optimization: The store could have the append/remove implemented so it doesn't do a round trip looking for prev
-    return this.store.update(rid, (prev) => {
-      const { [subcriberId]: removed, ...rest } = prev.subscribers;
+    return this.store
+      .update(rid, (prev) => {
+        const { [subcriberId]: removed, ...rest } = prev.subscribers;
 
-      return {
-        ...prev,
-        subscribers: rest,
-      };
-    });
+        return {
+          ...prev,
+          subscribers: rest,
+        };
+      })
+      .map((s) => s.subscribers);
   }
 
   // updateUncheckedState<TResourceType extends GenericResourceType>(
