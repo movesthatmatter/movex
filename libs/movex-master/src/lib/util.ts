@@ -149,7 +149,8 @@ const findAllKeyPathsForVal = (obj: object, val: unknown): string[] => {
 };
 
 export const parseMasterAction = <TMasterAction extends GenericMasterAction>(
-  action: GenericMasterAction
+  action: GenericMasterAction,
+  masterContext: MovexMasterContext
 ): ToPublicAction<TMasterAction> => {
   const allNowPaths = findAllKeyPathsForVal(
     { action: { payload: action.payload } },
@@ -158,7 +159,14 @@ export const parseMasterAction = <TMasterAction extends GenericMasterAction>(
 
   const { action: nextAction } = applyPatch({ action }, [
     ...allNowPaths.map(
-      (path) => ({ op: 'replace', path, value: new Date().getTime() } as const)
+      (path) =>
+        ({
+          op: 'replace',
+          path,
+          // TODO: Changed this to requestAt just temporary to test it
+          //  bt ideally, now() remains now, will add a new value for requestAt
+          value: masterContext.requestAt,
+        } as const)
     ),
   ])[0].newDocument;
 

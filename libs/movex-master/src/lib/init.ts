@@ -18,7 +18,7 @@ export const initMovexMaster = <
   // Run this only if in node!
   // if (process?.env) {
 
-  globalLogsy.info(`[MovexMaster] v${pkgVersion || 'Client-version'} initiating...`);
+  console.info(`[MovexMaster] v${pkgVersion || 'Client-version'} initiating...`);
 
   // }
 

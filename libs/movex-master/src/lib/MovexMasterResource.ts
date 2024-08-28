@@ -249,7 +249,7 @@ export class MovexMasterResource<
       peerActions: PeerActions;
     };
 
-    return this.getClientSpecificResource(rid, clientId, masterContext).flatMap<
+    return this.getStoreItem(rid).flatMap<
       ResponsePayload,
       unknown
     >((resource) => {
@@ -261,7 +261,8 @@ export class MovexMasterResource<
             return {
               wasMasterAction: true,
               action: parseMasterAction(
-                actionOrActionTuple as GenericMasterAction
+                actionOrActionTuple as GenericMasterAction,
+                masterContext
               ) as TAction,
             };
           }

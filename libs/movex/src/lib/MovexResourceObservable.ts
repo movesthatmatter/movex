@@ -7,6 +7,8 @@ import {
   isAction,
   Observable,
   SanitizedMovexClient,
+  MovexMasterContext,
+  checkedStateEquals,
 } from 'movex-core-util';
 import type {
   IObservable,
@@ -311,6 +313,26 @@ export class MovexResourceObservable<
         nextStateGetter
       ),
     }));
+  }
+
+  applyStateTransformer(
+    masterContext: MovexMasterContext
+  ): CheckedState<TState> {
+    const prevCheckedState = this.getCheckedState();
+
+    if (typeof this.reducer.$transformState === 'function') {
+      const nextCheckedState = computeCheckedState(
+        this.reducer.$transformState(prevCheckedState[0], masterContext)
+      );
+
+      if (!checkedStateEquals(nextCheckedState, this.getCheckedState())) {
+        this.updateCheckedState(nextCheckedState);
+      }
+
+      return this.getCheckedState();
+    }
+
+    return prevCheckedState;
   }
 
   // This to be called when the obervable is not used anymore in order to clean the update subscriptions

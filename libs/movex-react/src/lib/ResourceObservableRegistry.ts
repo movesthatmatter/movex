@@ -9,7 +9,7 @@ import {
 import {
   MovexClient,
   MovexFromDefinition,
-  MovexResourceObservable,
+  type MovexResourceObservable,
 } from 'movex';
 
 /**

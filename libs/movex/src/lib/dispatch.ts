@@ -13,6 +13,7 @@ import {
   masterMovexQueries,
   localMovexQueries,
   objectPick,
+  MovexMasterContext,
 } from 'movex-core-util';
 import type {
   Observable,
@@ -32,6 +33,25 @@ export type DispatchFn<TAction extends AnyAction = AnyAction> = (
       }) => ActionOrActionTupleFromAction<TAction>)
 ) => void;
 
+export type DispatchedEventPayload<TCheckedState, TAction extends AnyAction> = {
+  next: TCheckedState;
+  prev: TCheckedState;
+  action: ActionOrActionTupleFromAction<TAction>;
+
+  masterAction?: ActionOrActionTupleFromAction<ToMasterAction<TAction>>;
+
+  onEmitMasterActionAck: (
+    checkedMasterAction: ToCheckedAction<TAction>
+  ) => TCheckedState;
+  // onMasterContextReceived: (
+  //   checkedState: TCheckedState,
+  //   masterContext: MovexMasterContext
+  // ) => TCheckedState;
+  // masterAction?: {
+  //   // action: ActionOrActionTupleFromAction<TAction>;
+  // };
+};
+
 export type DispatchPublicFn<TAction extends AnyAction = AnyAction> = (
   actionOrFn:
     | ToPublicAction<TAction>
@@ -43,20 +63,6 @@ export type DispatchPublicFn<TAction extends AnyAction = AnyAction> = (
 //     | ToPublicAction<TAction>
 //     | ((m: { $queries: MovexMasterQueries }) => ToPublicAction<TAction>)
 // ) => void;
-
-export type DispatchedEventPayload<TState, TAction extends AnyAction> = {
-  next: TState;
-  prev: TState;
-  action: ActionOrActionTupleFromAction<TAction>;
-
-  masterAction?: ActionOrActionTupleFromAction<ToMasterAction<TAction>>;
-  onEmitMasterActionAck: (
-    checkedMasterAction: ToCheckedAction<TAction>
-  ) => Checksum;
-  // masterAction?: {
-  //   // action: ActionOrActionTupleFromAction<TAction>;
-  // };
-};
 
 // const x = {} as DispatchedEvent<number, AnyAction>;
 
@@ -183,7 +189,7 @@ export const createDispatcher = <
         if (checkedMasterAction.checksum === currentCheckedState[1]) {
           // Do nothing if the current state is the same as the received master checksum
           //  This can happen when the emitted masterAction didn't actualy need to be processed
-          return checkedMasterAction.checksum;
+          return currentCheckedState;
         }
 
         // Recompute the checked state based on the new master action
@@ -197,8 +203,29 @@ export const createDispatcher = <
           $checkedState.update(masterFreshState);
         }
 
-        return masterFreshState[1];
+        return masterFreshState;
       },
+
+      // TODO: This might not be needed in this API - but smoother
+      // onMasterContextReceived: (checkedState, masterContext) => {
+      //   console.log('onMasterContextReceived reducer.$transformState', reducer, typeof reducer.$transformState);
+
+      //   if (typeof reducer.$transformState !== 'function') {
+      //     return checkedState;
+      //   }
+
+      //   const masterFreshState = computeCheckedState(
+      //     reducer.$transformState(checkedState[0], masterContext)
+      //   );
+
+      //   console.log('running onMasterContextReceived', { masterFreshState })
+
+      //   if (!checkedStateEquals(checkedState, masterFreshState)) {
+      //     $checkedState.update(masterFreshState);
+      //   }
+
+      //   return masterFreshState;
+      // },
     };
 
     onDispatched(res);

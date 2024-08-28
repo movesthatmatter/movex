@@ -1,10 +1,14 @@
-import type {
+import {
   ResourceIdentifier,
   ResourceIdentifierStr,
   UnsubscribeFn,
   AnyAction,
   CheckedReconciliatoryActions,
   MovexReducer,
+  CheckedState,
+  MovexMasterContext,
+  computeCheckedState,
+  IOEvents,
 } from 'movex-core-util';
 import {
   globalLogsy,
@@ -142,12 +146,15 @@ export class MovexResource<
       });
 
     const onReconciliateActionsHandler = (
-      p: CheckedReconciliatoryActions<A>
+      // p: CheckedReconciliatoryActions<A>
+      p: Parameters<IOEvents<S, A, TResourceType>['onReconciliateActions']>[0]
     ) => {
       const prevState = resourceObservable.getCheckedState();
-      const nextState = resourceObservable.applyMultipleActions(
-        p.actions
-      ).checkedState;
+
+      resourceObservable.applyMultipleActions(p.actions);
+      const nextState = resourceObservable.applyStateTransformer(
+        p.masterContext
+      );
 
       logsy.log('ReconciliatoryActions Received', {
         ...p,
@@ -179,26 +186,51 @@ export class MovexResource<
           next: nextLocalCheckedState,
           masterAction,
           onEmitMasterActionAck,
+          // onMasterContextReceived,
         }) => {
           this.connectionToMasterResources
             .emitAction(rid, masterAction || action)
             .map((response) => {
+              const localizedMasterContext: MovexMasterContext = {
+                ...response.masterContext,
+
+                // @deprecate this is not used anymore in favor of requestAt
+                now: (): number => {
+                  console.warn('LocalizedMasterCotext.now() is deprecated in favor of requestAt - start using that!');
+
+                  // Defaulting to requestAt, 
+                  return response.masterContext.requestAt;
+                  // return NaN;
+                },
+              };
+
               if (response.type === 'reconciliation') {
-                onReconciliateActionsHandler(response);
+                // TODO: Aug28.2024 Add the onMasterContextReceived here as well
+                onReconciliateActionsHandler({
+                  ...response,
+                  rid,
+                  masterContext: localizedMasterContext,
+                });
 
                 return;
               }
 
               const nextChecksums = invoke(() => {
                 if (response.type === 'masterActionAck') {
+                  onEmitMasterActionAck(response.nextCheckedAction);
+
                   return {
-                    local: onEmitMasterActionAck(response.nextCheckedAction),
+                    local: resourceObservable.applyStateTransformer(
+                      localizedMasterContext
+                    )[1],
                     master: response.nextCheckedAction.checksum,
                   };
                 }
 
                 return {
-                  local: nextLocalCheckedState[1],
+                  local: resourceObservable.applyStateTransformer(
+                    localizedMasterContext
+                  )[1],
                   master: response.nextChecksum,
                 };
               });
@@ -228,7 +260,9 @@ export class MovexResource<
           clientId: this.connectionToMaster.client.id,
         });
 
-        const result = resourceObservable.reconciliateAction(p);
+        const result = resourceObservable
+          .reconciliateAction(p)
+          .map(() => resourceObservable.applyStateTransformer(p.masterContext));
 
         if (result.err) {
           logsy.warn('FwdAction Checksums Mismatch', {
@@ -303,6 +337,19 @@ export class MovexResource<
 
     return resourceObservable;
   }
+
+  // private applyStateTransformer(
+  //   checkedState: CheckedState<S>,
+  //   masterContext: MovexMasterContext
+  // ): CheckedState<S> {
+  //   if (typeof this.reducer.$transformState === 'function') {
+  //     return computeCheckedState(
+  //       this.reducer.$transformState(checkedState[0], masterContext)
+  //     );
+  //   }
+
+  //   return checkedState;
+  // }
 
   // Call to unsubscribe
   unbind(rid: ResourceIdentifier<TResourceType>) {

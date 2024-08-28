@@ -99,6 +99,7 @@ export class MovexMasterServer {
       }
 
       const masterContext = createMasterContext({
+        // TODO: Take this out after it works
         extra: {
           clientId: clientConnection.client.id,
           req: 'onEmitAction',
@@ -122,6 +123,7 @@ export class MovexMasterServer {
                   peerConnection.emitter.emit('onReconciliateActions', {
                     rid,
                     ...peerActions.byClientId[peerId],
+                    masterContext,
                   });
 
                   return;
@@ -132,6 +134,7 @@ export class MovexMasterServer {
               new Ok({
                 type: 'reconciliation',
                 ...peerActions.byClientId[clientConnection.client.id],
+                masterContext,
               } as const)
             );
           }
@@ -156,6 +159,7 @@ export class MovexMasterServer {
             peerConnection.emitter.emit('onFwdAction', {
               rid,
               ...peerActions.byClientId[peerId],
+              masterContext,
             });
           });
 
@@ -172,8 +176,9 @@ export class MovexMasterServer {
                     nextCheckedAction: objectOmit(nextPublic, [
                       'wasMasterAction',
                     ]),
+                    masterContext,
                   } as const)
-                : ({ type: 'ack', nextChecksum } as const)
+                : ({ type: 'ack', nextChecksum, masterContext } as const)
             )
           );
         })
@@ -371,6 +376,7 @@ export class MovexMasterServer {
               peerConnection.emitter.emit('onResourceSubscriberAdded', {
                 rid: payload.rid,
                 client: clientConnection.client, // TODO: Ensure this doesn't add more props than needed
+                masterContext,
               });
             });
         })
