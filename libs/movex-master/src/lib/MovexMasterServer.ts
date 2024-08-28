@@ -14,9 +14,7 @@ import {
   SanitizedMovexClient,
   GenericResourceType,
   objectOmit,
-  toResourceIdentifierStr,
   ResourceIdentifier,
-  AnyResourceIdentifier,
   MovexMasterContext,
 } from 'movex-core-util';
 import { createMasterContext, itemToSanitizedClientResource } from './util';
@@ -100,7 +98,13 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
-      const masterContext = createMasterContext();
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onEmitAction',
+          action: payload.action,
+        },
+      });
 
       masterResource
         .applyAction(rid, clientConnection.client.id, action, masterContext)
@@ -182,7 +186,12 @@ export class MovexMasterServer {
         p: ReturnType<IOEvents<S, A, TResourceType>['getResource']>
       ) => void
     ) => {
-      const masterContext = createMasterContext();
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onGetResourceHandler',
+        },
+      });
 
       this.getSanitizedClientSpecificResource(
         rid,
@@ -218,7 +227,12 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
-      const masterContext = createMasterContext();
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onGetResourceStateHandler',
+        },
+      });
 
       masterResource
         .getClientSpecificState(rid, clientConnection.client.id, masterContext)
@@ -263,7 +277,12 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
-      const masterContext = createMasterContext();
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onCreateResourceHandler',
+        },
+      });
 
       masterResource
         .create(resourceType, resourceState, resourceId)
@@ -301,7 +320,12 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
-      const masterContext = createMasterContext();
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onAddResourceSubscriber',
+        },
+      });
 
       masterResource
         .addResourceSubscriber(payload.rid, clientConnection.client.id)
@@ -444,7 +468,10 @@ export class MovexMasterServer {
     S,
     A extends AnyAction,
     TResourceType extends string
-  >({ rid }: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0]) {
+  >(
+    { rid }: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
+    masterContext: MovexMasterContext
+  ) {
     const masterResource =
       this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
 
@@ -453,8 +480,6 @@ export class MovexMasterServer {
         resultError('MovexMaster', 'MasterResourceInexistent')
       );
     }
-
-    const masterContext = createMasterContext();
 
     return masterResource.getPublicState(rid, masterContext);
   }

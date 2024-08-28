@@ -171,11 +171,14 @@ export const parseMasterAction = <TMasterAction extends GenericMasterAction>(
 
 export const createMasterContext = (p?: {
   requestAt?: number;
+  extra?: UnknownRecord;
 }): MovexMasterContext => ({
   // @Deprecate in favor of requestAt Props which enables purity
   now: () => new Date().getTime(),
 
   requestAt: p?.requestAt || new Date().getTime(),
+
+  ...(p?.extra && { _extra: p?.extra }),
 });
 
 export const createSanitizedMovexClient = <

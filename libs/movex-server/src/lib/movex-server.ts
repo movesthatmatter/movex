@@ -13,7 +13,11 @@ import {
   MovexClientInfo,
 } from 'movex-core-util';
 import { MemoryMovexStore, MovexStore } from 'movex-store';
-import { ConnectionToClient, initMovexMaster } from 'movex-master';
+import {
+  ConnectionToClient,
+  createMasterContext,
+  initMovexMaster,
+} from 'movex-master';
 import { delay, isOneOf } from './util';
 
 const pkgVersion = require('../../package.json').version;
@@ -181,6 +185,13 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
   // Public State
   app.get('/api/resources/:rid/state', async (req, res) => {
+    const masterContext = createMasterContext({
+      extra: {
+        clientId: 'UNKNOWN',
+        req: 'getPublicResourceCheckedState',
+      },
+    });
+
     const rawRid = req.params.rid;
 
     if (!isResourceIdentifier(rawRid)) {
@@ -196,7 +207,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     res.header('Content-Type', 'application/json');
 
     return movexMaster
-      .getPublicResourceCheckedState({ rid: ridObj })
+      .getPublicResourceCheckedState({ rid: ridObj }, masterContext)
       .map((checkedState) => res.json(checkedState))
       .mapErr((e) => {
         if (
