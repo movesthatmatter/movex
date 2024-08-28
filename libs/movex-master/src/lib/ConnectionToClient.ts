@@ -30,13 +30,13 @@ export class ConnectionToClient<
   async syncClocks() {
     const requestAt = new Date().getTime();
 
-    console.log('Sync clock', this.client.id, { requestAt });
+    // console.log('Sync clock', this.client.id, { requestAt });
 
     return this.emitter
       .emitAndAcknowledge('onClockSync', undefined)
       .then((res) => {
         if (res.err) {
-          console.log('Sync clock err', this.client.id);
+          // console.log('Sync clock err', this.client.id);
           console.error(res.err);
           return;
         }
@@ -53,13 +53,13 @@ export class ConnectionToClient<
         this.client.clockOffset =
           clientTimeAtRequest - new Date().getTime() - requestTime;
 
-        console.log('Sync clock ok', this.client.id, {
-          requestAt,
-          responseAt,
-          requestTime,
-          clientTimeAtRequest,
-          clientClockOffset: this.client.clockOffset,
-        });
+        // console.log('Sync clock ok', this.client.id, {
+        //   requestAt,
+        //   responseAt,
+        //   requestTime,
+        //   clientTimeAtRequest,
+        //   clientClockOffset: this.client.clockOffset,
+        // });
       });
   }
 }

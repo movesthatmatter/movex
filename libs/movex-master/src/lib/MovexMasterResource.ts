@@ -68,7 +68,7 @@ export class MovexMasterResource<
       //   requestAt:
       // };
 
-      console.log(
+      console.trace(
         '[Movex-master] applyStateTransformer',
         JSON.stringify({ masterContext })
       );
