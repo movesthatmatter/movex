@@ -1,5 +1,6 @@
 import { computeCheckedState } from 'movex-core-util';
 import { rpsReducer, rpsInitialState, tillNextTick } from 'movex-specs-util';
+import { createSanitizedMovexClient } from '../../lib';
 import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
@@ -89,14 +90,8 @@ test('2 Clients. Both Submitting (White first) WITH Reconciliation and the recon
       },
     }),
     subscribers: {
-      'client-a': {
-        id: 'client-a',
-        info: {},
-      },
-      'client-b': {
-        id: 'client-b',
-        info: {},
-      },
+      'client-a': createSanitizedMovexClient('client-a'),
+      'client-b': createSanitizedMovexClient('client-b'),
     },
   };
 

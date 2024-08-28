@@ -11,6 +11,7 @@ import {
 } from 'movex-core-util';
 import { MovexMasterResource } from './MovexMasterResource';
 import { MemoryMovexStore } from 'movex-store';
+import { createMasterContext } from './util';
 
 const rid = toResourceIdentifierStr({ resourceType: 'c', resourceId: '1' });
 
@@ -24,9 +25,13 @@ test('gets initial state', async () => {
     })
   );
 
-  const actualPublic = await master.getPublicState(rid).resolveUnwrap();
+  const mockMasterContext = createMasterContext({ requestAt: 123 });
+
+  const actualPublic = await master
+    .getPublicState(rid, mockMasterContext)
+    .resolveUnwrap();
   const actualByClient = await master
-    .getClientSpecificState(rid, 'testClient')
+    .getClientSpecificState(rid, 'testClient', mockMasterContext)
     .resolveUnwrap();
 
   const expectedPublic = computeCheckedState(initialCounterState);
@@ -45,6 +50,8 @@ test('applies public action', async () => {
     })
   );
 
+  const mockMasterContext = createMasterContext({ requestAt: 123 });
+
   const clientAId = 'clienA';
 
   const action: GetReducerAction<typeof counterReducer> = {
@@ -52,12 +59,14 @@ test('applies public action', async () => {
   };
 
   const actual = await master
-    .applyAction(rid, clientAId, action)
+    .applyAction(rid, clientAId, action, mockMasterContext)
     .resolveUnwrap();
 
-  const actualPublic = await master.getPublicState(rid).resolveUnwrap();
+  const actualPublic = await master
+    .getPublicState(rid, mockMasterContext)
+    .resolveUnwrap();
   const actualByClient = await master
-    .getClientSpecificState(rid, clientAId)
+    .getClientSpecificState(rid, clientAId, mockMasterContext)
     .resolveUnwrap();
 
   const expectedPublic = computeCheckedState({
@@ -90,6 +99,8 @@ test('applies only one private action w/o getting to reconciliation', async () =
     })
   );
 
+  const mockMasterContext = createMasterContext({ requestAt: 123 });
+
   const senderClientId = 'senderClient';
 
   const privateAction: GetReducerAction<typeof counterReducer> = {
@@ -103,16 +114,23 @@ test('applies only one private action w/o getting to reconciliation', async () =
   };
 
   const actual = await master
-    .applyAction(rid, senderClientId, [privateAction, publicAction])
+    .applyAction(
+      rid,
+      senderClientId,
+      [privateAction, publicAction],
+      mockMasterContext
+    )
     .resolveUnwrap();
 
-  const actualPublicState = await master.getPublicState(rid).resolveUnwrap();
+  const actualPublicState = await master
+    .getPublicState(rid, mockMasterContext)
+    .resolveUnwrap();
   const actualSenderState = await master
-    .getClientSpecificState(rid, senderClientId)
+    .getClientSpecificState(rid, senderClientId, mockMasterContext)
     .resolveUnwrap();
 
   const actualReceiverState = await master
-    .getClientSpecificState(rid, 'otherClient')
+    .getClientSpecificState(rid, 'otherClient', mockMasterContext)
     .resolveUnwrap();
 
   const expectedPublic = computeCheckedState({
@@ -156,6 +174,8 @@ test('applies private action UNTIL Reconciliation', async () => {
     })
   );
 
+  const mockMasterContext = createMasterContext({ requestAt: 123 });
+
   const whitePlayer = 'white';
   const blackPlayer = 'black';
 
@@ -177,19 +197,24 @@ test('applies private action UNTIL Reconciliation', async () => {
 
   // White Private Action
   const actualActionResultBeforeReconciliation = await master
-    .applyAction(rid, whitePlayer, [privateWhiteAction, publicWhiteAction])
+    .applyAction(
+      rid,
+      whitePlayer,
+      [privateWhiteAction, publicWhiteAction],
+      mockMasterContext
+    )
     .resolveUnwrap();
 
   const actualPublicStateBeforeReconciliation = await master
-    .getPublicState(rid)
+    .getPublicState(rid, mockMasterContext)
     .resolveUnwrap();
 
   const actualSenderStateBeforeReconciliation = await master
-    .getClientSpecificState(rid, whitePlayer)
+    .getClientSpecificState(rid, whitePlayer, mockMasterContext)
     .resolveUnwrap();
 
   const actualReceiverStateBeforeReconciliation = await master
-    .getClientSpecificState(rid, blackPlayer)
+    .getClientSpecificState(rid, blackPlayer, mockMasterContext)
     .resolveUnwrap();
 
   const expectedPublicStateBeforeReconciliation = computeCheckedState({
@@ -260,19 +285,24 @@ test('applies private action UNTIL Reconciliation', async () => {
 
   // Black Private Action (also the Reconciliatory Action)
   const actualActionResultAfterReconciliation = await master
-    .applyAction(rid, blackPlayer, [privateBlackAction, publicBlackAction])
+    .applyAction(
+      rid,
+      blackPlayer,
+      [privateBlackAction, publicBlackAction],
+      mockMasterContext
+    )
     .resolveUnwrap();
 
   const actualPublicStateAfterReconciliation = await master
-    .getPublicState(rid)
+    .getPublicState(rid, mockMasterContext)
     .resolveUnwrap();
 
   const actualSenderStateAfterReconciliation = await master
-    .getClientSpecificState(rid, blackPlayer)
+    .getClientSpecificState(rid, blackPlayer, mockMasterContext)
     .resolveUnwrap();
 
   const actualReceiverStateAfterReconciliation = await master
-    .getClientSpecificState(rid, whitePlayer)
+    .getClientSpecificState(rid, whitePlayer, mockMasterContext)
     .resolveUnwrap();
 
   const expectedPublicStateAfterReconciliation = computeCheckedState({

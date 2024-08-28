@@ -5,6 +5,7 @@ import {
   MovexReducer,
   MovexClientInfo,
   SanitizedMovexClient,
+  MovexMasterContext,
 } from 'movex-core-util';
 import { Movex, ConnectionToMaster } from 'movex';
 import { MovexMasterResource, MovexMasterServer } from 'movex-master';
@@ -89,10 +90,16 @@ export const movexClientMasterOrchestrator = <
       return mockedMovex.movex.register(resourceType, reducer);
     });
 
+    // TODO: This might need to change according to the needs of the test
+    const masterContext: MovexMasterContext = {
+      now: () => new Date().getTime(),
+      requestAt: new Date().getTime(),
+    };
+
     return {
       master: {
         getPublicState: (rid: ResourceIdentifier<TResourceType>) =>
-          masterResource.getPublicState(rid),
+          masterResource.getPublicState(rid, masterContext),
       },
       clients,
       $util: {

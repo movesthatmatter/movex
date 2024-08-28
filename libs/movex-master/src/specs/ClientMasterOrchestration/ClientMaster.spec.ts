@@ -6,6 +6,7 @@ import {
   initialRawGameStateWithDerivedState,
   tillNextTick,
 } from 'movex-specs-util';
+import { createSanitizedMovexClient } from '../../lib';
 import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
@@ -91,14 +92,8 @@ describe('Public Actions', () => {
         count: 5,
       }),
       subscribers: {
-        'white-client': {
-          id: 'white-client',
-          info: {},
-        },
-        'black-client': {
-          id: 'black-client',
-          info: {},
-        },
+        'white-client': createSanitizedMovexClient('white-client'),
+        'black-client': createSanitizedMovexClient('black-client'),
       },
     };
 
@@ -165,14 +160,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {
-          id: 'white-client',
-          info: {},
-        },
-        'black-client': {
-          id: 'black-client',
-          info: {},
-        },
+        'white-client': createSanitizedMovexClient('white-client'),
+        'black-client': createSanitizedMovexClient('black-client'),
       },
     };
 
@@ -200,14 +189,8 @@ describe('Private Actions', () => {
     const expectedPeerState = {
       checkedState: publicState,
       subscribers: {
-        'white-client': {
-          id: 'white-client',
-          info: {},
-        },
-        'black-client': {
-          id: 'black-client',
-          info: {},
-        },
+        'white-client': createSanitizedMovexClient('white-client'),
+        'black-client': createSanitizedMovexClient('black-client'),
       },
     };
     const actualPeerState = blackMovex.get();
@@ -274,14 +257,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {
-          id: 'white-client',
-          info: {},
-        },
-        'black-client': {
-          id: 'black-client',
-          info: {},
-        },
+        'white-client': createSanitizedMovexClient('white-client'),
+        'black-client': createSanitizedMovexClient('black-client'),
       },
     };
 
@@ -326,14 +303,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {
-          id: 'white-client',
-          info: {},
-        },
-        'black-client': {
-          id: 'black-client',
-          info: {},
-        },
+        'white-client': createSanitizedMovexClient('white-client'),
+        'black-client': createSanitizedMovexClient('black-client'),
       },
     };
 
@@ -357,14 +328,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {
-          id: 'white-client',
-          info: {},
-        },
-        'black-client': {
-          id: 'black-client',
-          info: {},
-        },
+        'white-client': createSanitizedMovexClient('white-client'),
+        'black-client': createSanitizedMovexClient('black-client'),
       },
     };
     // The Private Action gets set
@@ -426,14 +391,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {
-          id: 'white-client',
-          info: {},
-        },
-        'black-client': {
-          id: 'black-client',
-          info: {},
-        },
+        'white-client': createSanitizedMovexClient('white-client'),
+        'black-client': createSanitizedMovexClient('black-client'),
       },
     };
 
@@ -475,14 +434,8 @@ describe('Private Actions', () => {
         },
       }),
       subscribers: {
-        'white-client': {
-          id: 'white-client',
-          info: {},
-        },
-        'black-client': {
-          id: 'black-client',
-          info: {},
-        },
+        'white-client': createSanitizedMovexClient('white-client'),
+        'black-client': createSanitizedMovexClient('black-client'),
       },
     };
 
