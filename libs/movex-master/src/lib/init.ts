@@ -7,6 +7,7 @@ import {
 import { MovexMasterResource } from './MovexMasterResource';
 import { MovexMasterServer } from './MovexMasterServer';
 import type { MovexStore } from 'movex-store';
+const pkgVersion = require('../../package.json').version;
 
 export const initMovexMaster = <
   TResourcesMap extends BaseMovexDefinitionResourcesMap
@@ -16,11 +17,9 @@ export const initMovexMaster = <
 ) => {
   // Run this only if in node!
   // if (process?.env) {
-    const pkgVersion = require('../../package.json').version;
 
-    if (pkgVersion) {
-      globalLogsy.info(`[MovexMaster] v${pkgVersion} initiating...`);
-    }
+  globalLogsy.info(`[MovexMaster] v${pkgVersion || 'Client-version'} initiating...`);
+
   // }
 
   const mapOfResourceReducers = objectKeys(definition.resources).reduce(

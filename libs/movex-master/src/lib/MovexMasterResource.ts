@@ -68,10 +68,10 @@ export class MovexMasterResource<
       //   requestAt:
       // };
 
-      console.trace(
-        '[Movex-master] applyStateTransformer',
-        JSON.stringify({ masterContext })
-      );
+      // console.log(
+      //   '[Movex-master] applyStateTransformer',
+      //   JSON.stringify({ masterContext })
+      // );
 
       return computeCheckedState(
         this.reducer.$transformState(checkedState[0], masterContext)
