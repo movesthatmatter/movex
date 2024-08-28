@@ -86,7 +86,7 @@ const go = (args: string[]) => {
 
   const servePlugin = serve({ main: './.movex/runner.js' });
 
-  console.log(`movex-service v${pkgJson.version}`);
+  console.log(`[MovexService] v${pkgJson.version}`);
 
   if (hasCommand('dev')) {
     (async () => {
