@@ -15,10 +15,13 @@ export const initMovexMaster = <
   store: MovexStore<TResourcesMap> // | 'redis' once it's implemented
 ) => {
   // Run this only if in node!
-  if (process?.env) {
+  // if (process?.env) {
     const pkgVersion = require('../../package.json').version;
-    globalLogsy.info(`[MovexMaster] v${pkgVersion}`);
-  }
+
+    if (pkgVersion) {
+      globalLogsy.info(`[MovexMaster] v${pkgVersion} initiating...`);
+    }
+  // }
 
   const mapOfResourceReducers = objectKeys(definition.resources).reduce(
     (accum, nextResoureType) => {
