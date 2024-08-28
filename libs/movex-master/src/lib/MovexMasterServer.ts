@@ -17,8 +17,9 @@ import {
   toResourceIdentifierStr,
   ResourceIdentifier,
   AnyResourceIdentifier,
+  MovexMasterContext,
 } from 'movex-core-util';
-import { itemToSanitizedClientResource } from './util';
+import { createMasterContext, itemToSanitizedClientResource } from './util';
 import { type ConnectionToClient } from './ConnectionToClient';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
@@ -99,8 +100,10 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
+      const masterContext = createMasterContext();
+
       masterResource
-        .applyAction(rid, clientConnection.client.id, action)
+        .applyAction(rid, clientConnection.client.id, action, masterContext)
         .map(({ nextPublic, nextPrivate, peerActions }) => {
           if (peerActions.type === 'reconcilable') {
             // TODO: Filter out the client id so it only received the ack
@@ -179,7 +182,13 @@ export class MovexMasterServer {
         p: ReturnType<IOEvents<S, A, TResourceType>['getResource']>
       ) => void
     ) => {
-      this.getSanitizedClientSpecificResource(rid, clientConnection.client)
+      const masterContext = createMasterContext();
+
+      this.getSanitizedClientSpecificResource(
+        rid,
+        clientConnection.client,
+        masterContext
+      )
         .map((r) => {
           acknowledge?.(new Ok(r));
         })
@@ -209,8 +218,10 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
+      const masterContext = createMasterContext();
+
       masterResource
-        .getClientSpecificState(rid, clientConnection.client.id)
+        .getClientSpecificState(rid, clientConnection.client.id, masterContext)
         .map((checkedState) => acknowledge?.(new Ok(checkedState)))
         .mapErr((error) => {
           logsy.error('GetResourceState Error', {
@@ -252,18 +263,18 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
+      const masterContext = createMasterContext();
+
       masterResource
         .create(resourceType, resourceState, resourceId)
-        .map((r) =>
-          acknowledge?.(
-            new Ok(
-              itemToSanitizedClientResource(
-                this.populateClientInfoToSubscribers(r),
-                clientConnection.client.clockOffset
-              )
-            )
-          )
+        .flatMap((r) =>
+          this.getSanitizedClientSpecificResource(
+            r.rid,
+            clientConnection.client,
+            masterContext
+          ).mapErr((e) => e)
         )
+        .map((r) => acknowledge?.(new Ok(r)))
         .mapErr((error) => {
           logsy.error('OnCreateResourceHandler', {
             error,
@@ -290,12 +301,15 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
+      const masterContext = createMasterContext();
+
       masterResource
         .addResourceSubscriber(payload.rid, clientConnection.client.id)
         .flatMap(() =>
           this.getSanitizedClientSpecificResource(
             payload.rid,
-            clientConnection.client
+            clientConnection.client,
+            masterContext
           )
         )
         .map((sanitizedResource) => {
@@ -406,7 +420,8 @@ export class MovexMasterServer {
 
   private getSanitizedClientSpecificResource<TResourceType extends string>(
     rid: ResourceIdentifier<TResourceType>,
-    client: SanitizedMovexClient
+    client: SanitizedMovexClient,
+    masterContext: MovexMasterContext
   ) {
     const masterResource =
       this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
@@ -416,7 +431,7 @@ export class MovexMasterServer {
     }
 
     return masterResource
-      .getClientSpecificResource(rid, client.id)
+      .getClientSpecificResource(rid, client.id, masterContext)
       .map((r) =>
         itemToSanitizedClientResource(
           this.populateClientInfoToSubscribers(r),
@@ -439,7 +454,9 @@ export class MovexMasterServer {
       );
     }
 
-    return masterResource.getPublicState(rid);
+    const masterContext = createMasterContext();
+
+    return masterResource.getPublicState(rid, masterContext);
   }
 
   private populateClientInfoToSubscribers = <

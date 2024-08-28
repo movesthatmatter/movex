@@ -11,6 +11,9 @@ import {
   GenericMasterAction,
   MasterQueries,
   ToPublicAction,
+  MovexMasterContext,
+  SanitizedMovexClient,
+  UnknownRecord,
 } from 'movex-core-util';
 import { MovexStoreItem } from 'movex-store';
 
@@ -165,3 +168,23 @@ export const parseMasterAction = <TMasterAction extends GenericMasterAction>(
     payload: nextAction.payload,
   } as ToPublicAction<TMasterAction>;
 };
+
+export const createMasterContext = (p?: {
+  requestAt?: number;
+}): MovexMasterContext => ({
+  // @Deprecate in favor of requestAt Props which enables purity
+  now: () => new Date().getTime(),
+
+  requestAt: p?.requestAt || new Date().getTime(),
+});
+
+export const createSanitizedMovexClient = <
+  TInfo extends SanitizedMovexClient['info'] = SanitizedMovexClient['info']
+>(
+  id: string,
+  p?: { info?: TInfo; clockOffset?: SanitizedMovexClient['clockOffset'] }
+): SanitizedMovexClient => ({
+  id,
+  info: p?.info || {},
+  clockOffset: p?.clockOffset || 0,
+});

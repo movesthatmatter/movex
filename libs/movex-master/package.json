@@ -1,6 +1,6 @@
 {
   "name": "movex-master",
-  "version": "0.1.6-37",
+  "version": "0.1.6-40",
   "license": "MIT",
   "description": "Movex-master defines the master that wil be used on movex-server and movex-react-local-master",
   "author": {
