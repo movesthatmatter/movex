@@ -156,10 +156,25 @@ export class MovexMasterServer {
               return;
             }
 
+            const masterContextPerPeer = {
+              ...masterContext,
+              ...{
+                _extra: {
+                  ...(masterContext as any)._extra,
+                  peerId: peerConnection.client.id,
+                },
+              },
+              // extra: {
+              //   ...(masterContext as any).extra) || {
+              //     peerId:
+              //   })
+            };
+
             peerConnection.emitter.emit('onFwdAction', {
               rid,
               ...peerActions.byClientId[peerId],
-              masterContext,
+              // masterContext,
+              masterContext: masterContextPerPeer,
             });
           });
 

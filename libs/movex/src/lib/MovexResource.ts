@@ -193,12 +193,15 @@ export class MovexResource<
             .map((response) => {
               const localizedMasterContext: MovexMasterContext = {
                 ...response.masterContext,
+                ...{ _local: true },
 
                 // @deprecate this is not used anymore in favor of requestAt
                 now: (): number => {
-                  console.warn('LocalizedMasterCotext.now() is deprecated in favor of requestAt - start using that!');
+                  console.warn(
+                    'LocalizedMasterCotext.now() is deprecated in favor of requestAt - start using that!'
+                  );
 
-                  // Defaulting to requestAt, 
+                  // Defaulting to requestAt,
                   return response.masterContext.requestAt;
                   // return NaN;
                 },
@@ -215,26 +218,60 @@ export class MovexResource<
                 return;
               }
 
+              // console.log(
+              //   '---onDispatch callback started',
+              //   JSON.stringify(
+              //     { action, clientId: this.connectionToMaster.client.id },
+              //     null,
+              //     2
+              //   )
+              // );
               const nextChecksums = invoke(() => {
                 if (response.type === 'masterActionAck') {
                   onEmitMasterActionAck(response.nextCheckedAction);
 
-                  return {
-                    local: resourceObservable.applyStateTransformer(
+                  const localCheckedState =
+                    resourceObservable.applyStateTransformer(
                       localizedMasterContext
-                    )[1],
+                    );
+
+                  // console.log(
+                  //   'localCheckedState',
+                  //   `client:${this.connectionToMaster.client.id}`,
+                  //   JSON.stringify(localCheckedState, null, 2)
+                  // );
+
+                  return {
+                    local: localCheckedState[1],
                     master: response.nextCheckedAction.checksum,
                   };
                 }
 
-                return {
-                  local: resourceObservable.applyStateTransformer(
+                const localCheckedState =
+                  resourceObservable.applyStateTransformer(
                     localizedMasterContext
-                  )[1],
+                  );
+
+                // console.log(
+                //   'localCheckedState',
+                //   `client:${this.connectionToMaster.client.id}`,
+                //   JSON.stringify(localCheckedState, null, 2)
+                // );
+
+                return {
+                  local: localCheckedState[1],
                   master: response.nextChecksum,
                 };
               });
 
+              // console.log(
+              //   'nextChecksums',
+              //   JSON.stringify(nextChecksums, null, 2)
+              // );
+
+              // console.log('---onDispatch callback ended');
+
+              // console.log('');
               // And the checksums are equal stop here
               if (nextChecksums.master === nextChecksums.local) {
                 return;
@@ -255,14 +292,16 @@ export class MovexResource<
         }
       ),
       this.connectionToMasterResources.onFwdAction(rid, (p) => {
+        // logsy.group('FwdAction Received', {
         logsy.group('FwdAction Received', {
           ...p,
           clientId: this.connectionToMaster.client.id,
         });
 
-        const result = resourceObservable
-          .reconciliateAction(p)
-          .map(() => resourceObservable.applyStateTransformer(p.masterContext));
+        const result = resourceObservable.reconciliateAction(
+          p,
+          p.masterContext
+        );
 
         if (result.err) {
           logsy.warn('FwdAction Checksums Mismatch', {

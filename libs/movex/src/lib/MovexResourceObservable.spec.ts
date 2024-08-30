@@ -7,6 +7,7 @@ import {
   initialCounterState,
 } from 'movex-specs-util';
 import MockDate from 'mockdate';
+import { createMasterContext } from 'movex-master';
 
 const rid: ResourceIdentifier<string> = 'counter:test-id';
 
@@ -88,6 +89,8 @@ describe('Reconciliate Actions', () => {
       counterReducer
     );
 
+    const mockMasterContext = createMasterContext({ requestAt: 123 });
+
     const updateSpy = jest.fn();
     $resource.onUpdate(updateSpy);
 
@@ -96,12 +99,15 @@ describe('Reconciliate Actions', () => {
       count: initialCounterState.count + 1,
     });
 
-    const actual = $resource.reconciliateAction({
-      action: {
-        type: 'increment',
+    const actual = $resource.reconciliateAction(
+      {
+        action: {
+          type: 'increment',
+        },
+        checksum: incrementedStateChecksum,
       },
-      checksum: incrementedStateChecksum,
-    });
+      mockMasterContext
+    );
 
     expect(actual).toEqual(
       new Ok([incrementedState, incrementedStateChecksum])
@@ -120,15 +126,20 @@ describe('Reconciliate Actions', () => {
       counterReducer
     );
 
+    const mockMasterContext = createMasterContext({ requestAt: 123 });
+
     const updateSpy = jest.fn();
     $resource.onUpdate(updateSpy);
 
-    const actual = $resource.reconciliateAction({
-      action: {
-        type: 'increment',
+    const actual = $resource.reconciliateAction(
+      {
+        action: {
+          type: 'increment',
+        },
+        checksum: 'wrong_checksum',
       },
-      checksum: 'wrong_checksum',
-    });
+      mockMasterContext
+    );
 
     expect(actual.val).toEqual('ChecksumMismatch');
   });

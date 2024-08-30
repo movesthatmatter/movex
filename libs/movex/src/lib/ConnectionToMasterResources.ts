@@ -202,7 +202,6 @@ export class ConnectionToMasterResources<
     type GetStateEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['getResourceState']
     >;
-
     return AsyncResult.toAsyncResult<
       GetIOPayloadOKTypeFrom<GetStateEvent>,
       GetIOPayloadErrTypeFrom<GetStateEvent>
