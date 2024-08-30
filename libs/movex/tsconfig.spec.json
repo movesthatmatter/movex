@@ -18,6 +18,6 @@
     "**/*.spec.js",
     "**/*.test.jsx",
     "**/*.spec.jsx",
-    "**/*.d.ts", "../movex-store/src/lib/MemoryMovexStore/MemoryMovexStore.spec.ts", "../movex-master/src/lib/MovexMasterResource.spec.ts",
+    "**/*.d.ts",
   ]
 }
