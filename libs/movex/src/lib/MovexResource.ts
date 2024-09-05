@@ -111,15 +111,13 @@ export class MovexResource<
       const prevCheckedState = resourceObservable.get().checkedState;
 
       return syncLocalState().map((masterCheckedState) => {
-        logsy.warn('State Resynch-ed', {
+        // https://shorturl.at/hfKTI = https://github.com/movesthatmatter/movex/issues/8
+        logsy.warn('State Resynch-ed (See https://shorturl.at/hfKTI)', {
           local: prevCheckedState,
           master: masterCheckedState,
           // TODO: Do we really need this?
           // diff: deepObject.detailedDiff(prevCheckedState, masterCheckState),
         });
-        logsy.debug(
-          "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
-        );
 
         return masterCheckedState;
       });
