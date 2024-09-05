@@ -107,8 +107,15 @@ export class MovexMasterServer {
         },
       });
 
+      // console.log('[MovexMasterServer.onEmitActionHandler]', JSON.stringify({ payload, masterContext }, null, 2))
+
       masterResource
-        .applyAction(rid, clientConnection.client.id, action, masterContext)
+        .applyActionAndStateTransformer(
+          rid,
+          clientConnection.client.id,
+          action,
+          masterContext
+        )
         .map(({ nextPublic, nextPrivate, peerActions }) => {
           if (peerActions.type === 'reconcilable') {
             // TODO: Filter out the client id so it only received the ack

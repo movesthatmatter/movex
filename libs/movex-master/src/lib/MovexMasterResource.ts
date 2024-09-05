@@ -212,7 +212,7 @@ export class MovexMasterResource<
   //   unknown
   // >;
 
-  applyAction<TResourceType extends GenericResourceType>(
+  applyActionAndStateTransformer<TResourceType extends GenericResourceType>(
     rid: ResourceIdentifier<TResourceType>,
     clientId: MovexClient['id'],
     actionOrActionTuple: ActionOrActionTupleFromAction<TAction>,
@@ -258,6 +258,8 @@ export class MovexMasterResource<
 
             return { action: actionOrActionTuple };
           });
+
+          // console.log('[applyActionAndStateTransformer]', {rid, clientId, actionOrActionTuple, masterContext})
 
           return (
             this.store

@@ -38,11 +38,12 @@ export type DispatchedEventPayload<TCheckedState, TAction extends AnyAction> = {
   prev: TCheckedState;
   action: ActionOrActionTupleFromAction<TAction>;
 
-  masterAction?: ActionOrActionTupleFromAction<ToMasterAction<TAction>>;
+  // masterAction?: ActionOrActionTupleFromAction<ToMasterAction<TAction>>;
 
-  onEmitMasterActionAck: (
-    checkedMasterAction: ToCheckedAction<TAction>
-  ) => TCheckedState;
+  reapplyActionToPrevState: (action: TAction) => TCheckedState;
+  // onEmitMasterActionAck: (
+  //   checkedMasterAction: ToCheckedAction<TAction>
+  // ) => TCheckedState;
   // onMasterContextReceived: (
   //   checkedState: TCheckedState,
   //   masterContext: MovexMasterContext
@@ -173,38 +174,49 @@ export const createDispatcher = <
       reducer(prevState, localAction)
     );
 
-    const res: DispatchedEventPayload<CheckedState<TState>, TAction> = {
-      next: nextCheckedState,
-      prev: currentCheckedState,
-      action: localActionOrActionTuple,
-      ...(isMasterAction &&
-        isFunction(actionOrActionTupleOrFn) && {
-          masterAction: toMasterActionFromActionOrTuple(
+    const parsedAction =
+      isMasterAction && isFunction(actionOrActionTupleOrFn)
+        ? toMasterActionFromActionOrTuple(
             actionOrActionTupleOrFn({
               $queries: masterMovexQueries,
             })
-          ),
-        }),
-      onEmitMasterActionAck: (checkedMasterAction) => {
-        if (checkedMasterAction.checksum === currentCheckedState[1]) {
-          // Do nothing if the current state is the same as the received master checksum
-          //  This can happen when the emitted masterAction didn't actualy need to be processed
-          return currentCheckedState;
-        }
+          )
+        : localActionOrActionTuple;
 
-        // Recompute the checked state based on the new master action
-        const masterFreshState = computeCheckedState(
-          reducer(prevState, checkedMasterAction.action)
-        );
+    const res: DispatchedEventPayload<CheckedState<TState>, TAction> = {
+      next: nextCheckedState,
+      prev: currentCheckedState,
+      action: parsedAction,
+      // ...(isMasterAction &&
+      //   isFunction(actionOrActionTupleOrFn) && {
+      //     masterAction: toMasterActionFromActionOrTuple(
+      //       actionOrActionTupleOrFn({
+      //         $queries: masterMovexQueries,
+      //       })
+      //     ),
+      //   }),
+      // onEmitMasterActionAck: (checkedMasterAction) => {
+      //   if (checkedMasterAction.checksum === currentCheckedState[1]) {
+      //     // Do nothing if the current state is the same as the received master checksum
+      //     //  This can happen when the emitted masterAction didn't actualy need to be processed
+      //     return currentCheckedState;
+      //   }
 
-        // TODO: Should I call onStateUpdated as well?
+      //   // Recompute the checked state based on the new master action
+      //   const masterFreshState = computeCheckedState(
+      //     reducer(prevState, checkedMasterAction.action)
+      //   );
 
-        if (!checkedStateEquals(currentCheckedState, masterFreshState)) {
-          $checkedState.update(masterFreshState);
-        }
+      //   // TODO: Should I call onStateUpdated as well?
 
-        return masterFreshState;
-      },
+      //   if (!checkedStateEquals(currentCheckedState, masterFreshState)) {
+      //     $checkedState.update(masterFreshState);
+      //   }
+
+      //   return masterFreshState;
+      // },
+      reapplyActionToPrevState: (action) =>
+        computeCheckedState(reducer(prevState, action)),
 
       // TODO: This might not be needed in this API - but smoother
       // onMasterContextReceived: (checkedState, masterContext) => {

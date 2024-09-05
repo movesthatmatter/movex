@@ -3,11 +3,8 @@ import {
   ResourceIdentifierStr,
   UnsubscribeFn,
   AnyAction,
-  CheckedReconciliatoryActions,
   MovexReducer,
-  CheckedState,
   MovexMasterContext,
-  computeCheckedState,
   IOEvents,
 } from 'movex-core-util';
 import {
@@ -20,8 +17,11 @@ import { ConnectionToMasterResources } from './ConnectionToMasterResources';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import * as deepObject from 'deep-object-diff';
 import { ConnectionToMaster } from './ConnectionToMaster';
+import { Err, Ok } from 'ts-results';
 
 const logsy = globalLogsy.withNamespace('[Movex][MovexResource]');
+
+const ChecksumMismatchError = 'ChecksumMismatch';
 
 export class MovexResource<
   S,
@@ -180,20 +180,25 @@ export class MovexResource<
     };
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
+      // resourceObservable.onUpdate((next) => {
+      //   console.log(
+      //     '[MovexResource] state updated -> rendering this',
+      //     JSON.stringify({ next: next.checkedState }, null, 2)
+      //   );
+      // }),
       resourceObservable.onDispatched(
-        ({
-          action,
-          next: nextLocalCheckedState,
-          masterAction,
-          onEmitMasterActionAck,
-          // onMasterContextReceived,
-        }) => {
+        ({ action, next: nextLocalCheckedState, reapplyActionToPrevState }) => {
+          // console.log(
+          //   '[MovexResource] onDispatched -> going to render this state',
+          //   JSON.stringify({ action, nextLocalCheckedState }, null, 2)
+          // );
+
           this.connectionToMasterResources
-            .emitAction(rid, masterAction || action)
+            .emitAction(rid, action)
             .map((response) => {
               const localizedMasterContext: MovexMasterContext = {
-                ...response.masterContext,
-                ...{ _local: true },
+                requestAt: response.masterContext.requestAt,
+                ...{ _isMaster: false },
 
                 // @deprecate this is not used anymore in favor of requestAt
                 now: (): number => {
@@ -207,6 +212,11 @@ export class MovexResource<
                 },
               };
 
+              // console.log(
+              //   '[MovexResource] onDispatched emitAction ack -> should render again based on this',
+              //   JSON.stringify({ response }, null, 2)
+              // );
+
               if (response.type === 'reconciliation') {
                 // TODO: Aug28.2024 Add the onMasterContextReceived here as well
                 onReconciliateActionsHandler({
@@ -215,79 +225,63 @@ export class MovexResource<
                   masterContext: localizedMasterContext,
                 });
 
-                return;
+                // TODO: Does this need to do something more here?
+                return Ok.EMPTY;
               }
 
-              // console.log(
-              //   '---onDispatch callback started',
-              //   JSON.stringify(
-              //     { action, clientId: this.connectionToMaster.client.id },
-              //     null,
-              //     2
-              //   )
-              // );
-              const nextChecksums = invoke(() => {
-                if (response.type === 'masterActionAck') {
-                  onEmitMasterActionAck(response.nextCheckedAction);
+              const result = invoke(() => {
+                // console.log('[onDispatch.emitAck]', JSON.stringify({ response, localizedMasterContext }, null, 2));
 
-                  const localCheckedState =
-                    resourceObservable.applyStateTransformer(
+                if (response.type === 'masterActionAck') {
+                  const reapplied = reapplyActionToPrevState(
+                    response.nextCheckedAction.action
+                  );
+
+                  const nextLocalState =
+                    resourceObservable.applyStateTransformerToCheckedStateAndUpdate(
+                      reapplied,
                       localizedMasterContext
                     );
 
-                  // console.log(
-                  //   'localCheckedState',
-                  //   `client:${this.connectionToMaster.client.id}`,
-                  //   JSON.stringify(localCheckedState, null, 2)
-                  // );
+                  // console.log('[onDispatch.emitAck]', JSON.stringify({ nextLocalState, reapplied }, null, 2));
 
-                  return {
-                    local: localCheckedState[1],
-                    master: response.nextCheckedAction.checksum,
-                  };
+                  if (
+                    nextLocalState[1] !== response.nextCheckedAction.checksum
+                  ) {
+                    return new Err(ChecksumMismatchError);
+                  }
+
+                  return Ok.EMPTY;
                 }
 
+                // Regular Ack Response
                 const localCheckedState =
                   resourceObservable.applyStateTransformer(
                     localizedMasterContext
                   );
 
-                // console.log(
-                //   'localCheckedState',
-                //   `client:${this.connectionToMaster.client.id}`,
-                //   JSON.stringify(localCheckedState, null, 2)
-                // );
+                if (localCheckedState[1] !== response.nextChecksum) {
+                  return new Err(ChecksumMismatchError);
+                }
 
-                return {
-                  local: localCheckedState[1],
-                  master: response.nextChecksum,
-                };
+                return Ok.EMPTY;
               });
 
-              // console.log(
-              //   'nextChecksums',
-              //   JSON.stringify(nextChecksums, null, 2)
-              // );
+              if (result.err && ChecksumMismatchError) {
+                logsy.warn(`Dispatch Ack ChecksumsMismatchError`, {
+                  clientId: this.connectionToMaster.client.id,
+                  rid,
+                  action,
+                  nextLocalCheckedState,
+                  response,
+                });
 
-              // console.log('---onDispatch callback ended');
-
-              // console.log('');
-              // And the checksums are equal stop here
-              if (nextChecksums.master === nextChecksums.local) {
-                return;
+                // When the checksums aren't the same, need to resync the state!
+                // this is expensive and ideally doesn't happen too much.
+                resyncLocalState();
               }
 
-              // When the checksums aren't the same, need to resync the state!
-              // this is expensive and ideally doesn't happen too much.
-
-              logsy.error(`Dispatch Ack Error: "Checksums MISMATCH"`, {
-                clientId: this.connectionToMaster.client.id,
-                action,
-                response,
-                nextLocalCheckedState,
-              });
-
-              resyncLocalState();
+              return Ok.EMPTY;
             });
         }
       ),
@@ -349,20 +343,12 @@ export class MovexResource<
       () => this.connectionToMasterResources.destroy(),
 
       // Logger
-      resourceObservable.onDispatched(
-        ({
-          action,
-          next: nextLocalCheckedState,
-          prev: prevLocalCheckedState,
-        }) => {
-          logsy.info('Action Dispatched', {
-            action,
-            clientId: this.connectionToMaster.client.id,
-            prevState: prevLocalCheckedState,
-            nextLocalState: nextLocalCheckedState,
-          });
-        }
-      ),
+      resourceObservable.onDispatched((payload) => {
+        logsy.info('Action Dispatched', {
+          ...payload,
+          clientId: this.connectionToMaster.client.id,
+        });
+      }),
     ];
 
     // I like this idea of decorating the disaptch, and look at its return instead of subscribing to onDispatched

@@ -164,7 +164,7 @@ export class MovexResourceObservable<
     checkedAction: ToCheckedAction<TAction>,
     masterContext: MovexMasterContext
   ): Result<CheckedState<TState>, 'ChecksumMismatch'> {
-    const nextCheckedState = this.applyStateTransformerTo(
+    const nextCheckedState = this.applyStateTransformerToCheckedState(
       this.getNextCheckedStateFromAction(
         // Maybe worth making it a real public action but it's just for types
         checkedAction.action as ToPublicAction<TAction>
@@ -324,12 +324,12 @@ export class MovexResourceObservable<
   ): CheckedState<TState> {
     const prevCheckedState = this.getCheckedState();
 
-    const nextCheckedState = this.applyStateTransformerTo(
+    const nextCheckedState = this.applyStateTransformerToCheckedState(
       prevCheckedState,
       masterContext
     );
 
-    if (!checkedStateEquals(nextCheckedState, this.getCheckedState())) {
+    if (!checkedStateEquals(nextCheckedState, prevCheckedState)) {
       this.updateCheckedState(nextCheckedState);
 
       return this.getCheckedState();
@@ -338,7 +338,7 @@ export class MovexResourceObservable<
     return prevCheckedState;
   }
 
-  private applyStateTransformerTo(
+  private applyStateTransformerToCheckedState(
     checkedState: CheckedState<TState>,
     masterContext: MovexMasterContext
   ) {
@@ -351,6 +351,24 @@ export class MovexResourceObservable<
     }
 
     return checkedState;
+  }
+
+  applyStateTransformerToCheckedStateAndUpdate(
+    checkedState: CheckedState<TState>,
+    masterContext: MovexMasterContext
+  ) {
+    const nextCheckedState = this.applyStateTransformerToCheckedState(
+      checkedState,
+      masterContext
+    );
+
+    const prevCheckedState = this.getCheckedState();
+
+    if (!checkedStateEquals(nextCheckedState, prevCheckedState)) {
+      this.updateCheckedState(nextCheckedState);
+    }
+
+    return this.getCheckedState();
   }
 
   // This to be called when the obervable is not used anymore in order to clean the update subscriptions

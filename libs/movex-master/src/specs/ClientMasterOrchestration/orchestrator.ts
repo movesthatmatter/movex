@@ -43,8 +43,6 @@ export const movexClientMasterOrchestrator = <
       [resourceType]: masterResource,
     });
 
-    let masterContext = createMasterContext();
-
     const clientEmitters: MockConnectionEmitter<S, A, TResourceType>[] = [];
 
     const clients = clientIds.map((clientId) => {
@@ -92,17 +90,18 @@ export const movexClientMasterOrchestrator = <
       return mockedMovex.movex.register(resourceType, reducer);
     });
 
-    // TODO: This might need to change according to the needs of the test
-    // const masterContext: MovexMasterContext = {
-    //   now: () => new Date().getTime(),
-    //   requestAt: new Date().getTime(),
-    // };
+    const getMasterPublicState = (rid: ResourceIdentifier<TResourceType>) => {
+      const masterContext = createMasterContext({
+        extra: {
+          _isOrchestrator: true,
+        },
+      });
+
+      return masterResource.getPublicState(rid, masterContext);
+    };
 
     return {
-      master: {
-        getPublicState: (rid: ResourceIdentifier<TResourceType>) =>
-          masterResource.getPublicState(rid, masterContext),
-      },
+      master: { getPublicState: getMasterPublicState },
       clients,
       $util: {
         pauseEmit: () => {
@@ -115,6 +114,7 @@ export const movexClientMasterOrchestrator = <
           clientEmitters.forEach((c) => c._setEmitDelay(ms));
         },
         clientEmitters,
+        getMasterPublicState,
       },
     };
   };
