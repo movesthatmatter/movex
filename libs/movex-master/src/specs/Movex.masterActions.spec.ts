@@ -49,9 +49,9 @@ describe('Dispatching a Public Master Action with a Single Client', () => {
     let MOCKED_NOW = 33;
     MockDate.set(new Date(MOCKED_NOW));
 
-    r.dispatch((movex) => ({
+    r.dispatch((masterContext) => ({
       type: 'incrementBy',
-      payload: movex.$queries.now(),
+      payload: masterContext.requestAt(),
     }));
 
     await tillNextTick();
@@ -132,9 +132,9 @@ describe('Dispatching a Public Master Action with a Multiple Clients', () => {
 
     $util.pauseEmit();
 
-    aClientMovex.dispatch((movex) => ({
+    aClientMovex.dispatch((masterContext) => ({
       type: 'incrementBy',
-      payload: movex.$queries.now(),
+      payload: masterContext.requestAt(),
     }));
 
     await tillNextTick();

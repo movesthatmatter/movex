@@ -9,11 +9,11 @@ import {
   objectKeys,
   MovexClient,
   GenericMasterAction,
-  MasterQueries,
   ToPublicAction,
   MovexMasterContext,
   SanitizedMovexClient,
   UnknownRecord,
+  MovexMasterContextMap,
 } from 'movex-core-util';
 import { MovexStoreItem } from 'movex-store';
 
@@ -152,19 +152,17 @@ export const parseMasterAction = <TMasterAction extends GenericMasterAction>(
   action: GenericMasterAction,
   masterContext: MovexMasterContext
 ): ToPublicAction<TMasterAction> => {
-  const allNowPaths = findAllKeyPathsForVal(
+  const allRquestAtPaths = findAllKeyPathsForVal(
     { action: { payload: action.payload } },
-    MasterQueries.now
+    MovexMasterContextMap.requestAt
   );
 
   const { action: nextAction } = applyPatch({ action }, [
-    ...allNowPaths.map(
+    ...allRquestAtPaths.map(
       (path) =>
         ({
           op: 'replace',
           path,
-          // TODO: Changed this to requestAt just temporary to test it
-          //  bt ideally, now() remains now, will add a new value for requestAt
           value: masterContext.requestAt,
         } as const)
     ),
@@ -181,12 +179,9 @@ export const createMasterContext = (p?: {
   requestAt?: number;
   extra?: UnknownRecord;
 }): MovexMasterContext => ({
-  // @Deprecate in favor of requestAt Props which enables purity
-  now: () => new Date().getTime(),
-
   requestAt: p?.requestAt || new Date().getTime(),
 
-  ...(p?.extra && { _extra: p?.extra }),
+  // ...(p?.extra && { _extra: p?.extra }),
 });
 
 export const createSanitizedMovexClient = <

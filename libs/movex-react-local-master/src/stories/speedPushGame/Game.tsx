@@ -73,9 +73,9 @@ export function Game(props: Props) {
                 <button
                   className="bg-red-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                   onClick={() =>
-                    boundResource.dispatch((movex) => ({
+                    boundResource.dispatch((masterContext) => ({
                       type: 'push',
-                      payload: { at: movex.$queries.now(), by: 'red' },
+                      payload: { at: masterContext.requestAt(), by: 'red' },
                     }))
                   }
                 >
@@ -148,10 +148,10 @@ export function Game(props: Props) {
                 )}
                 <button
                   onClick={() =>
-                    boundResource.dispatch((movex) => ({
+                    boundResource.dispatch((masterContext) => ({
                       type: 'push',
                       // payload: { at: new Date().getTime(), by: 'blu' },
-                      payload: { at: movex.$queries.now(), by: 'blu' },
+                      payload: { at: masterContext.requestAt(), by: 'blu' },
                     }))
                   }
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"

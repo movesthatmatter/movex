@@ -185,12 +185,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
   // Public State
   app.get('/api/resources/:rid/state', async (req, res) => {
-    const masterContext = createMasterContext({
-      extra: {
-        clientId: 'UNKNOWN',
-        req: 'getPublicResourceCheckedState',
-      },
-    });
+    const masterContext = createMasterContext();
 
     const rawRid = req.params.rid;
 

@@ -14,7 +14,8 @@ import type {
   SanitizedMovexClient,
   MovexClientMasterClockOffset,
 } from '../core-types';
-import { MovexMasterContext } from '../reducer';
+import { MovexMasterContext } from '../masterContext';
+// import { MovexMasterContext } from '../reducer';
 
 export type IOEvents<
   TState = unknown,

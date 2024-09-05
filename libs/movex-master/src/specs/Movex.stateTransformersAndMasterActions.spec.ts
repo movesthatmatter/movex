@@ -61,11 +61,11 @@ test('dispatching an action that DOES NOT affect timeLefts YET keeps everything 
 
   $util.pauseEmit();
 
-  aMovex.dispatch(({ $queries }) => ({
+  aMovex.dispatch((masterContext) => ({
     type: 'move',
     payload: {
       by: 'white',
-      at: $queries.now(),
+      at: masterContext.requestAt(),
       sq: 'e4',
     },
   }));
@@ -205,11 +205,11 @@ test('dispatching an action that affects timeLefts acknowledges them and forward
   MockDate.set(FIRST_LOCAL_REQUEST_AT);
 
   // First Request (does not affect time lefts)
-  aMovex.dispatch(({ $queries }) => ({
+  aMovex.dispatch((masterContext) => ({
     type: 'move',
     payload: {
       by: 'white',
-      at: $queries.now(),
+      at: masterContext.requestAt(),
       sq: 'e4',
     },
   }));
@@ -223,11 +223,11 @@ test('dispatching an action that affects timeLefts acknowledges them and forward
   const SECOND_LOCAL_REQUEST_AT = 5;
   MockDate.set(SECOND_LOCAL_REQUEST_AT);
 
-  aMovex.dispatch(({ $queries }) => ({
+  aMovex.dispatch((masterContext) => ({
     type: 'move',
     payload: {
       by: 'black',
-      at: $queries.now(),
+      at: masterContext.requestAt(),
       sq: 'd6',
     },
   }));
@@ -420,11 +420,6 @@ test('dispatching after a mutating $stateTransformer, still keeps the states in 
       },
     };
 
-    console.log(
-      'actual after on demand for a',
-      JSON.stringify({ actual, now: new Date().getTime() }, null, 2)
-    );
-
     expect(actual).toEqual(expected);
     expect(actualOrchestratorMaster).toEqual(expected);
 
@@ -440,11 +435,6 @@ test('dispatching after a mutating $stateTransformer, still keeps the states in 
     const actualOrchestratorMaster = (
       await $util.getMasterPublicState(rid).resolveUnwrap()
     )[0];
-
-    console.log(
-      'actual after on demand for b',
-      JSON.stringify({ actual, now: new Date().getTime() }, null, 2)
-    );
 
     // The masterState is already same as the localState becase the $transformState already got applied locally
     const expected: SimpleChessGameState = {

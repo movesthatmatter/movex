@@ -171,9 +171,9 @@ describe('Master Actions (applied locally only)', () => {
     const MOCKED_NOW = 33;
     MockDate.set(new Date(MOCKED_NOW));
 
-    $resource.dispatch((movex) => ({
+    $resource.dispatch((masterContext) => ({
       type: 'incrementBy',
-      payload: movex.$queries.now(),
+      payload: masterContext.requestAt(),
     }));
 
     await tillNextTick();

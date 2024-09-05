@@ -7,9 +7,10 @@ import {
   isFunction,
   ToPublicAction,
   toMasterActionFromActionOrTuple,
-  masterMovexQueries,
-  localMovexQueries,
   objectPick,
+  localMasterContextQuery,
+  MovexMasterContextAsQuery,
+  masterContextQuery,
 } from 'movex-core-util';
 import type {
   Observable,
@@ -18,15 +19,14 @@ import type {
   AnyAction,
   AnyActionTuple,
   MovexReducer,
-  MovexMasterQueries,
 } from 'movex-core-util';
 
 export type DispatchFn<TAction extends AnyAction = AnyAction> = (
   actionOrActionTupleOrFn:
     | ActionOrActionTupleFromAction<TAction>
-    | ((m: {
-        $queries: MovexMasterQueries;
-      }) => ActionOrActionTupleFromAction<TAction>)
+    | ((
+        mc: MovexMasterContextAsQuery
+      ) => ActionOrActionTupleFromAction<TAction>)
 ) => void;
 
 export type DispatchedEventPayload<TCheckedState, TAction extends AnyAction> = {
@@ -40,7 +40,9 @@ export type DispatchedEventPayload<TCheckedState, TAction extends AnyAction> = {
 export type DispatchPublicFn<TAction extends AnyAction = AnyAction> = (
   actionOrFn:
     | ToPublicAction<TAction>
-    | ((m: { $queries: MovexMasterQueries }) => ToPublicAction<TAction>)
+    | ((
+        mc: MovexMasterContextAsQuery
+      ) => ActionOrActionTupleFromAction<TAction>)
 ) => void;
 
 const getLocalAction = <TAction extends AnyAction>(
@@ -108,13 +110,7 @@ export const createDispatcher = <
 
   onStateReceived($checkedState.get());
 
-  const dispatch = (
-    actionOrActionTupleOrFn:
-      | ActionOrActionTupleFromAction<TAction>
-      | ((m: {
-          $queries: MovexMasterQueries;
-        }) => ActionOrActionTupleFromAction<TAction>)
-  ) => {
+  const dispatch: DispatchFn<TAction> = (actionGetter) => {
     /**
      * Flag to determine if the action is a MasterAction
      *  it gets automatically detected when using the MovexQueries
@@ -122,22 +118,19 @@ export const createDispatcher = <
     let isMasterAction = false as boolean;
 
     const localActionOrActionTuple = invoke(() => {
-      if (isFunction(actionOrActionTupleOrFn)) {
-        const localQueries = {
-          now: () => {
-            // Now it becomes a masterAction
+      if (isFunction(actionGetter)) {
+        const localContext: MovexMasterContextAsQuery = {
+          requestAt: () => {
             isMasterAction = true;
 
-            return localMovexQueries.now();
+            return localMasterContextQuery.requestAt();
           },
         };
 
-        return actionOrActionTupleOrFn({
-          $queries: localQueries,
-        });
+        return actionGetter(localContext);
       }
 
-      return actionOrActionTupleOrFn;
+      return actionGetter;
     });
 
     const localAction = getLocalAction(localActionOrActionTuple);
@@ -155,12 +148,8 @@ export const createDispatcher = <
     );
 
     const parsedAction =
-      isMasterAction && isFunction(actionOrActionTupleOrFn)
-        ? toMasterActionFromActionOrTuple(
-            actionOrActionTupleOrFn({
-              $queries: masterMovexQueries,
-            })
-          )
+      isFunction(actionGetter) && isMasterAction
+        ? toMasterActionFromActionOrTuple(actionGetter(masterContextQuery))
         : localActionOrActionTuple;
 
     const res: DispatchedEventPayload<CheckedState<TState>, TAction> = {
