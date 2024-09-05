@@ -1,6 +1,11 @@
 import { Ok } from 'ts-results';
 import { MovexResourceObservable } from './MovexResourceObservable';
-import { ResourceIdentifier, computeCheckedState, UnknownRecord, MovexMasterContext } from 'movex-core-util';
+import {
+  ResourceIdentifier,
+  computeCheckedState,
+  UnknownRecord,
+  MovexMasterContext,
+} from 'movex-core-util';
 import {
   tillNextTick,
   counterReducer,
@@ -13,9 +18,6 @@ export const createMasterContext = (p?: {
   requestAt?: number;
   extra?: UnknownRecord;
 }): MovexMasterContext => ({
-  // @Deprecate in favor of requestAt Props which enables purity
-  now: () => new Date().getTime(),
-
   requestAt: p?.requestAt || new Date().getTime(),
 
   ...(p?.extra && { _extra: p?.extra }),

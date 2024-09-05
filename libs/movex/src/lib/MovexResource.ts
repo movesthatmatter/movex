@@ -1,11 +1,11 @@
-import {
+import type {
+  AnyAction,
+  IOEvents,
+  UnsubscribeFn,
   ResourceIdentifier,
   ResourceIdentifierStr,
-  UnsubscribeFn,
-  AnyAction,
   MovexReducer,
   MovexMasterContext,
-  IOEvents,
 } from 'movex-core-util';
 import {
   globalLogsy,
@@ -15,11 +15,10 @@ import {
 } from 'movex-core-util';
 import { ConnectionToMasterResources } from './ConnectionToMasterResources';
 import { MovexResourceObservable } from './MovexResourceObservable';
-import * as deepObject from 'deep-object-diff';
-import { ConnectionToMaster } from './ConnectionToMaster';
+import { type ConnectionToMaster } from './ConnectionToMaster';
 import { Err, Ok } from 'ts-results';
 
-const logsy = globalLogsy.withNamespace('[Movex][MovexResource]');
+const logsy = globalLogsy.withNamespace('[MovexResource]');
 
 const ChecksumMismatchError = 'ChecksumMismatch';
 
@@ -87,20 +86,15 @@ export class MovexResource<
       this.reducer
     );
 
-    // resourceObservable.$subscribers.get()
-
     // TODO: Fix this!!!
     // resourceObservable.setMasterSyncing(false);
 
-    const syncLocalState = () => {
-      return this.connectionToMasterResources
-        .getState(rid)
-        .map((masterCheckState) => {
-          resourceObservable.syncState(masterCheckState);
+    const syncLocalState = () =>
+      this.connectionToMasterResources.getState(rid).map((masterCheckState) => {
+        resourceObservable.syncState(masterCheckState);
 
-          return masterCheckState;
-        });
-    };
+        return masterCheckState;
+      });
 
     /**
      * This resyncs the local & master states
@@ -116,17 +110,18 @@ export class MovexResource<
 
       const prevCheckedState = resourceObservable.get().checkedState;
 
-      return syncLocalState().map((masterCheckState) => {
+      return syncLocalState().map((masterCheckedState) => {
         logsy.warn('State Resynch-ed', {
-          prevCheckedState,
-          masterCheckState,
-          diff: deepObject.detailedDiff(prevCheckedState, masterCheckState),
+          local: prevCheckedState,
+          master: masterCheckedState,
+          // TODO: Do we really need this?
+          // diff: deepObject.detailedDiff(prevCheckedState, masterCheckState),
         });
         logsy.debug(
           "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
         );
 
-        return masterCheckState;
+        return masterCheckedState;
       });
     };
 
@@ -180,42 +175,14 @@ export class MovexResource<
     };
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
-      // resourceObservable.onUpdate((next) => {
-      //   console.log(
-      //     '[MovexResource] state updated -> rendering this',
-      //     JSON.stringify({ next: next.checkedState }, null, 2)
-      //   );
-      // }),
       resourceObservable.onDispatched(
         ({ action, next: nextLocalCheckedState, reapplyActionToPrevState }) => {
-          // console.log(
-          //   '[MovexResource] onDispatched -> going to render this state',
-          //   JSON.stringify({ action, nextLocalCheckedState }, null, 2)
-          // );
-
           this.connectionToMasterResources
             .emitAction(rid, action)
             .map((response) => {
               const localizedMasterContext: MovexMasterContext = {
                 requestAt: response.masterContext.requestAt,
-                ...{ _isMaster: false },
-
-                // @deprecate this is not used anymore in favor of requestAt
-                now: (): number => {
-                  console.warn(
-                    'LocalizedMasterCotext.now() is deprecated in favor of requestAt - start using that!'
-                  );
-
-                  // Defaulting to requestAt,
-                  return response.masterContext.requestAt;
-                  // return NaN;
-                },
               };
-
-              // console.log(
-              //   '[MovexResource] onDispatched emitAction ack -> should render again based on this',
-              //   JSON.stringify({ response }, null, 2)
-              // );
 
               if (response.type === 'reconciliation') {
                 // TODO: Aug28.2024 Add the onMasterContextReceived here as well
@@ -230,8 +197,6 @@ export class MovexResource<
               }
 
               const result = invoke(() => {
-                // console.log('[onDispatch.emitAck]', JSON.stringify({ response, localizedMasterContext }, null, 2));
-
                 if (response.type === 'masterActionAck') {
                   const reapplied = reapplyActionToPrevState(
                     response.nextCheckedAction.action
@@ -242,8 +207,6 @@ export class MovexResource<
                       reapplied,
                       localizedMasterContext
                     );
-
-                  // console.log('[onDispatch.emitAck]', JSON.stringify({ nextLocalState, reapplied }, null, 2));
 
                   if (
                     nextLocalState[1] !== response.nextCheckedAction.checksum
@@ -286,7 +249,6 @@ export class MovexResource<
         }
       ),
       this.connectionToMasterResources.onFwdAction(rid, (p) => {
-        // logsy.group('FwdAction Received', {
         logsy.group('FwdAction Received', {
           ...p,
           clientId: this.connectionToMaster.client.id,
@@ -362,19 +324,6 @@ export class MovexResource<
 
     return resourceObservable;
   }
-
-  // private applyStateTransformer(
-  //   checkedState: CheckedState<S>,
-  //   masterContext: MovexMasterContext
-  // ): CheckedState<S> {
-  //   if (typeof this.reducer.$transformState === 'function') {
-  //     return computeCheckedState(
-  //       this.reducer.$transformState(checkedState[0], masterContext)
-  //     );
-  //   }
-
-  //   return checkedState;
-  // }
 
   // Call to unsubscribe
   unbind(rid: ResourceIdentifier<TResourceType>) {
