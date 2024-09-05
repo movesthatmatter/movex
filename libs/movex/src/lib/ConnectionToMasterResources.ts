@@ -5,13 +5,10 @@ import {
   ResourceIdentifierStr,
   ActionOrActionTupleFromAction,
   AnyAction,
-  CheckedReconciliatoryActions,
-  ToCheckedAction,
   UnsubscribeFn,
   IOEvents,
   MovexClient,
   SanitizedMovexClient,
-  objectOmit,
   objectPick,
 } from 'movex-core-util';
 import {

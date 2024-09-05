@@ -1,16 +1,11 @@
 import { computeCheckedState, invoke } from 'movex-core-util';
 import {
-  initialSpeedPushGameState,
-  SpeedGameState,
   simpleChessGameReducer,
   tillNextTick,
   initialSimpleChessGameState,
   SimpleChessGameState,
 } from 'movex-specs-util';
-import {
-  createSanitizedMovexClient,
-  movexClientMasterOrchestrator,
-} from 'movex-master';
+import { movexClientMasterOrchestrator } from 'movex-master';
 import MockDate from 'mockdate';
 
 const orchestrator = movexClientMasterOrchestrator();
@@ -358,7 +353,8 @@ test('dispatching an action that affects timeLefts acknowledges them and forward
   // });
 });
 
-test.only('dispatching after an mutating $stateTransformer, still keeps the states in sync correctly', async () => {
+test('dispatching after a mutating $stateTransformer, still keeps the states in sync correctly', async () => {
+  MockDate.set(0);
   const INITIAL_GAME_STATE: Extract<
     SimpleChessGameState,
     { status: 'ongoing' }
@@ -403,126 +399,71 @@ test.only('dispatching after an mutating $stateTransformer, still keeps the stat
   expect(syncStateSpyA).toHaveBeenCalledTimes(1); // jest already called the spyOn once
   expect(syncStateSpyB).toHaveBeenCalledTimes(1); // jest already called the spyOn once
 
-  await invoke(
-    async function checkMasterStateGetOnDemandChangesTimeLeftsOnReadOnPlayerA() {
-      const TIME_SINCE_LAST_REQUEST = 3;
-      MockDate.set(INITIAL_GAME_STATE.lastMoveAt + TIME_SINCE_LAST_REQUEST);
+  await invoke(async function checkPlayerAMasterStateTransformations() {
+    const TIME_SINCE_LAST_REQUEST = 3;
+    MockDate.set(INITIAL_GAME_STATE.lastMoveAt + TIME_SINCE_LAST_REQUEST);
 
-      const actual = (await aResource.get(rid).resolveUnwrap()).state;
-      const actualOrchestratorMaster = (
-        await $util.getMasterPublicState(rid).resolveUnwrap()
-      )[0];
+    const actual = (await aResource.get(rid).resolveUnwrap()).state;
+    const actualOrchestratorMaster = (
+      await $util.getMasterPublicState(rid).resolveUnwrap()
+    )[0];
 
-      // The masterState is already same as the localState becase the $transformState already got applied locally
-      const expected: SimpleChessGameState = {
-        status: 'ongoing',
-        winner: undefined,
-        lastMoveAt: INITIAL_GAME_STATE.lastMoveAt,
-        lastMoveBy: 'black',
-        timeLefts: {
-          white: INITIAL_GAME_STATE.timeLefts.white - TIME_SINCE_LAST_REQUEST,
-          black: INITIAL_GAME_STATE.timeLefts.black,
-        },
-      };
+    // The masterState is already same as the localState becase the $transformState already got applied locally
+    const expected: SimpleChessGameState = {
+      status: 'ongoing',
+      winner: undefined,
+      lastMoveAt: INITIAL_GAME_STATE.lastMoveAt,
+      lastMoveBy: 'black',
+      timeLefts: {
+        white: INITIAL_GAME_STATE.timeLefts.white - TIME_SINCE_LAST_REQUEST,
+        black: INITIAL_GAME_STATE.timeLefts.black,
+      },
+    };
 
-      console.log(
-        'actual after on demand for a',
-        JSON.stringify({ actual, now: new Date().getTime() }, null, 2)
-      );
+    console.log(
+      'actual after on demand for a',
+      JSON.stringify({ actual, now: new Date().getTime() }, null, 2)
+    );
 
-      expect(actual).toEqual(expected);
-      expect(actualOrchestratorMaster).toEqual(expected);
+    expect(actual).toEqual(expected);
+    expect(actualOrchestratorMaster).toEqual(expected);
 
-      expect(syncStateSpyA).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
-      expect(syncStateSpyB).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
-    }
-  );
+    expect(syncStateSpyA).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
+    expect(syncStateSpyB).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
+  });
 
-  await invoke(
-    async function checkMasterStateGetOnDemandChangesTimeLeftsOnReadOnPlayerB() {
-      const TIME_SINCE_LAST_REQUEST = 5;
-      MockDate.set(INITIAL_GAME_STATE.lastMoveAt + TIME_SINCE_LAST_REQUEST);
+  await invoke(async function checkPlayerBMasterStateTransformations() {
+    const TIME_SINCE_LAST_REQUEST = 5;
+    MockDate.set(INITIAL_GAME_STATE.lastMoveAt + TIME_SINCE_LAST_REQUEST);
 
-      const actual = (await bResource.get(rid).resolveUnwrap()).state;
-      const actualOrchestratorMaster = (
-        await $util.getMasterPublicState(rid).resolveUnwrap()
-      )[0];
+    const actual = (await bResource.get(rid).resolveUnwrap()).state;
+    const actualOrchestratorMaster = (
+      await $util.getMasterPublicState(rid).resolveUnwrap()
+    )[0];
 
-      console.log(
-        'actual after on demand for b',
-        JSON.stringify({ actual, now: new Date().getTime() }, null, 2)
-      );
+    console.log(
+      'actual after on demand for b',
+      JSON.stringify({ actual, now: new Date().getTime() }, null, 2)
+    );
 
-      // The masterState is already same as the localState becase the $transformState already got applied locally
-      const expected: SimpleChessGameState = {
-        status: 'ongoing',
-        winner: undefined,
-        lastMoveAt: INITIAL_GAME_STATE.lastMoveAt,
-        lastMoveBy: 'black',
-        timeLefts: {
-          white: INITIAL_GAME_STATE.timeLefts.white - TIME_SINCE_LAST_REQUEST,
-          black: INITIAL_GAME_STATE.timeLefts.black,
-        },
-      };
+    // The masterState is already same as the localState becase the $transformState already got applied locally
+    const expected: SimpleChessGameState = {
+      status: 'ongoing',
+      winner: undefined,
+      lastMoveAt: INITIAL_GAME_STATE.lastMoveAt,
+      lastMoveBy: 'black',
+      timeLefts: {
+        white: INITIAL_GAME_STATE.timeLefts.white - TIME_SINCE_LAST_REQUEST,
+        black: INITIAL_GAME_STATE.timeLefts.black,
+      },
+    };
 
-      expect(actual).toEqual(expected);
-      expect(actualOrchestratorMaster).toEqual(expected);
+    expect(actual).toEqual(expected);
+    expect(actualOrchestratorMaster).toEqual(expected);
 
-      expect(syncStateSpyA).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
-      expect(syncStateSpyB).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
-    }
-  );
-
-  await invoke(
-    async function checkStateBetweenClientsAfterInidividualStateTransformationsAbove() {
-      const actualForA = aMovex.getCheckedState();
-      const actualForB = bMovex.getCheckedState();
-      // const actualOrchestratorMaster = await $util.getMasterPublicState(rid).resolveUnwrap();
-
-      console.log(
-        'actualForA',
-        JSON.stringify({ actualForA, actualForB, now: new Date().getTime() }, null, 2)
-      );
-
-      const expected = computeCheckedState<SimpleChessGameState>({
-        status: 'ongoing',
-        winner: undefined,
-        lastMoveAt: INITIAL_GAME_STATE.lastMoveAt,
-        lastMoveBy: 'black',
-        timeLefts: {
-          white: INITIAL_GAME_STATE.timeLefts.white,
-          black: INITIAL_GAME_STATE.timeLefts.black,
-        },
-      });
-
-      expect(actualForA).toEqual(expected);
-      // expect(actualForA).toEqual(actualOrchestratorMaster);
-    }
-  );
-  // await invoke(async function checkMasterStateGetOnDemand() {
-  //   const TIME_SINCE_LAST_REQUEST = 12;
-  //   MockDate.set(SECOND_MASTER_REQUEST_AT + TIME_SINCE_LAST_REQUEST);
-
-  //   const actual = (await aResource.get(rid).resolveUnwrap()).state;
-
-  //   // The masterState is already same as the localState becase the $transformState already got applied locally
-  //   const expected: SimpleChessGameState = {
-  //     status: 'ongoing',
-  //     winner: undefined,
-  //     lastMoveAt: SECOND_MASTER_REQUEST_AT,
-  //     lastMoveBy: 'black',
-  //     timeLefts: {
-  //       white: INITIAL_GAME_STATE.timeLefts.white - TIME_SINCE_LAST_REQUEST,
-  //       black:
-  //         TOTAL_TIME_LEFT - (SECOND_MASTER_REQUEST_AT - FIRST_LOCAL_REQUEST_AT),
-  //     },
-  //   };
-
-  //   expect(actual).toEqual(expected);
-
-  //   expect(syncStateSpyA).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
-  //   expect(syncStateSpyB).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
-  // });
+    expect(syncStateSpyA).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
+    expect(syncStateSpyB).toHaveBeenCalledTimes(1); // ensure no other state-sync calls happened
+  });
 });
 
 test('requesting the state again (via unrelated action dispatch) will return the updated time lefts', () => {});
