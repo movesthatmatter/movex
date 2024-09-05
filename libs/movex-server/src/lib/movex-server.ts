@@ -107,7 +107,6 @@ export const movexServer = <TDefinition extends MovexDefinition>(
       {
         id: clientId,
         info: clientInfo,
-        clockOffset: 0, // start it at 0
       }
     );
 
@@ -115,24 +114,10 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
     movexMaster.addClientConnection(connectionToClient);
 
-    // socket.on('pong', (p) => {
-    //   console.log('on pong', p);
-    // });
-
-    // io.on('pong', (p) => {
-    //   console.log('on pong', p);
-    // });
-
-    // const pingIntervalId = setInterval(() => {
-    //   io.emit('ping', { clientId });
-    // }, 10 * 1000);
-
     io.on('disconnect', () => {
       logsy.info('Client Disconnected', { clientId });
 
       movexMaster.removeConnection(clientId);
-
-      // clearInterval(pingIntervalId);
     });
   });
 
@@ -229,7 +214,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   //   }
   // });
 
-  // //start our server
+  // start the server
   const port = process.env['port'] || 3333;
   httpServer.listen(port, () => {
     const address = httpServer.address();

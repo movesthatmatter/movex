@@ -441,10 +441,7 @@ export class MovexMasterServer {
     return masterResource
       .getClientSpecificResource(rid, client.id, masterContext)
       .map((r) =>
-        itemToSanitizedClientResource(
-          this.populateClientInfoToSubscribers(r),
-          client.clockOffset
-        )
+        itemToSanitizedClientResource(this.populateClientInfoToSubscribers(r))
       );
   }
 

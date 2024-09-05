@@ -87,8 +87,7 @@ export const itemToSanitizedClientResource = <
         info: MovexClient['info'];
       }
     >;
-  },
-  clockOffset: number
+  }
 ): MovexClientResourceShape<TResourceType, TState> => ({
   rid: toResourceIdentifierStr(item.rid),
   state: item.state,
@@ -98,7 +97,6 @@ export const itemToSanitizedClientResource = <
       [nextSubId]: {
         id: nextSubId,
         info: item.subscribers[nextSubId].info || {},
-        clockOffset,
       },
     }),
     {} as MovexClientResourceShape<TResourceType, TState>['subscribers']
@@ -181,16 +179,15 @@ export const createMasterContext = (p?: {
 }): MovexMasterContext => ({
   requestAt: p?.requestAt || new Date().getTime(),
 
-  // ...(p?.extra && { _extra: p?.extra }),
+  ...(p?.extra && { _extra: p?.extra }),
 });
 
 export const createSanitizedMovexClient = <
   TInfo extends SanitizedMovexClient['info'] = SanitizedMovexClient['info']
 >(
   id: string,
-  p?: { info?: TInfo; clockOffset?: SanitizedMovexClient['clockOffset'] }
+  p?: { info?: TInfo }
 ): SanitizedMovexClient => ({
   id,
   info: p?.info || {},
-  clockOffset: p?.clockOffset || 0,
 });

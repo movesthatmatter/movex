@@ -113,7 +113,7 @@ export class ConnectionToMasterResources<
 
       this.subscriberAddedEventPubsy.publish(
         `rid:${toResourceIdentifierStr(p.rid)}`,
-        objectPick(p.client, ['clockOffset', 'id', 'info'])
+        objectPick(p.client, ['id', 'info'])
       );
     };
 

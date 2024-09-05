@@ -41,7 +41,6 @@ export const orchestrateDefinedMovex = <
         info: {
           _clientType: 'orchestrator', // TODO: Take this one out
         },
-        clockOffset: 0,
       })
     ),
     emitter: emitterOnClient,
