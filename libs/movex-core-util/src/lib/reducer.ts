@@ -6,6 +6,7 @@ import type {
   ActionsCollectionMapBase,
   AnyAction,
 } from './action';
+import { MovexMasterContext } from './masterContext';
 
 export type MovexReducerFromActionsMap<
   TState,
@@ -32,11 +33,11 @@ export type MovexReducerMap<
 //   TAction extends AnyAction = AnyAction
 // > = (state: TState, action: TAction) => TState;
 
-export type MovexMasterContext = {
-  // @Deprecate in favor of requestAt Props which enables purity
-  now: () => number; // timestamp
-  requestAt: number; // timestamp
-};
+// export type MovexMasterContext = {
+//   // @Deprecate in favor of requestAt Props which enables purity
+//   // now: () => number; // timestamp
+//   requestAt: number; // timestamp
+// };
 
 export type MovexReducer<S = any, A extends AnyAction = AnyAction> = ((
   state: S,

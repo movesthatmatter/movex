@@ -50,7 +50,6 @@ export const movexClientMasterOrchestrator = <
         id: clientId,
         // TODO: If this needs to be given here is where it can be
         info: {} as TClientInfo,
-        clockOffset: 0,
       };
 
       // Would this be the only one for both client and master or seperate?

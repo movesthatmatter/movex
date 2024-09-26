@@ -1,6 +1,6 @@
 {
   "name": "movex-service",
-  "version": "0.1.6-57",
+  "version": "0.1.6-58",
   "license": "MIT",
   "type": "commonjs",
   "description": "Movex Service is the CLI for Movex",

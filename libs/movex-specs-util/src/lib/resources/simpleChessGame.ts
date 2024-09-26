@@ -144,8 +144,6 @@ simpleChessGameReducer.$transformState = (state, masterContext) => {
       turn,
     });
 
-    // console.log('[reducer].$transformState', JSON.stringify({ nextTimeLefts, masterContext }, null, 2))
-
     if (nextTimeLefts[turn] <= 0) {
       return {
         status: 'completed',
@@ -160,7 +158,7 @@ simpleChessGameReducer.$transformState = (state, masterContext) => {
     return {
       ...state,
       timeLefts: nextTimeLefts,
-    }
+    };
   }
 
   return state;

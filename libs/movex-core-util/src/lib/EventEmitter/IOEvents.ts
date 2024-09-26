@@ -12,9 +12,9 @@ import type {
   MovexClient,
   ResourceIdentifier,
   SanitizedMovexClient,
-  MovexClientMasterClockOffset,
 } from '../core-types';
-import { MovexMasterContext } from '../reducer';
+import { MovexMasterContext } from '../masterContext';
+// import { MovexMasterContext } from '../reducer';
 
 export type IOEvents<
   TState = unknown,
@@ -97,7 +97,7 @@ export type IOEvents<
    * */
   onReady: (p: SanitizedMovexClient) => void;
 
-  onClockSync: (p: undefined) => IOPayloadResult<number, unknown>; // acknowledges the client timestamp
+  // onClockSync: (p: undefined) => IOPayloadResult<number, unknown>; // acknowledges the client timestamp
 
   onFwdAction: (
     payload: {

@@ -1,20 +1,17 @@
-import {
+import type {
   GetIOPayloadErrTypeFrom,
   GetIOPayloadOKTypeFrom,
   ResourceIdentifier,
   ResourceIdentifierStr,
   ActionOrActionTupleFromAction,
   AnyAction,
-  CheckedReconciliatoryActions,
-  ToCheckedAction,
   UnsubscribeFn,
   IOEvents,
   MovexClient,
   SanitizedMovexClient,
-  objectOmit,
-  objectPick,
 } from 'movex-core-util';
 import {
+  objectPick,
   invoke,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
@@ -22,7 +19,7 @@ import {
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
-import { ConnectionToMaster } from './ConnectionToMaster';
+import { type ConnectionToMaster } from './ConnectionToMaster';
 
 /**
  * This handles the connection with Master per ResourceType
@@ -116,7 +113,7 @@ export class ConnectionToMasterResources<
 
       this.subscriberAddedEventPubsy.publish(
         `rid:${toResourceIdentifierStr(p.rid)}`,
-        objectPick(p.client, ['clockOffset', 'id', 'info'])
+        objectPick(p.client, ['id', 'info'])
       );
     };
 

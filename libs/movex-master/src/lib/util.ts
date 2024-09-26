@@ -9,11 +9,11 @@ import {
   objectKeys,
   MovexClient,
   GenericMasterAction,
-  MasterQueries,
   ToPublicAction,
   MovexMasterContext,
   SanitizedMovexClient,
   UnknownRecord,
+  MovexMasterContextMap,
 } from 'movex-core-util';
 import { MovexStoreItem } from 'movex-store';
 
@@ -87,8 +87,7 @@ export const itemToSanitizedClientResource = <
         info: MovexClient['info'];
       }
     >;
-  },
-  clockOffset: number
+  }
 ): MovexClientResourceShape<TResourceType, TState> => ({
   rid: toResourceIdentifierStr(item.rid),
   state: item.state,
@@ -98,7 +97,6 @@ export const itemToSanitizedClientResource = <
       [nextSubId]: {
         id: nextSubId,
         info: item.subscribers[nextSubId].info || {},
-        clockOffset,
       },
     }),
     {} as MovexClientResourceShape<TResourceType, TState>['subscribers']
@@ -152,19 +150,17 @@ export const parseMasterAction = <TMasterAction extends GenericMasterAction>(
   action: GenericMasterAction,
   masterContext: MovexMasterContext
 ): ToPublicAction<TMasterAction> => {
-  const allNowPaths = findAllKeyPathsForVal(
+  const allRquestAtPaths = findAllKeyPathsForVal(
     { action: { payload: action.payload } },
-    MasterQueries.now
+    MovexMasterContextMap.requestAt
   );
 
   const { action: nextAction } = applyPatch({ action }, [
-    ...allNowPaths.map(
+    ...allRquestAtPaths.map(
       (path) =>
         ({
           op: 'replace',
           path,
-          // TODO: Changed this to requestAt just temporary to test it
-          //  bt ideally, now() remains now, will add a new value for requestAt
           value: masterContext.requestAt,
         } as const)
     ),
@@ -181,9 +177,6 @@ export const createMasterContext = (p?: {
   requestAt?: number;
   extra?: UnknownRecord;
 }): MovexMasterContext => ({
-  // @Deprecate in favor of requestAt Props which enables purity
-  now: () => new Date().getTime(),
-
   requestAt: p?.requestAt || new Date().getTime(),
 
   ...(p?.extra && { _extra: p?.extra }),
@@ -193,9 +186,8 @@ export const createSanitizedMovexClient = <
   TInfo extends SanitizedMovexClient['info'] = SanitizedMovexClient['info']
 >(
   id: string,
-  p?: { info?: TInfo; clockOffset?: SanitizedMovexClient['clockOffset'] }
+  p?: { info?: TInfo }
 ): SanitizedMovexClient => ({
   id,
   info: p?.info || {},
-  clockOffset: p?.clockOffset || 0,
 });
