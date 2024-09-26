@@ -11,9 +11,10 @@ import type {
   IOPayloadResult,
   MovexClient,
   ResourceIdentifier,
-  ResourceIdentifierStr,
   SanitizedMovexClient,
 } from '../core-types';
+import { MovexMasterContext } from '../masterContext';
+// import { MovexMasterContext } from '../reducer';
 
 export type IOEvents<
   TState = unknown,
@@ -72,37 +73,49 @@ export type IOEvents<
     rid: ResourceIdentifier<TResourceType>;
     action: ActionOrActionTupleFromAction<A>;
   }) => IOPayloadResult<
-    | {
-        reconciled?: false;
-        nextChecksum: Checksum;
-      }
-    | ({
-        reconciled: true;
-      } & CheckedReconciliatoryActions<A>),
+    (
+      | {
+          type: 'ack';
+          nextChecksum: Checksum;
+        }
+      | {
+          type: 'masterActionAck';
+          // nextChecksum: Checksum;
+          nextCheckedAction: ToCheckedAction<A>;
+        }
+      | ({
+          type: 'reconciliation';
+        } & CheckedReconciliatoryActions<A>)
+    ) & {
+      masterContext: MovexMasterContext;
+    },
     'MasterResourceInexistent' | string
   >; // Type the other errors
 
   /**
    * The following events are directed from Master to Client
    * */
-  // @deprecate in favor ofClientReady
-  setClientId: (clientId: string) => void;
+  onReady: (p: SanitizedMovexClient) => void;
 
-  onClientReady: (client: SanitizedMovexClient) => void;
+  // onClockSync: (p: undefined) => IOPayloadResult<number, unknown>; // acknowledges the client timestamp
 
   onFwdAction: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
+      masterContext: MovexMasterContext;
     } & ToCheckedAction<A>
   ) => IOPayloadResult<void, unknown>;
   onReconciliateActions: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
+      masterContext: MovexMasterContext;
     } & CheckedReconciliatoryActions<A>
   ) => IOPayloadResult<void, unknown>;
   onResourceSubscriberAdded: (p: {
     rid: ResourceIdentifier<TResourceType>;
-    client: Pick<MovexClient, 'id' | 'info'>;
+    client: SanitizedMovexClient;
+    // TODO: Make required after it works
+    masterContext: MovexMasterContext;
     // clientId: MovexClient['id'];
   }) => IOPayloadResult<
     void,
@@ -120,6 +133,7 @@ export type IOEvents<
    * The following events are by-directional (from Client to Master and vice-versa)
    * */
 
+  // They need to be different than ping/pong because those are native to socket.io
   ping: () => IOPayloadResult<void, unknown>;
   pong: () => IOPayloadResult<void, unknown>;
 };

@@ -3,17 +3,17 @@ import {
   MovexContextProps,
   MovexContext,
   MovexContextPropsConnected,
+  initialMovexContext,
 } from './MovexContext';
 import {
   type BaseMovexDefinitionResourcesMap,
   type MovexDefinition,
   type SanitizedMovexClient,
-  invoke,
   noop,
   ResourceIdentifier,
   StringKeys,
-  LoggingEvent,
   globalLogsy,
+  MovexLogger,
 } from 'movex-core-util';
 import { MovexClient } from 'movex';
 import { ResourceObservablesRegistry } from './ResourceObservableRegistry';
@@ -44,123 +44,95 @@ export type MovexProviderProps<
   /**
    * Optional Event Logger
    */
-  logger?: {
-    onLog: (event: LoggingEvent) => void;
-  };
+  logger?: MovexLogger;
 
-  /**
-   * This will trigger when the connection is made
-   *
-   * @param state
-   * @returns
-   */
-  onConnected?: (
-    state: Extract<
-      MovexContextProps<TMovexConfigResourcesMap>,
-      { connected: true }
-    >
-  ) => void;
-
-  /**
-   * This will trigger when movex gets disconnected
-   *
-   * @param state
-   * @returns
-   */
-  onDisconnected?: (
-    state: Extract<
-      MovexContextProps<TMovexConfigResourcesMap>,
-      { connected: false }
-    >
+  onConnectionStatusChange?: (
+    state: MovexContextProps<TMovexConfigResourcesMap>
   ) => void;
 }>;
 
 export const MovexProvider: React.FC<
   MovexProviderProps<BaseMovexDefinitionResourcesMap>
-> = ({ onConnected = noop, onDisconnected = noop, logger, ...props }) => {
+> = ({ onConnectionStatusChange, logger, ...props }) => {
   type TResourcesMap = typeof props['movexDefinition']['resources'];
 
-  const [contextState, setContextState] = useState<
-    MovexContextProps<TResourcesMap>
-  >({
-    connected: false,
-    clientId: undefined,
-    clientInfo: undefined,
-  });
+  const [contextState, setContextState] =
+    useState<MovexContextProps<TResourcesMap>>(initialMovexContext);
 
   // TODO: This can all be moved into the MovexProviderClass and rename it to MovexProviderImplementation
   //   or this to MovexProviderContainer
   useEffect(() => {
-    if (contextState.connected) {
-      return;
-    }
+    return MovexClient.initMovex(
+      {
+        clientId: props.clientId,
+        clientInfo: props.clientInfo,
+        url: props.endpointUrl,
+        apiKey: '',
+        onReady: (movex) => {
+          const client = movex.getClient();
 
-    invoke(async () => {
-      const movex = await MovexClient.initMovex(
-        {
-          clientId: props.clientId,
-          clientInfo: props.clientInfo,
-          url: props.endpointUrl,
-          apiKey: '',
+          // This resets each time movex re-initiates
+          const resourceRegistry = new ResourceObservablesRegistry(movex);
+
+          const nextState: MovexContextPropsConnected<TResourcesMap> = {
+            status: 'connected',
+            // clientId: client.id,
+            // clientInfo: client.info,
+            client,
+            movex,
+            movexDefinition: props.movexDefinition,
+            bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
+              rid: ResourceIdentifier<TResourceType>,
+              onStateUpdate: (p: MovexClient.MovexBoundResource) => void
+            ) => {
+              const $resource = resourceRegistry.register(rid);
+
+              onStateUpdate(new MovexClient.MovexBoundResource($resource));
+
+              return $resource.onUpdate(() => {
+                onStateUpdate(new MovexClient.MovexBoundResource($resource));
+              });
+            },
+          } as const;
+
+          setContextState(nextState);
         },
-        props.movexDefinition
-      );
+        onDisconnect: () => {
+          globalLogsy.info('[MovexProvider] Disconnected.');
 
-      const client = movex.getClient();
-
-      // This resets each time movex re-initiates
-      const resourceRegistry = new ResourceObservablesRegistry(movex);
-
-      const nextState: MovexContextPropsConnected<TResourcesMap> = {
-        connected: true,
-        clientId: client.id,
-        clientInfo: client.info,
-        movex,
-        movexDefinition: props.movexDefinition,
-        bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
-          rid: ResourceIdentifier<TResourceType>,
-          onStateUpdate: (p: MovexClient.MovexBoundResource) => void
-        ) => {
-          const $resource = resourceRegistry.register(rid);
-
-          onStateUpdate(new MovexClient.MovexBoundResource($resource));
-
-          return $resource.onUpdate(() => {
-            onStateUpdate(new MovexClient.MovexBoundResource($resource));
+          setContextState({
+            ...initialMovexContext,
+            status: 'disconnected',
           });
         },
-      } as const;
+        onConnectionError: (e) => {
+          globalLogsy.error('[MovexProvider] Connection Error', {
+            error: e,
+          });
 
-      setContextState(nextState);
-    });
-
-    // TODO: Maybe add destroyer?
+          setContextState({
+            ...initialMovexContext,
+            status: 'connectionError',
+          });
+        },
+      },
+      props.movexDefinition
+    );
   }, [props.endpointUrl, props.clientId]);
 
-  const didPreviouslyConnect = useRef(false);
-
-  // Fire the onConnected handler
-  useEffect(() => {
-    if (contextState.connected && !didPreviouslyConnect.current) {
-      // TODO: How to listen to changes on the onConnected without triggering
-      onConnected(contextState);
-      didPreviouslyConnect.current = true;
-    }
-  }, [contextState.connected, onConnected]);
-
-  // On Disconnect
-  useEffect(() => {
-    if (contextState.connected === false && didPreviouslyConnect.current) {
-      onDisconnected(contextState);
-    }
-  }, [contextState.connected, onDisconnected]);
+  const prevStatus = useRef(contextState.status);
 
   useEffect(() => {
-    if (logger) {
+    onConnectionStatusChange?.(contextState);
+    prevStatus.current = contextState.status;
+  }, [contextState.status, onConnectionStatusChange]);
+
+  useEffect(() => {
+    if (logger?.onLog) {
       return globalLogsy.onLog(logger.onLog);
     }
 
-    return () => {};
+    return noop;
   }, [logger]);
 
   return (

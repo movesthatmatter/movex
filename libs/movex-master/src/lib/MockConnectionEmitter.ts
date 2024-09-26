@@ -4,11 +4,20 @@ import {
   UnsubscribeFn,
   IOEvents,
   globalLogsy,
+  EmptyFn,
 } from 'movex-core-util';
+import { PromiseDelegate } from 'promise-delegate';
 import { Pubsy } from 'ts-pubsy';
 import { getRandomInt, getUuid } from './util';
 
 const logsy = globalLogsy.withNamespace('MockConnectionEmitter');
+
+const delay = (ms: number) =>
+  new Promise((resolve) => {
+    logsy.debug(`Emit() delayed for ${ms} ms!`);
+
+    setTimeout(resolve, ms);
+  });
 
 export class MockConnectionEmitter<
   TState extends any = any,
@@ -27,8 +36,9 @@ export class MockConnectionEmitter<
     };
   }>();
 
-  private ackPubsy = new Pubsy<{
-    [ackId in string]: undefined;
+  private connectionPubsy = new Pubsy<{
+    onConnect: undefined;
+    onDisconnect: undefined;
   }>();
 
   private onEmittedPubsy = new Pubsy<{
@@ -45,12 +55,32 @@ export class MockConnectionEmitter<
         >
       ) => void;
     };
+    onEmitAck: {
+      event: keyof IOEvents;
+      payload: Parameters<
+        IOEvents<TState, TAction, TResourceType>[keyof IOEvents]
+      >[0];
+    };
   }>();
+
+  private _id = getRandomInt(0, 99999);
+
+  private canEmit = new PromiseDelegate<string>();
+
+  private emitDelay = 0;
 
   constructor(
     private clientId: string,
     public emitterLabel: string = String(getRandomInt(10000, 99999))
-  ) {}
+  ) {
+    // Resolve by default
+    this.canEmit.resolve(`c:${this._id}`);
+
+    setTimeout(() => {
+      // Connect right away
+      this.connectionPubsy.publish('onConnect', undefined);
+    }, 0);
+  }
 
   on<E extends keyof IOEvents<TState, TAction, TResourceType>>(
     event: E,
@@ -114,7 +144,7 @@ export class MockConnectionEmitter<
       ) => void
     ) => void
   ) {
-    const unsub = this.onEmittedPubsy.subscribe('onEmitted', (r) => {
+    return this.onEmittedPubsy.subscribe('onEmitted', (r) => {
       fn(
         {
           event: r.event as E,
@@ -125,10 +155,22 @@ export class MockConnectionEmitter<
         r.ackCb
       );
     });
+  }
 
-    return () => {
-      unsub();
-    };
+  _onEmitAck<E extends keyof IOEvents>(
+    fn: (p: {
+      event: E;
+      payload: Parameters<IOEvents<TState, TAction, TResourceType>[E]>[0];
+    }) => void
+  ) {
+    return this.onEmittedPubsy.subscribe('onEmitAck', (r) => {
+      fn({
+        event: r.event as E,
+        payload: r.payload as Parameters<
+          IOEvents<TState, TAction, TResourceType>[E]
+        >[0],
+      });
+    });
   }
 
   _publish<E extends keyof IOEvents>(
@@ -144,9 +186,7 @@ export class MockConnectionEmitter<
     this.mainPubsy.publish(event, {
       content: payload as any,
       ...(ackCb && {
-        ackCb: (res: any) => {
-          ackCb(res);
-        },
+        ackCb: (res: any) => ackCb(res),
       }),
       // ackId,
       // what ab the ack?
@@ -160,33 +200,24 @@ export class MockConnectionEmitter<
       response: ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
     ) => void
   ) {
-    if (acknowledgeCb) {
-      const ackId = getUuid();
-
-      // TODO: Need a way for this to call the unsubscriber
-      this.ackPubsy.subscribe(ackId, (ackMsg) => {
-        logsy.log('Emit', {
+    this.canEmit.promise
+      .then(() => (this.emitDelay > 0 ? delay(this.emitDelay) : undefined))
+      .then(() => {
+        this.onEmittedPubsy.publish('onEmitted', {
           event,
-          request,
-          response: ackMsg,
+          payload: request,
+          ...(acknowledgeCb && {
+            ackCb: (r: any) => {
+              this.onEmittedPubsy.publish('onEmitAck', {
+                event,
+                payload: r,
+              });
+
+              return acknowledgeCb(r);
+            },
+          }),
         });
-
-        acknowledgeCb(
-          ackMsg as ReturnType<IOEvents<TState, TAction, TResourceType>[E]>
-        );
       });
-
-      this.onEmittedPubsy.publish('onEmitted', {
-        event,
-        payload: request,
-        ackCb: acknowledgeCb as any,
-      });
-    } else {
-      this.onEmittedPubsy.publish('onEmitted', {
-        event,
-        payload: request,
-      });
-    }
 
     return true;
   }
@@ -200,5 +231,39 @@ export class MockConnectionEmitter<
         this.emit(event, request, resolve);
       }
     );
+  }
+
+  disconnect(): void {
+    // TODO: What should this do here??
+    // Implement
+  }
+
+  onConnect(fn: () => void) {
+    return this.connectionPubsy.subscribe('onConnect', fn);
+  }
+
+  onDisconnect(fn: () => void) {
+    return this.connectionPubsy.subscribe('onDisconnect', fn);
+  }
+
+  // A way to pause the client-master connection so I can test the intermediary(pending) states
+  _pauseEmit() {
+    this.canEmit = new PromiseDelegate();
+  }
+
+  _resumeEmit() {
+    if (!this.canEmit.settled) {
+      this.canEmit.resolve(`p:${this._id}`);
+    }
+
+    logsy.warn(
+      '[MovexConnectionEmitter] canEmit PromiseDelegate is already settled!'
+    );
+  }
+
+  _setEmitDelay(ms: number) {
+    if (ms >= 0) {
+      this.emitDelay = ms;
+    }
   }
 }

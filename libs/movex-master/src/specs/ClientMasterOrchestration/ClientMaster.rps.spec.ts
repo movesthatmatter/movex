@@ -1,5 +1,6 @@
 import { computeCheckedState } from 'movex-core-util';
 import { rpsReducer, rpsInitialState, tillNextTick } from 'movex-specs-util';
+import { createSanitizedMovexClient } from '../../lib';
 import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
@@ -89,18 +90,12 @@ test('2 Clients. Both Submitting (White first) WITH Reconciliation and the recon
       },
     }),
     subscribers: {
-      'client-a': {
-        id: 'client-a',
-        info: {},
-      },
-      'client-b': {
-        id: 'client-b',
-        info: {},
-      },
+      'client-a': createSanitizedMovexClient('client-a'),
+      'client-b': createSanitizedMovexClient('client-b'),
     },
   };
 
-  const actualAfterPrivateAction = aMovex.state;
+  const actualAfterPrivateAction = aMovex.get();
 
   expect(actualAfterPrivateAction).toEqual(expectedAfterPrivateAction);
 
@@ -148,14 +143,14 @@ test('2 Clients. Both Submitting (White first) WITH Reconciliation and the recon
     },
   });
 
-  const actualAfterPrivateRevelatoryAction = bMovex.state.checkedState;
+  const actualAfterPrivateRevelatoryAction = bMovex.getCheckedState();
 
   expect(actualAfterPrivateRevelatoryAction).toEqual(
     expectedAfterPrivateRevelatoryAction
   );
 
   // The 2 clients are the same after revelation
-  expect(aMovex.state).toEqual(bMovex.state);
+  expect(aMovex.get()).toEqual(bMovex.get());
 
   const masterPublicState = await master.getPublicState(rid).resolveUnwrap();
   expect(masterPublicState).toEqual(actualAfterPrivateRevelatoryAction);
@@ -260,7 +255,7 @@ test('Same Kind Reconciliatory Actions Bug. See https://github.com/movesthatmatt
     },
   });
 
-  const actualAfterPrivateAction = aMovex.state.checkedState;
+  const actualAfterPrivateAction = aMovex.getCheckedState();
 
   expect(actualAfterPrivateAction).toEqual(expectedAfterPrivateAction);
 
@@ -308,14 +303,14 @@ test('Same Kind Reconciliatory Actions Bug. See https://github.com/movesthatmatt
     },
   });
 
-  const actualAfterPrivateRevelatoryAction = bMovex.state.checkedState;
+  const actualAfterPrivateRevelatoryAction = bMovex.getCheckedState();
 
   expect(actualAfterPrivateRevelatoryAction).toEqual(
     expectedAfterPrivateRevelatoryAction
   );
 
   // The 2 clients are the same after revelation
-  expect(aMovex.state).toEqual(bMovex.state);
+  expect(aMovex.get()).toEqual(bMovex.get());
 
   const masterPublicState = await master.getPublicState(rid).resolveUnwrap();
   expect(masterPublicState).toEqual(actualAfterPrivateRevelatoryAction);
@@ -422,7 +417,7 @@ test('Ensure further actinos can be dispatched after a Master-Resync', async () 
 
   await tillNextTick();
 
-  expect(bMovex.state.checkedState).toEqual(
+  expect(bMovex.getCheckedState()).toEqual(
     computeCheckedState({
       ...rpsInitialState,
       currentGame: {
@@ -460,7 +455,7 @@ test('Ensure further actinos can be dispatched after a Master-Resync', async () 
 
   await tillNextTick();
 
-  expect(aMovex.state.checkedState).toEqual(
+  expect(aMovex.getCheckedState()).toEqual(
     computeCheckedState({
       ...rpsInitialState,
       currentGame: {
@@ -485,7 +480,7 @@ test('Ensure further actinos can be dispatched after a Master-Resync', async () 
     })
   );
 
-  expect(bMovex.state.checkedState).toEqual(
+  expect(bMovex.getCheckedState()).toEqual(
     computeCheckedState({
       ...rpsInitialState,
       currentGame: {
@@ -555,6 +550,6 @@ test('Ensure further actinos can be dispatched after a Master-Resync', async () 
     },
   });
 
-  expect(bMovex.state.checkedState).toEqual(expectedSharedState);
-  expect(aMovex.state.checkedState).toEqual(expectedSharedState);
+  expect(bMovex.getCheckedState()).toEqual(expectedSharedState);
+  expect(aMovex.getCheckedState()).toEqual(expectedSharedState);
 });

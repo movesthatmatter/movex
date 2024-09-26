@@ -5,7 +5,10 @@ import {
   initialGameState,
   tillNextTick,
 } from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
+import {
+  createSanitizedMovexClient,
+  movexClientMasterOrchestrator,
+} from 'movex-master';
 
 const orchestrator = movexClientMasterOrchestrator();
 
@@ -44,7 +47,7 @@ describe('All', () => {
     const { rid } = await counterResource.create({ count: 2 }).resolveUnwrap();
 
     const actual = counterResource.bind(rid);
-    const actualDefaultState = actual.state;
+    const actualDefaultState = actual.get();
 
     expect(actualDefaultState.checkedState).toEqual(
       computeCheckedState({ count: 0 })
@@ -55,14 +58,11 @@ describe('All', () => {
     const expected = {
       checkedState: computeCheckedState({ count: 2 }),
       subscribers: {
-        'test-user': {
-          id: 'test-user',
-          info: {},
-        },
+        'test-user': createSanitizedMovexClient('test-user'),
       },
     };
 
-    expect(actual.state).toEqual(expected);
+    expect(actual.get()).toEqual(expected);
   });
 
   test('Dispatch Public Action', async () => {
@@ -86,10 +86,7 @@ describe('All', () => {
     const expected = {
       checkedState: computeCheckedState({ count: 3 }),
       subscribers: {
-        'test-user': {
-          id: 'test-user',
-          info: {},
-        },
+        'test-user': createSanitizedMovexClient('test-user'),
       },
     };
 
@@ -123,7 +120,7 @@ describe('All', () => {
 
     await tillNextTick();
 
-    const actual = r.state;
+    const actual = r.get();
 
     const expected = {
       checkedState: computeCheckedState({
@@ -138,10 +135,7 @@ describe('All', () => {
         },
       }),
       subscribers: {
-        'test-user': {
-          id: 'test-user',
-          info: {},
-        },
+        'test-user': createSanitizedMovexClient('test-user'),
       },
     };
 

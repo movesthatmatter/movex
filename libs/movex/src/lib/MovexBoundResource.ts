@@ -14,24 +14,21 @@ export class MovexBoundResource<
   TState = any,
   TAction extends AnyAction = AnyAction
 > {
-  // TODO: Add the TResourceType so it the rid can be typed correctly
+  // TODO: Add the TResourceType the rid can be typed correctly
   public rid = this.observable.rid;
 
   constructor(private observable: MovexResourceObservable<TState, TAction>) {}
 
-  dispatch = (action: ToPublicAction<TAction>) => {
-    this.observable.dispatch(action);
-  };
+  dispatch = (...args: Parameters<typeof this.observable.dispatch>) =>
+    this.observable.dispatch(...args);
 
   dispatchPrivate = (
     privateAction: ToPrivateAction<TAction>,
     publicAction: ToPublicAction<TAction>
-  ) => {
-    this.observable.dispatchPrivate(privateAction, publicAction);
-  };
+  ) => this.observable.dispatchPrivate(privateAction, publicAction);
 
   get state() {
-    return this.observable.getUncheckedState();
+    return this.observable.getUnwrappedState();
   }
 
   get subscribers() {
@@ -44,7 +41,5 @@ export class MovexBoundResource<
   // }
 
   // This to be called when not used anymore in order to clean the update subscriptions
-  destroy = () => {
-    this.observable.destroy();
-  };
+  destroy = () => this.observable.destroy();
 }

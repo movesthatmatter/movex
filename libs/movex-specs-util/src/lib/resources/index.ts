@@ -4,3 +4,5 @@ export * from './gameReducer';
 export * from './matchReducer';
 export * from './rockPaperScissors.movex';
 export * from './gameReducerWithDerivedState';
+export * from './speedPushGame';
+export * from './simpleChessGame';

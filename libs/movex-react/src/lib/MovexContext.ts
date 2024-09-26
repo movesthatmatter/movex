@@ -4,6 +4,7 @@ import type {
   MovexClientInfo,
   MovexDefinition,
   ResourceIdentifier,
+  SanitizedMovexClient,
   StringKeys,
   UnsubscribeFn,
 } from 'movex-core-util';
@@ -14,9 +15,10 @@ export type MovexContextProps<
 > = MovexContextPropsNotConnected | MovexContextPropsConnected<TResourcesMap>;
 
 export type MovexContextPropsNotConnected = {
-  connected: false;
-  clientId: undefined;
-  clientInfo: undefined;
+  status: 'disconnected' | 'initiating' | 'connectionError';
+  // clientId: undefined;
+  // clientInfo: undefined;
+  client?: undefined;
   movex?: Movex;
   movexConfig?: undefined;
   bindResource?: () => void;
@@ -25,10 +27,11 @@ export type MovexContextPropsNotConnected = {
 export type MovexContextPropsConnected<
   TResourcesMap extends BaseMovexDefinitionResourcesMap
 > = {
-  connected: true;
-  clientId: string;
-  clientInfo: MovexClientInfo;
-  movex: MovexClient.MovexFromDefintion<TResourcesMap>;
+  status: 'connected';
+  // clientId: string;
+  // clientInfo: MovexClientInfo;
+  client: SanitizedMovexClient;
+  movex: MovexClient.MovexFromDefinition<TResourcesMap>;
   movexDefinition: MovexDefinition<TResourcesMap>;
   bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>,
@@ -36,11 +39,12 @@ export type MovexContextPropsConnected<
   ) => UnsubscribeFn;
 };
 
-export const MovexContext = createContext<
-  MovexContextProps<BaseMovexDefinitionResourcesMap>
->({
+export const initialMovexContext = {
   movex: undefined,
-  connected: false,
-  clientId: undefined,
-  clientInfo: undefined,
-});
+  status: 'initiating',
+} as const;
+
+export const MovexContext =
+  createContext<MovexContextProps<BaseMovexDefinitionResourcesMap>>(
+    initialMovexContext
+  );

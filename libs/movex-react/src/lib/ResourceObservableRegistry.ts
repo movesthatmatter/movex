@@ -8,8 +8,8 @@ import {
 } from 'movex-core-util';
 import {
   MovexClient,
-  MovexFromDefintion,
-  MovexResourceObservable,
+  MovexFromDefinition,
+  type MovexResourceObservable,
 } from 'movex';
 
 /**
@@ -25,7 +25,7 @@ export class ResourceObservablesRegistry<
     };
   } = {};
 
-  constructor(private movex: MovexFromDefintion<TResourcesMap>) {}
+  constructor(private movex: MovexFromDefinition<TResourcesMap>) {}
 
   private get<TResourceType extends StringKeys<TResourcesMap>>(
     rid: ResourceIdentifier<TResourceType>

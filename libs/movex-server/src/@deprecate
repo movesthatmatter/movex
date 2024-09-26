@@ -1,0 +1,1 @@
+Remove bin.ts and /bin b/c movex-service takes care of those now

@@ -17,13 +17,7 @@ type Props<
     'movexDefinition' | 'onConnected' | 'onDisconnected'
   > & {
     movexDefinition: MovexDefinition<TResourcesMap>;
-    onConnected?: (
-      state: Extract<
-        MovexContextProps<TResourcesMap>,
-        { connected: true }
-      >['movex']
-    ) => void;
-    onDisconnected?: () => void;
+    onConnectionStatusChange?: MovexProviderProps<TResourcesMap>['onConnectionStatusChange'];
   }
 >;
 
@@ -40,18 +34,15 @@ export class MovexProviderClass<
   TResourceType extends StringKeys<TResourcesMap>
 > extends React.Component<Props<TResourcesMap, TResourceType>, State> {
   override render() {
-    const { onConnected, ...props } = this.props;
+    const { onConnectionStatusChange, ...props } = this.props;
 
     return (
       <MovexProvider
-        onConnected={(r) => {
-          onConnected?.(
-            r.movex as Extract<
-              MovexContextProps<TResourcesMap>,
-              { connected: true }
-            >['movex']
-          );
-        }}
+        {...(onConnectionStatusChange && {
+          onConnectionStatusChange: (r) => {
+            onConnectionStatusChange(r as MovexContextProps<TResourcesMap>);
+          },
+        })}
         {...props}
       />
     );

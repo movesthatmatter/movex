@@ -1,5 +1,5 @@
 export { v4 as getUuid } from 'uuid';
-import { applyReducer, compare, deepClone } from 'fast-json-patch';
+import { applyReducer, compare, deepClone, applyPatch } from 'fast-json-patch';
 import {
   JsonPatch,
   isObject,
@@ -7,8 +7,13 @@ import {
   MovexClientResourceShape,
   toResourceIdentifierStr,
   objectKeys,
-  MovexClientInfo,
   MovexClient,
+  GenericMasterAction,
+  ToPublicAction,
+  MovexMasterContext,
+  SanitizedMovexClient,
+  UnknownRecord,
+  MovexMasterContextMap,
 } from 'movex-core-util';
 import { MovexStoreItem } from 'movex-store';
 
@@ -96,4 +101,93 @@ export const itemToSanitizedClientResource = <
     }),
     {} as MovexClientResourceShape<TResourceType, TState>['subscribers']
   ),
+});
+
+const findFirstKeyPathForVal = (
+  obj: object | unknown,
+  val: unknown,
+  currentPath = ''
+): string | undefined => {
+  let matchingPath;
+
+  if (!obj || typeof obj !== 'object') {
+    return undefined;
+  }
+
+  for (const k of objectKeys(obj)) {
+    const nextPath = currentPath ? `${currentPath}/${k}` : `/${k}`;
+
+    matchingPath =
+      obj[k] === val ? nextPath : findFirstKeyPathForVal(obj[k], val, nextPath);
+
+    if (matchingPath) break;
+  }
+
+  return matchingPath;
+};
+
+const findAllKeyPathsForVal = (obj: object, val: unknown): string[] => {
+  let lookingObj = obj;
+  const res: string[] = [];
+
+  while (objectKeys(lookingObj).length > 0) {
+    const found = findFirstKeyPathForVal(lookingObj, val);
+
+    if (!found) {
+      break;
+    }
+
+    res.push(found);
+
+    lookingObj = applyPatch(lookingObj, [{ op: 'remove', path: found }])[0]
+      .newDocument;
+  }
+
+  return res;
+};
+
+export const parseMasterAction = <TMasterAction extends GenericMasterAction>(
+  action: GenericMasterAction,
+  masterContext: MovexMasterContext
+): ToPublicAction<TMasterAction> => {
+  const allRquestAtPaths = findAllKeyPathsForVal(
+    { action: { payload: action.payload } },
+    MovexMasterContextMap.requestAt
+  );
+
+  const { action: nextAction } = applyPatch({ action }, [
+    ...allRquestAtPaths.map(
+      (path) =>
+        ({
+          op: 'replace',
+          path,
+          value: masterContext.requestAt,
+        } as const)
+    ),
+  ])[0].newDocument;
+
+  return {
+    type: action.type,
+    ...(action.isPrivate && { isPrivate: true }),
+    payload: nextAction.payload,
+  } as ToPublicAction<TMasterAction>;
+};
+
+export const createMasterContext = (p?: {
+  requestAt?: number;
+  extra?: UnknownRecord;
+}): MovexMasterContext => ({
+  requestAt: p?.requestAt || new Date().getTime(),
+
+  ...(p?.extra && { _extra: p?.extra }),
+});
+
+export const createSanitizedMovexClient = <
+  TInfo extends SanitizedMovexClient['info'] = SanitizedMovexClient['info']
+>(
+  id: string,
+  p?: { info?: TInfo }
+): SanitizedMovexClient => ({
+  id,
+  info: p?.info || {},
 });

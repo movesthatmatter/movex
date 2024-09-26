@@ -4,6 +4,7 @@ import {
   tillNextTick,
   matchReducer,
 } from 'movex-specs-util';
+import { createSanitizedMovexClient } from '../../lib';
 import { movexClientMasterOrchestrator } from './orchestrator';
 
 const orchestrator = movexClientMasterOrchestrator();
@@ -55,18 +56,12 @@ test('works with public actions', async () => {
       },
     }),
     subscribers: {
-      'white-client': {
-        id: 'white-client',
-        info: {},
-      },
-      'black-client': {
-        id: 'black-client',
-        info: {},
-      },
+      'white-client': createSanitizedMovexClient('white-client'),
+      'black-client': createSanitizedMovexClient('black-client'),
     },
   };
 
-  const actual = whiteMovex.state;
+  const actual = whiteMovex.get();
 
   expect(actual).toEqual(expected);
 });

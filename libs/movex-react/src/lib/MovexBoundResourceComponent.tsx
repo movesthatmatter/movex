@@ -125,19 +125,14 @@ export class MovexBoundResourceComponent<
   override render() {
     return (
       <MovexContextStateChange
-        // onMovexConnected={() => {
-
-        // }}
-        onChange={(r) => {
-          if (!r.connected) {
-            return;
+        onStatusChange={(r) => {
+          if (r.status === 'connected') {
+            this.init(
+              // r.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
+              r.client.id,
+              r.bindResource
+            );
           }
-
-          this.init(
-            // r.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
-            r.clientId,
-            r.bindResource
-          );
         }}
       >
         {this.state.init

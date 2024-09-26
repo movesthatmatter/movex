@@ -5,7 +5,6 @@ import cors from 'cors';
 import {
   globalLogsy,
   SocketIOEmitter,
-  ConnectionToClient,
   type MovexDefinition,
   type IOEvents,
   isResourceIdentifier,
@@ -14,10 +13,33 @@ import {
   MovexClientInfo,
 } from 'movex-core-util';
 import { MemoryMovexStore, MovexStore } from 'movex-store';
-import { initMovexMaster } from 'movex-master';
-import { isOneOf } from './util';
+import {
+  ConnectionToClient,
+  createMasterContext,
+  initMovexMaster,
+} from 'movex-master';
+import { delay, isOneOf } from './util';
+
+const pkgVersion = require('../../package.json').version;
 
 const logsy = globalLogsy.withNamespace('[MovexServer]');
+
+logsy.onLog((event) => {
+  // if (config.DEBUG_MODE) {
+  console[event.method](event.prefix, event.message, event.payload);
+  // }
+
+  // if (isOneOf(event.method, ['error', 'warn'])) {
+  //   captureEvent({
+  //     level: event.method === 'warn' ? 'warning' : event.method,
+  //     message: event.prefix + ' | ' + String(event.message),
+  //     environment: config.ENV,
+  //     // TODO: add more info if needed, like the resource id at least so it can be checked in the store
+  //     //  if not more relevant, timely stuff
+  //     // extra: {}
+  //   });
+  // }
+});
 
 export const movexServer = <TDefinition extends MovexDefinition>(
   {
@@ -42,6 +64,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     cors: {
       origin: corsOpts?.origin || '*',
     },
+    // pingInterval: 5000,
   });
 
   const store =
@@ -54,8 +77,25 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   const getClientId = (clientId: string) =>
     clientId || String(Math.random()).slice(-5);
 
-  socket.on('connection', (io) => {
+  socket.on('connection', async (io) => {
     const clientId = getClientId(io.handshake.query['clientId'] as string);
+
+    const oldClientConnection = movexMaster.getConnection(clientId);
+
+    if (oldClientConnection) {
+      /**
+       * Disconnects the old client if a connection is already present, in order to support the new connection
+       *  This normally happens when the same user opens a new tab with the same resource present
+       *
+       * Note - this is the simplest approach for now, but in the future this can include more advanced use-cases
+       */
+      oldClientConnection.emitter.disconnect();
+
+      movexMaster.removeConnection(clientId);
+
+      await delay(10);
+    }
+
     const clientInfo = JSON.parse(
       (io.handshake.query['clientInfo'] as string) || ''
     ) as MovexClientInfo;
@@ -63,12 +103,14 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     logsy.info('Client Connected', { clientId, clientInfo });
 
     const connectionToClient = new ConnectionToClient(
-      clientId,
       new SocketIOEmitter<IOEvents>(io),
-      clientInfo
+      {
+        id: clientId,
+        info: clientInfo,
+      }
     );
 
-    connectionToClient.emitClientReady();
+    await connectionToClient.setReady();
 
     movexMaster.addClientConnection(connectionToClient);
 
@@ -126,6 +168,38 @@ export const movexServer = <TDefinition extends MovexDefinition>(
       });
   });
 
+  // Public State
+  app.get('/api/resources/:rid/state', async (req, res) => {
+    const masterContext = createMasterContext();
+
+    const rawRid = req.params.rid;
+
+    if (!isResourceIdentifier(rawRid)) {
+      return res.sendStatus(400); // Bad Request
+    }
+
+    const ridObj = toResourceIdentifierObj(rawRid);
+
+    if (!isOneOf(ridObj.resourceType, objectKeys(definition.resources))) {
+      return res.sendStatus(400); // Bad Request
+    }
+
+    res.header('Content-Type', 'application/json');
+
+    return movexMaster
+      .getPublicResourceCheckedState({ rid: ridObj }, masterContext)
+      .map((checkedState) => res.json(checkedState))
+      .mapErr((e) => {
+        if (
+          isOneOf(e.reason, ['ResourceInexistent', 'MasterResourceInexistent'])
+        ) {
+          return res.status(404).json(e);
+        }
+
+        return res.status(500).json(e);
+      });
+  });
+
   // app.post('/api/resources', async (req, res) => {
   //   // const rawRid = req.params.rid;
   //   req
@@ -140,16 +214,18 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   //   }
   // });
 
-  // //start our server
+  // start the server
   const port = process.env['port'] || 3333;
   httpServer.listen(port, () => {
     const address = httpServer.address();
 
-    if (typeof address !== 'string') {
-      logsy.info('Server started', {
-        port,
-        definitionResources: Object.keys(definition.resources),
-      });
-    }
+    // console.log(`[movex-server] v${pkgVersion} started at port ${port}.`);
+
+    // if (typeof address !== 'string') {
+    logsy.info(`v${pkgVersion} started`, {
+      port,
+      definitionResources: Object.keys(definition.resources),
+    });
+    // }
   });
 };
