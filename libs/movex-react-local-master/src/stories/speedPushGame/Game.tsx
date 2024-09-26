@@ -30,13 +30,14 @@ export function Game(props: Props) {
       <MovexLocalInstance
         clientId="redPlayer"
         movexDefinition={movexConfig}
+        // masterEmitDelayMs={12 * 1000}
         onConnected={(movex) => {
           const reg = movex.register('speedPushGame');
 
           reg
             .create({
               ...initialState,
-              timeToNextPushMs: 2 * 1000,
+              timeToNextPushMs: 100 * 1000,
             })
             .map(({ rid }) => {
               setRid(rid);
@@ -72,10 +73,10 @@ export function Game(props: Props) {
                 <button
                   className="bg-red-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                   onClick={() =>
-                    boundResource.dispatch({
+                    boundResource.dispatch((movex) => ({
                       type: 'push',
-                      payload: { at: new Date().getTime(), by: 'red' },
-                    })
+                      payload: { at: movex.$queries.now(), by: 'red' },
+                    }))
                   }
                 >
                   Push
@@ -124,7 +125,11 @@ export function Game(props: Props) {
         )}
       </div>
       {rid && masterStateUpdated && (
-        <MovexLocalInstance clientId="bluPlayer" movexDefinition={movexConfig}>
+        <MovexLocalInstance
+          clientId="bluPlayer"
+          movexDefinition={movexConfig}
+          // masterEmitDelayMs={10 * 1000}
+        >
           <MovexBoundResource
             rid={rid}
             movexDefinition={movexConfig}
@@ -143,10 +148,11 @@ export function Game(props: Props) {
                 )}
                 <button
                   onClick={() =>
-                    boundResource.dispatch({
+                    boundResource.dispatch((movex) => ({
                       type: 'push',
-                      payload: { at: new Date().getTime(), by: 'blu' },
-                    })
+                      // payload: { at: new Date().getTime(), by: 'blu' },
+                      payload: { at: movex.$queries.now(), by: 'blu' },
+                    }))
                   }
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                 >

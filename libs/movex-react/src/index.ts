@@ -4,6 +4,7 @@ export { MovexProviderClass as MovexProvider } from './lib/MovexProviderClass';
 // so something else might be done there but for now it's ok!
 export {
   MovexContext as MovexReactContext,
+  initialMovexContext as initialReactMovexContext,
   type MovexContextProps as MovexReactContextProps,
   type MovexContextPropsConnected as MovexReactContextPropsConnected,
   type MovexContextPropsNotConnected as MovexReactContextPropsNotConnected,

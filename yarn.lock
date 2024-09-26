@@ -14478,6 +14478,11 @@ jsesc@~0.5.0:
   resolved "https://registry.yarnpkg.com/jsesc/-/jsesc-0.5.0.tgz#e7dee66e35d6fc16f710fe91d5cf69f70f08911d"
   integrity sha512-uZz5UnB7u4T9LvwmFqXii7pZSouaRPorGs5who1Ip7VO0wxanFvBL7GkM6dTHlgX+jhBApRetaWpnDabOeTcnA==
 
+json-find@^2.0.8:
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/json-find/-/json-find-2.0.8.tgz#d7e7f5305dab12a5eb8ff0d29c443aa5b4e8a2f5"
+  integrity sha512-ZR38FSmUdN2UBG7VS1wLyMokhi4ZUwI3kLJzdKtjYRm3BNkJYAlPz7yFPhUYmuB1k7TCALf+6qs6bn0ZExGb5Q==
+
 json-parse-better-errors@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/json-parse-better-errors/-/json-parse-better-errors-1.0.2.tgz#bb867cfb3450e69107c131d1c514bab3dc8bcaa9"

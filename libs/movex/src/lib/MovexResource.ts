@@ -5,7 +5,6 @@ import type {
   AnyAction,
   CheckedReconciliatoryActions,
   MovexReducer,
-  ConnectionToMaster,
 } from 'movex-core-util';
 import {
   globalLogsy,
@@ -16,6 +15,7 @@ import {
 import { ConnectionToMasterResources } from './ConnectionToMasterResources';
 import { MovexResourceObservable } from './MovexResourceObservable';
 import * as deepObject from 'deep-object-diff';
+import { ConnectionToMaster } from './ConnectionToMaster';
 
 const logsy = globalLogsy.withNamespace('[Movex][MovexResource]');
 
@@ -57,7 +57,11 @@ export class MovexResource<
   }
 
   get(rid: ResourceIdentifier<TResourceType>) {
-    return this.connectionToMasterResources.getResource(rid);
+    return this.connectionToMasterResources.getResource(rid).map((item) => ({
+      ...item,
+      rid: toResourceIdentifierObj<TResourceType>(item.rid),
+      state: item.state[0],
+    }));
   }
 
   /**
@@ -74,7 +78,7 @@ export class MovexResource<
     // This also willl allow the get to craete the observable and sync it
 
     const resourceObservable = new MovexResourceObservable(
-      this.connectionToMaster.clientId,
+      this.connectionToMaster.client.id,
       rid,
       this.reducer
     );
@@ -148,7 +152,7 @@ export class MovexResource<
       logsy.log('Reconciliatory Actions Received', {
         ...p,
         actionsCount: p.actions.length,
-        clientId: this.connectionToMaster.clientId,
+        clientId: this.connectionToMaster.client.id,
         nextState,
         prevState,
       });
@@ -176,36 +180,86 @@ export class MovexResource<
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
       resourceObservable.onDispatched(
-        ({ action, next: nextLocalCheckedState }) => {
-          const [nextLocalState, nextLocalChecksum] = nextLocalCheckedState;
+        ({
+          action,
+          next: nextLocalCheckedState,
+          masterAction,
+          onEmitMasterActionAck,
+        }) => {
+          // const [_, nextLocalChecksumPreAck] = nextLocalCheckedState;
+
+          // console.log('comes here sf???');
 
           this.connectionToMasterResources
-            .emitAction(rid, action)
-            .map(async (master) => {
-              if (master.reconciled) {
-                onReconciliateActionsHandler(master);
+            // TODO: Left it here
+            // here's what needs to be added
+            //  This emitter needs to get an extra flag saying that it is a masterAction
+            //  A masterAction is a special type of action that gets set with values computed locally
+            //   but the dispatcher waits for an ack with the master processed action and the next checksum to be applied locally!
+            // if the checksums don't match, it will do a state re-sync just like usually
+            // TODO: need to also check what's happening with private actions
+            .emitAction(rid, masterAction || action)
+            .map(async (response) => {
+              console.log('response', response);
+
+              if (response.type === 'reconciliation') {
+                onReconciliateActionsHandler(response);
 
                 return;
               }
 
-              // Otherwise if it's a simple ack
+              // Otherwise if it's type === 'ack'
+
+              // const nextLocalChecksum =
+              //   response.type === 'masterActionAck'
+              //     ? onEmitMasterActionAck(response.nextCheckedAction)
+              //     : nextLocalCheckedState[1];
+
+              // const masterChecksum =
+              //   response.type === 'masterActionAck'
+              //     ? response.nextCheckedAction.checksum
+              //     : response.nextChecksum;
+
+              const nextChecksums = invoke(() => {
+                if (response.type === 'masterActionAck') {
+                  return {
+                    local: onEmitMasterActionAck(response.nextCheckedAction),
+                    master: response.nextCheckedAction.checksum,
+                  };
+                }
+
+                return {
+                  local: nextLocalCheckedState[1],
+                  master: response.nextChecksum,
+                };
+              });
 
               // And the checksums are equal stop here
-              if (master.nextChecksum === nextLocalChecksum) {
+              if (nextChecksums.master === nextChecksums.local) {
+                console.log(
+                  'Movex REsource checksums are the same not going to resync'
+                );
+
                 return;
               }
+
+              console.log(
+                'Movex REsource checksums are not the same so I am going to resync'
+              );
 
               // When the checksums are not the same, need to resync the state!
               // this is expensive and ideally doesn't happen too much.
 
               logsy.error(`Dispatch Ack Error: "Checksums MISMATCH"`, {
+                clientId: this.connectionToMaster.client.id,
                 action,
-                clientId: this.connectionToMaster.clientId,
+                response,
+                nextLocalCheckedState,
               });
 
               await resyncLocalState()
                 .map((masterState) => {
-                  logsy.info('Resynched Result', {
+                  logsy.info('Re-synched Response', {
                     masterState,
                     nextLocalCheckedState,
                     diff: deepObject.detailedDiff(
@@ -227,7 +281,7 @@ export class MovexResource<
 
         logsy.info('Forwarded Action Received', {
           ...p,
-          clientId: this.connectionToMaster.clientId,
+          clientId: this.connectionToMaster.client.id,
           prevState,
           nextState,
         });
@@ -273,13 +327,22 @@ export class MovexResource<
         }) => {
           logsy.info('Action Dispatched', {
             action,
-            clientId: this.connectionToMaster.clientId,
+            clientId: this.connectionToMaster.client.id,
             prevState: prevLocalCheckedState,
             nextLocalState: nextLocalCheckedState,
           });
         }
       ),
     ];
+
+    // I like this idea of decorating the disaptch, and look at its return instead of subscribing to onDispatched
+    // this way, if the dispatcher needs to wait for the master it can do that somehow easier
+    // it needs to wait for master with the new $movexQueries like generateId or randomInt or stuff like that
+    // const nextDispatch = (...args: Parameters<DispatchFn>) => {
+    //   resourceObservable.dispatch(...args);
+    // }
+
+    // resourceObservable.dispatch()
 
     return resourceObservable;
   }

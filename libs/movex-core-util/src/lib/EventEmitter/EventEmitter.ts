@@ -1,5 +1,5 @@
 import type { EventMap } from 'typed-emitter';
-import type { EmptyFn } from './core-types';
+import type { EmptyFn } from '../core-types';
 
 export const emptyFn: EmptyFn = () => {};
 
@@ -34,4 +34,9 @@ export interface EventEmitter<TEventMap extends EventMap> {
     event: E,
     request: Parameters<TEventMap[E]>[0]
   ): Promise<ReturnType<TEventMap[E]>>;
+
+  disconnect(): void;
+
+  onConnect(fn: () => void): EmptyFn;
+  onDisconnect(fn: () => void): EmptyFn;
 }

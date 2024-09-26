@@ -1,21 +1,23 @@
 import { Err, Ok } from 'ts-results';
-import { globalLogsy } from './Logsy';
+import { globalLogsy } from '../Logsy';
 import type { Socket as ServerSocket } from 'socket.io';
 import type { Socket as ClientSocket } from 'socket.io-client';
 import type { EventMap } from 'typed-emitter';
 import type { EventEmitter } from './EventEmitter';
-import type { UnsubscribeFn, WsResponseResultPayload } from './core-types';
+import type { UnsubscribeFn, WsResponseResultPayload } from '../core-types';
 
 export type SocketIO = ServerSocket | ClientSocket;
 
 const logsy = globalLogsy.withNamespace('[SocketIOEmitter]');
 
-export class SocketIOEmitter<TEventMap extends EventMap>
-  implements EventEmitter<TEventMap>
+export class SocketIOEmitter<
+  TEventMap extends EventMap,
+  TSocketIO extends SocketIO = ServerSocket | ClientSocket
+> implements EventEmitter<TEventMap>
 {
   constructor(
-    private socket: SocketIO,
-    private config: {
+    protected socket: TSocketIO,
+    protected config: {
       waitForResponseMs?: number;
     } = {}
   ) {
@@ -148,6 +150,26 @@ export class SocketIOEmitter<TEventMap extends EventMap>
         )
       );
     }).catch((e) => e) as any;
+  }
+
+  onConnect(fn: () => void) {
+    this.socket.on('connect', fn);
+
+    return () => {
+      this.socket.off('connect', fn);
+    };
+  }
+
+  onDisconnect(fn: () => void) {
+    this.socket.on('disconnect', fn);
+
+    return () => {
+      this.socket.off('disconnect', fn);
+    };
+  }
+
+  disconnect(): void {
+    this.socket.disconnect();
   }
 }
 

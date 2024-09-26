@@ -18,6 +18,7 @@ describe('Public Actions', () => {
   test('Dispatch with 1 client only', async () => {
     const {
       clients: [gameClientResource],
+      $util,
     } = orchestrator.orchestrate({
       clientIds: ['test-client'],
       reducer: gameReducer,

@@ -22,7 +22,12 @@ import type {
   ToPublicAction,
   MovexReducer,
 } from 'movex-core-util';
-import { createDispatcher, DispatchedEvent } from './dispatch';
+import {
+  createDispatcher,
+  DispatchedEventPayload,
+  DispatchFn,
+  DispatchPublicFn,
+} from './dispatch';
 import { PromiseDelegate } from 'promise-delegate';
 
 const logsy = globalLogsy.withNamespace('[MovexResourceObservable]');
@@ -51,12 +56,10 @@ export class MovexResourceObservable<
   private $item: Observable<ObservedItem<TState>>;
 
   private pubsy = new Pubsy<{
-    onDispatched: DispatchedEvent<CheckedState<TState>, TAction>;
+    onDispatched: DispatchedEventPayload<CheckedState<TState>, TAction>;
   }>();
 
-  private dispatcher: (
-    actionOrActionTuple: ActionOrActionTupleFromAction<TAction>
-  ) => void;
+  private dispatcher: DispatchFn<TAction>;
 
   private unsubscribers: UnsubscribeFn[] = [];
 
@@ -116,21 +119,22 @@ export class MovexResourceObservable<
         dispatch(...args);
       });
     };
+
     this.unsubscribers.push(unsubscribeFromDispatch);
   }
 
   /**
    * This is the dispatch for this Movex Resource
    */
-  dispatch(action: ToPublicAction<TAction>) {
-    this.dispatcher(action);
+  dispatch(...args: Parameters<DispatchPublicFn<TAction>>) {
+    return this.dispatcher(...args);
   }
 
   dispatchPrivate(
     privateAction: ToPrivateAction<TAction>,
     publicAction: ToPublicAction<TAction>
   ) {
-    this.dispatcher([privateAction, publicAction]);
+    return this.dispatcher([privateAction, publicAction]);
   }
 
   applyMultipleActions(actions: ToPublicAction<TAction>[]) {
@@ -208,7 +212,7 @@ export class MovexResourceObservable<
   }
 
   onDispatched(
-    fn: (event: DispatchedEvent<CheckedState<TState>, TAction>) => void
+    fn: (event: DispatchedEventPayload<CheckedState<TState>, TAction>) => void
   ) {
     return this.pubsy.subscribe('onDispatched', fn);
   }

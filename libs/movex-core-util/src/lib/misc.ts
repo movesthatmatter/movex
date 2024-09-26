@@ -1,3 +1,5 @@
+import { DistributiveOmit, TupleToUnionType } from './core-types';
+
 export const objectKeys = <O extends object>(o: O) =>
   Object.keys(o) as (keyof O)[];
 
@@ -19,3 +21,33 @@ export const isObject = (o: unknown): o is object => {
 
 export const isFunction = (x: unknown): x is (...args: any) => any =>
   typeof x === 'function';
+
+export const objectOmit = <O extends Object, ToOmit extends (keyof O)[]>(
+  o: O,
+  toOmit: ToOmit
+) =>
+  objectKeys(o).reduce((prev, nextKey) => {
+    if (toOmit.indexOf(nextKey) > -1) {
+      return prev;
+    }
+
+    return {
+      ...prev,
+      [nextKey]: o[nextKey],
+    };
+  }, {} as DistributiveOmit<O, TupleToUnionType<ToOmit>>);
+
+export const objectPick = <O extends Object, ToPick extends (keyof O)[]>(
+  o: O,
+  toPick: ToPick
+) =>
+  objectKeys(o).reduce((prev, nextKey) => {
+    if (toPick.indexOf(nextKey) === -1) {
+      return prev;
+    }
+
+    return {
+      ...prev,
+      [nextKey]: o[nextKey],
+    };
+  }, {} as Pick<O, TupleToUnionType<ToPick>>);

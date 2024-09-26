@@ -5,23 +5,24 @@ import type {
   MovexDefinition,
   BaseMovexDefinitionResourcesMap,
 } from 'movex-core-util';
-import type { MovexReactContextProps } from 'movex-react';
+import type { MovexReactContextPropsConnected } from 'movex-react';
 import { MovexLocalProvider } from './MovexLocalProvider';
 
 type Props<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
   TResourceType extends Extract<keyof TResourcesMap, string>
-> = React.PropsWithChildren<{
-  movexDefinition: MovexDefinition<TResourcesMap>;
-  clientId?: string;
-  onConnected?: (
-    state: Extract<
-      MovexReactContextProps<TResourcesMap>,
-      { connected: true }
-    >['movex']
-  ) => void;
-  onDisconnected?: () => void;
-}>;
+> = React.PropsWithChildren<
+  {
+    movexDefinition: MovexDefinition<TResourcesMap>;
+    clientId?: string;
+    onConnected?: (
+      state: MovexReactContextPropsConnected<TResourcesMap>['movex']
+    ) => void;
+    onDisconnected?: () => void;
+  } & {
+    masterEmitDelayMs?: number;
+  }
+>;
 
 type State = {
   clientId?: MovexClient['id'];
@@ -54,6 +55,7 @@ export class MovexLocalInstance<
 
           this.props.onDisconnected?.();
         }}
+        masterEmitDelayMs={this.props.masterEmitDelayMs}
       >
         {/* {clientId && this.props.rid && ( */}
         {clientId && <>{this.props.children}</>}

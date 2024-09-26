@@ -6,41 +6,155 @@ import {
   counterReducer,
   initialCounterState,
 } from 'movex-specs-util';
+import MockDate from 'mockdate';
 
 const rid: ResourceIdentifier<string> = 'counter:test-id';
 
-test('Dispatch Local Actions', async () => {
-  const $resource = new MovexResourceObservable(
-    'test-client',
-    rid,
-    counterReducer
-  );
-  $resource.setMasterSyncing(false);
-
-  $resource.dispatch({
-    type: 'increment',
-  });
-
-  await tillNextTick();
-
-  expect($resource.getUnwrappedState()).toEqual({ count: 1 });
-
-  $resource.onUpdate((next) => {
-    expect(next.checkedState).toEqual(
-      computeCheckedState({
-        count: 4,
-      })
+describe('Dispatch', () => {
+  test('Dispatch Local Actions', async () => {
+    const $resource = new MovexResourceObservable(
+      'test-client',
+      rid,
+      counterReducer
     );
+    $resource.setMasterSyncing(false);
+
+    $resource.dispatch({
+      type: 'increment',
+    });
+
+    await tillNextTick();
+
+    expect($resource.getUnwrappedState()).toEqual({ count: 1 });
+
+    $resource.onUpdate((next) => {
+      expect(next.checkedState).toEqual(
+        computeCheckedState({
+          count: 4,
+        })
+      );
+    });
+
+    $resource.dispatch({
+      type: 'incrementBy',
+      payload: 3,
+    });
+
+    await tillNextTick();
+
+    expect($resource.getUnwrappedState()).toEqual({ count: 4 });
   });
 
-  $resource.dispatch({
-    type: 'incrementBy',
-    payload: 3,
+  test('Dispatch Local Actions via the callback method', async () => {
+    const $resource = new MovexResourceObservable(
+      'test-client',
+      rid,
+      counterReducer
+    );
+    $resource.setMasterSyncing(false);
+
+    $resource.dispatch(() => ({
+      type: 'increment',
+    }));
+
+    await tillNextTick();
+
+    expect($resource.getUnwrappedState()).toEqual({ count: 1 });
+
+    $resource.onUpdate((next) => {
+      expect(next.checkedState).toEqual(
+        computeCheckedState({
+          count: 4,
+        })
+      );
+    });
+
+    $resource.dispatch({
+      type: 'incrementBy',
+      payload: 3,
+    });
+
+    await tillNextTick();
+
+    expect($resource.getUnwrappedState()).toEqual({ count: 4 });
+  });
+});
+
+describe('Reconciliate Actions', () => {
+  test('Updates when matching', () => {
+    const $resource = new MovexResourceObservable(
+      'test-client',
+      rid,
+      counterReducer
+    );
+
+    const updateSpy = jest.fn();
+    $resource.onUpdate(updateSpy);
+
+    const [incrementedState, incrementedStateChecksum] = computeCheckedState({
+      ...initialCounterState,
+      count: initialCounterState.count + 1,
+    });
+
+    const actual = $resource.reconciliateAction({
+      action: {
+        type: 'increment',
+      },
+      checksum: incrementedStateChecksum,
+    });
+
+    expect(actual).toEqual(
+      new Ok([incrementedState, incrementedStateChecksum])
+    );
+
+    expect(updateSpy).toHaveBeenCalledWith({
+      subscribers: {},
+      checkedState: [incrementedState, incrementedStateChecksum],
+    });
   });
 
-  await tillNextTick();
+  test('Fails when NOT matching and does not update', () => {
+    const $resource = new MovexResourceObservable(
+      'test-client',
+      rid,
+      counterReducer
+    );
 
-  expect($resource.getUnwrappedState()).toEqual({ count: 4 });
+    const updateSpy = jest.fn();
+    $resource.onUpdate(updateSpy);
+
+    const actual = $resource.reconciliateAction({
+      action: {
+        type: 'increment',
+      },
+      checksum: 'wrong_checksum',
+    });
+
+    expect(actual.val).toEqual('ChecksumMismatch');
+  });
+});
+
+describe('Master Actions (applied locally only)', () => {
+  test('tests a master action local application', async () => {
+    const $resource = new MovexResourceObservable(
+      'test-client',
+      rid,
+      counterReducer
+    );
+    $resource.setMasterSyncing(false);
+
+    const MOCKED_NOW = 33;
+    MockDate.set(new Date(MOCKED_NOW));
+
+    $resource.dispatch((movex) => ({
+      type: 'incrementBy',
+      payload: movex.$queries.now(),
+    }));
+
+    await tillNextTick();
+
+    expect($resource.getUnwrappedState()).toEqual({ count: MOCKED_NOW });
+  });
 });
 
 describe('External Updates', () => {
@@ -74,83 +188,29 @@ describe('External Updates', () => {
 
     expect($resource.getUnwrappedState()).toEqual({ count: 39 });
   });
+});
 
-  describe('Reconciliate Action', () => {
-    test('Updates when matching', () => {
-      const $resource = new MovexResourceObservable(
-        'test-client',
-        rid,
-        counterReducer
-      );
+test('Destroys the observable', async () => {
+  const $resource = new MovexResourceObservable(
+    'test-client',
+    rid,
+    counterReducer
+  );
+  $resource.setMasterSyncing(false);
+  const updateListener = jest.fn();
+  $resource.onUpdate(updateListener);
 
-      const updateSpy = jest.fn();
-      $resource.onUpdate(updateSpy);
+  expect(updateListener).not.toHaveBeenCalled();
 
-      const [incrementedState, incrementedStateChecksum] = computeCheckedState({
-        ...initialCounterState,
-        count: initialCounterState.count + 1,
-      });
+  $resource.destroy();
 
-      const actual = $resource.reconciliateAction({
-        action: {
-          type: 'increment',
-        },
-        checksum: incrementedStateChecksum,
-      });
+  await tillNextTick();
 
-      expect(actual).toEqual(
-        new Ok([incrementedState, incrementedStateChecksum])
-      );
-
-      expect(updateSpy).toHaveBeenCalledWith({
-        subscribers: {},
-        checkedState: [incrementedState, incrementedStateChecksum],
-      });
-    });
-
-    test('Fails when NOT matching and does not update', () => {
-      const $resource = new MovexResourceObservable(
-        'test-client',
-        rid,
-        counterReducer
-      );
-
-      const updateSpy = jest.fn();
-      $resource.onUpdate(updateSpy);
-
-      const actual = $resource.reconciliateAction({
-        action: {
-          type: 'increment',
-        },
-        checksum: 'wrong_checksum',
-      });
-
-      expect(actual.val).toEqual('ChecksumMismatch');
-    });
+  $resource.dispatch({
+    type: 'increment',
   });
 
-  test('Destroys the observable', async () => {
-    const $resource = new MovexResourceObservable(
-      'test-client',
-      rid,
-      counterReducer
-    );
-    $resource.setMasterSyncing(false);
-    const updateListener = jest.fn();
-    $resource.onUpdate(updateListener);
-
-    expect(updateListener).not.toHaveBeenCalled();
-
-    $resource.destroy();
-
-    await tillNextTick();
-
-    $resource.dispatch({
-      type: 'increment',
-    });
-
-    expect(updateListener).not.toHaveBeenCalled();
-  });
+  expect(updateListener).not.toHaveBeenCalled();
 });
 
 // TODO: Add some tests with the subscibers

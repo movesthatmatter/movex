@@ -1,6 +1,6 @@
 {
   "name": "movex",
-  "version": "0.1.6-2",
+  "version": "0.1.6-23",
   "license": "MIT",
   "author": {
     "name": "Gabriel C. Troia",
@@ -26,6 +26,7 @@
     "dev-movex-docs": "npx nx serve movex-docs",
     "lint-all-libs": "npx nx run-many --parallel --target=lint --projects=movex-core-util,movex,movex-server,movex-service,movex-react,movex-vue --quiet",
     "push-all-libs--locally": "cd dist/libs/movex && npm version pre && yalc push && cd -; cd dist/libs/movex-server && npm version pre && yalc push && cd -; cd dist/libs/movex-core-util && npm version pre && yalc push && cd -; cd dist/libs/movex-react && npm version pre && yalc push && cd -; cd dist/libs/movex-service && npm version pre && yalc push && cd -; cd dist/libs/movex-store && npm version pre && yalc push && cd -; cd dist/libs/movex-master && npm version pre && yalc push && cd -;",
+    "push-lib-locally--movex": "cd dist/libs/movex && npm version pre && yalc push && cd -",
     "push-lib-locally--movex-react": "cd dist/libs/movex-react && npm version pre && yalc push && cd -",
     "push-lib-locally--movex-server": "cd dist/libs/movex-server && npm version pre && yalc push && cd -",
     "push-lib-locally--movex-master": "cd dist/libs/movex-master && npm version pre && yalc push && cd -",
@@ -71,6 +72,7 @@
     "express": "^4.18.2",
     "handy-redis": "1.8.3",
     "hotscript": "^1.0.7",
+    "json-find": "^2.0.8",
     "microdiff": "^1.3.1",
     "micropatch": "https://github.com/movesthatmatter/micropatch.git",
     "next": "13.0.0",

@@ -414,3 +414,9 @@ export type OnlyKeysOfType<T, O extends Record<string, unknown>> = {
 export type DistributiveOmit<T, K extends PropertyKey> = T extends any
   ? Omit<T, K>
   : never;
+
+export type DistributivePick<T, K extends keyof T> = T extends unknown
+  ? Pick<T, K>
+  : never;
+
+export type TupleToUnionType<T extends any[]> = T[number];
