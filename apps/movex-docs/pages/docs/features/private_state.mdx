@@ -1,0 +1,8 @@
+# Private State
+
+Sometimes, some parts of the state need not be known by every peer subscribed to it right away. This is called `Private State` or `Private State Fragments`.
+
+Think about a game of Poker for example, where each player gets a hand of cards that are meant to be kept _secret_ until the end of the round when every remaining player will reveal their cards. In a naive implementation of a Shared State setup, all of the hands would be kept somewhere in the global state and thus easily accessible by anyone who knows where to look (e.g. at the network traffic) – and thus a bad actor would be able to read their values even if the UI might not actually display them.
+
+Movex makes it very easy to keep these 100% private, by allowing the developer to decide which part of the state remains public and which private for each client (_peer_). See more more on how that works [here](/docs/how/private_state).
+ 

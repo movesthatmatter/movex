@@ -1,7 +1,7 @@
 {
-  "frontend_only": "Frontend Only",
+  "serverless": "Serverless",
   "server_authoritative": "Authoritative Server",
   "realtime": "Realtime State Sync",
-  "secret_state": "Secret State",
+  "private_state": "Private State",
   "functional": "Typesafe Functional Programming"
 }

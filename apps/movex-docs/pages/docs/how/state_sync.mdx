@@ -1,0 +1,23 @@
+# State Sync
+
+**With Movex, state changes are triggered by one thing only: an Action Dispatch Event.**
+
+When an Action is dispatched, Movex eagerly updates the state on the client that initiated it. Simultaneously, it emits an <code>ActionDispatchedEvent</code> to the Master, which applies the Action to the latest Master State, computes a new state checksum, and sends an <code>ActionForwardedEvent</code> to the other peer clients. This ensures they update their state accordingly and remain in sync.
+
+**Utilizing state checksums optimally.**
+
+The <code>ActionForwardedEvent</code> contains two key elements in its payload:
+1. the originally dispatched Action.
+2. the new Master State Checksum
+
+This mechanism allows Movex to efficiently verify whether the local state matches the Master state on each client.
+
+
+**The logic is straightforward:**
+
+_“If the received checksum matches the local checksum after applying the forwarded Action, the client and Master are in sync, and everything is functioning correctly. If not, something unexpected occurred, and the states are no longer aligned.”_
+
+When the latter occurs, Movex logs a warning to alert the developer to potential issues in the code. It then fetches the latest state from the Master, bringing the faulty client back in sync, and everything is fine again.
+
+**In most cases, this extra network call to retrieve the full state won’t significantly impact the UI/UX, but if it happens frequently, it’s a sign that something deeper needs attention.**
+

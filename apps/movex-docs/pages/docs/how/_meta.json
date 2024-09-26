@@ -4,5 +4,6 @@
   "reducers": "Reducers",
   "actions": "Actions",
   "state": "State",
-  "secret_state": "Secret State & Private Actions"
+  "private_state": "Private State",
+  "state_sync": "State Sync"
 }
