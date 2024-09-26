@@ -1,17 +1,18 @@
 import React from 'react';
 import {
   invoke,
-  ConnectionToClient,
   type MovexClient as MovexClientUser,
   type MovexDefinition,
   type BaseMovexDefinitionResourcesMap,
   StringKeys,
   ResourceIdentifier,
+  SanitizedMovexClient,
 } from 'movex-core-util';
 import {
   MovexMasterServer,
   MockConnectionEmitter,
-  getUuid, // This can actually be mocked here as it's just client only!
+  getUuid,
+  ConnectionToClient, // This can actually be mocked here as it's just client only!
 } from 'movex-master';
 import { MovexClient } from 'movex';
 import {
@@ -19,10 +20,11 @@ import {
   MovexReactContextProps,
   MovexResourceObservablesRegistry,
   MovexReactContextPropsConnected,
+  MovexReactContextPropsNotConnected,
+  initialReactMovexContext,
 } from 'movex-react';
 import { MovexLocalContextConsumerProvider } from './MovexLocalContextConsumer';
 import { orchestrateDefinedMovex } from './ClientMasterOrchestrator';
-// import { MovexContextPropsConnected } from 'movex-react';
 
 type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
   React.PropsWithChildren<{
@@ -30,14 +32,9 @@ type Props<TResourcesMap extends BaseMovexDefinitionResourcesMap> =
     clientId?: MovexClientUser['id'];
     masterEmitDelayMs?: number;
     onConnected?: (
-      state: Extract<MovexReactContextProps<TResourcesMap>, { connected: true }>
+      state: MovexReactContextPropsConnected<TResourcesMap>
     ) => void;
-    onDisconnected?: (
-      state: Extract<
-        MovexReactContextProps<TResourcesMap>,
-        { connected: false }
-      >
-    ) => void;
+    onDisconnected?: (state: MovexReactContextPropsNotConnected) => void;
   }>;
 
 type State<TResourcesMap extends BaseMovexDefinitionResourcesMap> = {
@@ -54,11 +51,7 @@ export class MovexLocalProvider<
     super(props);
 
     this.state = {
-      contextState: {
-        connected: false,
-        clientId: undefined,
-        clientInfo: undefined,
-      },
+      contextState: initialReactMovexContext,
     };
   }
 
@@ -66,11 +59,14 @@ export class MovexLocalProvider<
     // Clean up the prev event handlers in case it's called multiple times (which shouldnt)
     this.cleanUp();
 
-    const clientId = this.props.clientId || getUuid();
+    const clientWithInfo: SanitizedMovexClient<{}> = {
+      id: this.props.clientId || getUuid(),
+      info: {},
+    };
 
     // This should be defined as real source not just as a mock
     const emitterOnMaster = new MockConnectionEmitter(
-      clientId,
+      clientWithInfo.id,
       'master-emitter'
     );
 
@@ -80,8 +76,8 @@ export class MovexLocalProvider<
     }
 
     const connectionToClient = new ConnectionToClient(
-      clientId,
-      emitterOnMaster
+      emitterOnMaster,
+      clientWithInfo
     );
 
     const unsubscribeFromConnection =
@@ -89,7 +85,7 @@ export class MovexLocalProvider<
 
     const mockedMovex = orchestrateDefinedMovex(
       this.props.movexDefinition,
-      clientId,
+      clientWithInfo.id,
       emitterOnMaster
     );
 
@@ -101,7 +97,7 @@ export class MovexLocalProvider<
     const client = mockedMovex.movex.getClient();
 
     const nextState: MovexReactContextPropsConnected<TResourcesMap> = {
-      connected: true,
+      status: 'connected',
       movex: mockedMovex.movex,
       clientId: client.id,
       clientInfo: client.info,

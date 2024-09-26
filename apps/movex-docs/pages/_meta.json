@@ -24,5 +24,9 @@
   "about": {
     "title": "About",
     "type": "page"
+  },
+  "changelog": {
+    "title": "Changelog",
+    "type": "page"
   }
 }

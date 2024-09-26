@@ -1,27 +1,22 @@
+import { Err, Ok } from 'ts-results';
+import { AsyncErr, AsyncResult } from 'ts-async-results';
+import { MovexMasterResource } from './MovexMasterResource';
+import { MovexStoreItem, resultError } from 'movex-store';
 import {
+  type AnyAction,
+  type IOEvents,
+  type AnyStringResourceIdentifier,
   MovexClient,
   globalLogsy,
   objectKeys,
   toResourceIdentifierObj,
-  type AnyAction,
-  type IOEvents,
-  type ConnectionToClient,
-  type AnyStringResourceIdentifier,
   MovexClientInfo,
   SanitizedMovexClient,
   GenericResourceType,
-  isAction,
-  isMasterAction,
-  GenericAction,
-  GenericMasterAction,
   objectOmit,
 } from 'movex-core-util';
-import { AsyncErr, AsyncResult } from 'ts-async-results';
-import { Err, Ok } from 'ts-results';
-import { MovexMasterResource } from './MovexMasterResource';
-import { itemToSanitizedClientResource, parseMasterAction } from './util';
-import { MovexStoreItem } from 'movex-store';
-import { resultError } from 'movex-store';
+import { itemToSanitizedClientResource } from './util';
+import { type ConnectionToClient } from './ConnectionToClient';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
 
@@ -60,8 +55,7 @@ export class MovexMasterServer {
       (prev, nextClientId) => ({
         ...prev,
         [nextClientId]: {
-          id: this.clientConnectionsByClientId[nextClientId].clientId,
-          info: this.clientConnectionsByClientId[nextClientId].clientInfo,
+          ...this.clientConnectionsByClientId[nextClientId].client,
           subscriptions: {
             ...this.subscribersToRidsMap[nextClientId],
             subscribedAt: -1, // TODO: fix this if needed
@@ -103,13 +97,13 @@ export class MovexMasterServer {
       }
 
       masterResource
-        .applyAction(rid, clientConnection.clientId, action)
+        .applyAction(rid, clientConnection.client.id, action)
         .map(({ nextPublic, nextPrivate, peerActions }) => {
           if (peerActions.type === 'reconcilable') {
             // TODO: Filter out the client id so it only received the ack
             objectKeys(peerActions.byClientId)
               // Take out myself
-              .filter((id) => id !== clientConnection.clientId)
+              .filter((id) => id !== clientConnection.client.id)
               .forEach((peerId) => {
                 if (peerActions.byClientId[peerId]) {
                   const peerConnection =
@@ -127,7 +121,7 @@ export class MovexMasterServer {
             return acknowledge?.(
               new Ok({
                 type: 'reconciliation',
-                ...peerActions.byClientId[clientConnection.clientId],
+                ...peerActions.byClientId[clientConnection.client.id],
               } as const)
             );
           }
@@ -192,7 +186,7 @@ export class MovexMasterServer {
       }
 
       masterResource
-        .getClientSpecificResource(rid, clientConnection.clientId)
+        .getClientSpecificResource(rid, clientConnection.client.id)
         .map((r) => {
           acknowledge?.(
             new Ok(
@@ -226,7 +220,7 @@ export class MovexMasterServer {
       }
 
       masterResource
-        .getClientSpecificState(rid, clientConnection.clientId)
+        .getClientSpecificState(rid, clientConnection.client.id)
         .map((checkedState) => acknowledge?.(new Ok(checkedState)))
         .mapErr(
           AsyncResult.passThrough((e) => {
@@ -301,13 +295,13 @@ export class MovexMasterServer {
       }
 
       masterResource
-        .addResourceSubscriber(payload.rid, clientConnection.clientId)
+        .addResourceSubscriber(payload.rid, clientConnection.client.id)
         .map((s) => {
           // Keep a record of the rid it just subscribed to so it can also be unsubscribed
           this.subscribersToRidsMap = {
             ...this.subscribersToRidsMap,
-            [clientConnection.clientId]: {
-              ...this.subscribersToRidsMap[clientConnection.clientId],
+            [clientConnection.client.id]: {
+              ...this.subscribersToRidsMap[clientConnection.client.id],
               [s.rid]: undefined,
             },
           };
@@ -324,7 +318,7 @@ export class MovexMasterServer {
           // Let the rest of the peer-clients know as well
           objectKeys(s.subscribers)
             // Take out just-added-client
-            .filter((clientId) => clientId !== clientConnection.clientId)
+            .filter((clientId) => clientId !== clientConnection.client.id)
             .forEach((peerId) => {
               const peerConnection = this.clientConnectionsByClientId[peerId];
 
@@ -337,8 +331,8 @@ export class MovexMasterServer {
               }
 
               const client: SanitizedMovexClient = {
-                id: clientConnection.clientId,
-                info: clientConnection.clientInfo,
+                id: clientConnection.client.id,
+                info: clientConnection.client.info,
               };
 
               peerConnection.emitter.emit('onResourceSubscriberAdded', {
@@ -378,7 +372,7 @@ export class MovexMasterServer {
 
     this.clientConnectionsByClientId = {
       ...this.clientConnectionsByClientId,
-      [clientConnection.clientId]: clientConnection as ConnectionToClient<
+      [clientConnection.client.id]: clientConnection as ConnectionToClient<
         any,
         AnyAction,
         any,
@@ -387,7 +381,7 @@ export class MovexMasterServer {
     };
 
     logsy.info('Connection Added Succesfully', {
-      clientId: clientConnection.clientId,
+      clientId: clientConnection.client.id,
       connectionsCount: Object.keys(this.clientConnectionsByClientId).length,
     });
 
@@ -468,6 +462,10 @@ export class MovexMasterServer {
       clientId,
       connectionsLeft: Object.keys(this.clientConnectionsByClientId).length,
     });
+  }
+
+  getConnection(clientId: MovexClient['id']) {
+    return this.clientConnectionsByClientId[clientId];
   }
 
   private unsubscribeClientFromResources(clientId: MovexClient['id']) {

@@ -1,5 +1,4 @@
 import type {
-  GenericClientResourceShapeOfType,
   ResourceIdentifier,
   ResourceIdentifierObj,
   ResourceIdentifierStr,

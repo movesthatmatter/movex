@@ -5,7 +5,6 @@ import cors from 'cors';
 import {
   globalLogsy,
   SocketIOEmitter,
-  ConnectionToClient,
   type MovexDefinition,
   type IOEvents,
   isResourceIdentifier,
@@ -14,8 +13,11 @@ import {
   MovexClientInfo,
 } from 'movex-core-util';
 import { MemoryMovexStore, MovexStore } from 'movex-store';
-import { initMovexMaster } from 'movex-master';
-import { isOneOf } from './util';
+import { ConnectionToClient, initMovexMaster } from 'movex-master';
+import { delay, isOneOf } from './util';
+
+const pkgVersion = require('../../package.json').version;
+const pkgBuild = 3;
 
 const logsy = globalLogsy.withNamespace('[MovexServer]');
 
@@ -54,8 +56,25 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   const getClientId = (clientId: string) =>
     clientId || String(Math.random()).slice(-5);
 
-  socket.on('connection', (io) => {
+  socket.on('connection', async (io) => {
     const clientId = getClientId(io.handshake.query['clientId'] as string);
+
+    const oldClientConnection = movexMaster.getConnection(clientId);
+
+    if (oldClientConnection) {
+      /**
+       * Disconnects the old client if a connection is already present, in order to support the new connection
+       *  This normally happens when the same user opens a new tab with the same resource present
+       *
+       * Note - this is the simplest approach for now, but in the future this can include more advanced use-cases
+       */
+      oldClientConnection.emitter.disconnect();
+
+      movexMaster.removeConnection(clientId);
+
+      await delay(10);
+    }
+
     const clientInfo = JSON.parse(
       (io.handshake.query['clientInfo'] as string) || ''
     ) as MovexClientInfo;
@@ -63,9 +82,11 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     logsy.info('Client Connected', { clientId, clientInfo });
 
     const connectionToClient = new ConnectionToClient(
-      clientId,
       new SocketIOEmitter<IOEvents>(io),
-      clientInfo
+      {
+        id: clientId,
+        info: clientInfo,
+      }
     );
 
     connectionToClient.emitClientReady();
@@ -174,6 +195,12 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   const port = process.env['port'] || 3333;
   httpServer.listen(port, () => {
     const address = httpServer.address();
+
+    console.log(
+      `[movex-server] v${pkgVersion}${
+        pkgBuild ? ` (build:${pkgBuild})` : ''
+      } started at port ${port}.`
+    );
 
     if (typeof address !== 'string') {
       logsy.info('Server started', {

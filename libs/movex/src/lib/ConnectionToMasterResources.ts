@@ -9,7 +9,6 @@ import type {
   ToCheckedAction,
   UnsubscribeFn,
   IOEvents,
-  ConnectionToMaster,
   MovexClient,
   SanitizedMovexClient,
 } from 'movex-core-util';
@@ -21,6 +20,7 @@ import {
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
+import { ConnectionToMaster } from './ConnectionToMaster';
 
 /**
  * This handles the connection with Master per ResourceType
@@ -189,7 +189,7 @@ export class ConnectionToMasterResources<
       this.connectionToMaster.emitter
         .emitAndAcknowledge('addResourceSubscriber', {
           rid,
-          clientInfo: this.connectionToMaster.clientInfo,
+          clientInfo: this.connectionToMaster.client.info,
         })
         .then((res) => (res.ok ? new Ok(res.val) : new Err(res.val)))
     );

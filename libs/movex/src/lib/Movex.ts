@@ -1,9 +1,9 @@
 import type {
   AnyAction,
-  ConnectionToMaster,
   MovexReducer,
   SanitizedMovexClient,
 } from 'movex-core-util';
+import { ConnectionToMaster } from './ConnectionToMaster';
 import { MovexResource } from './MovexResource';
 
 export type MovexConfig = {
@@ -21,14 +21,11 @@ export class Movex {
   ) {}
 
   getClientId() {
-    return this.connectionToMaster.clientId;
+    return this.getClient().id;
   }
 
   getClient(): SanitizedMovexClient {
-    return {
-      id: this.getClientId(),
-      info: this.connectionToMaster.clientInfo,
-    };
+    return this.connectionToMaster.client;
   }
 
   register<S, A extends AnyAction, TResourceType extends string>(
