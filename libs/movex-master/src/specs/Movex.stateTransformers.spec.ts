@@ -5,7 +5,7 @@ import {
   speedPushGameReducer,
   tillNextTick,
 } from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
+import { createSanitizedMovexClient, movexClientMasterOrchestrator } from 'movex-master';
 import MockDate from 'mockdate';
 
 const orchestrator = movexClientMasterOrchestrator();
@@ -52,10 +52,7 @@ test('State is changed (to status="completed") when a related ACTION DISPATCH tr
       timeToNextPushMs: initialSpeedPushGameState.timeToNextPushMs,
     }),
     subscribers: {
-      'test-user': {
-        id: 'test-user',
-        info: {},
-      },
+      'test-user': createSanitizedMovexClient('test-user'),
     },
   };
 

@@ -4,6 +4,7 @@ import type {
   MovexClientInfo,
   MovexDefinition,
   ResourceIdentifier,
+  SanitizedMovexClient,
   StringKeys,
   UnsubscribeFn,
 } from 'movex-core-util';
@@ -15,8 +16,9 @@ export type MovexContextProps<
 
 export type MovexContextPropsNotConnected = {
   status: 'disconnected' | 'initiating' | 'connectionError';
-  clientId: undefined;
-  clientInfo: undefined;
+  // clientId: undefined;
+  // clientInfo: undefined;
+  client?: undefined;
   movex?: Movex;
   movexConfig?: undefined;
   bindResource?: () => void;
@@ -26,8 +28,9 @@ export type MovexContextPropsConnected<
   TResourcesMap extends BaseMovexDefinitionResourcesMap
 > = {
   status: 'connected';
-  clientId: string;
-  clientInfo: MovexClientInfo;
+  // clientId: string;
+  // clientInfo: MovexClientInfo;
+  client: SanitizedMovexClient;
   movex: MovexClient.MovexFromDefinition<TResourcesMap>;
   movexDefinition: MovexDefinition<TResourcesMap>;
   bindResource: <TResourceType extends StringKeys<TResourcesMap>>(
@@ -39,8 +42,6 @@ export type MovexContextPropsConnected<
 export const initialMovexContext = {
   movex: undefined,
   status: 'initiating',
-  clientId: undefined,
-  clientInfo: undefined,
 } as const;
 
 export const MovexContext =

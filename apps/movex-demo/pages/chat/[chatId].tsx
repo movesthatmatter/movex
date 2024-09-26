@@ -1,4 +1,4 @@
-import { useMovexBoundResourceFromRid, useMovexClientId } from 'movex-react';
+import { useMovexBoundResourceFromRid, useMovexClient } from 'movex-react';
 import { useRouter } from 'next/router';
 import { useMemo } from 'react';
 import { toResourceIdentifierObj } from 'movex-core-util';
@@ -20,7 +20,7 @@ const ChatSystem: React.FC<Props> = () => {
 
   // TODO: Validate the rid is correct inside useMovexBoundResouce
   const boundResource = useMovexBoundResourceFromRid(movexConfig, rid);
-  const userId = useMovexClientId(movexConfig);
+  const userId = useMovexClient(movexConfig)?.id;
 
   if (!(boundResource && userId)) {
     return null;

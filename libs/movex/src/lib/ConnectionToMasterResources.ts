@@ -1,4 +1,4 @@
-import type {
+import {
   GetIOPayloadErrTypeFrom,
   GetIOPayloadOKTypeFrom,
   ResourceIdentifier,
@@ -11,6 +11,8 @@ import type {
   IOEvents,
   MovexClient,
   SanitizedMovexClient,
+  objectOmit,
+  objectPick,
 } from 'movex-core-util';
 import {
   invoke,
@@ -39,10 +41,7 @@ export class ConnectionToMasterResources<
   }>();
 
   private subscriberAddedEventPubsy = new Pubsy<{
-    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: Pick<
-      MovexClient,
-      'id' | 'info'
-    >;
+    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: SanitizedMovexClient;
   }>();
 
   private subscriberRemovedEventPubsy = new Pubsy<{
@@ -113,7 +112,7 @@ export class ConnectionToMasterResources<
 
       this.subscriberAddedEventPubsy.publish(
         `rid:${toResourceIdentifierStr(p.rid)}`,
-        { id: p.client.id, info: p.client.info }
+        objectPick(p.client, ['clockOffset', 'id', 'info'])
       );
     };
 

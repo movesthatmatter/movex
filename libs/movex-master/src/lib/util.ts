@@ -1,10 +1,5 @@
 export { v4 as getUuid } from 'uuid';
-import {
-  applyReducer,
-  compare,
-  deepClone,
-  applyPatch,
-} from 'fast-json-patch';
+import { applyReducer, compare, deepClone, applyPatch } from 'fast-json-patch';
 import {
   JsonPatch,
   isObject,
@@ -16,6 +11,9 @@ import {
   GenericMasterAction,
   MasterQueries,
   ToPublicAction,
+  MovexMasterContext,
+  SanitizedMovexClient,
+  UnknownRecord,
 } from 'movex-core-util';
 import { MovexStoreItem } from 'movex-store';
 
@@ -89,7 +87,8 @@ export const itemToSanitizedClientResource = <
         info: MovexClient['info'];
       }
     >;
-  }
+  },
+  clockOffset: number
 ): MovexClientResourceShape<TResourceType, TState> => ({
   rid: toResourceIdentifierStr(item.rid),
   state: item.state,
@@ -99,6 +98,7 @@ export const itemToSanitizedClientResource = <
       [nextSubId]: {
         id: nextSubId,
         info: item.subscribers[nextSubId].info || {},
+        clockOffset,
       },
     }),
     {} as MovexClientResourceShape<TResourceType, TState>['subscribers']
@@ -168,3 +168,26 @@ export const parseMasterAction = <TMasterAction extends GenericMasterAction>(
     payload: nextAction.payload,
   } as ToPublicAction<TMasterAction>;
 };
+
+export const createMasterContext = (p?: {
+  requestAt?: number;
+  extra?: UnknownRecord;
+}): MovexMasterContext => ({
+  // @Deprecate in favor of requestAt Props which enables purity
+  now: () => new Date().getTime(),
+
+  requestAt: p?.requestAt || new Date().getTime(),
+
+  ...(p?.extra && { _extra: p?.extra }),
+});
+
+export const createSanitizedMovexClient = <
+  TInfo extends SanitizedMovexClient['info'] = SanitizedMovexClient['info']
+>(
+  id: string,
+  p?: { info?: TInfo; clockOffset?: SanitizedMovexClient['clockOffset'] }
+): SanitizedMovexClient => ({
+  id,
+  info: p?.info || {},
+  clockOffset: p?.clockOffset || 0,
+});

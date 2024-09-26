@@ -32,8 +32,10 @@ export type MovexReducerMap<
 //   TAction extends AnyAction = AnyAction
 // > = (state: TState, action: TAction) => TState;
 
-export type MovexRemoteContext = {
+export type MovexMasterContext = {
+  // @Deprecate in favor of requestAt Props which enables purity
   now: () => number; // timestamp
+  requestAt: number; // timestamp
 };
 
 export type MovexReducer<S = any, A extends AnyAction = AnyAction> = ((
@@ -41,7 +43,7 @@ export type MovexReducer<S = any, A extends AnyAction = AnyAction> = ((
   action: A
 ) => S) & {
   $canReconcileState?: (s: S) => boolean;
-  $transformState?: (s: S, remoteContext: MovexRemoteContext) => S;
+  $transformState?: (s: S, masterContext: MovexMasterContext) => S;
 };
 
 export type GetReducerState<

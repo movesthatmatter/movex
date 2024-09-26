@@ -14,8 +14,10 @@ import {
   SanitizedMovexClient,
   GenericResourceType,
   objectOmit,
+  ResourceIdentifier,
+  MovexMasterContext,
 } from 'movex-core-util';
-import { itemToSanitizedClientResource } from './util';
+import { createMasterContext, itemToSanitizedClientResource } from './util';
 import { type ConnectionToClient } from './ConnectionToClient';
 
 const logsy = globalLogsy.withNamespace('[MovexMasterServer]');
@@ -96,8 +98,16 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onEmitAction',
+          action: payload.action,
+        },
+      });
+
       masterResource
-        .applyAction(rid, clientConnection.client.id, action)
+        .applyAction(rid, clientConnection.client.id, action, masterContext)
         .map(({ nextPublic, nextPrivate, peerActions }) => {
           if (peerActions.type === 'reconcilable') {
             // TODO: Filter out the client id so it only received the ack
@@ -171,37 +181,35 @@ export class MovexMasterServer {
     };
 
     const onGetResourceHandler = (
-      payload: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
+      { rid }: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
       acknowledge?: (
         p: ReturnType<IOEvents<S, A, TResourceType>['getResource']>
       ) => void
     ) => {
-      const { rid } = payload;
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onGetResourceHandler',
+        },
+      });
 
-      const masterResource =
-        this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
-
-      if (!masterResource) {
-        return acknowledge?.(new Err('MasterResourceInexistent'));
-      }
-
-      masterResource
-        .getClientSpecificResource(rid, clientConnection.client.id)
+      this.getSanitizedClientSpecificResource(
+        rid,
+        clientConnection.client,
+        masterContext
+      )
         .map((r) => {
-          acknowledge?.(
-            new Ok(
-              itemToSanitizedClientResource(
-                this.populateClientInfoToSubscribers(r)
-              )
-            )
-          );
+          acknowledge?.(new Ok(r));
         })
-        .mapErr(
-          AsyncResult.passThrough((e) => {
-            logsy.error('Get Resource Error', e);
-          })
-        )
-        .mapErr((e) => acknowledge?.(new Err(e)));
+        .mapErr((error) => {
+          logsy.error('GetResource Error', {
+            error,
+            rid,
+            clientId: this.clientConnectionsByClientId,
+          });
+
+          acknowledge?.(new Err(error));
+        });
     };
 
     const onGetResourceStateHandler = (
@@ -219,15 +227,25 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onGetResourceStateHandler',
+        },
+      });
+
       masterResource
-        .getClientSpecificState(rid, clientConnection.client.id)
+        .getClientSpecificState(rid, clientConnection.client.id, masterContext)
         .map((checkedState) => acknowledge?.(new Ok(checkedState)))
-        .mapErr(
-          AsyncResult.passThrough((e) => {
-            logsy.error('Get Resource Error', e);
-          })
-        )
-        .mapErr((e) => acknowledge?.(new Err(e)));
+        .mapErr((error) => {
+          logsy.error('GetResourceState Error', {
+            error,
+            rid,
+            clientId: this.clientConnectionsByClientId,
+          });
+
+          acknowledge?.(new Err(error));
+        });
     };
 
     const onGetResourceSubscribersHandler = (
@@ -259,23 +277,31 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onCreateResourceHandler',
+        },
+      });
+
       masterResource
         .create(resourceType, resourceState, resourceId)
-        .map((r) =>
-          acknowledge?.(
-            new Ok(
-              itemToSanitizedClientResource(
-                this.populateClientInfoToSubscribers(r)
-              )
-            )
-          )
+        .flatMap((r) =>
+          this.getSanitizedClientSpecificResource(
+            r.rid,
+            clientConnection.client,
+            masterContext
+          ).mapErr((e) => e)
         )
-        .mapErr(
-          AsyncResult.passThrough((e) => {
-            logsy.error('');
-          })
-        )
-        .mapErr(() => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .map((r) => acknowledge?.(new Ok(r)))
+        .mapErr((error) => {
+          logsy.error('OnCreateResourceHandler', {
+            error,
+            clientId: this.clientConnectionsByClientId,
+          });
+
+          acknowledge?.(new Err('UnknownError'));
+        }); // TODO: Type this using the ResultError from Matterio
     };
 
     const onAddResourceSubscriber = (
@@ -294,54 +320,69 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
+      const masterContext = createMasterContext({
+        extra: {
+          clientId: clientConnection.client.id,
+          req: 'onAddResourceSubscriber',
+        },
+      });
+
       masterResource
         .addResourceSubscriber(payload.rid, clientConnection.client.id)
-        .map((s) => {
+        .flatMap(() =>
+          this.getSanitizedClientSpecificResource(
+            payload.rid,
+            clientConnection.client,
+            masterContext
+          )
+        )
+        .map((sanitizedResource) => {
           // Keep a record of the rid it just subscribed to so it can also be unsubscribed
           this.subscribersToRidsMap = {
             ...this.subscribersToRidsMap,
             [clientConnection.client.id]: {
               ...this.subscribersToRidsMap[clientConnection.client.id],
-              [s.rid]: undefined,
+              [sanitizedResource.rid]: undefined,
             },
           };
 
           // Send the ack to the just-added-client
-          acknowledge?.(
-            new Ok(
-              itemToSanitizedClientResource(
-                this.populateClientInfoToSubscribers(s)
-              )
-            )
-          );
+          acknowledge?.(new Ok(sanitizedResource));
 
           // Let the rest of the peer-clients know as well
-          objectKeys(s.subscribers)
+          objectKeys(sanitizedResource.subscribers)
             // Take out just-added-client
             .filter((clientId) => clientId !== clientConnection.client.id)
             .forEach((peerId) => {
               const peerConnection = this.clientConnectionsByClientId[peerId];
 
               if (!peerConnection) {
-                logsy.error('OnAddResourceSubscriber PeerConnectionNotFound', {
-                  peerId,
-                  clientId: this.clientConnectionsByClientId,
-                });
+                logsy.error(
+                  'OnAddResourceSubscriber PeerConnectionNotFound Error',
+                  {
+                    peerId,
+                    rid: payload.rid,
+                    clientId: this.clientConnectionsByClientId,
+                  }
+                );
                 return;
               }
 
-              const client: SanitizedMovexClient = {
-                id: clientConnection.client.id,
-                info: clientConnection.client.info,
-              };
-
               peerConnection.emitter.emit('onResourceSubscriberAdded', {
                 rid: payload.rid,
-                client,
+                client: clientConnection.client, // TODO: Ensure this doesn't add more props than needed
               });
             });
         })
-        .mapErr((e) => acknowledge?.(new Err('UnknownError'))); // TODO: Type this using the ResultError from Matterio
+        .mapErr((error) => {
+          logsy.error('OnAddResourceSubscriber Error', {
+            error,
+            rid: payload.rid,
+            clientId: this.clientConnectionsByClientId,
+          });
+
+          acknowledge?.(new Err('UnknownError'));
+        }); // TODO: Type this using the ResultError from Matterio
     };
 
     const onPingHandler = (
@@ -401,11 +442,36 @@ export class MovexMasterServer {
     };
   }
 
+  private getSanitizedClientSpecificResource<TResourceType extends string>(
+    rid: ResourceIdentifier<TResourceType>,
+    client: SanitizedMovexClient,
+    masterContext: MovexMasterContext
+  ) {
+    const masterResource =
+      this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
+
+    if (!masterResource) {
+      return new Err('MasterResourceInexistent');
+    }
+
+    return masterResource
+      .getClientSpecificResource(rid, client.id, masterContext)
+      .map((r) =>
+        itemToSanitizedClientResource(
+          this.populateClientInfoToSubscribers(r),
+          client.clockOffset
+        )
+      );
+  }
+
   public getPublicResourceCheckedState<
     S,
     A extends AnyAction,
     TResourceType extends string
-  >({ rid }: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0]) {
+  >(
+    { rid }: Parameters<IOEvents<S, A, TResourceType>['getResourceState']>[0],
+    masterContext: MovexMasterContext
+  ) {
     const masterResource =
       this.masterResourcesByType[toResourceIdentifierObj(rid).resourceType];
 
@@ -415,7 +481,7 @@ export class MovexMasterServer {
       );
     }
 
-    return masterResource.getPublicState(rid);
+    return masterResource.getPublicState(rid, masterContext);
   }
 
   private populateClientInfoToSubscribers = <

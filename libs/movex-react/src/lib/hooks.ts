@@ -24,28 +24,15 @@ export const useMovex = <TResourcesMap extends BaseMovexDefinitionResourcesMap>(
     MovexContext as Context<MovexContextProps<typeof movexConfig['resources']>>
   );
 
-export const useMovexClientId = <
-  TResourcesMap extends BaseMovexDefinitionResourcesMap
->(
-  movexConfig: MovexDefinition<TResourcesMap>
-) => useMovex(movexConfig).clientId;
+// Removed on Aug 23 2024 in favor of only having the useMovexClient()
+// export const useMovexClientId = (
+//   movexConfig: MovexDefinition<BaseMovexDefinitionResourcesMap>
+// ) => useMovex(movexConfig).clientId;
 
-export const useMovexClient = <
-  TResourcesMap extends BaseMovexDefinitionResourcesMap
->(
-  movexConfig: MovexDefinition<TResourcesMap>
-): SanitizedMovexClient | undefined => {
-  const mc = useMovex(movexConfig);
-
-  if (mc.status !== 'connected') {
-    return undefined;
-  }
-
-  return {
-    id: mc.clientId,
-    info: mc.clientInfo,
-  };
-};
+export const useMovexClient = (
+  movexConfig?: MovexDefinition<BaseMovexDefinitionResourcesMap>
+): SanitizedMovexClient | undefined =>
+  useMovex(movexConfig || { resources: {} }).client;
 
 export type MovexResourceFromConfig<
   TResourcesMap extends BaseMovexDefinitionResourcesMap,
@@ -138,7 +125,7 @@ export const useMovexBoundResourceFromRid = <
     const unsubscribe = movexContext.bindResource(rid, (boundResource) => {
       setBoundResource(boundResource);
 
-      handlers?.onReady?.({ boundResource, clientId: movexContext.clientId });
+      handlers?.onReady?.({ boundResource, clientId: movexContext.client.id });
     });
 
     return () => {

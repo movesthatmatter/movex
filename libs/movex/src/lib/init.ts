@@ -3,6 +3,7 @@ import {
   EmptyFn,
   invoke,
   MovexClientInfo,
+  MovexClientMasterClockOffset,
   SanitizedMovexClient,
   SocketIOEmitter,
   UnknownRecord,
@@ -15,6 +16,7 @@ import type {
 } from 'movex-core-util';
 import { MovexFromDefinition } from './MovexFromDefintion';
 import { ConnectionToMaster } from './ConnectionToMaster';
+import { Ok } from 'ts-results';
 
 // TODO: The ClientId ideally isn't given from here bu retrieved somehow else. hmm
 // Or no?
@@ -79,9 +81,7 @@ export const initMovex = <TResourceMap extends BaseMovexDefinitionResourcesMap>(
     });
   }
 
-  const onClientReadyHandler = (
-    client: SanitizedMovexClient<UnknownRecord>
-  ) => {
+  const onReadyHandler = (client: SanitizedMovexClient) => {
     config.onReady(
       new MovexFromDefinition<TResourceMap>(
         movexDefinition,
@@ -90,10 +90,39 @@ export const initMovex = <TResourceMap extends BaseMovexDefinitionResourcesMap>(
     );
   };
 
-  emitter.on('onClientReady', onClientReadyHandler);
+  // emitter.on('pong', (payload) => {
+  //   // lastPongs.push(payload);
+  //   console.log('pong received, latency', payload);
+  //   // console.log('pong received, latency', payload);
+  // });
+
+  // emitter.on('ping' as any, (x) => {
+  //   emitter.emit('pong' as any, x);
+  // });
+
+  const onClockSyncHandler = (
+    payload: Parameters<IOEvents<any, any, string>['onClockSync']>[0],
+    acknowledge?: (
+      p: ReturnType<IOEvents<any, any, any>['onClockSync']>
+    ) => void
+  ) => {
+    const clientTime = new Date().getTime();
+    console.log('on clock sync handler', { payload, acknowledge });
+
+    // Respond with the client time
+    acknowledge?.(new Ok(clientTime));
+  };
+
+  emitter.on('onClockSync', onClockSyncHandler);
 
   unsubscribers.push(() => {
-    socket.off('onClientReady', onClientReadyHandler);
+    socket.off('onClockSync', onClockSyncHandler);
+  });
+
+  emitter.on('onReady', onReadyHandler);
+
+  unsubscribers.push(() => {
+    socket.off('onReady', onReadyHandler);
   });
 
   // Return the destroyer()

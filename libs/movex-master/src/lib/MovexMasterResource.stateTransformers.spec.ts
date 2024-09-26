@@ -5,12 +5,13 @@ import {
 } from 'movex-specs-util';
 import {
   computeCheckedState,
-  MovexRemoteContext,
+  MovexMasterContext,
   toResourceIdentifierStr,
 } from 'movex-core-util';
 import { MovexMasterResource } from './MovexMasterResource';
 import { MemoryMovexStore } from 'movex-store';
 import MockDate from 'mockdate';
+import { createMasterContext } from './util';
 
 const rid = toResourceIdentifierStr({ resourceType: 'c', resourceId: '1' });
 
@@ -28,9 +29,11 @@ test('gets initial state transformed', async () => {
     })
   );
 
-  const actualPublic = await master.getPublicState(rid).resolveUnwrap();
+  const mockMasterContext = createMasterContext({ requestAt: 123 });
+
+  const actualPublic = await master.getPublicState(rid, mockMasterContext).resolveUnwrap();
   const actualClientSpecific = await master
-    .getClientSpecificState(rid, 'testClient')
+    .getClientSpecificState(rid, 'testClient', mockMasterContext)
     .resolveUnwrap();
 
   const expected = computeCheckedState({ count: -99 });
@@ -59,9 +62,13 @@ test('gets initial state transformed with Prev State', async () => {
     })
   );
 
-  const actualPublic = await master.getPublicState(rid).resolveUnwrap();
+  const mockMasterContext = createMasterContext({ requestAt: 123 });
+
+  const actualPublic = await master
+    .getPublicState(rid, mockMasterContext)
+    .resolveUnwrap();
   const actualClientSpecific = await master
-    .getClientSpecificState(rid, 'testClient')
+    .getClientSpecificState(rid, 'testClient', mockMasterContext)
     .resolveUnwrap();
 
   const expected = computeCheckedState({ count: -104 });
@@ -76,7 +83,7 @@ test('gets initial state transformed with PrevState and Movex Context', async ()
 
   (counterReducer as any).$transformState = (
     prev: CounterState,
-    context: MovexRemoteContext
+    context: MovexMasterContext
   ): CounterState => {
     return { count: context.now() };
   };
@@ -90,9 +97,13 @@ test('gets initial state transformed with PrevState and Movex Context', async ()
     })
   );
 
-  const actualPublic = await master.getPublicState(rid).resolveUnwrap();
+  const mockMasterContext = createMasterContext({ requestAt: 123 });
+
+  const actualPublic = await master
+    .getPublicState(rid, mockMasterContext)
+    .resolveUnwrap();
   const actualClientSpecific = await master
-    .getClientSpecificState(rid, 'testClient')
+    .getClientSpecificState(rid, 'testClient', mockMasterContext)
     .resolveUnwrap();
 
   MockDate.reset();

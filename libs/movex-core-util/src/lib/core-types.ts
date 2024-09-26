@@ -237,8 +237,17 @@ export type MovexClient<Info extends MovexClientInfo = UnknownRecord> = {
   >;
 };
 
+export type MovexClientMasterClockOffset = number;
+
 export type SanitizedMovexClient<Info extends UnknownRecord = UnknownRecord> =
-  Pick<MovexClient<Info>, 'id' | 'info'>;
+  Pick<MovexClient<Info>, 'id' | 'info'> & {
+    /**
+     * This is the diff between client and master needed to be adjusted on the client side
+     * 
+     * TODO: Still not sure it should be available here - meaning all the peers can read it!
+     */
+    clockOffset: MovexClientMasterClockOffset;
+  };
 
 export type ResourceIdentifierObj<TResourceType extends string> = {
   resourceType: TResourceType;

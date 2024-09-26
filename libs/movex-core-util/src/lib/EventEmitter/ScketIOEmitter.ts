@@ -15,13 +15,19 @@ export class SocketIOEmitter<
   TSocketIO extends SocketIO = ServerSocket | ClientSocket
 > implements EventEmitter<TEventMap>
 {
+  protected config: {
+    waitForResponseMs: number;
+  };
+
   constructor(
     protected socket: TSocketIO,
-    protected config: {
+    config?: {
       waitForResponseMs?: number;
-    } = {}
+    }
   ) {
-    this.config.waitForResponseMs = this.config.waitForResponseMs || 15 * 1000;
+    this.config = {
+      waitForResponseMs: config?.waitForResponseMs || 15 * 1000,
+    };
   }
 
   on<E extends keyof TEventMap>(
@@ -173,6 +179,14 @@ export class SocketIOEmitter<
   }
 }
 
+/**
+ * TODO: Deprecate this in favor of using the native timeout See https://socket.io/docs/v4/emitting-events/#with-timeout
+ *
+ * @param onSuccess
+ * @param onTimeout
+ * @param timeout
+ * @returns
+ */
 const withTimeout = (
   onSuccess: (...args: any[]) => void,
   onTimeout: () => void,

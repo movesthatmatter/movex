@@ -10,7 +10,9 @@ describe('useMovex', () => {
     const { result } = renderHook(() => useMovex(movexConfigMock));
 
     expect(result.current.movex).toBeUndefined();
-    expect(result.current.clientId).toBeUndefined();
-    expect(result.current.connected).toEqual(false);
+    expect(result.current.client).toBeUndefined();
+    expect(result.current.status).toEqual('initiating');
   });
 });
+
+// TODO: Add more tests

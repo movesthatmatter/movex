@@ -129,7 +129,7 @@ export class MovexBoundResourceComponent<
           if (r.status === 'connected') {
             this.init(
               // r.movex as MovexClient.MovexFromDefintion<TResourcesMap>,
-              r.clientId,
+              r.client.id,
               r.bindResource
             );
           }

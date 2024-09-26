@@ -5,7 +5,10 @@ import {
   initialGameState,
   tillNextTick,
 } from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
+import {
+  createSanitizedMovexClient,
+  movexClientMasterOrchestrator,
+} from 'movex-master';
 
 const orchestrator = movexClientMasterOrchestrator();
 
@@ -55,10 +58,7 @@ describe('All', () => {
     const expected = {
       checkedState: computeCheckedState({ count: 2 }),
       subscribers: {
-        'test-user': {
-          id: 'test-user',
-          info: {},
-        },
+        'test-user': createSanitizedMovexClient('test-user'),
       },
     };
 
@@ -86,10 +86,7 @@ describe('All', () => {
     const expected = {
       checkedState: computeCheckedState({ count: 3 }),
       subscribers: {
-        'test-user': {
-          id: 'test-user',
-          info: {},
-        },
+        'test-user': createSanitizedMovexClient('test-user'),
       },
     };
 
@@ -138,10 +135,7 @@ describe('All', () => {
         },
       }),
       subscribers: {
-        'test-user': {
-          id: 'test-user',
-          info: {},
-        },
+        'test-user': createSanitizedMovexClient('test-user'),
       },
     };
 
