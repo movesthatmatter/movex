@@ -5,13 +5,13 @@ import {
   MovexReducer,
   MovexClientInfo,
   SanitizedMovexClient,
-  MovexMasterContext,
 } from 'movex-core-util';
 import { Movex, ConnectionToMaster } from 'movex';
 import { MovexMasterResource, MovexMasterServer } from 'movex-master';
 import { MemoryMovexStore } from 'movex-store';
 import { MockConnectionEmitter } from '../../lib/MockConnectionEmitter';
 import { ConnectionToClient } from '../../lib/ConnectionToClient';
+import { createMasterContext } from '../../lib/util';
 
 // TODO: This was added on April 16th 2024, when I added the subscribers info (client info)
 
@@ -50,7 +50,6 @@ export const movexClientMasterOrchestrator = <
         id: clientId,
         // TODO: If this needs to be given here is where it can be
         info: {} as TClientInfo,
-        clockOffset: 0,
       };
 
       // Would this be the only one for both client and master or seperate?
@@ -90,17 +89,18 @@ export const movexClientMasterOrchestrator = <
       return mockedMovex.movex.register(resourceType, reducer);
     });
 
-    // TODO: This might need to change according to the needs of the test
-    const masterContext: MovexMasterContext = {
-      now: () => new Date().getTime(),
-      requestAt: new Date().getTime(),
+    const getMasterPublicState = (rid: ResourceIdentifier<TResourceType>) => {
+      const masterContext = createMasterContext({
+        extra: {
+          _isOrchestrator: true,
+        },
+      });
+
+      return masterResource.getPublicState(rid, masterContext);
     };
 
     return {
-      master: {
-        getPublicState: (rid: ResourceIdentifier<TResourceType>) =>
-          masterResource.getPublicState(rid, masterContext),
-      },
+      master: { getPublicState: getMasterPublicState },
       clients,
       $util: {
         pauseEmit: () => {
@@ -113,6 +113,7 @@ export const movexClientMasterOrchestrator = <
           clientEmitters.forEach((c) => c._setEmitDelay(ms));
         },
         clientEmitters,
+        getMasterPublicState,
       },
     };
   };

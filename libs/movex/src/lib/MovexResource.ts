@@ -1,10 +1,11 @@
 import type {
+  AnyAction,
+  IOEvents,
+  UnsubscribeFn,
   ResourceIdentifier,
   ResourceIdentifierStr,
-  UnsubscribeFn,
-  AnyAction,
-  CheckedReconciliatoryActions,
   MovexReducer,
+  MovexMasterContext,
 } from 'movex-core-util';
 import {
   globalLogsy,
@@ -14,10 +15,12 @@ import {
 } from 'movex-core-util';
 import { ConnectionToMasterResources } from './ConnectionToMasterResources';
 import { MovexResourceObservable } from './MovexResourceObservable';
-import * as deepObject from 'deep-object-diff';
-import { ConnectionToMaster } from './ConnectionToMaster';
+import { type ConnectionToMaster } from './ConnectionToMaster';
+import { Err, Ok } from 'ts-results';
 
-const logsy = globalLogsy.withNamespace('[Movex][MovexResource]');
+const logsy = globalLogsy.withNamespace('[MovexResource]');
+
+const ChecksumMismatchError = 'ChecksumMismatch';
 
 export class MovexResource<
   S,
@@ -83,20 +86,15 @@ export class MovexResource<
       this.reducer
     );
 
-    // resourceObservable.$subscribers.get()
-
     // TODO: Fix this!!!
     // resourceObservable.setMasterSyncing(false);
 
-    const syncLocalState = () => {
-      return this.connectionToMasterResources
-        .getState(rid)
-        .map((masterCheckState) => {
-          resourceObservable.syncState(masterCheckState);
+    const syncLocalState = () =>
+      this.connectionToMasterResources.getState(rid).map((masterCheckState) => {
+        resourceObservable.syncState(masterCheckState);
 
-          return masterCheckState;
-        });
-    };
+        return masterCheckState;
+      });
 
     /**
      * This resyncs the local & master states
@@ -112,17 +110,16 @@ export class MovexResource<
 
       const prevCheckedState = resourceObservable.get().checkedState;
 
-      return syncLocalState().map((masterCheckState) => {
-        logsy.warn('State Resynch-ed', {
-          prevCheckedState,
-          masterCheckState,
-          diff: deepObject.detailedDiff(prevCheckedState, masterCheckState),
+      return syncLocalState().map((masterCheckedState) => {
+        // https://shorturl.at/hfKTI = https://github.com/movesthatmatter/movex/issues/8
+        logsy.warn('State Resynch-ed (See https://shorturl.at/hfKTI)', {
+          local: prevCheckedState,
+          master: masterCheckedState,
+          // TODO: Do we really need this?
+          // diff: deepObject.detailedDiff(prevCheckedState, masterCheckState),
         });
-        logsy.debug(
-          "This shouldn't happen too often! If it does, make sure there's no way around it! See this for more https://github.com/movesthatmatter/movex/issues/8"
-        );
 
-        return masterCheckState;
+        return masterCheckedState;
       });
     };
 
@@ -142,12 +139,15 @@ export class MovexResource<
       });
 
     const onReconciliateActionsHandler = (
-      p: CheckedReconciliatoryActions<A>
+      // p: CheckedReconciliatoryActions<A>
+      p: Parameters<IOEvents<S, A, TResourceType>['onReconciliateActions']>[0]
     ) => {
       const prevState = resourceObservable.getCheckedState();
-      const nextState = resourceObservable.applyMultipleActions(
-        p.actions
-      ).checkedState;
+
+      resourceObservable.applyMultipleActions(p.actions);
+      const nextState = resourceObservable.applyStateTransformer(
+        p.masterContext
+      );
 
       logsy.log('ReconciliatoryActions Received', {
         ...p,
@@ -174,51 +174,75 @@ export class MovexResource<
 
     this.unsubscribersByRid[toResourceIdentifierStr(rid)] = [
       resourceObservable.onDispatched(
-        ({
-          action,
-          next: nextLocalCheckedState,
-          masterAction,
-          onEmitMasterActionAck,
-        }) => {
+        ({ action, next: nextLocalCheckedState, reapplyActionToPrevState }) => {
           this.connectionToMasterResources
-            .emitAction(rid, masterAction || action)
+            .emitAction(rid, action)
             .map((response) => {
-              if (response.type === 'reconciliation') {
-                onReconciliateActionsHandler(response);
+              const localizedMasterContext: MovexMasterContext = {
+                requestAt: response.masterContext.requestAt,
+              };
 
-                return;
+              if (response.type === 'reconciliation') {
+                // TODO: Aug28.2024 Add the onMasterContextReceived here as well
+                onReconciliateActionsHandler({
+                  ...response,
+                  rid,
+                  masterContext: localizedMasterContext,
+                });
+
+                // TODO: Does this need to do something more here?
+                return Ok.EMPTY;
               }
 
-              const nextChecksums = invoke(() => {
+              const result = invoke(() => {
                 if (response.type === 'masterActionAck') {
-                  return {
-                    local: onEmitMasterActionAck(response.nextCheckedAction),
-                    master: response.nextCheckedAction.checksum,
-                  };
+                  const reapplied = reapplyActionToPrevState(
+                    response.nextCheckedAction.action
+                  );
+
+                  const nextLocalState =
+                    resourceObservable.applyStateTransformerToCheckedStateAndUpdate(
+                      reapplied,
+                      localizedMasterContext
+                    );
+
+                  if (
+                    nextLocalState[1] !== response.nextCheckedAction.checksum
+                  ) {
+                    return new Err(ChecksumMismatchError);
+                  }
+
+                  return Ok.EMPTY;
                 }
 
-                return {
-                  local: nextLocalCheckedState[1],
-                  master: response.nextChecksum,
-                };
+                // Regular Ack Response
+                const localCheckedState =
+                  resourceObservable.applyStateTransformer(
+                    localizedMasterContext
+                  );
+
+                if (localCheckedState[1] !== response.nextChecksum) {
+                  return new Err(ChecksumMismatchError);
+                }
+
+                return Ok.EMPTY;
               });
 
-              // And the checksums are equal stop here
-              if (nextChecksums.master === nextChecksums.local) {
-                return;
+              if (result.err && ChecksumMismatchError) {
+                logsy.warn(`Dispatch Ack ChecksumsMismatchError`, {
+                  clientId: this.connectionToMaster.client.id,
+                  rid,
+                  action,
+                  nextLocalCheckedState,
+                  response,
+                });
+
+                // When the checksums aren't the same, need to resync the state!
+                // this is expensive and ideally doesn't happen too much.
+                resyncLocalState();
               }
 
-              // When the checksums aren't the same, need to resync the state!
-              // this is expensive and ideally doesn't happen too much.
-
-              logsy.error(`Dispatch Ack Error: "Checksums MISMATCH"`, {
-                clientId: this.connectionToMaster.client.id,
-                action,
-                response,
-                nextLocalCheckedState,
-              });
-
-              resyncLocalState();
+              return Ok.EMPTY;
             });
         }
       ),
@@ -228,7 +252,10 @@ export class MovexResource<
           clientId: this.connectionToMaster.client.id,
         });
 
-        const result = resourceObservable.reconciliateAction(p);
+        const result = resourceObservable.reconciliateAction(
+          p,
+          p.masterContext
+        );
 
         if (result.err) {
           logsy.warn('FwdAction Checksums Mismatch', {
@@ -276,20 +303,12 @@ export class MovexResource<
       () => this.connectionToMasterResources.destroy(),
 
       // Logger
-      resourceObservable.onDispatched(
-        ({
-          action,
-          next: nextLocalCheckedState,
-          prev: prevLocalCheckedState,
-        }) => {
-          logsy.info('Action Dispatched', {
-            action,
-            clientId: this.connectionToMaster.client.id,
-            prevState: prevLocalCheckedState,
-            nextLocalState: nextLocalCheckedState,
-          });
-        }
-      ),
+      resourceObservable.onDispatched((payload) => {
+        logsy.info('Action Dispatched', {
+          ...payload,
+          clientId: this.connectionToMaster.client.id,
+        });
+      }),
     ];
 
     // I like this idea of decorating the disaptch, and look at its return instead of subscribing to onDispatched

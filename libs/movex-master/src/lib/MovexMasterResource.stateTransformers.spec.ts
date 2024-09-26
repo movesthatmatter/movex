@@ -85,7 +85,7 @@ test('gets initial state transformed with PrevState and Movex Context', async ()
     prev: CounterState,
     context: MovexMasterContext
   ): CounterState => {
-    return { count: context.now() };
+    return { count: context.requestAt };
   };
 
   const master = new MovexMasterResource(
@@ -108,7 +108,7 @@ test('gets initial state transformed with PrevState and Movex Context', async ()
 
   MockDate.reset();
 
-  const expected = computeCheckedState({ count: MOCKED_NOW });
+  const expected = computeCheckedState({ count: 123 });
 
   expect(actualPublic).toEqual(expected);
   expect(actualClientSpecific).toEqual(expected);

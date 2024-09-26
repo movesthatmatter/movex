@@ -12,8 +12,9 @@ import type {
   MovexClient,
   ResourceIdentifier,
   SanitizedMovexClient,
-  MovexClientMasterClockOffset,
 } from '../core-types';
+import { MovexMasterContext } from '../masterContext';
+// import { MovexMasterContext } from '../reducer';
 
 export type IOEvents<
   TState = unknown,
@@ -72,18 +73,22 @@ export type IOEvents<
     rid: ResourceIdentifier<TResourceType>;
     action: ActionOrActionTupleFromAction<A>;
   }) => IOPayloadResult<
-    | {
-        type: 'ack';
-        nextChecksum: Checksum;
-      }
-    | {
-        type: 'masterActionAck';
-        // nextChecksum: Checksum;
-        nextCheckedAction: ToCheckedAction<A>;
-      }
-    | ({
-        type: 'reconciliation';
-      } & CheckedReconciliatoryActions<A>),
+    (
+      | {
+          type: 'ack';
+          nextChecksum: Checksum;
+        }
+      | {
+          type: 'masterActionAck';
+          // nextChecksum: Checksum;
+          nextCheckedAction: ToCheckedAction<A>;
+        }
+      | ({
+          type: 'reconciliation';
+        } & CheckedReconciliatoryActions<A>)
+    ) & {
+      masterContext: MovexMasterContext;
+    },
     'MasterResourceInexistent' | string
   >; // Type the other errors
 
@@ -92,21 +97,25 @@ export type IOEvents<
    * */
   onReady: (p: SanitizedMovexClient) => void;
 
-  onClockSync: (p: undefined) => IOPayloadResult<number, unknown>; // acknowledges the client timestamp
+  // onClockSync: (p: undefined) => IOPayloadResult<number, unknown>; // acknowledges the client timestamp
 
   onFwdAction: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
+      masterContext: MovexMasterContext;
     } & ToCheckedAction<A>
   ) => IOPayloadResult<void, unknown>;
   onReconciliateActions: (
     payload: {
       rid: ResourceIdentifier<TResourceType>;
+      masterContext: MovexMasterContext;
     } & CheckedReconciliatoryActions<A>
   ) => IOPayloadResult<void, unknown>;
   onResourceSubscriberAdded: (p: {
     rid: ResourceIdentifier<TResourceType>;
     client: SanitizedMovexClient;
+    // TODO: Make required after it works
+    masterContext: MovexMasterContext;
     // clientId: MovexClient['id'];
   }) => IOPayloadResult<
     void,

@@ -59,7 +59,7 @@ test('applies public action', async () => {
   };
 
   const actual = await master
-    .applyAction(rid, clientAId, action, mockMasterContext)
+    .applyActionAndStateTransformer(rid, clientAId, action, mockMasterContext)
     .resolveUnwrap();
 
   const actualPublic = await master
@@ -114,7 +114,7 @@ test('applies only one private action w/o getting to reconciliation', async () =
   };
 
   const actual = await master
-    .applyAction(
+    .applyActionAndStateTransformer(
       rid,
       senderClientId,
       [privateAction, publicAction],
@@ -197,7 +197,7 @@ test('applies private action UNTIL Reconciliation', async () => {
 
   // White Private Action
   const actualActionResultBeforeReconciliation = await master
-    .applyAction(
+    .applyActionAndStateTransformer(
       rid,
       whitePlayer,
       [privateWhiteAction, publicWhiteAction],
@@ -285,7 +285,7 @@ test('applies private action UNTIL Reconciliation', async () => {
 
   // Black Private Action (also the Reconciliatory Action)
   const actualActionResultAfterReconciliation = await master
-    .applyAction(
+    .applyActionAndStateTransformer(
       rid,
       blackPlayer,
       [privateBlackAction, publicBlackAction],

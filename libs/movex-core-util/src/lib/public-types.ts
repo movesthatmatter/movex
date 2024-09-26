@@ -30,6 +30,7 @@ export type MovexLogger = {
 };
 
 
+
 export type MovexDispatchOf<A extends AnyAction> = (
   action: ToPublicAction<A> // TODO: Should this be ToPublic??
 ) => void;

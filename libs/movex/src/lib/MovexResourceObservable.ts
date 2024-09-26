@@ -7,6 +7,8 @@ import {
   isAction,
   Observable,
   SanitizedMovexClient,
+  MovexMasterContext,
+  checkedStateEquals,
 } from 'movex-core-util';
 import type {
   IObservable,
@@ -159,11 +161,15 @@ export class MovexResourceObservable<
    * @returns
    */
   reconciliateAction(
-    checkedAction: ToCheckedAction<TAction>
+    checkedAction: ToCheckedAction<TAction>,
+    masterContext: MovexMasterContext
   ): Result<CheckedState<TState>, 'ChecksumMismatch'> {
-    const nextCheckedState = this.getNextCheckedStateFromAction(
-      // Maybe worth making it a real public action but it's just for types
-      checkedAction.action as ToPublicAction<TAction>
+    const nextCheckedState = this.applyStateTransformerToCheckedState(
+      this.getNextCheckedStateFromAction(
+        // Maybe worth making it a real public action but it's just for types
+        checkedAction.action as ToPublicAction<TAction>
+      ),
+      masterContext
     );
 
     if (nextCheckedState[1] !== checkedAction.checksum) {
@@ -311,6 +317,58 @@ export class MovexResourceObservable<
         nextStateGetter
       ),
     }));
+  }
+
+  applyStateTransformer(
+    masterContext: MovexMasterContext
+  ): CheckedState<TState> {
+    const prevCheckedState = this.getCheckedState();
+
+    const nextCheckedState = this.applyStateTransformerToCheckedState(
+      prevCheckedState,
+      masterContext
+    );
+
+    if (!checkedStateEquals(nextCheckedState, prevCheckedState)) {
+      this.updateCheckedState(nextCheckedState);
+
+      return this.getCheckedState();
+    }
+
+    return prevCheckedState;
+  }
+
+  private applyStateTransformerToCheckedState(
+    checkedState: CheckedState<TState>,
+    masterContext: MovexMasterContext
+  ) {
+    if (typeof this.reducer.$transformState === 'function') {
+      const nextCheckedState = computeCheckedState(
+        this.reducer.$transformState(checkedState[0], masterContext)
+      );
+
+      return nextCheckedState;
+    }
+
+    return checkedState;
+  }
+
+  applyStateTransformerToCheckedStateAndUpdate(
+    checkedState: CheckedState<TState>,
+    masterContext: MovexMasterContext
+  ) {
+    const nextCheckedState = this.applyStateTransformerToCheckedState(
+      checkedState,
+      masterContext
+    );
+
+    const prevCheckedState = this.getCheckedState();
+
+    if (!checkedStateEquals(nextCheckedState, prevCheckedState)) {
+      this.updateCheckedState(nextCheckedState);
+    }
+
+    return this.getCheckedState();
   }
 
   // This to be called when the obervable is not used anymore in order to clean the update subscriptions

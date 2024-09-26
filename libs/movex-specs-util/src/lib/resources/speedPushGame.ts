@@ -88,19 +88,20 @@ export const speedPushGameReducer: MovexReducer<
 // How does it move to complete? With the $transfomer
 
 speedPushGameReducer.$transformState = (state, context) => {
-  const NOW = context.now();
-
+  // const NOW = context.now();
   if (
     state.status === 'ongoing' &&
-    NOW > state.lastPushAt + state.timeToNextPushMs
+    context.requestAt > state.lastPushAt + state.timeToNextPushMs
   ) {
-    return {
+    const next = {
       status: 'completed',
       winner: state.lastPushBy,
       lastPushAt: state.lastPushAt,
       lastPushBy: state.lastPushBy,
       timeToNextPushMs: state.timeToNextPushMs,
-    };
+    } as const;
+
+    return next;
   }
 
   return state;

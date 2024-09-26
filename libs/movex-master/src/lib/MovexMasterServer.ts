@@ -98,16 +98,15 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
-      const masterContext = createMasterContext({
-        extra: {
-          clientId: clientConnection.client.id,
-          req: 'onEmitAction',
-          action: payload.action,
-        },
-      });
+      const masterContext = createMasterContext();
 
       masterResource
-        .applyAction(rid, clientConnection.client.id, action, masterContext)
+        .applyActionAndStateTransformer(
+          rid,
+          clientConnection.client.id,
+          action,
+          masterContext
+        )
         .map(({ nextPublic, nextPrivate, peerActions }) => {
           if (peerActions.type === 'reconcilable') {
             // TODO: Filter out the client id so it only received the ack
@@ -122,6 +121,7 @@ export class MovexMasterServer {
                   peerConnection.emitter.emit('onReconciliateActions', {
                     rid,
                     ...peerActions.byClientId[peerId],
+                    masterContext,
                   });
 
                   return;
@@ -132,6 +132,7 @@ export class MovexMasterServer {
               new Ok({
                 type: 'reconciliation',
                 ...peerActions.byClientId[clientConnection.client.id],
+                masterContext,
               } as const)
             );
           }
@@ -156,6 +157,7 @@ export class MovexMasterServer {
             peerConnection.emitter.emit('onFwdAction', {
               rid,
               ...peerActions.byClientId[peerId],
+              masterContext,
             });
           });
 
@@ -172,8 +174,9 @@ export class MovexMasterServer {
                     nextCheckedAction: objectOmit(nextPublic, [
                       'wasMasterAction',
                     ]),
+                    masterContext,
                   } as const)
-                : ({ type: 'ack', nextChecksum } as const)
+                : ({ type: 'ack', nextChecksum, masterContext } as const)
             )
           );
         })
@@ -186,12 +189,7 @@ export class MovexMasterServer {
         p: ReturnType<IOEvents<S, A, TResourceType>['getResource']>
       ) => void
     ) => {
-      const masterContext = createMasterContext({
-        extra: {
-          clientId: clientConnection.client.id,
-          req: 'onGetResourceHandler',
-        },
-      });
+      const masterContext = createMasterContext();
 
       this.getSanitizedClientSpecificResource(
         rid,
@@ -227,12 +225,7 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
-      const masterContext = createMasterContext({
-        extra: {
-          clientId: clientConnection.client.id,
-          req: 'onGetResourceStateHandler',
-        },
-      });
+      const masterContext = createMasterContext();
 
       masterResource
         .getClientSpecificState(rid, clientConnection.client.id, masterContext)
@@ -277,12 +270,7 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
-      const masterContext = createMasterContext({
-        extra: {
-          clientId: clientConnection.client.id,
-          req: 'onCreateResourceHandler',
-        },
-      });
+      const masterContext = createMasterContext();
 
       masterResource
         .create(resourceType, resourceState, resourceId)
@@ -320,12 +308,7 @@ export class MovexMasterServer {
         return acknowledge?.(new Err('MasterResourceInexistent'));
       }
 
-      const masterContext = createMasterContext({
-        extra: {
-          clientId: clientConnection.client.id,
-          req: 'onAddResourceSubscriber',
-        },
-      });
+      const masterContext = createMasterContext();
 
       masterResource
         .addResourceSubscriber(payload.rid, clientConnection.client.id)
@@ -371,6 +354,7 @@ export class MovexMasterServer {
               peerConnection.emitter.emit('onResourceSubscriberAdded', {
                 rid: payload.rid,
                 client: clientConnection.client, // TODO: Ensure this doesn't add more props than needed
+                masterContext,
               });
             });
         })
@@ -457,10 +441,7 @@ export class MovexMasterServer {
     return masterResource
       .getClientSpecificResource(rid, client.id, masterContext)
       .map((r) =>
-        itemToSanitizedClientResource(
-          this.populateClientInfoToSubscribers(r),
-          client.clockOffset
-        )
+        itemToSanitizedClientResource(this.populateClientInfoToSubscribers(r))
       );
   }
 

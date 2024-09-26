@@ -5,7 +5,10 @@ import {
   IOEvents,
 } from 'movex-core-util';
 import { counterReducer, tillNextTick } from 'movex-specs-util';
-import { movexClientMasterOrchestrator } from 'movex-master';
+import {
+  createMasterContext,
+  movexClientMasterOrchestrator,
+} from 'movex-master';
 import MockDate from 'mockdate';
 import { Ok } from 'ts-results';
 
@@ -43,12 +46,12 @@ describe('Dispatching a Public Master Action with a Single Client', () => {
     // Pause the emits to master so I can check the intermediary state on local
     $util.pauseEmit();
 
-    const MOCKED_NOW = 33;
+    let MOCKED_NOW = 33;
     MockDate.set(new Date(MOCKED_NOW));
 
-    r.dispatch((movex) => ({
+    r.dispatch((masterContext) => ({
       type: 'incrementBy',
-      payload: movex.$queries.now(),
+      payload: masterContext.requestAt(),
     }));
 
     await tillNextTick();
@@ -62,15 +65,18 @@ describe('Dispatching a Public Master Action with a Single Client', () => {
 
     // Master updates (client-master sync)
 
+    MOCKED_NOW += 2;
     // Mock the different time on the server
-    MockDate.set(new Date(MOCKED_NOW + 2));
+    MockDate.set(new Date(MOCKED_NOW));
     // Resume the master emits
     $util.resumeEmit();
 
     await tillNextTick();
 
     const actual = r.getCheckedState();
-    const expected = computeCheckedState({ count: MOCKED_NOW + 2 });
+    const expected = computeCheckedState({ count: MOCKED_NOW });
+
+    const expectedMockState = createMasterContext({ requestAt: MOCKED_NOW });
 
     expect(actual).toEqual(expected);
 
@@ -84,11 +90,12 @@ describe('Dispatching a Public Master Action with a Single Client', () => {
       type: 'masterActionAck',
       nextCheckedAction: {
         action: {
-          payload: MOCKED_NOW + 2,
+          payload: MOCKED_NOW,
           type: 'incrementBy',
         },
         checksum: expected[1],
       },
+      masterContext: expectedMockState,
     } as const);
 
     expect(emitActionDispatchSpy).toHaveBeenCalledWith(expectedAckResponse);
@@ -115,7 +122,7 @@ describe('Dispatching a Public Master Action with a Multiple Clients', () => {
 
     // Pause the emits to master so I can check the intermediary state on local
 
-    const MOCKED_NOW = 33;
+    let MOCKED_NOW = 33;
     MockDate.set(new Date(MOCKED_NOW));
 
     const peerOnFwdActionSpy = jest.fn();
@@ -125,9 +132,9 @@ describe('Dispatching a Public Master Action with a Multiple Clients', () => {
 
     $util.pauseEmit();
 
-    aClientMovex.dispatch((movex) => ({
+    aClientMovex.dispatch((masterContext) => ({
       type: 'incrementBy',
-      payload: movex.$queries.now(),
+      payload: masterContext.requestAt(),
     }));
 
     await tillNextTick();
@@ -153,6 +160,8 @@ describe('Dispatching a Public Master Action with a Multiple Clients', () => {
     const actual = aClientMovex.getCheckedState();
     const expected = computeCheckedState({ count: MASTER_MOCKED_NOW });
 
+    const expectedMasterContext = createMasterContext({ requestAt: MASTER_MOCKED_NOW })
+
     expect(actual).toEqual(expected);
 
     const expectedPeerFwdActionPayload: Parameters<
@@ -168,6 +177,7 @@ describe('Dispatching a Public Master Action with a Multiple Clients', () => {
         payload: MASTER_MOCKED_NOW,
       },
       checksum: expected[1],
+      masterContext: expectedMasterContext,
     };
 
     expect(peerOnFwdActionSpy).toHaveBeenCalledWith(

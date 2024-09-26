@@ -62,7 +62,6 @@ export class MovexLocalProvider<
     const clientWithInfo: SanitizedMovexClient<{}> = {
       id: this.props.clientId || getUuid(),
       info: {},
-      clockOffset: 0,
     };
 
     // This should be defined as real source not just as a mock

@@ -1,12 +1,27 @@
 import { Ok } from 'ts-results';
 import { MovexResourceObservable } from './MovexResourceObservable';
-import { ResourceIdentifier, computeCheckedState } from 'movex-core-util';
+import {
+  ResourceIdentifier,
+  computeCheckedState,
+  UnknownRecord,
+  MovexMasterContext,
+} from 'movex-core-util';
 import {
   tillNextTick,
   counterReducer,
   initialCounterState,
 } from 'movex-specs-util';
 import MockDate from 'mockdate';
+
+// This needs to be rewritten here in order to not have a circular dependency (since it comes from movex-master)!
+export const createMasterContext = (p?: {
+  requestAt?: number;
+  extra?: UnknownRecord;
+}): MovexMasterContext => ({
+  requestAt: p?.requestAt || new Date().getTime(),
+
+  ...(p?.extra && { _extra: p?.extra }),
+});
 
 const rid: ResourceIdentifier<string> = 'counter:test-id';
 
@@ -88,6 +103,8 @@ describe('Reconciliate Actions', () => {
       counterReducer
     );
 
+    const mockMasterContext = createMasterContext({ requestAt: 123 });
+
     const updateSpy = jest.fn();
     $resource.onUpdate(updateSpy);
 
@@ -96,12 +113,15 @@ describe('Reconciliate Actions', () => {
       count: initialCounterState.count + 1,
     });
 
-    const actual = $resource.reconciliateAction({
-      action: {
-        type: 'increment',
+    const actual = $resource.reconciliateAction(
+      {
+        action: {
+          type: 'increment',
+        },
+        checksum: incrementedStateChecksum,
       },
-      checksum: incrementedStateChecksum,
-    });
+      mockMasterContext
+    );
 
     expect(actual).toEqual(
       new Ok([incrementedState, incrementedStateChecksum])
@@ -120,15 +140,20 @@ describe('Reconciliate Actions', () => {
       counterReducer
     );
 
+    const mockMasterContext = createMasterContext({ requestAt: 123 });
+
     const updateSpy = jest.fn();
     $resource.onUpdate(updateSpy);
 
-    const actual = $resource.reconciliateAction({
-      action: {
-        type: 'increment',
+    const actual = $resource.reconciliateAction(
+      {
+        action: {
+          type: 'increment',
+        },
+        checksum: 'wrong_checksum',
       },
-      checksum: 'wrong_checksum',
-    });
+      mockMasterContext
+    );
 
     expect(actual.val).toEqual('ChecksumMismatch');
   });
@@ -146,9 +171,9 @@ describe('Master Actions (applied locally only)', () => {
     const MOCKED_NOW = 33;
     MockDate.set(new Date(MOCKED_NOW));
 
-    $resource.dispatch((movex) => ({
+    $resource.dispatch((masterContext) => ({
       type: 'incrementBy',
-      payload: movex.$queries.now(),
+      payload: masterContext.requestAt(),
     }));
 
     await tillNextTick();

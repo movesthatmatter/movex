@@ -8,4 +8,4 @@ export * from './lib/reducer';
 export * from './lib/core-types';
 export * from './lib/public-types';
 export * from './lib/checkedState';
-export * from './lib/masterQueries';
+export * from './lib/masterContext';

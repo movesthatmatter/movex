@@ -6,6 +6,7 @@
 - [ ] Improve the Connection Events
 - [ ] Master Actions. See the [Pull Request](https://github.com/movesthatmatter/movex/pull/216)
 - [ ] State Transformers. See the [Pull Request](https://github.com/movesthatmatter/movex/pull/218)
+- [ ] State Transformers applied locally. See the [Pull Request](https://github.com/movesthatmatter/movex/pull/221)
 
 ### Breaking
 

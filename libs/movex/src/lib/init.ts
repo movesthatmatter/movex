@@ -3,10 +3,8 @@ import {
   EmptyFn,
   invoke,
   MovexClientInfo,
-  MovexClientMasterClockOffset,
   SanitizedMovexClient,
   SocketIOEmitter,
-  UnknownRecord,
   UnsubscribeFn,
 } from 'movex-core-util';
 import type {
@@ -16,7 +14,6 @@ import type {
 } from 'movex-core-util';
 import { MovexFromDefinition } from './MovexFromDefintion';
 import { ConnectionToMaster } from './ConnectionToMaster';
-import { Ok } from 'ts-results';
 
 // TODO: The ClientId ideally isn't given from here bu retrieved somehow else. hmm
 // Or no?
@@ -33,9 +30,6 @@ export const initMovex = <TResourceMap extends BaseMovexDefinitionResourcesMap>(
   },
   movexDefinition: MovexDefinition<TResourceMap>
 ) => {
-  // TODO: Do we need a registry here? Maybe so it doesn't recreate the resoures all the time
-  // const registry =
-
   // TODO: Here can check if the clientId already exists locally
   //  and send it over in the handshake for the server to determine what to do with it
   //  (i.e. if it's still valid and return it or create a new one)
@@ -90,34 +84,24 @@ export const initMovex = <TResourceMap extends BaseMovexDefinitionResourcesMap>(
     );
   };
 
-  // emitter.on('pong', (payload) => {
-  //   // lastPongs.push(payload);
-  //   console.log('pong received, latency', payload);
-  //   // console.log('pong received, latency', payload);
+  // const onClockSyncHandler = (
+  //   payload: Parameters<IOEvents<any, any, string>['onClockSync']>[0],
+  //   acknowledge?: (
+  //     p: ReturnType<IOEvents<any, any, any>['onClockSync']>
+  //   ) => void
+  // ) => {
+  //   const clientTime = new Date().getTime();
+  //   console.log('on clock sync handler', { payload, acknowledge });
+
+  //   // Respond with the client time
+  //   acknowledge?.(new Ok(clientTime));
+  // };
+
+  // emitter.on('onClockSync', onClockSyncHandler);
+
+  // unsubscribers.push(() => {
+  //   socket.off('onClockSync', onClockSyncHandler);
   // });
-
-  // emitter.on('ping' as any, (x) => {
-  //   emitter.emit('pong' as any, x);
-  // });
-
-  const onClockSyncHandler = (
-    payload: Parameters<IOEvents<any, any, string>['onClockSync']>[0],
-    acknowledge?: (
-      p: ReturnType<IOEvents<any, any, any>['onClockSync']>
-    ) => void
-  ) => {
-    const clientTime = new Date().getTime();
-    console.log('on clock sync handler', { payload, acknowledge });
-
-    // Respond with the client time
-    acknowledge?.(new Ok(clientTime));
-  };
-
-  emitter.on('onClockSync', onClockSyncHandler);
-
-  unsubscribers.push(() => {
-    socket.off('onClockSync', onClockSyncHandler);
-  });
 
   emitter.on('onReady', onReadyHandler);
 

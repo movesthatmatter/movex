@@ -1,20 +1,17 @@
-import {
+import type {
   GetIOPayloadErrTypeFrom,
   GetIOPayloadOKTypeFrom,
   ResourceIdentifier,
   ResourceIdentifierStr,
   ActionOrActionTupleFromAction,
   AnyAction,
-  CheckedReconciliatoryActions,
-  ToCheckedAction,
   UnsubscribeFn,
   IOEvents,
   MovexClient,
   SanitizedMovexClient,
-  objectOmit,
-  objectPick,
 } from 'movex-core-util';
 import {
+  objectPick,
   invoke,
   toResourceIdentifierObj,
   toResourceIdentifierStr,
@@ -22,7 +19,7 @@ import {
 import { Pubsy } from 'ts-pubsy';
 import { AsyncResult } from 'ts-async-results';
 import { Err, Ok } from 'ts-results';
-import { ConnectionToMaster } from './ConnectionToMaster';
+import { type ConnectionToMaster } from './ConnectionToMaster';
 
 /**
  * This handles the connection with Master per ResourceType
@@ -33,11 +30,16 @@ export class ConnectionToMasterResources<
   TResourceType extends string
 > {
   private fwdActionEventPubsy = new Pubsy<{
-    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: ToCheckedAction<TAction>;
+    // [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: ToCheckedAction<TAction>;
+    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: Parameters<
+      IOEvents<TState, TAction, TResourceType>['onFwdAction']
+    >[0];
   }>();
 
   private reconciliatoryActionEventPubsy = new Pubsy<{
-    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: CheckedReconciliatoryActions<TAction>;
+    [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: Parameters<
+      IOEvents<TState, TAction, TResourceType>['onReconciliateActions']
+    >[0];
   }>();
 
   private subscriberAddedEventPubsy = new Pubsy<{
@@ -60,9 +62,7 @@ export class ConnectionToMasterResources<
     >
   ) {
     const onFwdActionHandler = (
-      p: {
-        rid: ResourceIdentifier<TResourceType>;
-      } & ToCheckedAction<TAction>
+      p: Parameters<IOEvents<TState, TAction, TResourceType>['onFwdAction']>[0]
     ) => {
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
         return;
@@ -75,9 +75,9 @@ export class ConnectionToMasterResources<
     };
 
     const onReconciliateActionsHandler = (
-      p: {
-        rid: ResourceIdentifier<TResourceType>;
-      } & CheckedReconciliatoryActions<TAction>
+      p: Parameters<
+        IOEvents<TState, TAction, TResourceType>['onReconciliateActions']
+      >[0]
     ) => {
       if (toResourceIdentifierObj(p.rid).resourceType !== resourceType) {
         return;
@@ -89,6 +89,7 @@ export class ConnectionToMasterResources<
       );
     };
 
+    // TODO: Refactor this to take the Parametrs of IOEvents
     const onRemoveResourceSubscriberHandler = (p: {
       rid: ResourceIdentifier<TResourceType>;
       clientId: MovexClient['id'];
@@ -112,7 +113,7 @@ export class ConnectionToMasterResources<
 
       this.subscriberAddedEventPubsy.publish(
         `rid:${toResourceIdentifierStr(p.rid)}`,
-        objectPick(p.client, ['clockOffset', 'id', 'info'])
+        objectPick(p.client, ['id', 'info'])
       );
     };
 
@@ -198,7 +199,6 @@ export class ConnectionToMasterResources<
     type GetStateEvent = ReturnType<
       IOEvents<TState, TAction, TResourceType>['getResourceState']
     >;
-
     return AsyncResult.toAsyncResult<
       GetIOPayloadOKTypeFrom<GetStateEvent>,
       GetIOPayloadErrTypeFrom<GetStateEvent>
@@ -261,8 +261,12 @@ export class ConnectionToMasterResources<
   }
 
   onFwdAction(
+    // p: Parameters<IOEvents['onFwdAction']>[0],
     rid: ResourceIdentifier<TResourceType>,
-    fn: (p: ToCheckedAction<TAction>) => void
+    // fn: (p: ToCheckedAction<TAction>) => void
+    fn: (
+      p: Parameters<IOEvents<TState, TAction, TResourceType>['onFwdAction']>[0]
+    ) => void
   ) {
     return this.fwdActionEventPubsy.subscribe(
       `rid:${toResourceIdentifierStr(rid)}`,
@@ -272,7 +276,11 @@ export class ConnectionToMasterResources<
 
   onReconciliatoryActions(
     rid: ResourceIdentifier<TResourceType>,
-    fn: (p: CheckedReconciliatoryActions<TAction>) => void
+    fn: (
+      p: Parameters<
+        IOEvents<TState, TAction, TResourceType>['onReconciliateActions']
+      >[0]
+    ) => void
   ) {
     return this.reconciliatoryActionEventPubsy.subscribe(
       `rid:${toResourceIdentifierStr(rid)}`,
