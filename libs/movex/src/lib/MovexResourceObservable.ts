@@ -224,7 +224,6 @@ export class MovexResourceObservable<
   }
 
   get() {
-    // return this.$checkedState.get();
     return this.$item.get();
   }
 
@@ -235,16 +234,6 @@ export class MovexResourceObservable<
   getUnwrappedState() {
     return this.getCheckedState()[0];
   }
-
-  // This is the actual checked state. TODO: Not sure about the names yet
-  // get state() {
-  //   return this.get();
-  // }
-
-  // This is the actual unchecked state. TODO: Not sure about the names yet
-  // get unwrappedState() {
-  //   return this.getUnwrappedState();
-  // }
 
   /**
    * This needs to be called each time master emits an updated state.

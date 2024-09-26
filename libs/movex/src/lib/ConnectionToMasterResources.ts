@@ -30,7 +30,6 @@ export class ConnectionToMasterResources<
   TResourceType extends string
 > {
   private fwdActionEventPubsy = new Pubsy<{
-    // [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: ToCheckedAction<TAction>;
     [key in `rid:${ResourceIdentifierStr<TResourceType>}`]: Parameters<
       IOEvents<TState, TAction, TResourceType>['onFwdAction']
     >[0];
@@ -169,7 +168,6 @@ export class ConnectionToMasterResources<
     >(
       this.connectionToMaster.emitter
         .emitAndAcknowledge('createResource', {
-          // clientId: this.connectionToMaster.clientId,
           resourceState,
           resourceType,
           resourceId,
@@ -261,9 +259,7 @@ export class ConnectionToMasterResources<
   }
 
   onFwdAction(
-    // p: Parameters<IOEvents['onFwdAction']>[0],
     rid: ResourceIdentifier<TResourceType>,
-    // fn: (p: ToCheckedAction<TAction>) => void
     fn: (
       p: Parameters<IOEvents<TState, TAction, TResourceType>['onFwdAction']>[0]
     ) => void
