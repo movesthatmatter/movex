@@ -5,25 +5,17 @@ import { useRouter } from 'next/router';
 
 const tags = {
   description:
-    'Serverless real-time data sharing infrastructure for front-end developers. Server Authoritative. Secret State. Real Time Multiplayer State Synchronization.',
+    'Serverless realtime data sharing infrastructure for frontend developers. Server Authoritative. Private State. State Synchronization.',
 };
 
 const config: DocsThemeConfig = {
   logo: <Logo />,
   banner: {
-    key: 'dev-version-aug-2023',
+    key: 'dev-version-sept-2024',
     text: () => (
       <span>
-        Movex is <a href="/docs/overview/introduction" style={{ textDecoration: 'underline' }}>feature-complete</a> yet still in Development for now.
-        Contributions and feedback are much{' '}
-        <a
-          href="https://github.com/movesthatmatter/movex/issues"
-          target='_blank'
-          style={{ textDecoration: 'underline' }}
-        >
-          appreciated
-        </a>
-        !
+        <b>We're Participating in #Hacktoberfest2024! 🤩</b>{' '}
+        Check out our <a href="https://github.com/movesthatmatter/movex/issues" target='_blank' style={{ textDecoration: 'underline' }}>open issues</a> and help us simplify multiplayer game development!
       </span>
     ),
     dismissible: true,

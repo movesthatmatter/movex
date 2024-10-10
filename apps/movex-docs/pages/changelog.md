@@ -1,4 +1,4 @@
-# Changelog
+# Movex Changelog
 
 ## v0.1.6 (Sep 26 2024)
 

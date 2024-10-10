@@ -1,3 +1,5 @@
-# Real-Time State Sync
+# Realtime State Sync
 
-Movex uses the Obervable Pattern under the hood to listen to changes coming from the Master State (i.e. Server)  accross all the peers (clients) subscribed to any Movex Resources. This means that as soon as a Resource State gets updated, all the subscribed peers will get notified, and the next client state will automatically get re-processed.
+Movex employs the Observable Pattern under the hood to monitor changes in the Master State (i.e., the Server) across all clients subscribed (i.e. peers) to Movex Resources. This means that as soon as a Resource State is updated, all peers receive immediate notifications, triggering an automatic reprocessing of their local state.
+
+Dive deeper into how it works [here](/docs/how/state_sync).

@@ -1,52 +1,29 @@
 import {
   ArrowPathIcon,
   LockClosedIcon,
-  HeartIcon,
   FlagIcon,
   BookOpenIcon,
   BoltIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import themeConfig from '../../theme.config';
 
 export const features = [
   {
-    name: 'Open Source',
+    name: 'Serverless',
     description:
-      "Movex is completely open source. You are welcome to contribute.",
-    icon: BookOpenIcon,
-    link: {
-      label: 'Learn More',
-      url: 'https://github.com/movesthatmatter/movex',
-    },
-    color: 'orange-500',
-  },
-  {
-    name: 'Generated Backend',
-    description:
-      "Movex takes care of the networking logic, databases, state sharing strategies, deploying and maintaining the server(s) and a lot of other decisions in between.",
+      '“Movex manages the network logic, state-sharing protocols, server deployment and maintenance, along with various other essential functionalities.',
     icon: BoltIcon,
     link: {
       label: 'Learn More',
-      url: 'docs/features/frontend_only',
+      url: 'docs/features/serverless',
     },
     color: 'orange-500',
   },
   {
-    name: 'Authoritative Server',
+    name: 'Realtime',
     description:
-      "It's important to keep the app logic outside the reach of potential bad actors, which is why it gets processed on the server.",
-    icon: FlagIcon,
-    link: {
-      label: 'Learn More',
-      url: '/docs/features/server_authoritative',
-    },
-    color: 'orange-500',
-  },
-  {
-    name: 'Real-Time Sync',
-    description:
-    'Movex uses the Observable Pattern under the hood to track state changes on the registered resources and notify the UI layer.',
+      'Movex utilizes the Observable Pattern to monitor state changes in registered resources and promptly notify the UI layer.',
     icon: ArrowPathIcon,
     link: {
       label: 'Learn More',
@@ -55,20 +32,31 @@ export const features = [
     color: 'blue-500',
   },
   {
-    name: 'Secret State',
+    name: 'Private State',
     description:
-      'Sometimes you need to keep parts of the state secret from the rest of the peers until the time is appropriate to reveal, like a game of cards for example.',
+      'At times, certain parts of the state need to remain hidden from peers until the right moment to reveal them—much like a game of cards.',
     icon: LockClosedIcon,
     link: {
       label: 'Learn More',
-      url: '/docs/features/secret_state',
+      url: '/docs/features/private_state',
     },
     color: 'yellow-300',
   },
   {
+    name: 'Authoritative Server',
+    description:
+      "To safeguard app logic from potential bad actors, it is processed on the server while remaining abstracted from the developer.",
+    icon: FlagIcon,
+    link: {
+      label: 'Learn More',
+      url: '/docs/features/server_authoritative',
+    },
+    color: 'orange-500',
+  },
+  {
     name: 'Typesafe Functional Programming',
     description:
-      "Movex is built entirely in Typescript. If you know Redux or the React.useReducer() hook you'll feel right at home. If not Movex is quick to get started with.",
+      "Movex is entirely built in TypeScript. If you’re familiar with Redux or the React.useReducer() hook, you’ll feel right at home. If not, getting started with Movex is quick and easy!",
     icon: ShieldCheckIcon,
     link: {
       label: 'Learn More',
@@ -76,12 +64,23 @@ export const features = [
     },
     color: 'red-500',
   },
+  {
+    name: 'Open Source',
+    description:
+      'Movex is fully open source, inviting developers to contribute and collaborate! Your input is welcome as we build a robust and dynamic community around this project.',
+    icon: BookOpenIcon,
+    link: {
+      label: 'Learn More',
+      url: 'https://github.com/movesthatmatter/movex',
+    },
+    color: 'orange-500',
+  },
 ];
 
 export const faqs = [
   {
     q: 'What does "No Server Code" or "No Server Hassle" really mean?',
-    a: "It means there that you, the developer, don't have to write, build, distribute or maintain any server code. You only have to concern with the client/local code as you'd be developing for single player/user and movex takes care of the server part seamlessly.",
+    a: "This means you, the developer, don’t need to write, build, distribute, or maintain any server code. Your focus is solely on client-side/local code, as if you were developing for a single player or user, while Movex seamlessly manages the server component for you.",
     link: {
       label: 'See more here',
       url: '/docs/features/server_authoritative',
@@ -89,7 +88,7 @@ export const faqs = [
   },
   {
     q: 'How can there be "Server Authoritative" without a server?',
-    a: "Spot on, detective! There is in fact a server sunning, but it's just abstracted away by movex + movex-service so you don't have to bother with it.",
+    a: "Spot on, detective! There is indeed a server running, but it’s fully abstracted by Movex and movex-service, so you can focus on development without any hassle.",
     link: {
       label: 'See more here',
       url: '/docs/features/server_authoritative',
@@ -101,7 +100,7 @@ export const faqs = [
   // },
   {
     q: 'What can I build with Movex?',
-    a: "Movex uses Deterministic Action Propagation under the hood, which means it's propagating Actions (small bits of data) from client to server and server to client(s). This works great for games (or applications) with infrequent changes (traffic) such as a turn-based game (e.g. Age of Empires) but will most likely not be enough for a shooter game or something that requires a lot of user input sent over the network. There are some ideas to make that possible in the future as well.",
+    a: "Movex employs Deterministic Action Propagation to seamlessly transmit Actions (small bits of data) between clients and servers. This approach is particularly effective for games or applications with infrequent state changes, such as turn-based games (e.g., Age of Empires). However, it may not suffice for fast-paced shooter games or applications requiring extensive user input transmitted over the network. Future enhancements are in the works to address these needs as well!",
     link: {
       label: 'Read more about Deterministic Propagation',
       url: '/docs/features/server_authoritative#determinstic-action-propagation-method',
