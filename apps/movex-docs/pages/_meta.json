@@ -25,6 +25,10 @@
     "title": "About",
     "type": "page"
   },
+  "roadmap": {
+    "title": "Roadmap",
+    "type": "page"
+  },
   "changelog": {
     "title": "Changelog",
     "type": "page"

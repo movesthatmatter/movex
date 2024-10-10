@@ -10,24 +10,16 @@ const tags = {
 
 const config: DocsThemeConfig = {
   logo: <Logo />,
-  // banner: {
-  //   key: 'dev-version-sept-2024',
-  //   text: () => (
-  //     <span>
-  //       Movex is <a href="/docs/overview/introduction" style={{ textDecoration: 'underline' }}>feature-complete</a> yet still in Development for now.
-  //       Contributions and feedback are much{' '}
-  //       <a
-  //         href="https://github.com/movesthatmatter/movex/issues"
-  //         target='_blank'
-  //         style={{ textDecoration: 'underline' }}
-  //       >
-  //         appreciated
-  //       </a>
-  //       !
-  //     </span>
-  //   ),
-  //   dismissible: true,
-  // },
+  banner: {
+    key: 'dev-version-sept-2024',
+    text: () => (
+      <span>
+        <b>We're Participating in #Hacktoberfest2024! 🤩</b>{' '}
+        Check out our <a href="https://github.com/movesthatmatter/movex/issues" target='_blank' style={{ textDecoration: 'underline' }}>open issues</a> and help us simplify multiplayer game development!
+      </span>
+    ),
+    dismissible: true,
+  },
   project: {
     link: 'https://github.com/movesthatmatter/movex',
   },
