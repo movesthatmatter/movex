@@ -8,7 +8,7 @@ export const HeroSubText: React.FC<Props> = (props) => {
   return (
     <h3 className={props.className}>
       Accelerate your development process and deliver faster by abstracting
-      backend complexities with Movex! 🚀
+      the backend complexities with Movex! 🚀
     </h3>
   );
 };
