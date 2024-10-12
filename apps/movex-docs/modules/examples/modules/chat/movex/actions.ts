@@ -1,4 +1,4 @@
-import { Action } from 'movex';
+import { Action } from 'movex-core-util';
 import { Color, ParticipantId } from './state';
 
 export type ChatActions =

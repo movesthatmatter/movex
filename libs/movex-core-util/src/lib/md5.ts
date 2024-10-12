@@ -12,7 +12,7 @@ export function md5(s: any) {
     c,
     d,
     h = [(b = 0x67452301), (c = 0xefcdab89), ~b, ~c],
-    words = [],
+    words: number[] = [],
     j: any = unescape(encodeURI(s)) + '\x80',
     a = j.length;
 

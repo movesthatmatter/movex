@@ -15,4 +15,4 @@ export {
   isSameResourceIdentifier as isSameRid,
 } from 'movex-core-util';
 
-export { DispatchPublicFn as MovexDispatchAction } from './lib/dispatch';
+export { type DispatchPublicFn as MovexDispatchAction } from './lib/dispatch';
