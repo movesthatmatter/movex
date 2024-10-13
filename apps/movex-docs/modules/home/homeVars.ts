@@ -12,7 +12,7 @@ export const features = [
   {
     name: 'Serverless',
     description:
-      '“Movex manages the network logic, state-sharing protocols, server deployment and maintenance, along with various other essential functionalities.',
+      'Movex manages the network logic, state-sharing protocols, server deployment and maintenance, along with various other essential functionalities.',
     icon: BoltIcon,
     link: {
       label: 'Learn More',
@@ -45,7 +45,7 @@ export const features = [
   {
     name: 'Authoritative Server',
     description:
-      "To safeguard app logic from potential bad actors, it is processed on the server while remaining abstracted from the developer.",
+      'To safeguard app logic from potential bad actors, it is processed on the server while remaining abstracted from the developer.',
     icon: FlagIcon,
     link: {
       label: 'Learn More',
@@ -53,16 +53,27 @@ export const features = [
     },
     color: 'orange-500',
   },
+  // {
+  //   name: 'Typesafe Functional Programming',
+  //   description:
+  //     "Movex is entirely built in TypeScript. If you’re familiar with Redux or the React.useReducer() hook, you’ll feel right at home. If not, getting started with Movex is quick and easy!",
+  //   icon: ShieldCheckIcon,
+  //   link: {
+  //     label: 'Learn More',
+  //     url: '/docs/features/functional',
+  //   },
+  //   color: 'red-500',
+  // },
   {
-    name: 'Typesafe Functional Programming',
+    name: 'Efficient Data Flow',
     description:
-      "Movex is entirely built in TypeScript. If you’re familiar with Redux or the React.useReducer() hook, you’ll feel right at home. If not, getting started with Movex is quick and easy!",
+      'Movex ensures that only the minimum required data is transmitted with each update, optimizing performance.',
     icon: ShieldCheckIcon,
     link: {
       label: 'Learn More',
-      url: '/docs/features/functional',
+      url: 'https://www.movex.dev/docs/features/functional#determinstic-action-propagation',
     },
-    color: 'red-500',
+    color: 'orange-500',
   },
   {
     name: 'Open Source',
@@ -80,7 +91,7 @@ export const features = [
 export const faqs = [
   {
     q: 'What does "No Server Code" or "No Server Hassle" really mean?',
-    a: "This means you, the developer, don’t need to write, build, distribute, or maintain any server code. Your focus is solely on client-side/local code, as if you were developing for a single player or user, while Movex seamlessly manages the server component for you.",
+    a: 'This means you, the developer, don’t need to write, build, distribute, or maintain any server code. Your focus is solely on client-side/local code, as if you were developing for a single player or user, while Movex seamlessly manages the server component for you.',
     link: {
       label: 'See more here',
       url: '/docs/features/server_authoritative',
@@ -88,7 +99,7 @@ export const faqs = [
   },
   {
     q: 'How can there be "Server Authoritative" without a server?',
-    a: "Spot on, detective! There is indeed a server running, but it’s fully abstracted by Movex and movex-service, so you can focus on development without any hassle.",
+    a: 'Spot on, detective! There is indeed a server running, but it’s fully abstracted by Movex and movex-service, so you can focus on development without any hassle.',
     link: {
       label: 'See more here',
       url: '/docs/features/server_authoritative',
@@ -100,7 +111,7 @@ export const faqs = [
   // },
   {
     q: 'What can I build with Movex?',
-    a: "Movex employs Deterministic Action Propagation to seamlessly transmit Actions (small bits of data) between clients and servers. This approach is particularly effective for games or applications with infrequent state changes, such as turn-based games (e.g., Age of Empires). However, it may not suffice for fast-paced shooter games or applications requiring extensive user input transmitted over the network. Future enhancements are in the works to address these needs as well!",
+    a: 'Movex employs Deterministic Action Propagation to seamlessly transmit Actions (small bits of data) between clients and servers. This approach is particularly effective for games or applications with infrequent state changes, such as turn-based games (e.g., Age of Empires). However, it may not suffice for fast-paced shooter games or applications requiring extensive user input transmitted over the network. Future enhancements are in the works to address these needs as well!',
     link: {
       label: 'Read more about Deterministic Propagation',
       url: '/docs/features/server_authoritative#determinstic-action-propagation-method',

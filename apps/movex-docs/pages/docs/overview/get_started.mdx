@@ -20,7 +20,7 @@ yarn start
 yarn add movex movex-react; yarn add --dev movex-service
 ```
 
-### 3. Create the Movex Config File
+### 2. Create the Movex Config File
 
 ```ts copy filename="src/movex.config.ts"
 export default {
@@ -28,13 +28,13 @@ export default {
 };
 ```
 
-### 2. Start Movex in Dev Mode
+### 3. Start Movex in Dev Mode
 
 ```bash copy
 npx movex dev
 ```
 
-### 3. Wrap the App in the MovexProvider
+### 4. Wrap the App in the MovexProvider
 
 ```ts copy filename="src/App.tsx" {4-5, 9-15, 32}
 import React from 'react';
@@ -73,7 +73,7 @@ export default function App() {
 }
 ```
 
-### 4. Add a Movex Resource
+### 5. Add a Movex Resource
 
 In this short tutorial we're going to build a Counter App that will sync in real-time with another client out of the box.
 
@@ -139,7 +139,7 @@ export default {
 };
 ```
 
-### 5. Let's add the Counter Component
+### 6. Let's add the Counter Component
 
 For this tutorial, we'll keep the UI very basic since it's not the main point.
 
@@ -176,7 +176,7 @@ On line 11 we're binding to the counter resource by rid. This means that now we 
 
 In the following lines we're rendering a very simple UI, which displays the Counter State at _line 20_ and adding two Buttons which will be responsible for triggering the "Increment" and "Decrement" actions.
 
-### 5. And hook it up with our App
+### 7. And hook it up with our App
 
 ```ts copy showLineNumbers filename="src/App.tsx" {5-7, 10-13, 22-29, 32-39}
 import React, { useMemo } from 'react';
@@ -249,7 +249,7 @@ import Image from 'next/image';
   height={500}
 />
 
-### 5. Let's add the Actions
+### 8. Let's add the Actions
 
 At this point we can see the state of the Counter Resource but cannot do much with it.
 
@@ -311,7 +311,7 @@ And you should be able to see this:
   height={500}
 />
 
-### 6. Now bring in multi-players
+### 9. Now bring in multi-players
 
 Open the URL in another browser tab or 2, or even 9 and start clicking the buttons. The changes will be synced in realtime, without any server-side coding.
 
@@ -327,6 +327,6 @@ Open the URL in another browser tab or 2, or even 9 and start clicking the butto
 
 The world is your oyster now – go make multiplayer gameees! :D
 
-### 7. Homework
+### 10. Homework
 
 If you want an extra step, implement the "incrementBy" Action and functionality.
