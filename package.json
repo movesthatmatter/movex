@@ -24,7 +24,7 @@
     "build": "nx build movex-demo",
     "test": "nx run-many --all --target=test --skip-nx-cache",
     "dev-movex-docs": "npx nx serve movex-docs",
-    "lint-all-libs": "npx nx run-many --parallel --target=lint --projects=movex-core-util,movex,movex-server,movex-service,movex-react,movex-vue --quiet",
+    "lint-all-libs": "npx nx run-many --parallel --target=lint --projects=movex-core-util,movex,movex-server,movex-service,movex-react,movex-react-local-master,movex-vue,movex-store,movex-master,movex-specs-util --quiet",
     "push-all-libs--locally": "cd dist/libs/movex && yalc push && cd -; cd dist/libs/movex-server && yalc push && cd -; cd dist/libs/movex-core-util && yalc push && cd -; cd dist/libs/movex-react && yalc push && cd -; cd dist/libs/movex-service && yalc push && cd -; cd dist/libs/movex-store && yalc push && cd -; cd dist/libs/movex-master && yalc push && cd -;",
     "push-lib-locally--movex": "cd dist/libs/movex && yalc push && cd -",
     "push-lib-locally--movex-react": "cd dist/libs/movex-react && yalc push && cd -",

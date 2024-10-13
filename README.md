@@ -6,8 +6,8 @@
 </div>
 
 <div align="center">
-  <h1>Serverless real-time data sharing infrastructure for frontend developers</h1>
-  Build multiplayer games, chat apps or anything in between without worrying about the server side, backend logic or even the network! Works with React out of the box!
+  <h1>Serverless Multiplayer Infrastructure for JavaScript Game Developers</h1>
+  Build multiplayer games without worrying about server-side logic, backend infrastructure, or networking. Movex takes care of it all—works with React out of the box!
 </div>
 
 <br/>
@@ -29,32 +29,37 @@
 
 ## 🧐 Why Movex
 
-__Movex let's you cut the development effort in half and ship faster by abstracting the backend logic and server-side away! 🎉__
+__Movex cuts your development effort in half and helps you ship faster by abstracting away backend logic and server-side complexity! 🎉__
 
-With it's unique approach and set of features Movex gives you the freedom to focus only on the front-end while still maintaining all of the control over the App Logic, UI/UX and Authority over Data.
+With its unique approach and robust set of features, Movex gives you the freedom to focus solely on the front-end while still maintaining full control over the Game Logic, UI/UX, and Data Authority.
 
-In addition it comes pre-packed with:
-- the ability to keep parts of the shared state private to specific users. [See Secret State](https://www.movex.dev/docs/features/secret_state)
-- ensures the minimun amount of data is sent over the wire with each update. [See Deterministic Action Propagation](https://www.movex.dev/docs/features/functional)
-- keeps bad actors away by keeping the Data Reconciliation Logic out of the client reach. [See Authoritative Server](https://www.movex.dev/docs/features/server_authoritative)
+## ⭐️ Features:
+- __Serverless:__
+  Movex manages the network logic, state-sharing protocols, server deployment and maintenance, along with various other essential functionalities. [Learn more](https://www.movex.dev/docs/features/serverless).
+- __Authoritative Server:__
+  By keeping the data reconciliation logic on the server side, Movex keeps bad actors away, ensuring the integrity of your application. [Learn more](https://www.movex.dev/docs/features/server_authoritative).
+- __Real-time synchronization:__
+  By utilizing the Observable Pattern to monitor state changes in registered resources Movex promptly notifes the UI layer. [See more](https://www.movex.dev/docs/features/realtime)
+- __Private State:__
+  Movex allows parts of the shared state to remain private to specific users, ensuring that sensitive information is kept secure. [See more](https://www.movex.dev/docs/features/private_state)
+- __Efficient Data Flow:__
+  Movex ensures that only the minimum required data is transmitted with each update, optimizing performance. (See: [Deterministic Action Propagation](https://www.movex.dev/docs/features/functional#determinstic-action-propagation))
 
 
-## 🚀 Examples
+## 💜 Who uses Movex?
+<a href="https://chessroulette.live" target="_blank" alt="Chessroulette | Conect. Play. Stream">
+  <picture width="500">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/movesthatmatter/chessroulette-web/master/src/components/Logo/assets/Logo_light_full.svg" width="250">
+    <img alt="Chessroulette | Conect. Play. Stream" src="https://raw.githubusercontent.com/movesthatmatter/chessroulette-web/master/src/components/Logo/assets/Logo_dark_full.svg" width="250">
+  </picture>
+</a>
 
-- **Chat App** - https://github.com/GabrielCTroia/movex-next-chat
+## 🚀 Examples & Demos
 - **Multiplayer Rock Paper Scissors Game** - https://codesandbox.io/s/rps-demo-x877yl
-
-## ⭐️ Features
-- 🤯 __No Backend logic to manage__ - Movex takes care of it for you! [See how](https://www.movex.dev/docs/features/frontend_only).
-- 👑 __Authoritative Server__
-- 🤩 __Real-time synchronization__
-- 🤐 __Secret State__
-- 😎 __Follows the Flux API__
-- 😍 __Works with Vanilla JS or any Framework__
+- **Chat App** - https://github.com/GabrielCTroia/movex-next-chat
 
 ## 🧙🏽‍♂️ How Movex works
-
-At the client level, Movex adheres to the [Flux Pattern](https://medium.com/weekly-webtips/flux-pattern-architecture-in-react-35d0b55313f6) to react to UI changes. Additionally, it employs the ["Deterministic Action Propagation Method"](https://www.movex.dev/docs/features/functional#determinstic-action-propagation) to synchronize any state changes with the Global (Master) State which lives on the server. Consequently, this process instantly updates all other peers on the network, ensuring real-time data synchronization. [Learn More](https://www.movex.dev/docs/how).
+Movex follows the [Flux Pattern](https://medium.com/weekly-webtips/flux-pattern-architecture-in-react-35d0b55313f6) locally to respond to UI changes. It then employs the [Deterministic Propagation Method](https://www.movex.dev/docs/features/functional#determinstic-action-propagation) to synchronize state changes with the Global State(aka Master State) and all peers in the network. [Learn More](https://www.movex.dev/docs/how).
 
 <div align="center">
 <picture width="600">
@@ -65,7 +70,31 @@ At the client level, Movex adheres to the [Flux Pattern](https://medium.com/week
 
 ## 👩‍💻 Getting Started
 
-Visit the [Docs](https://www.movex.dev/docs/overview/get_started) to get started with Movex.
+#### 1. Install It
+
+```bash
+yarn add movex; yarn add --dev movex-service
+```
+
+####  2. Create the Movex Config File
+
+```ts
+export default {
+  resources: {},
+};
+```
+
+####  3. Start Movex in Dev Mode
+
+```bash
+npx movex dev
+```
+
+#### 4. Next Steps
+To continue with the next steps see [Get Started Docs](https://www.movex.dev/docs/overview/get_started).
+
+## Documentation 
+Visit the [Docs](https://www.movex.dev/docs/overview/introduction) to get started with Movex.
 
 ## 🙏 Contributing
 
