@@ -47,7 +47,7 @@ With its unique approach and robust set of features, Movex gives you the freedom
 
 
 ## 💜 Who uses Movex?
-<a href="https://chessroulette.live" alt="Chessroulette | Conect. Play. Stream">
+<a href="https://chessroulette.live" target="_blank" alt="Chessroulette | Conect. Play. Stream">
   <picture width="500">
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/movesthatmatter/chessroulette-web/master/src/components/Logo/assets/Logo_light_full.svg" width="250">
     <img alt="Chessroulette | Conect. Play. Stream" src="https://raw.githubusercontent.com/movesthatmatter/chessroulette-web/master/src/components/Logo/assets/Logo_dark_full.svg" width="250">
@@ -55,8 +55,8 @@ With its unique approach and robust set of features, Movex gives you the freedom
 </a>
 
 ## 🚀 Examples & Demos
-- **Chat App** - https://github.com/GabrielCTroia/movex-next-chat
 - **Multiplayer Rock Paper Scissors Game** - https://codesandbox.io/s/rps-demo-x877yl
+- **Chat App** - https://github.com/GabrielCTroia/movex-next-chat
 
 ## 🧙🏽‍♂️ How Movex works
 Movex follows the [Flux Pattern](https://medium.com/weekly-webtips/flux-pattern-architecture-in-react-35d0b55313f6) locally to respond to UI changes. It then employs the [Deterministic Propagation Method](https://www.movex.dev/docs/features/functional#determinstic-action-propagation) to synchronize state changes with the Global State(aka Master State) and all peers in the network. [Learn More](https://www.movex.dev/docs/how).
@@ -91,7 +91,7 @@ npx movex dev
 ```
 
 #### 4. Next Steps
-For the next steps see the [Get Started Docs](https://www.movex.dev/docs/overview/get_started)
+To continue with the next steps see [Get Started Docs](https://www.movex.dev/docs/overview/get_started).
 
 ## Documentation 
 Visit the [Docs](https://www.movex.dev/docs/overview/introduction) to get started with Movex.
