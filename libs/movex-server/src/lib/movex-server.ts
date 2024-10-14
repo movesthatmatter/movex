@@ -20,8 +20,8 @@ import {
 } from 'movex-master';
 import { delay, isOneOf } from './util';
 
-const pkgVersion = require('../../package.json').version;
-
+import { version as pkgVersion } from '../../package.json';
+import { ResourceIdentifier } from 'movex-core-util';
 const logsy = globalLogsy.withNamespace('[MovexServer]');
 
 logsy.onLog((event) => {
@@ -144,7 +144,9 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   // });
 
   app.get('/api/resources/:rid', async (req, res) => {
-    const rawRid = req.params.rid;
+    const rawRid = req.params.rid as ResourceIdentifier<
+      Extract<keyof TDefinition['resources'], string>
+    >;
 
     if (!isResourceIdentifier(rawRid)) {
       return res.sendStatus(400); // Bad Request
@@ -159,7 +161,7 @@ export const movexServer = <TDefinition extends MovexDefinition>(
     res.header('Content-Type', 'application/json');
 
     return store
-      .get(rawRid as any) // TODO: Not sure why this doesn't see it and needs to be casted to any?
+      .get(rawRid)
       .map((data) => {
         res.send(JSON.stringify(data, null, 4));
       })
@@ -217,8 +219,6 @@ export const movexServer = <TDefinition extends MovexDefinition>(
   // start the server
   const port = process.env['port'] || 3333;
   httpServer.listen(port, () => {
-    const address = httpServer.address();
-
     // console.log(`[movex-server] v${pkgVersion} started at port ${port}.`);
 
     // if (typeof address !== 'string') {
