@@ -154,7 +154,15 @@ export const movexServer = <TDefinition extends MovexDefinition>(
 
     const ridObj = toResourceIdentifierObj(rawRid);
 
-    if (!isOneOf(ridObj.resourceType, objectKeys(definition.resources))) {
+    if (
+      !isOneOf(
+        ridObj.resourceType,
+        objectKeys(definition.resources) as Extract<
+          keyof TDefinition['resources'],
+          string
+        >[]
+      )
+    ) {
       return res.sendStatus(400); // Bad Request
     }
 
