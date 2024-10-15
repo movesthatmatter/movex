@@ -28,6 +28,19 @@
         "jestConfig": "libs/movex-specs-util/jest.config.ts",
         "passWithNoTests": true
       }
+    },
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/movex-specs-util",
+        "tsConfig": "libs/movex-specs-util/tsconfig.lib.json",
+        "packageJson": "libs/movex-specs-util/package.json",
+        "main": "libs/movex-specs-util/src/index.ts",
+        "assets": ["libs/movex-specs-util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": true,
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
     }
   },
   "tags": []
