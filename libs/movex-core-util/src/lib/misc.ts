@@ -22,7 +22,7 @@ export const isObject = (o: unknown): o is object => {
 export const isFunction = (x: unknown): x is (...args: any) => any =>
   typeof x === 'function';
 
-export const objectOmit = <O extends Object, ToOmit extends (keyof O)[]>(
+export const objectOmit = <O extends object, ToOmit extends (keyof O)[]>(
   o: O,
   toOmit: ToOmit
 ) =>
@@ -37,7 +37,7 @@ export const objectOmit = <O extends Object, ToOmit extends (keyof O)[]>(
     };
   }, {} as DistributiveOmit<O, TupleToUnionType<ToOmit>>);
 
-export const objectPick = <O extends Object, ToPick extends (keyof O)[]>(
+export const objectPick = <O extends object, ToPick extends (keyof O)[]>(
   o: O,
   toPick: ToPick
 ) =>

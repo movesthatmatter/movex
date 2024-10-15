@@ -1,7 +1,7 @@
 import type { EventMap } from 'typed-emitter';
 import type { EmptyFn } from '../core-types';
 
-export const emptyFn: EmptyFn = () => {};
+// export const emptyFn: EmptyFn = () => {};
 
 export interface EventEmitter<TEventMap extends EventMap> {
   on<E extends keyof TEventMap>(

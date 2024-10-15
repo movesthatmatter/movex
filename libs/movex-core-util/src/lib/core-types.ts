@@ -238,8 +238,7 @@ export type MovexClient<Info extends MovexClientInfo = UnknownRecord> = {
 };
 
 export type SanitizedMovexClient<Info extends UnknownRecord = UnknownRecord> =
-  Pick<MovexClient<Info>, 'id' | 'info'> & {
-  };
+  Pick<MovexClient<Info>, 'id' | 'info'> & object;
 
 export type ResourceIdentifierObj<TResourceType extends string> = {
   resourceType: TResourceType;
