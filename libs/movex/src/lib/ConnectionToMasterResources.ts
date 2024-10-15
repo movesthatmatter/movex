@@ -9,6 +9,7 @@ import type {
   IOEvents,
   MovexClient,
   SanitizedMovexClient,
+  MovexClientInfo,
 } from 'movex-core-util';
 import {
   objectPick,
@@ -57,7 +58,7 @@ export class ConnectionToMasterResources<
       TState,
       TAction,
       TResourceType,
-      {} // Fix
+      MovexClientInfo
     >
   ) {
     const onFwdActionHandler = (
