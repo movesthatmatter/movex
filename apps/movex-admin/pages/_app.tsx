@@ -6,7 +6,7 @@ import '../css/style.css';
 import React, { useEffect, useState } from 'react';
 import Loader from '../components/common/Loader';
 
-export default function MyApp({ Component, pageProps }) {
+export default function MyApp({ Component, pageProps }: any) {
   // const [sidebarOpen, setSidebarOpen] = useState(false);
   // const [loading, setLoading] = useState<boolean>(true);
 
