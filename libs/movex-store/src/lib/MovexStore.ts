@@ -31,14 +31,25 @@ export type MovexStoreItem<
     [patchGroupKey in string]: MovexStatePatch<T>[];
   };
   subscribers: Record<MovexClient['id'], { subscribedAt: number }>;
+  createdAt?: number;
+  updatedAt?: number;
+  expiresAt?: number;
 };
+
+export type MovexStoreItemsRecord<
+  TResourcesMap extends BaseMovexDefinitionResourcesMap,
+  ResourceType extends StringKeys<TResourcesMap>
+> = Record<
+  ResourceIdentifierStr<ResourceType>,
+  MovexStoreItem<GetReducerState<TResourcesMap[ResourceType]>, ResourceType>
+>;
 
 export type MovexStoreItemsMapByType<
   TResourcesMap extends BaseMovexDefinitionResourcesMap
 > = {
-  [resourceType in StringKeys<TResourcesMap>]?: Record<
-    ResourceIdentifierStr<resourceType>,
-    MovexStoreItem<GetReducerState<TResourcesMap[resourceType]>, resourceType>
+  [resourceType in StringKeys<TResourcesMap>]?: MovexStoreItemsRecord<
+    TResourcesMap,
+    resourceType
   >;
 };
 

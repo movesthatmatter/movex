@@ -1,20 +1,13 @@
 import type { InferGetStaticPropsType, GetStaticProps } from 'next';
 import ECommerce from '../components/Dashboard/E-commerce';
-
 import DefaultLayout from '../components/Layouts/DefaultLayout';
 import { objectKeys } from 'movex-core-util';
 import { MovexStoreData } from '../types/store';
-
-const URL = 'https://chessroulette-movex-staging.fly.dev';
+import { fetchConnections, fetchAllStore } from '../api/storeApi';
 
 export const getStaticProps = (async (context) => {
-  const storeRes = await fetch(`${URL}/store`);
-  const store = await storeRes.json();
-
-  // console.log(JSON.stringify(store, null, 2));
-
-  const connectionsRes = await fetch(`${URL}/connections`);
-  const connections = await connectionsRes.json();
+  const store = await fetchAllStore();
+  const connections = await fetchConnections();
 
   return {
     props: {
@@ -47,8 +40,6 @@ export const getStaticProps = (async (context) => {
 export default function Home(
   props: InferGetStaticPropsType<typeof getStaticProps>
 ) {
-  // console.log('store', store);
-
   return (
     <DefaultLayout>
       <ECommerce {...props} />
