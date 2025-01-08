@@ -14,6 +14,12 @@ export const ResourceTypesList = ({
   items,
   hrefBase = '/',
 }: Props) => {
+  if (items.length === 0) {
+    return (
+      <div>Count: 0</div>
+    )
+  }
+
   return (
     <div className="">
       {listTitle && <h5 className="text-xl font-bold pb-4">{listTitle}</h5>}

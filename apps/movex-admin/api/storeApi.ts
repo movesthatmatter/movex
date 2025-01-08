@@ -1,45 +1,47 @@
-import { config } from '../config';
 import { MovexStoreItemsRecord } from 'movex-store';
 import { UnknownMovexDefinitionResourcesMap } from 'movex-core-util';
 
-import storeMockData from '../_mockData/movex-store-2024-11-25.json';
-import connectionsMockData from '../_mockData/movex-connections-2025-12-23.json';
+export const fetchAllStore = async (url?: string) => {
+  // console.log('Fetching from', url);
 
-export const fetchAllStore = async () => {
-  if (config.MOCK_DATA) {
-    return storeMockData;
+  if (!url) {
+    return {};
   }
 
-  const storeRes = await fetch(`${config.MOVEX_ENDPOINT}/store`);
+  const storeRes = await fetch(`${url}/store`);
   return await storeRes.json();
 };
 
-export const fetchResourcesOfType = async ({
-  type,
-}: {
-  type: string;
-}): Promise<
+export const fetchResourcesOfType = async (
+  url: string,
+  {
+    type,
+  }: {
+    type: string;
+  }
+): Promise<
   MovexStoreItemsRecord<UnknownMovexDefinitionResourcesMap, typeof type>
 > => {
-  if (config.MOCK_DATA) {
-    return storeMockData[
-      type as keyof typeof storeMockData
-    ] as unknown as MovexStoreItemsRecord<
-      UnknownMovexDefinitionResourcesMap,
-      typeof type
-    >;
-  }
-  return (await fetchAllStore())[type] as MovexStoreItemsRecord<
+  console.log('fetchResourcesOfType url', url);
+  // if (config.MOCK_DATA) {
+  //   return storeMockData[
+  //     type as keyof typeof storeMockData
+  //   ] as unknown as MovexStoreItemsRecord<
+  //     UnknownMovexDefinitionResourcesMap,
+  //     typeof type
+  //   >;
+  // }
+  return (await fetchAllStore(url))[type] as MovexStoreItemsRecord<
     UnknownMovexDefinitionResourcesMap,
     typeof type
   >;
 };
 
-export const fetchConnections = async () => {
-  if (config.MOCK_DATA) {
-    return connectionsMockData;
+export const fetchConnections = async (url?: string) => {
+  if (!url) {
+    return [];
   }
 
-  const connectionsRes = await fetch(`${config.MOVEX_ENDPOINT}/connections`);
+  const connectionsRes = await fetch(`${url}/connections`);
   return await connectionsRes.json();
 };

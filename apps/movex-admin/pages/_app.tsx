@@ -1,10 +1,12 @@
 'use client';
 import 'jsvectormap/dist/jsvectormap.css';
 import 'flatpickr/dist/flatpickr.min.css';
-import "../css/satoshi.css";
+import '../css/satoshi.css';
 import '../css/style.css';
 import React, { useEffect, useState } from 'react';
 import Loader from '../components/common/Loader';
+import '@radix-ui/themes/styles.css';
+import { Theme } from '@radix-ui/themes';
 
 export default function MyApp({ Component, pageProps }: any) {
   // const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,7 +19,9 @@ export default function MyApp({ Component, pageProps }: any) {
   // }, []);
   return (
     <main className="app">
-      <Component {...pageProps} />
+      <Theme>
+        <Component {...pageProps} />
+      </Theme>
     </main>
   );
 

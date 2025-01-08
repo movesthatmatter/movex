@@ -1,38 +1,42 @@
-import type { InferGetStaticPropsType, GetStaticProps } from 'next';
+import type { GetStaticProps, InferGetServerSidePropsType } from 'next';
 import DefaultLayout from 'apps/movex-admin/components/Layouts/DefaultLayout';
-import {
-  fetchAllStore,
-  fetchResourcesOfType,
-} from 'apps/movex-admin/api/storeApi';
+import { fetchResourcesOfType } from 'apps/movex-admin/api/storeApi';
 import { objectKeys } from 'movex-core-util';
 import { StoreItem } from '../../../modules/Resources/components/StoreItem';
 import Breadcrumb from 'apps/movex-admin/components/Breadcrumbs/Breadcrumb';
+import { getCookieFromRequest } from 'apps/movex-admin/lib/misc';
 
-export const getStaticProps = (async (context) => {
+export const getServerSideProps = (async (context) => {
+  const movexInstanceUrl = JSON.parse(
+    getCookieFromRequest(context, 'movex-instances')
+  ).active;
+
   const resorceType = context.params?.['resourceType'] as string;
 
   return {
     props: {
-      resources: await fetchResourcesOfType({ type: resorceType }),
+      resources: await fetchResourcesOfType(movexInstanceUrl, {
+        type: resorceType,
+      }),
       resorceType,
     },
   };
 }) satisfies GetStaticProps<any>;
 
-export async function getStaticPaths() {
-  const store = await fetchAllStore();
+// export async function getStaticPaths() {
+//   const store = await fetchAllStore();
 
-  const paths = Object.keys(store).map((resourceType) => ({
-    params: { resourceType },
-  }));
+//   const paths = Object.keys(store).map((resourceType) => ({
+//     params: { resourceType },
+//   }));
 
-  return { paths, fallback: false };
-}
+//   return { paths, fallback: false };
+// }
 
 export default function Page({
   resources,
   resorceType,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   return (
     <DefaultLayout>
       <Breadcrumb pageName={`Resource: ${resorceType}`} />

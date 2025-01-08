@@ -1,4 +1,5 @@
 import { githubLightTheme, JsonEditor } from 'json-edit-react';
+import { makeTimestampsInRecordReadable, objectOmit } from 'movex-core-util';
 import { MovexStoreItem } from 'movex-store';
 import { useState } from 'react';
 
@@ -9,6 +10,11 @@ type Props = {
 export const StoreItem = ({ item }: Props) => {
   const [expand, setExpand] = useState<boolean>();
   const [state, checksum] = item.state;
+
+  const itemMeta = makeTimestampsInRecordReadable(
+    objectOmit(item, ['state', 'subscribers']),
+    ['createdAt', 'expiresAt', 'updatedAt']
+  );
 
   return (
     <div className="bg-slate-200 mb-3">
@@ -38,22 +44,44 @@ export const StoreItem = ({ item }: Props) => {
       {expand && (
         <div className="p-3 flex bg-slate-200">
           <div className="flex-1">
-            <div className="pb-2 font-bold">Subscribers</div>
-            <>
-              {item.subscribers && (
-                <JsonEditor
-                  data={item.subscribers}
-                  rootName="subscribers"
-                  theme={githubLightTheme}
-                  restrictEdit
-                  restrictAdd
-                  restrictDelete
-                  restrictDrag
-                  restrictTypeSelection
-                  enableClipboard
-                />
-              )}
-            </>
+            {itemMeta && (
+              <div className="pb-4">
+                <div className="pb-2 font-bold">Meta</div>
+                <>
+                  {itemMeta && (
+                    <JsonEditor
+                      data={itemMeta}
+                      rootName="meta"
+                      theme={githubLightTheme}
+                      restrictEdit
+                      restrictAdd
+                      restrictDelete
+                      restrictDrag
+                      restrictTypeSelection
+                      enableClipboard
+                    />
+                  )}
+                </>
+              </div>
+            )}
+            <div className="pb-4">
+              <div className="pb-2 font-bold">Subscribers</div>
+              <>
+                {item.subscribers && (
+                  <JsonEditor
+                    data={item.subscribers}
+                    rootName="subscribers"
+                    theme={githubLightTheme}
+                    restrictEdit
+                    restrictAdd
+                    restrictDelete
+                    restrictDrag
+                    restrictTypeSelection
+                    enableClipboard
+                  />
+                )}
+              </>
+            </div>
           </div>
           <div className="flex-1">
             <div className="pb-2 font-bold">State</div>

@@ -1,13 +1,18 @@
-import type { InferGetStaticPropsType, GetStaticProps } from 'next';
+import type { GetStaticProps, InferGetServerSidePropsType } from 'next';
 import ECommerce from '../components/Dashboard/E-commerce';
 import DefaultLayout from '../components/Layouts/DefaultLayout';
 import { objectKeys } from 'movex-core-util';
 import { MovexStoreData } from '../types/store';
 import { fetchConnections, fetchAllStore } from '../api/storeApi';
+import { getCookieFromRequest } from '../lib/misc';
 
-export const getStaticProps = (async (context) => {
-  const store = await fetchAllStore();
-  const connections = await fetchConnections();
+export const getServerSideProps = (async (context) => {
+  const movexInstanceUrl = JSON.parse(
+    getCookieFromRequest(context, 'movex-instances') || '{}'
+  ).active;
+
+  const store = await fetchAllStore(movexInstanceUrl);
+  const connections = await fetchConnections(movexInstanceUrl);
 
   return {
     props: {
@@ -38,7 +43,7 @@ export const getStaticProps = (async (context) => {
 }) satisfies GetStaticProps<MovexStoreData>;
 
 export default function Home(
-  props: InferGetStaticPropsType<typeof getStaticProps>
+  props: InferGetServerSidePropsType<typeof getServerSideProps>
 ) {
   return (
     <DefaultLayout>

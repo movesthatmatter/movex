@@ -7,6 +7,7 @@ import Image from 'next/image';
 import SidebarItem from '../Sidebar/SidebarItem';
 import ClickOutside from '../ClickOutside';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import { config } from 'apps/movex-admin/config';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -420,7 +421,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           </button>
         </div>
         {/* <!-- SIDEBAR HEADER --> */}
-
+        
         <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
           {/* <!-- Sidebar Menu --> */}
           <nav className="mt-5 px-4 py-4 lg:mt-9 lg:px-6">

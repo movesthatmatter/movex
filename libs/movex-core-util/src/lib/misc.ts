@@ -1,4 +1,8 @@
-import { DistributiveOmit, TupleToUnionType } from './core-types';
+import {
+  DistributiveOmit,
+  TupleToUnionType,
+  UnknownRecord,
+} from './core-types';
 
 export const objectKeys = <O extends object>(o: O) =>
   Object.keys(o) as (keyof O)[];
@@ -51,3 +55,25 @@ export const objectPick = <O extends Object, ToPick extends (keyof O)[]>(
       [nextKey]: o[nextKey],
     };
   }, {} as Pick<O, TupleToUnionType<ToPick>>);
+
+export const isOneOf = <T extends string | number, List extends T[]>(
+  k: T | undefined,
+  listOfOptions: List
+): k is TupleToUnionType<List> => !!k && listOfOptions.indexOf(k) > -1;
+
+export const makeTimestampsInRecordReadable = <r extends UnknownRecord>(
+  x: r,
+  keysList: (keyof r)[]
+) => {
+  const onlyKeysObject = objectPick(x, keysList);
+  return objectKeys(onlyKeysObject).reduce((prev, next) => {
+    return {
+      ...prev,
+      [next]:
+        typeof x[next] === 'number' ? timestampToDateString(x[next]) : x[next],
+    };
+  }, {} as typeof x);
+};
+
+export const timestampToDateString = (d: number) =>
+  new Date(d).toLocaleString();

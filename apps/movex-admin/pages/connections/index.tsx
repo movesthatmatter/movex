@@ -1,20 +1,25 @@
-import type { InferGetStaticPropsType, GetStaticProps } from 'next';
+import type { GetStaticProps, InferGetServerSidePropsType } from 'next';
 import DefaultLayout from 'apps/movex-admin/components/Layouts/DefaultLayout';
 import { fetchConnections } from 'apps/movex-admin/api/storeApi';
 import Breadcrumb from 'apps/movex-admin/components/Breadcrumbs/Breadcrumb';
 import { ConnectionsView } from 'apps/movex-admin/modules/Connections/ConnectionsView';
+import { getCookieFromRequest } from 'apps/movex-admin/lib/misc';
 
-export const getStaticProps = (async (context) => {
+export const getServerSideProps = (async (context) => {
+  const movexInstanceUrl = JSON.parse(
+    getCookieFromRequest(context, 'movex-instances') || '{}'
+  ).active;
+
   return {
     props: {
-      connections: await fetchConnections(),
+      connections: await fetchConnections(movexInstanceUrl),
     },
   };
 }) satisfies GetStaticProps<any>;
 
 export default function Page({
   connections,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   return (
     <DefaultLayout>
       <Breadcrumb pageName="Connections" />
