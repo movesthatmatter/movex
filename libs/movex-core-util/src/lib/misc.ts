@@ -67,10 +67,11 @@ export const makeTimestampsInRecordReadable = <r extends UnknownRecord>(
 ) => {
   const onlyKeysObject = objectPick(x, keysList);
   return objectKeys(onlyKeysObject).reduce((prev, next) => {
+    const val = x[next];
+
     return {
       ...prev,
-      [next]:
-        typeof x[next] === 'number' ? timestampToDateString(x[next]) : x[next],
+      [next]: typeof val === 'number' ? timestampToDateString(val) : x[next],
     };
   }, {} as typeof x);
 };
