@@ -15,7 +15,7 @@
 
 [![NPM version][npm-image]][npm-url]
 [![License][license-image]][license-url]
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/dwyl/esta/issues)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/movesthatmatter/movex/issues)
 ![Tests](https://github.com/movesthatmatter/movex/actions/workflows/test.yml/badge.svg)
 ![Type Script Compilation](https://github.com/movesthatmatter/movex/actions/workflows/tsc-compiler.yml/badge.svg)
 

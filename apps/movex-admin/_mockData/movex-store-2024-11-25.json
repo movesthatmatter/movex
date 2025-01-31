@@ -1,0 +1,300 @@
+{
+  "room": {
+    "room:opj07N4lH": {
+      "rid": "room:opj07N4lH",
+      "state": [
+        {
+          "activity": {
+            "activityType": "match",
+            "activityState": {
+              "status": "aborted",
+              "type": "bestOf",
+              "rounds": 3,
+              "players": {
+                "white": {
+                  "id": "uxgYGCtugVLZ6",
+                  "score": 0
+                },
+                "black": {
+                  "id": "r94TvDtpScEh_",
+                  "score": 0
+                }
+              },
+              "winner": null,
+              "endedPlays": [
+                {
+                  "game": {
+                    "status": "aborted",
+                    "winner": null,
+                    "startedAt": 1728695603231,
+                    "pgn": "",
+                    "orientation": "white",
+                    "timeLeft": {
+                      "lastUpdatedAt": null,
+                      "white": 180000,
+                      "black": 180000
+                    },
+                    "lastMoveBy": "black",
+                    "lastMoveAt": null,
+                    "timeClass": "blitz3",
+                    "gameOverReason": null,
+                    "offers": []
+                  }
+                }
+              ],
+              "ongoingPlay": null
+            }
+          }
+        },
+        "02ff475cb955479e42ad8cb86e8a3731"
+      ],
+      "subscribers": {},
+      "createdAt": 1734973940204,
+      "updatedAt": 1734973940289,
+      "expiresAt": 1734973962289
+    },
+    "room:op2DqwWbp": {
+      "rid": "room:op2DqwWbp",
+      "state": [
+        {
+          "activity": {
+            "activityType": "match",
+            "activityState": {
+              "status": "pending",
+              "type": "bestOf",
+              "rounds": 3,
+              "players": {
+                "white": {
+                  "id": "WIfPknnPKHAMy",
+                  "score": 0
+                },
+                "black": {
+                  "id": "xUt-VlpN5iHHn",
+                  "score": 0
+                }
+              },
+              "winner": null,
+              "endedPlays": [],
+              "ongoingPlay": {
+                "game": {
+                  "status": "idling",
+                  "winner": null,
+                  "startedAt": 1728700761500,
+                  "pgn": "1. e4",
+                  "orientation": "white",
+                  "timeLeft": {
+                    "lastUpdatedAt": null,
+                    "white": 180000,
+                    "black": 180000
+                  },
+                  "lastMoveBy": "white",
+                  "lastMoveAt": 1728700795561,
+                  "timeClass": "blitz3",
+                  "gameOverReason": null,
+                  "offers": []
+                }
+              }
+            }
+          }
+        },
+        "9a428d6c379f833ed396d21266866b1c"
+      ],
+      "subscribers": {},
+      "createdAt": 1734973940215,
+      "updatedAt": 1734973940289,
+      "expiresAt": 1734973962291
+    },
+    "room:opeYplpiP": {
+      "rid": "room:opeYplpiP",
+      "state": [
+        {
+          "activity": {
+            "activityType": "match",
+            "activityState": {
+              "status": "pending",
+              "type": "bestOf",
+              "rounds": 3,
+              "players": {
+                "white": {
+                  "id": "WIfPknnPKHAMy",
+                  "score": 0
+                },
+                "black": {
+                  "id": "xUt-VlpN5iHHn",
+                  "score": 0
+                }
+              },
+              "winner": null,
+              "endedPlays": [],
+              "ongoingPlay": {
+                "game": {
+                  "status": "idling",
+                  "winner": null,
+                  "startedAt": 1728700805049,
+                  "pgn": "",
+                  "orientation": "white",
+                  "timeLeft": {
+                    "lastUpdatedAt": null,
+                    "white": 180000,
+                    "black": 180000
+                  },
+                  "lastMoveBy": "black",
+                  "lastMoveAt": null,
+                  "timeClass": "blitz3",
+                  "gameOverReason": null,
+                  "offers": []
+                }
+              }
+            }
+          }
+        },
+        "4b42a983c359a763cb185bfd66d0fc27"
+      ],
+      "subscribers": {},
+      "createdAt": 1734973940216,
+      "updatedAt": 1734973940289,
+      "expiresAt": 1734973962295
+    },
+    "room:uttDtJb": {
+      "rid": "room:uttDtJb",
+      "state": [
+        {
+          "activity": {
+            "activityType": "play",
+            "activityState": {
+              "game": {
+                "status": "pending",
+                "winner": null,
+                "startedAt": null,
+                "pgn": "",
+                "orientation": "white",
+                "timeLeft": {
+                  "lastUpdatedAt": null,
+                  "white": -1,
+                  "black": -1
+                },
+                "lastMoveBy": "black",
+                "lastMoveAt": null,
+                "timeClass": "untimed",
+                "gameOverReason": null,
+                "offers": []
+              }
+            }
+          }
+        },
+        "ac0a035042a03f3893048d42cfdc4ee1"
+      ],
+      "subscribers": {},
+      "createdAt": 1734973940217,
+      "updatedAt": 1734973940289,
+      "expiresAt": 1734973972291
+    },
+    "room:op0fDoIJg": {
+      "rid": "room:op0fDoIJg",
+      "state": [
+        {
+          "activity": {
+            "activityType": "match",
+            "activityState": {
+              "status": "complete",
+              "type": "bestOf",
+              "rounds": 3,
+              "players": {
+                "white": {
+                  "id": "ZtkFnIf5yNHrW",
+                  "score": 0
+                },
+                "black": {
+                  "id": "lm0RB_BB7woCU",
+                  "score": 2
+                }
+              },
+              "winner": "lm0RB_BB7woCU",
+              "endedPlays": [
+                {
+                  "game": {
+                    "timeClass": "blitz3",
+                    "offers": [],
+                    "orientation": "white",
+                    "pgn": "1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. cxd5 exd5 5. Bg5 Be7 6. e3 O-O 7. Nf3 Nc6 8. Bd3 Nb4 9. Bb1 a5 10. O-O c5 11. a3 Nc6 12. Qd3 g6 13. dxc5 Bf5 14. Qe2 Bxc5 15. Bxf6 Qxf6 16. Nxd5 Qd6 17. Rd1 Be4 18. Bxe4 f5 19. Qc4 fxe4 20. Nf6+ Kh8 21. Rxd6 Bxd6 22. Nxe4 Be5 23. Nxe5 Nxe5 24. Qc3 Rac8 25. Qxe5+ Kg8 26. Nf6+ Kg7 27. Nd7+",
+                    "lastMoveBy": "white",
+                    "lastMoveAt": 1728716236434,
+                    "status": "complete",
+                    "startedAt": 1728715945237,
+                    "winner": "white",
+                    "timeLeft": {
+                      "lastUpdatedAt": 1728716251656,
+                      "white": 65201,
+                      "black": 0
+                    },
+                    "gameOverReason": 0
+                  }
+                },
+                {
+                  "game": {
+                    "timeClass": "blitz3",
+                    "offers": [],
+                    "orientation": "black",
+                    "pgn": "1. e4 e5 2. d3 Nf6 3. Nf3 d5 4. Nc3 d4 5. Ne2 Nbd7 6. Bd2 Bd6 7. Ng3 O-O 8. Be2 c6 9. O-O Re8 10. Nf5 Nf8 11. Nxd6 Qxd6 12. a3 a5 13. c3 c5 14. Ng5 h6 15. Nh3 Bxh3 16. gxh3 Ng6 17. Bh5 Nxh5 18. Qxh5 Kh7 19. b4 dxc3 20. Bxc3 cxb4 21. axb4 axb4 22. Bxb4 Qxb4 23. Rxa8 Rxa8 24. Qf5 Qd4",
+                    "lastMoveBy": "black",
+                    "lastMoveAt": 1728716560323,
+                    "status": "complete",
+                    "startedAt": 1728716261686,
+                    "winner": "black",
+                    "timeLeft": {
+                      "lastUpdatedAt": 1728716568695,
+                      "white": 0,
+                      "black": 57828
+                    },
+                    "gameOverReason": 0
+                  }
+                }
+              ],
+              "ongoingPlay": null
+            }
+          }
+        },
+        "082eb1c48adc2ff77be430996ce4917a"
+      ],
+      "subscribers": {},
+      "createdAt": 1734973940218,
+      "updatedAt": 1734973940289,
+      "expiresAt": 1734973982291
+    }
+  },
+  "game": {
+    "game:o8912e": {
+      "rid": "game:o8912e",
+      "state": [
+        {
+          "timeClass": "blitz",
+          "offers": [
+            {
+              "byPlayer": "u8CQTqhn4-zqw",
+              "type": "draw",
+              "status": "accepted"
+            }
+          ],
+          "orientation": "white",
+          "pgn": "1. e4 c5 2. Nf3 a6 3. c3 d5 4. exd5 Qxd5 5. d4 Nc6 6. Be2 Bf5 7. O-O cxd4 8. cxd4 e6",
+          "lastMoveBy": "black",
+          "lastMoveAt": 1729008495917,
+          "status": "complete",
+          "startedAt": 1729008177943,
+          "winner": "1/2",
+          "timeLeft": {
+            "lastUpdatedAt": 1729008495917,
+            "white": 274291,
+            "black": 281463
+          },
+          "gameOverReason": 7
+        },
+        "43c447179ff03dfa1d41b58d8b124670"
+      ],
+      "subscribers": {},
+      "createdAt": 1734973940219,
+      "updatedAt": 1734973940289,
+      "expiresAt": 1734973992291
+    }
+  }
+}

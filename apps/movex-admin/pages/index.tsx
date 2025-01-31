@@ -1,0 +1,53 @@
+import type { GetStaticProps, InferGetServerSidePropsType } from 'next';
+import ECommerce from '../components/Dashboard/E-commerce';
+import DefaultLayout from '../components/Layouts/DefaultLayout';
+import { objectKeys } from 'movex-core-util';
+import { MovexStoreData } from '../types/store';
+import { fetchConnections, fetchAllStore } from '../api/storeApi';
+import { getCookieFromRequest } from '../lib/misc';
+
+export const getServerSideProps = (async (context) => {
+  const movexInstanceUrl = JSON.parse(
+    getCookieFromRequest(context, 'movex-instances') || '{}'
+  ).active;
+
+  const store = await fetchAllStore(movexInstanceUrl);
+  const connections = await fetchConnections(movexInstanceUrl);
+
+  return {
+    props: {
+      connections: {
+        count: Object.keys(connections).length,
+      },
+      resources: objectKeys(store).reduce((prev, resourceType) => {
+        // console.log('store[resource].subscribers', store[resource]);
+        return {
+          ...prev,
+          [resourceType]: {
+            resourceType,
+            subscribersCount: 0,
+            totalCount: Object.keys(store[resourceType]).length,
+            activeCount: objectKeys(store[resourceType]).reduce(
+              (prev: number, next) =>
+                prev +
+                Object.keys(store[resourceType][next].subscribers).length,
+              0
+            ),
+            // isActive: Object.keys(store[resource][store[resource].rid].subscribers).length > 0,
+            // isActive: 0,
+          },
+        };
+      }, {} satisfies MovexStoreData['resources']),
+    },
+  };
+}) satisfies GetStaticProps<MovexStoreData>;
+
+export default function Home(
+  props: InferGetServerSidePropsType<typeof getServerSideProps>
+) {
+  return (
+    <DefaultLayout>
+      <ECommerce {...props} />
+    </DefaultLayout>
+  );
+}
