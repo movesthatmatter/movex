@@ -1,6 +1,6 @@
 
-var k: any = [],
-  i = 0;
+const k: any = [];
+let i = 0;
 
 for (; i < 64; ) {
   k[i] = 0 | (Math.sin(++i % Math.PI) * 4294967296);
@@ -8,13 +8,13 @@ for (; i < 64; ) {
 }
 
 export function md5(s: any) {
-  var b,
+  let b,
     c,
     d,
-    h = [(b = 0x67452301), (c = 0xefcdab89), ~b, ~c],
-    words: number[] = [],
     j: any = unescape(encodeURI(s)) + '\x80',
     a = j.length;
+  const words: number[] = [];
+  const h = [(b = 0x67452301), (c = 0xefcdab89), ~b, ~c];
 
   s = (--a / 4 + 2) | 15;
 

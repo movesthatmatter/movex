@@ -3,7 +3,6 @@ import {
   invoke,
   globalLogsy,
   noop,
-  emptyFn,
   type StringKeys,
   type GetReducerState,
   type BaseMovexDefinitionResourcesMap,
@@ -84,7 +83,7 @@ export const MovexLocalMasterProvider: React.FC<
       };
     }
 
-    return emptyFn;
+    return () => {};
   }, []);
 
   useEffect(() => {
